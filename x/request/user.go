@@ -4,6 +4,8 @@ import "context"
 
 const authenticatedUserKey = contextValueKey("authenticatedUser")
 
+// AuthenticatedUser holds the identifiers of a user making an authenticated
+// request.
 type AuthenticatedUser struct {
 	// CustomerAccountID is the ID of the currently logged in user's parent
 	// account/organization, sometimes known as the "account_aggregate_id".
@@ -16,11 +18,16 @@ type AuthenticatedUser struct {
 	RealUserID string
 }
 
+// ContextWithAuthenticatedUser returns a new context with the given user
+// embedded as a value.
 func ContextWithAuthenticatedUser(parent context.Context, user AuthenticatedUser) context.Context {
 	ctx := context.WithValue(parent, authenticatedUserKey, user)
 	return ctx
 }
 
+// AuthenticatedUserFromContext attempts to retrieve an AuthenticatedUser
+// from the given context, returning an AuthenticatedUser along with a boolean
+// signalling whether the retrieval was successful.
 func AuthenticatedUserFromContext(ctx context.Context) (AuthenticatedUser, bool) {
 	value := ctx.Value(authenticatedUserKey)
 
@@ -28,6 +35,8 @@ func AuthenticatedUserFromContext(ctx context.Context) (AuthenticatedUser, bool)
 	return user, ok
 }
 
+// ContextHasAuthenticatedUser returns whether the given context contains
+// an AuthenticatedUser value.
 func ContextHasAuthenticatedUser(ctx context.Context) bool {
 	_, ok := AuthenticatedUserFromContext(ctx)
 	return ok
