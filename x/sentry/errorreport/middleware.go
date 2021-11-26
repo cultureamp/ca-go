@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	sentryhttp "github.com/getsentry/sentry-go/http"
+	"goa.design/goa"
 )
 
 type OnRequestPanicHandler func(context.Context, http.ResponseWriter, error)
@@ -26,6 +27,19 @@ func NewHTTPMiddleware(onRequestPanic OnRequestPanicHandler) func(http.Handler) 
 
 			sentryHandler.ServeHTTP(w, req)
 		})
+	}
+}
+
+func NewGoaEndpointMiddleware() func(goa.Endpoint) goa.Endpoint {
+	return func(next goa.Endpoint) goa.Endpoint {
+		return func(ctx context.Context, request interface{}) (interface{}, error) {
+			res, err := next(ctx, request)
+			if err != nil {
+				ReportError(ctx, err)
+			}
+
+			return res, err
+		}
 	}
 }
 
