@@ -57,6 +57,22 @@ func TestAuthenticatedUserFromContextMissing(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func ExampleContextHasAuthenticatedUser() {
+	authenticatedUser := request.AuthenticatedUser{
+		CustomerAccountID: "123",
+		UserID:            "456",
+		RealUserID:        "789",
+	}
+	ctx := context.Background()
+
+	ctx = request.ContextWithAuthenticatedUser(ctx, authenticatedUser)
+
+	ok := request.ContextHasAuthenticatedUser(ctx)
+	fmt.Println(ok)
+
+	// Output: true
+}
+
 func TestContextHasAuthenticatedUserSuceeds(t *testing.T) {
 	ctx := request.ContextWithAuthenticatedUser(context.Background(), newAuthenticatedUser())
 
