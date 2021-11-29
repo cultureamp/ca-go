@@ -2,6 +2,7 @@ package errorreport_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -86,6 +87,49 @@ func TestHTTPMiddleware(t *testing.T) {
 		assert.Equal(t, http.StatusTeapot, w.Result().StatusCode)
 
 		// ...and reports the error to Sentry.
+		assert.Len(t, mockSentryTransport.Events(), 1)
+	})
+}
+
+func TestGoaEndpointMiddleware(t *testing.T) {
+	t.Run("successful request", func(t *testing.T) {
+		mockSentryTransport := setupSentry(t)
+
+		endpointCalled := false
+		endpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+			endpointCalled = true
+
+			return "foobar", nil
+		}
+
+		mw := errorreport.NewGoaEndpointMiddleware()
+
+		sut := mw(endpoint)
+		res, err := sut(context.Background(), nil)
+		assert.NoError(t, err)
+		assert.Equal(t, res, "foobar")
+
+		assert.True(t, endpointCalled)
+		assert.Len(t, mockSentryTransport.Events(), 0)
+	})
+
+	t.Run("unsuccessful request", func(t *testing.T) {
+		mockSentryTransport := setupSentry(t)
+
+		endpointCalled := false
+		endpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+			endpointCalled = true
+
+			return nil, errors.New("boom")
+		}
+
+		mw := errorreport.NewGoaEndpointMiddleware()
+
+		sut := mw(endpoint)
+		_, err := sut(context.Background(), nil)
+		assert.Error(t, err)
+
+		assert.True(t, endpointCalled)
 		assert.Len(t, mockSentryTransport.Events(), 1)
 	})
 }
