@@ -16,6 +16,8 @@ const (
 	sentryTracingSubheading = "Culture Amp - Tracing"
 )
 
+// Configure sets up the Sentry client with the given options. It returns
+// an error if mandatory options are not supplied.
 func Configure(opts ...Option) error {
 	cfg := &config{}
 	for _, opt := range opts {
@@ -62,6 +64,8 @@ func Configure(opts ...Option) error {
 	return nil
 }
 
+// Connect initialises the Sentry client. An error is returned if the
+// client is not yet configured, or an initialisation error occurs.
 func Connect() error {
 	if sentryConfig == nil {
 		return errors.New("attempt to connect an unconfigured client")
@@ -80,7 +84,7 @@ func Connect() error {
 	sentryConfig.connected = true
 
 	// Add build information to the scope for all error reports.
-	// This can't be done before we initialsie the Sentry client.
+	// This can't be done before we initialise the Sentry client.
 	sentry.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetTag("build_number", sentryConfig.buildNumber)
 		scope.SetTag("branch", sentryConfig.branch)
@@ -91,6 +95,9 @@ func Connect() error {
 	return nil
 }
 
+// ReportError reports an error to Sentry. It will attempt to
+// extract request IDs and the authenticated user from the
+// context.
 func ReportError(ctx context.Context, err error) {
 	hub := sentry.CurrentHub()
 
