@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"goa.design/goa"
 )
@@ -35,6 +36,10 @@ func NewHTTPMiddleware(onRequestPanic OnRequestPanicHandler) func(http.Handler) 
 
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			defer recoverRequestPanic(req.Context(), w, onRequestPanic)
+
+			scope := sentry.CurrentHub().PushScope()
+			addRequestFieldsToScope(req.Context(), scope)
+			defer sentry.PopScope()
 
 			sentryHandler.ServeHTTP(w, req)
 		})

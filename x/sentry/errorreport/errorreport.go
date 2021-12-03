@@ -99,27 +99,30 @@ func Connect() error {
 // extract request IDs and the authenticated user from the
 // context.
 func ReportError(ctx context.Context, err error) {
-	hub := sentry.CurrentHub()
+	scope := sentry.CurrentHub().PushScope()
+	defer sentry.PopScope()
 
-	hub.WithScope(func(scope *sentry.Scope) {
-		if authenticatedUser, ok := request.AuthenticatedUserFromContext(ctx); ok {
-			scope.SetUser(sentry.User{
-				ID: authenticatedUser.UserID,
-			})
+	addRequestFieldsToScope(ctx, scope)
+	sentry.CaptureException(err)
+}
 
-			scope.SetTag("customer", authenticatedUser.CustomerAccountID)
-			scope.SetTag("user.real", authenticatedUser.RealUserID)
-		}
+func addRequestFieldsToScope(ctx context.Context, scope *sentry.Scope) {
+	if authenticatedUser, ok := request.AuthenticatedUserFromContext(ctx); ok {
+		scope.SetUser(sentry.User{
+			ID: authenticatedUser.UserID,
+		})
 
-		if requestIDs, ok := request.RequestIDsFromContext(ctx); ok {
-			scope.SetTag("RequestID", requestIDs.RequestID)
+		scope.SetTag("customer", authenticatedUser.CustomerAccountID)
+		scope.SetTag("user.real", authenticatedUser.RealUserID)
+	}
 
-			// add as a context as well for display below the stack trace
-			scope.SetContext(sentryTracingSubheading, map[string]interface{}{
-				"RequestID":     requestIDs.RequestID,
-				"CorrelationID": requestIDs.CorrelationID,
-			})
-		}
-		hub.CaptureException(err)
-	})
+	if requestIDs, ok := request.RequestIDsFromContext(ctx); ok {
+		scope.SetTag("RequestID", requestIDs.RequestID)
+
+		// add as a context as well for display below the stack trace
+		scope.SetContext(sentryTracingSubheading, map[string]interface{}{
+			"RequestID":     requestIDs.RequestID,
+			"CorrelationID": requestIDs.CorrelationID,
+		})
+	}
 }

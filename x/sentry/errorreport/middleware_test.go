@@ -3,6 +3,7 @@ package errorreport_test
 import (
 	"context"
 	"errors"
+	"github.com/cultureamp/ca-go/x/request"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -28,9 +29,44 @@ func setupSentry(t *testing.T) *transportMock {
 	return mockSentryTransport
 }
 
+// setupContextForSentry returns a new context populated with sample
+// request and user IDs, along with an assertion function. The function
+// can be called by tests to check that the request and user IDs have
+// successfully been sent to Sentry in the error report.
+func setupContextForSentry() (context.Context, func(t *testing.T, transport *transportMock)) {
+	ctx := context.Background()
+	ctx = request.ContextWithAuthenticatedUser(ctx, request.AuthenticatedUser{
+		CustomerAccountID: "123",
+		UserID:            "456",
+		RealUserID:        "789",
+	})
+	ctx = request.ContextWithRequestIDs(ctx, request.RequestIDs{
+		RequestID:     "abc",
+		CorrelationID: "def",
+	})
+
+	return ctx, func(t *testing.T, mockSentryTransport *transportMock) {
+		t.Helper()
+
+		assert.Len(t, mockSentryTransport.Events(), 1)
+		sentryEvent := mockSentryTransport.Events()[0]
+
+		assert.Equal(t, "123", sentryEvent.Tags["customer"])
+		assert.Equal(t, "456", sentryEvent.User.ID)
+		assert.Equal(t, "789", sentryEvent.Tags["user.real"])
+		assert.Equal(t, "abc", sentryEvent.Tags["RequestID"])
+
+		tracingContext, ok := sentryEvent.Contexts["Culture Amp - Tracing"].(map[string]interface{})
+		require.True(t, ok)
+		assert.Equal(t, "def", tracingContext["CorrelationID"])
+	}
+}
+
 func TestHTTPMiddleware(t *testing.T) {
+	ctx, sentryContextAssertions := setupContextForSentry()
+
 	req, err := http.NewRequestWithContext(
-		context.Background(),
+		ctx,
 		http.MethodGet,
 		"http://www.example.com/happy_path",
 		nil)
@@ -87,11 +123,13 @@ func TestHTTPMiddleware(t *testing.T) {
 		assert.Equal(t, http.StatusTeapot, w.Result().StatusCode)
 
 		// ...and reports the error to Sentry.
-		assert.Len(t, mockSentryTransport.Events(), 1)
+		sentryContextAssertions(t, mockSentryTransport)
 	})
 }
 
 func TestGoaEndpointMiddleware(t *testing.T) {
+	ctx, sentryContextAssertion := setupContextForSentry()
+
 	t.Run("successful request", func(t *testing.T) {
 		mockSentryTransport := setupSentry(t)
 
@@ -105,7 +143,7 @@ func TestGoaEndpointMiddleware(t *testing.T) {
 		mw := errorreport.NewGoaEndpointMiddleware()
 
 		sut := mw(endpoint)
-		res, err := sut(context.Background(), nil)
+		res, err := sut(ctx, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, res, "foobar")
 
@@ -126,10 +164,10 @@ func TestGoaEndpointMiddleware(t *testing.T) {
 		mw := errorreport.NewGoaEndpointMiddleware()
 
 		sut := mw(endpoint)
-		_, err := sut(context.Background(), nil)
+		_, err := sut(ctx, nil)
 		assert.Error(t, err)
 
 		assert.True(t, endpointCalled)
-		assert.Len(t, mockSentryTransport.Events(), 1)
+		sentryContextAssertion(t, mockSentryTransport)
 	})
 }
