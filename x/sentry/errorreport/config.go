@@ -17,9 +17,6 @@ type config struct {
 
 	beforeFilter SentryBeforeFilter
 	transport    sentry.Transport
-
-	sentryOpts sentry.ClientOptions
-	connected  bool
 }
 
 // Option is a function type that can be provided to Configure to modify the

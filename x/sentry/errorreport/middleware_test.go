@@ -3,10 +3,11 @@ package errorreport_test
 import (
 	"context"
 	"errors"
-	"github.com/cultureamp/ca-go/x/request"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/cultureamp/ca-go/x/request"
 
 	"github.com/cultureamp/ca-go/x/sentry/errorreport"
 	"github.com/stretchr/testify/assert"
@@ -17,14 +18,13 @@ func setupSentry(t *testing.T) *transportMock {
 	t.Helper()
 
 	mockSentryTransport := &transportMock{}
-	err := errorreport.Configure(
+	err := errorreport.Init(
 		errorreport.WithEnvironment("test"),
 		errorreport.WithDSN("https://public@sentry.example.com/1"),
 		errorreport.WithRelease("1.0.0"),
 		errorreport.WithTransport(mockSentryTransport),
 	)
 	require.NoError(t, err)
-	require.NoError(t, errorreport.Connect())
 
 	return mockSentryTransport
 }

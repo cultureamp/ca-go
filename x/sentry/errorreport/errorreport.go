@@ -2,7 +2,6 @@ package errorreport
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -10,15 +9,13 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-var sentryConfig *config
-
 const (
 	sentryTracingSubheading = "Culture Amp - Tracing"
 )
 
-// Configure sets up the Sentry client with the given options. It returns
+// Init initialises the Sentry client with the given options. It returns
 // an error if mandatory options are not supplied.
-func Configure(opts ...Option) error {
+func Init(opts ...Option) error {
 	cfg := &config{}
 	for _, opt := range opts {
 		opt(cfg)
@@ -57,39 +54,18 @@ func Configure(opts ...Option) error {
 		sentryOpts.Transport = cfg.transport
 	}
 
-	cfg.sentryOpts = sentryOpts
-
-	sentryConfig = cfg
-
-	return nil
-}
-
-// Connect initialises the Sentry client. An error is returned if the
-// client is not yet configured, or an initialisation error occurs.
-func Connect() error {
-	if sentryConfig == nil {
-		return errors.New("attempt to connect an unconfigured client")
-	}
-
-	if sentryConfig.connected {
-		// Don't attempt to connect if not necessary.
-		return nil
-	}
-
-	err := sentry.Init(sentryConfig.sentryOpts)
+	err := sentry.Init(sentryOpts)
 	if err != nil {
 		return fmt.Errorf("initialise sentry: %w", err)
 	}
 
-	sentryConfig.connected = true
-
 	// Add build information to the scope for all error reports.
 	// This can't be done before we initialise the Sentry client.
 	sentry.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetTag("build_number", sentryConfig.buildNumber)
-		scope.SetTag("branch", sentryConfig.branch)
-		scope.SetTag("commit", sentryConfig.commit)
-		scope.SetTag("farm", sentryConfig.farm)
+		scope.SetTag("build_number", cfg.buildNumber)
+		scope.SetTag("branch", cfg.branch)
+		scope.SetTag("commit", cfg.commit)
+		scope.SetTag("farm", cfg.farm)
 	})
 
 	return nil

@@ -37,41 +37,36 @@ func (t *transportMock) Events() []*sentry.Event {
 
 func TestConfigure(t *testing.T) {
 	t.Run("no errors when all mandatory options supplied", func(t *testing.T) {
-		err := errorreport.Configure(
+		err := errorreport.Init(
 			errorreport.WithEnvironment("test"),
 			errorreport.WithDSN("https://public@sentry.example.com/1"),
 			errorreport.WithRelease("1.0.0"),
 		)
 		require.NoError(t, err)
-
-		require.NoError(t, errorreport.Connect())
 	})
 
 	t.Run("errors when environment is missing", func(t *testing.T) {
-		err := errorreport.Configure(
+		err := errorreport.Init(
 			errorreport.WithDSN("https://public@sentry.example.com/1"),
 			errorreport.WithRelease("1.0.0"),
 		)
-
-		require.Error(t, err)
+		require.EqualError(t, err, "mandatory fields missing: environment")
 	})
 
 	t.Run("errors when DSN is missing", func(t *testing.T) {
-		err := errorreport.Configure(
+		err := errorreport.Init(
 			errorreport.WithEnvironment("test"),
 			errorreport.WithRelease("1.0.0"),
 		)
-
-		require.Error(t, err)
+		require.EqualError(t, err, "mandatory fields missing: DSN")
 	})
 
 	t.Run("errors when release is missing", func(t *testing.T) {
-		err := errorreport.Configure(
+		err := errorreport.Init(
 			errorreport.WithEnvironment("test"),
 			errorreport.WithDSN("https://public@sentry.example.com/1"),
 		)
-
-		require.Error(t, err)
+		require.EqualError(t, err, "mandatory fields missing: release")
 	})
 
 	t.Run("allows build details, transport, debug mode, and before filter to be supplied", func(t *testing.T) {
@@ -86,9 +81,7 @@ func TestConfigure(t *testing.T) {
 				return event
 			}),
 		)
-
 		require.NoError(t, err)
-		require.NoError(t, errorreport.Connect())
 	})
 
 	t.Run("allows a default serverless transport to be set", func(t *testing.T) {
