@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/cultureamp/ca-go/x/request"
-
 	"github.com/cultureamp/ca-go/x/sentry/errorreport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

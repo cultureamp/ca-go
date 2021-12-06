@@ -54,8 +54,7 @@ func Init(opts ...Option) error {
 		sentryOpts.Transport = cfg.transport
 	}
 
-	err := sentry.Init(sentryOpts)
-	if err != nil {
+	if err := sentry.Init(sentryOpts); err != nil {
 		return fmt.Errorf("initialise sentry: %w", err)
 	}
 
