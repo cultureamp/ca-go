@@ -125,6 +125,34 @@ func TestHTTPMiddleware(t *testing.T) {
 		// ...and reports the error to Sentry.
 		sentryContextAssertions(t, mockSentryTransport)
 	})
+
+	t.Run("unsuccessful request with default panic handler", func(t *testing.T) {
+		mockSentryTransport := setupSentry(t)
+		w := httptest.NewRecorder()
+
+		mw := errorreport.NewHTTPMiddleware(nil)
+
+		innerHandlerCalled := false
+		innerHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			innerHandlerCalled = true
+			panic("boom")
+		})
+
+		sut := mw(innerHandler)
+		sut.ServeHTTP(w, req)
+
+		// Executes the request handler...
+		assert.True(t, innerHandlerCalled)
+
+		// ...reports the error to Sentry...
+		sentryContextAssertions(t, mockSentryTransport)
+
+		// ...and produces a JSON:API style error response.
+		assert.Equal(t, "{\"errors\":[{\"status\":\"500\",\"title\":\"Internal Server Error\"}]}", w.Body.String())
+		// nolint:bodyclose
+		assert.Equal(t, http.StatusInternalServerError, w.Result().StatusCode)
+		assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	})
 }
 
 func TestGoaEndpointMiddleware(t *testing.T) {

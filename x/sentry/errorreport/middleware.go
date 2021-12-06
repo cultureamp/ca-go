@@ -15,9 +15,23 @@ import (
 // to perform further processing of an HTTP request after a panic has occurred.
 type OnRequestPanicHandler func(context.Context, http.ResponseWriter, error)
 
+// defaultRequestPanicHandler writes a JSON:API style error response with a
+// 500 status code.
+func defaultRequestPanicHandler(ctx context.Context, w http.ResponseWriter, err error) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusInternalServerError)
+	_, _ = w.Write([]byte(`{"errors":[{"status":"500","title":"Internal Server Error"}]}`))
+}
+
 // NewHTTPMiddleware returns an http.Handler that reports panics to Sentry, recovers
-// from the panic, and calls the given OnRequestPanic handler as necessary.
+// from the panic, and calls the OnRequestPanicHandler if provided. If a handler is
+// not provided, returns a JSON:API structured body with status 500.
 func NewHTTPMiddleware(onRequestPanic OnRequestPanicHandler) func(http.Handler) http.Handler {
+	panicHandler := defaultRequestPanicHandler
+	if onRequestPanic != nil {
+		panicHandler = onRequestPanic
+	}
+
 	sentryWrapper := sentryhttp.New(sentryhttp.Options{
 		// Repanic to propagate the error to the onRequestPanic handler.
 		Repanic: true,
@@ -35,7 +49,7 @@ func NewHTTPMiddleware(onRequestPanic OnRequestPanicHandler) func(http.Handler) 
 		sentryHandler := sentryWrapper.Handle(next)
 
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			defer recoverRequestPanic(req.Context(), w, onRequestPanic)
+			defer recoverRequestPanic(req.Context(), w, panicHandler)
 
 			scope := sentry.CurrentHub().PushScope()
 			addRequestFieldsToScope(req.Context(), scope)
