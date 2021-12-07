@@ -20,7 +20,7 @@ func setupSentry(t *testing.T) *transportMock {
 	err := errorreport.Init(
 		errorreport.WithEnvironment("test"),
 		errorreport.WithDSN("https://public@sentry.example.com/1"),
-		errorreport.WithRelease("1.0.0"),
+		errorreport.WithRelease("my-app", "1.0.0"),
 		errorreport.WithTransport(mockSentryTransport),
 	)
 	require.NoError(t, err)

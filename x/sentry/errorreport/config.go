@@ -1,6 +1,8 @@
 package errorreport
 
 import (
+	"fmt"
+
 	"github.com/getsentry/sentry-go"
 )
 
@@ -46,11 +48,11 @@ func WithDSN(dsn string) Option {
 	}
 }
 
-// WithRelease configures Sentry with the given release, e.g. my-service@1.0.0
+// WithRelease formats the Sentry release with the given app name and version.
 // This is a mandatory option.
-func WithRelease(release string) Option {
+func WithRelease(appName, appVersion string) Option {
 	return func(c *config) {
-		c.release = release
+		c.release = fmt.Sprintf("%s@%s", appName, appVersion)
 	}
 }
 

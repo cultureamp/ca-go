@@ -5,12 +5,12 @@
 //
 // You configure and initialise errorreport using Init():
 //   err := errorreport.Init(
-//			  errorreport.WithDSN("foo")
-//			  errorreport.WithRelease("bar")
-//			  errorreport.WithEnvironment("baz"))
+//			  errorreport.WithDSN(os.Getenv("SENTRY_DSN")),
+//			  errorreport.WithRelease(os.Getenv("APP"), os.Getenv("APP_VERSION")),
+//			  errorreport.WithEnvironment(os.Getenv("AWS_ENVIRONMENT_NAME")))
 //   if err != nil {
 //     // handle initialisation error
-//	 }
+//   }
 //
 // Ad-hoc errors can be reported using ReportError():
 //   errorreport.ReportError(ctx, errors.New("We hit a snag!"))

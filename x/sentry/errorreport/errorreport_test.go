@@ -40,7 +40,7 @@ func TestConfigure(t *testing.T) {
 		err := errorreport.Init(
 			errorreport.WithEnvironment("test"),
 			errorreport.WithDSN("https://public@sentry.example.com/1"),
-			errorreport.WithRelease("1.0.0"),
+			errorreport.WithRelease("my-app", "1.0.0"),
 		)
 		require.NoError(t, err)
 	})
@@ -48,7 +48,7 @@ func TestConfigure(t *testing.T) {
 	t.Run("errors when environment is missing", func(t *testing.T) {
 		err := errorreport.Init(
 			errorreport.WithDSN("https://public@sentry.example.com/1"),
-			errorreport.WithRelease("1.0.0"),
+			errorreport.WithRelease("my-app", "1.0.0"),
 		)
 		require.EqualError(t, err, "mandatory fields missing: environment")
 	})
@@ -56,7 +56,7 @@ func TestConfigure(t *testing.T) {
 	t.Run("errors when DSN is missing", func(t *testing.T) {
 		err := errorreport.Init(
 			errorreport.WithEnvironment("test"),
-			errorreport.WithRelease("1.0.0"),
+			errorreport.WithRelease("my-app", "1.0.0"),
 		)
 		require.EqualError(t, err, "mandatory fields missing: DSN")
 	})
@@ -73,7 +73,7 @@ func TestConfigure(t *testing.T) {
 		err := errorreport.Init(
 			errorreport.WithEnvironment("test"),
 			errorreport.WithDSN("https://public@sentry.example.com/1"),
-			errorreport.WithRelease("1.0.0"),
+			errorreport.WithRelease("my-app", "1.0.0"),
 			errorreport.WithBuildDetails("dolly", "100", "main", "ffff"),
 			errorreport.WithTransport(&transportMock{}),
 			errorreport.WithDebug(),
@@ -88,7 +88,7 @@ func TestConfigure(t *testing.T) {
 		err := errorreport.Init(
 			errorreport.WithEnvironment("test"),
 			errorreport.WithDSN("https://public@sentry.example.com/1"),
-			errorreport.WithRelease("1.0.0"),
+			errorreport.WithRelease("my-app", "1.0.0"),
 			errorreport.WithServerlessTransport(),
 		)
 		require.NoError(t, err)
