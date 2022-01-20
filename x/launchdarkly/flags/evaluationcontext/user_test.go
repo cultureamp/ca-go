@@ -14,23 +14,23 @@ import (
 func TestNewUser(t *testing.T) {
 	t.Run("can create an anonymous user", func(t *testing.T) {
 		user := evaluationcontext.NewAnonymousUser("")
-		assertUserAttributes(t, user, "ANONYMOUS_USER", "", "")
+		assertUserAttributes(t, user, "user.ANONYMOUS_USER", "", "")
 	})
 
 	t.Run("can create an anonymous user with session/request key", func(t *testing.T) {
 		user := evaluationcontext.NewAnonymousUser("my-request-id")
-		assertUserAttributes(t, user, "my-request-id", "", "")
+		assertUserAttributes(t, user, "user.my-request-id", "", "")
 	})
 
 	t.Run("can create an identified user", func(t *testing.T) {
 		user := evaluationcontext.NewUser("not-a-uuid")
-		assertUserAttributes(t, user, "not-a-uuid", "", "")
+		assertUserAttributes(t, user, "user.not-a-uuid", "", "")
 
 		user = evaluationcontext.NewUser(
 			"not-a-uuid",
 			evaluationcontext.WithAccountID("not-a-uuid"),
 			evaluationcontext.WithRealUserID("not-a-uuid"))
-		assertUserAttributes(t, user, "not-a-uuid", "not-a-uuid", "not-a-uuid")
+		assertUserAttributes(t, user, "user.not-a-uuid", "not-a-uuid", "not-a-uuid")
 	})
 
 	t.Run("can create a user from context", func(t *testing.T) {
@@ -45,18 +45,17 @@ func TestNewUser(t *testing.T) {
 
 		flagsUser, err := evaluationcontext.UserFromContext(ctx)
 		require.NoError(t, err)
-		assertUserAttributes(t, flagsUser, "789", "456", "123")
+		assertUserAttributes(t, flagsUser, "user.789", "456", "123")
 	})
 }
 
-func assertUserAttributes(t *testing.T, user evaluationcontext.User, effectiveUserAggregateID, realUserAggregateID, accountAggregateID string) {
+func assertUserAttributes(t *testing.T, user evaluationcontext.User, userID, realUserID, accountID string) {
 	t.Helper()
 
 	ldUser, ok := user.RawUser().(lduser.User)
 	require.True(t, ok, "should be castable to a LaunchDarkly user object")
 
-	assert.Equal(t, effectiveUserAggregateID, ldUser.GetKey())
-	assert.Equal(t, realUserAggregateID, ldUser.GetAttribute("user.realUserID").StringValue())
-	assert.Equal(t, accountAggregateID, ldUser.GetAttribute("user.accountID").StringValue())
-	assert.Equal(t, "user", ldUser.GetAttribute("entityType").StringValue())
+	assert.Equal(t, userID, ldUser.GetKey())
+	assert.Equal(t, realUserID, ldUser.GetAttribute("realUserID").StringValue())
+	assert.Equal(t, accountID, ldUser.GetAttribute("accountID").StringValue())
 }
