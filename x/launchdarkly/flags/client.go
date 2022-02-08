@@ -25,7 +25,10 @@ type Client struct {
 // returned if mandatory ConfigOptions are not supplied, or an invalid
 // combination of options is provided.
 func NewClient(opts ...ConfigOption) (*Client, error) {
-	c := &Client{}
+	c := &Client{
+		initWait: 5 * time.Second, // wait up to 5 seconds for LD to connect
+	}
+
 	for _, opt := range opts {
 		opt(c)
 	}

@@ -37,6 +37,8 @@ func WithSDKKey(key string) ConfigOption {
 
 // WithInitWait configures the client to wait for the given duration for the
 // LaunchDarkly client to connect.
+// If you don't provide this option, the client will wait up to 5 seconds by
+// default.
 func WithInitWait(t time.Duration) ConfigOption {
 	return func(c *Client) {
 		c.initWait = t
