@@ -1,0 +1,19 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ca-go
+  description: Library of common Go packages used at Culture Amp
+  links:
+    - title: Github
+      url: https://github.com/cultureamp/ca-go
+  tags:
+    - users-internal
+    - camp-platform
+    - data-none
+  annotations:
+    github.com/project-slug: cultureamp/ca-go
+    github.com/team-slug: cultureamp/core-services
+spec:
+  type: library
+  owner: core-services
+  lifecycle: production
