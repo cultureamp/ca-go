@@ -2,15 +2,18 @@
 // the LaunchDarkly SDK and exposes a convenient and consistent way of configuring
 // and using the client.
 //
+// The client can be configured automatically based on the presence of an environment
+// variable. You can override this behaviour by supplying ConfigOption arguments
+// manually. For more information, see the docs on flags.FromEnvironment() and
+// the ConfigOption functions in config.go.
+//
 // The client can be configured and used as a managed singleton or as an
 // instance returned from a constructor function. The managed singleton provides
 // a layer of convenience by removing the need for your application to maintain
 // a handle on the flags client.
 //
 // To configure the client as a singleton:
-//   err := flags.Configure(
-//	   flags.WithSDKKey("foobar"),
-//   )
+//   err := flags.Configure(flags.FromEnvironment())
 //   if err != nil {
 //     // handle invalid configuration
 //   }
@@ -21,9 +24,7 @@
 //   }
 //
 // To configure the client as a instance that you manage:
-//   client, err := flags.NewClient(
-//	   flags.WithSDKKey("foobar"),
-//   )
+//   client, err := flags.NewClient(flags.FromEnvironment())
 //   if err != nil {
 //     // handle invalid configuration
 //   }
