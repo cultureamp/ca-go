@@ -8,7 +8,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
-	"goa.design/goa"
+	goa "goa.design/goa/v3/pkg"
 )
 
 // OnRequestPanicHandler is a function that can be supplied to HTTP middleware
