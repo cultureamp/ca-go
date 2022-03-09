@@ -121,7 +121,7 @@ func WithDynamoBaseURL(baseURL *url.URL) ConfigOption {
 
 func configForProxyMode(cfg *proxyModeConfig) ld.Config {
 	return ld.Config{
-		DataSource: ldcomponents.StreamingDataSource().BaseURI(cfg.relayProxyURL),
+		ServiceEndpoints: ldcomponents.RelayProxyEndpoints(cfg.relayProxyURL),
 	}
 }
 
