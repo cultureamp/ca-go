@@ -81,6 +81,13 @@ func ReportError(ctx context.Context, err error) {
 	sentry.CaptureException(err)
 }
 
+// Decorate adds tags to the Sentry record to give more details of what went wrong.
+func Decorate(tags map[string]string) func() {
+	scope := sentry.CurrentHub().PushScope()
+	scope.SetTags(tags)
+	return sentry.PopScope
+}
+
 func addRequestFieldsToScope(ctx context.Context, scope *sentry.Scope) {
 	if authenticatedUser, ok := request.AuthenticatedUserFromContext(ctx); ok {
 		scope.SetUser(sentry.User{
