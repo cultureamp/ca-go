@@ -77,7 +77,7 @@ func TestHandleError(t *testing.T) {
 
 	for _, test := range tests {
 		mockSentryTransport := setupSentry(t)
-		handler := New(Options{})
+		handler := New(PanicOptions{})
 
 		t.Run(test.name, func(t *testing.T) {
 			wrapped := handler.Handle(test.testEventHandler)
@@ -90,7 +90,7 @@ func TestHandleError(t *testing.T) {
 }
 
 func TestPanic(t *testing.T) {
-	handler := New(Options{
+	handler := New(PanicOptions{
 		Repanic: true,
 	})
 	wrapped := handler.Handle(func(ctx context.Context, payload interface{}) error {
