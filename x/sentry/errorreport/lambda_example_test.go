@@ -61,7 +61,6 @@ func Example() {
 // case, it's a Kinesis event handler, but this could be a handler for any
 // Lambda event.
 func Handler(ctx context.Context, event events.KinesisEvent) error {
-
 	for _, record := range event.Records {
 		err := processRecord(ctx, record)
 		if err != nil {
@@ -73,7 +72,6 @@ func Handler(ctx context.Context, event events.KinesisEvent) error {
 }
 
 func processRecord(ctx context.Context, record events.KinesisEventRecord) error {
-
 	// Decorate will add these details to any error report that is sent to
 	// Sentry in the context of this method. (Note the use of defer.)
 	defer errorreport.Decorate(map[string]string{
