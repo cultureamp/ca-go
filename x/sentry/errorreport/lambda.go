@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cultureamp/ca-go/x/lambdafunction"
 	"github.com/getsentry/sentry-go"
 )
 
@@ -16,19 +17,10 @@ type LambdaErrorOptions struct {
 	Repanic *bool
 }
 
-// LambdaHandlerOf[TIn] is a lambda handler that models a Lambda handler
-// function that expects a payload of TIn and returns an error.
-type LambdaHandlerOf[TIn any] func(context.Context, TIn) error
-
-// LambdaHandlerWithOutputOf[TIn] is a lambda handler that models a Lambda
-// handler function that expects a payload of TIn and returns a tuple of an
-// output type (TOut) and an error.
-type LambdaHandlerWithOutputOf[TIn any, TOut any] func(context.Context, TIn) (TOut, error)
-
 // LambdaMiddleware[TIn] provides error-handling middleware for a Lambda
 // function that has a payload type of TIn. This suits Lambda functions like
 // event processors, where the return has no payload.
-func LambdaMiddleware[TIn any](nextHandler LambdaHandlerOf[TIn], options LambdaErrorOptions) LambdaHandlerOf[TIn] {
+func LambdaMiddleware[TIn any](nextHandler lambdafunction.HandlerOf[TIn], options LambdaErrorOptions) lambdafunction.HandlerOf[TIn] {
 	return func(ctx context.Context, event TIn) error {
 		defer beforeHandler(ctx, options)()
 
@@ -42,7 +34,7 @@ func LambdaMiddleware[TIn any](nextHandler LambdaHandlerOf[TIn], options LambdaE
 
 // LambdaWithOutputMiddleware[TIn, TOut] provides error-handling middleware for
 // a Lambda function that has a payload type of TIn and returns the tuple TOut,error.
-func LambdaWithOutputMiddleware[TIn any, TOut any](nextHandler LambdaHandlerWithOutputOf[TIn, TOut], options LambdaErrorOptions) LambdaHandlerWithOutputOf[TIn, TOut] {
+func LambdaWithOutputMiddleware[TIn any, TOut any](nextHandler lambdafunction.HandlerWithOutputOf[TIn, TOut], options LambdaErrorOptions) lambdafunction.HandlerWithOutputOf[TIn, TOut] {
 	return func(ctx context.Context, event TIn) (TOut, error) {
 		defer beforeHandler(ctx, options)()
 		fmt.Println("afterbefore")
