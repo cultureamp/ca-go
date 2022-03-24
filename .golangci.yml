@@ -1,3 +1,6 @@
+run:
+  go: 1.18
+
 linters:
   enable-all: true
   disable:
@@ -32,7 +35,7 @@ linters:
   - golint
   - scopelint
   - maligned
-  
+
 linters-settings:
   gosec:
     # all rules enabled

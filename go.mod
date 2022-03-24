@@ -1,6 +1,6 @@
 module github.com/cultureamp/ca-go
 
-go 1.17
+go 1.18
 
 require (
 	github.com/aws/aws-sdk-go v1.42.7
@@ -16,6 +16,7 @@ require (
 )
 
 require (
+	github.com/aws/aws-lambda-go v1.28.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
