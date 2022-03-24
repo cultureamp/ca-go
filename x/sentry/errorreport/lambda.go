@@ -2,78 +2,82 @@ package errorreport
 
 import (
 	"context"
-	"time"
+	"fmt"
 
 	"github.com/getsentry/sentry-go"
 )
 
-// TODO: we should try to upgrade to Go 1.18 and use Generics here instead of interface{}
-type EventHandler func(context.Context, interface{}) error
-
-// A LambdaHandler is a middleware factory that provides integration with Sentry.
-type LambdaHandler struct {
-	repanic bool
-	timeout time.Duration
-}
-
-// PanicOptions configure a LambdaHandler.
-type PanicOptions struct {
+// LambdaErrorOptions configures the way Sentry is used in the context of a
+// Lambda handler wrapper.
+type LambdaErrorOptions struct {
 	// Repanic configures whether to panic again after recovering from a panic.
 	// Use this option if you have other panic handlers or want the default
-	// behavior from AWS lambda runtime.
-	Repanic bool
-	// Timeout for the delivery of panic events. Defaults to 2s.
-	//
-	// If the timeout is reached, the current goroutine is no longer blocked
-	// waiting, but the delivery is not canceled.
-	Timeout time.Duration
+	// behavior from AWS lambda runtime. Defaults to true.
+	Repanic *bool
 }
 
-// New returns a new LambdaHandler. Use the Handle and HandleFunc methods to wrap
-// existing handlers.
-func New(options PanicOptions) *LambdaHandler {
-	timeout := options.Timeout
-	if timeout == 0 {
-		timeout = 2 * time.Second
-	}
-	return &LambdaHandler{
-		repanic: options.Repanic,
-		timeout: timeout,
-	}
-}
+// LambdaHandlerOf[TIn] is a lambda handler that models a Lambda handler
+// function that expects a payload of TIn and returns an error.
+type LambdaHandlerOf[TIn any] func(context.Context, TIn) error
 
-// Handle works as a middleware that wraps an existing KinesisEventHandler. A wrapped
-// handler will recover from and report panics to Sentry, and provide access to
-// a request-specific hub to report messages and errors.
-func (h *LambdaHandler) Handle(handler EventHandler) EventHandler {
-	return h.handle(handler)
-}
+// LambdaHandlerWithOutputOf[TIn] is a lambda handler that models a Lambda
+// handler function that expects a payload of TIn and returns a tuple of an
+// output type (TOut) and an error.
+type LambdaHandlerWithOutputOf[TIn any, TOut any] func(context.Context, TIn) (TOut, error)
 
-func (h *LambdaHandler) handle(handler EventHandler) EventHandler {
-	return func(ctx context.Context, event interface{}) error {
-		hub := sentry.GetHubFromContext(ctx)
-		if hub == nil {
-			hub = sentry.CurrentHub().Clone()
-			ctx = sentry.SetHubOnContext(ctx, hub)
-		}
-		defer h.recoverWithSentry(ctx, hub)
+// LambdaMiddleware[TIn] provides error-handling middleware for a Lambda
+// function that has a payload type of TIn. This suits Lambda functions like
+// event processors, where the return has no payload.
+func LambdaMiddleware[TIn any](nextHandler LambdaHandlerOf[TIn], options LambdaErrorOptions) LambdaHandlerOf[TIn] {
+	return func(ctx context.Context, event TIn) error {
+		defer beforeHandler(ctx, options)()
 
-		err := handler(ctx, event)
-		if err != nil {
-			ReportError(ctx, err)
-		}
+		err := nextHandler(ctx, event)
+
+		afterHandler(ctx, err)
+
 		return err
 	}
 }
 
-func (h *LambdaHandler) recoverWithSentry(ctx context.Context, hub *sentry.Hub) {
-	if err := recover(); err != nil {
-		eventID := hub.RecoverWithContext(ctx, err)
-		if eventID != nil {
-			hub.Flush(h.timeout)
+// LambdaWithOutputMiddleware[TIn, TOut] provides error-handling middleware for
+// a Lambda function that has a payload type of TIn and returns the tuple TOut,error.
+func LambdaWithOutputMiddleware[TIn any, TOut any](nextHandler LambdaHandlerWithOutputOf[TIn, TOut], options LambdaErrorOptions) LambdaHandlerWithOutputOf[TIn, TOut] {
+	return func(ctx context.Context, event TIn) (TOut, error) {
+		defer beforeHandler(ctx, options)()
+		fmt.Println("afterbefore")
+
+		out, err := nextHandler(ctx, event)
+
+		fmt.Println("beforeafter")
+		afterHandler(ctx, err)
+		fmt.Println("afterafter")
+
+		return out, err
+	}
+}
+
+func beforeHandler(ctx context.Context, options LambdaErrorOptions) func() {
+	hub := sentry.GetHubFromContext(ctx)
+	if hub == nil {
+		hub = sentry.CurrentHub().Clone()
+		ctx = sentry.SetHubOnContext(ctx, hub)
+	}
+	return func() {
+		if err := recover(); err != nil {
+			fmt.Println("panic found!")
+			_ = hub.RecoverWithContext(ctx, err)
+
+			if options.Repanic == nil || *options.Repanic {
+				fmt.Println("repanic!")
+				panic(err)
+			}
 		}
-		if h.repanic {
-			panic(err)
-		}
+	}
+}
+
+func afterHandler(ctx context.Context, err error) {
+	if err != nil {
+		ReportError(ctx, err)
 	}
 }
