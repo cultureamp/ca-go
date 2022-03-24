@@ -1,10 +1,13 @@
 package errorreport_test
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	"github.com/cultureamp/ca-go/x/sentry/errorreport"
 	"github.com/getsentry/sentry-go"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,6 +19,31 @@ func ExampleDecorate() {
 
 	// Since this API is designed around "defer", don't use it in a loop.
 	// Instead, create a function and call that function in a loop.
+}
+
+func TestDecorate(t *testing.T) {
+	ctx := context.Background()
+	mockSentryTransport := setupMockSentryTransport(t)
+
+	// record event with tag value in context
+	popFn := errorreport.Decorate(map[string]string{
+		"animal": "flamingo",
+	})
+	errorreport.ReportError(ctx, errors.New("with a flamingo"))
+
+	// pop tagging context
+	popFn()
+
+	// report event without a tag value in context
+	errorreport.ReportError(ctx, errors.New("i have no flamingo"))
+
+	require.Len(t, mockSentryTransport.events, 2)
+
+	eventWithTag := mockSentryTransport.events[0]
+	assert.Equal(t, "flamingo", eventWithTag.Tags["animal"])
+
+	eventNoTag := mockSentryTransport.events[1]
+	assert.Equal(t, "", eventNoTag.Tags["animal"])
 }
 
 func TestConfigure(t *testing.T) {
