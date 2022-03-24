@@ -8,6 +8,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func ExampleDecorate() {
+	defer errorreport.Decorate(map[string]string{
+		"key":    "123",
+		"animal": "flamingo",
+	})()
+
+	// Since this API is designed around "defer", don't use it in a loop.
+	// Instead, create a function and call that function in a loop.
+}
+
 func TestConfigure(t *testing.T) {
 	t.Run("no errors when all mandatory options supplied", func(t *testing.T) {
 		err := errorreport.Init(
