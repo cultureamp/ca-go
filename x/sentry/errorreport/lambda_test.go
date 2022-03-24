@@ -35,7 +35,7 @@ func TestHandleError(t *testing.T) {
 		mockSentryTransport := setupMockSentryTransport(t)
 
 		t.Run(test.name, func(t *testing.T) {
-			wrapped := errorreport.LambdaMiddleware(test.testEventHandler, errorreport.LambdaErrorOptions{})
+			wrapped := errorreport.LambdaMiddleware(test.testEventHandler)
 
 			_ = wrapped(context.Background(), "random body")
 
@@ -73,10 +73,14 @@ func TestPanic(t *testing.T) {
 	for _, test := range tests {
 		mockSentryTransport := setupMockSentryTransport(t)
 
+		options := []errorreport.LambdaOption{}
+
+		if test.repanic != nil {
+			options = append(options, errorreport.WithRepanic(*test.repanic))
+		}
+
 		t.Run(test.name, func(t *testing.T) {
-			wrapped := errorreport.LambdaMiddleware(unstableHandler, errorreport.LambdaErrorOptions{
-				Repanic: test.repanic,
-			})
+			wrapped := errorreport.LambdaMiddleware(unstableHandler, options...)
 
 			testFunc := func() {
 				_ = wrapped(context.Background(), "random body")

@@ -51,7 +51,7 @@ func Example() {
 	}
 
 	// wrap the lambda handler function with error reporting
-	handler := errorreport.LambdaMiddleware(Handler, errorreport.LambdaErrorOptions{})
+	handler := errorreport.LambdaMiddleware(Handler)
 
 	// start the lambda function
 	lambda.StartWithContext(ctx, handler)
