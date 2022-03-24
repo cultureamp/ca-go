@@ -12,33 +12,45 @@ import (
 func TestHandleError(t *testing.T) {
 	tests := []struct {
 		name                 string
-		testEventHandler     func(ctx context.Context, payload interface{}) error
+		err                  error
 		expectedSentryEvents int
 	}{
 		{
-			name: "test not error",
-			testEventHandler: func(ctx context.Context, payload interface{}) error {
-				return nil
-			},
+			name:                 "test not error",
+			err:                  nil,
 			expectedSentryEvents: 0,
 		},
 		{
-			name: "test error",
-			testEventHandler: func(ctx context.Context, payload interface{}) error {
-				return fmt.Errorf("test error")
-			},
+			name:                 "test error",
+			err:                  fmt.Errorf("test error"),
 			expectedSentryEvents: 1,
 		},
 	}
 
 	for _, test := range tests {
-		mockSentryTransport := setupMockSentryTransport(t)
+		t.Run("LambdaMiddleware: "+test.name, func(t *testing.T) {
+			mockSentryTransport := setupMockSentryTransport(t)
+			eventHandler := func(ctx context.Context, payload any) error {
+				return test.err
+			}
+			wrapped := errorreport.LambdaMiddleware(eventHandler)
 
-		t.Run(test.name, func(t *testing.T) {
-			wrapped := errorreport.LambdaMiddleware(test.testEventHandler)
+			err := wrapped(context.Background(), "random body")
 
-			_ = wrapped(context.Background(), "random body")
+			assert.Equal(t, test.err, err)
+			assert.Len(t, mockSentryTransport.Events(), test.expectedSentryEvents)
+		})
 
+		t.Run("LambdaWithOutputMiddleware: "+test.name, func(t *testing.T) {
+			mockSentryTransport := setupMockSentryTransport(t)
+			eventHandler := func(ctx context.Context, payload any) (any, error) {
+				return nil, test.err
+			}
+			wrapped := errorreport.LambdaWithOutputMiddleware(eventHandler)
+
+			_, err := wrapped(context.Background(), "random body")
+
+			assert.Equal(t, test.err, err)
 			assert.Len(t, mockSentryTransport.Events(), test.expectedSentryEvents)
 		})
 	}
@@ -47,6 +59,14 @@ func TestHandleError(t *testing.T) {
 func TestPanic(t *testing.T) {
 	tr := true
 	fls := false
+
+	unstableHandler := func(ctx context.Context, payload any) error {
+		panic(fmt.Errorf("lol"))
+	}
+
+	unstableOutputHandler := func(ctx context.Context, payload any) (any, error) {
+		panic(fmt.Errorf("lol"))
+	}
 
 	tests := []struct {
 		name    string
@@ -66,24 +86,36 @@ func TestPanic(t *testing.T) {
 		},
 	}
 
-	unstableHandler := func(ctx context.Context, payload interface{}) error {
-		panic(fmt.Errorf("lol"))
-	}
-
 	for _, test := range tests {
-		mockSentryTransport := setupMockSentryTransport(t)
-
 		options := []errorreport.LambdaOption{}
 
 		if test.repanic != nil {
 			options = append(options, errorreport.WithRepanic(*test.repanic))
 		}
 
-		t.Run(test.name, func(t *testing.T) {
+		t.Run("LambdaMiddleware: "+test.name, func(t *testing.T) {
+			mockSentryTransport := setupMockSentryTransport(t)
 			wrapped := errorreport.LambdaMiddleware(unstableHandler, options...)
 
 			testFunc := func() {
 				_ = wrapped(context.Background(), "random body")
+			}
+
+			if test.repanic == nil || *test.repanic {
+				assert.PanicsWithError(t, "lol", testFunc)
+			} else {
+				assert.NotPanics(t, testFunc)
+			}
+
+			assert.Len(t, mockSentryTransport.Events(), 1)
+		})
+
+		t.Run("LambdaWithOutputMiddleware: "+test.name, func(t *testing.T) {
+			mockSentryTransport := setupMockSentryTransport(t)
+			wrapped := errorreport.LambdaWithOutputMiddleware(unstableOutputHandler, options...)
+
+			testFunc := func() {
+				_, _ = wrapped(context.Background(), "random body")
 			}
 
 			if test.repanic == nil || *test.repanic {
