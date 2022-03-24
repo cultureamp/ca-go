@@ -103,7 +103,7 @@ func TestHTTPMiddleware(t *testing.T) {
 		assert.True(t, innerHandlerCalled)
 
 		// ...recovers the panic...
-		// nolint:bodyclose
+
 		assert.Equal(t, http.StatusTeapot, w.Result().StatusCode)
 
 		// ...and reports the error to Sentry.
@@ -133,7 +133,6 @@ func TestHTTPMiddleware(t *testing.T) {
 
 		// ...and produces a JSON:API style error response.
 		assert.Equal(t, "{\"errors\":[{\"status\":\"500\",\"title\":\"Internal Server Error\"}]}", w.Body.String())
-		// nolint:bodyclose
 		assert.Equal(t, http.StatusInternalServerError, w.Result().StatusCode)
 		assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	})
