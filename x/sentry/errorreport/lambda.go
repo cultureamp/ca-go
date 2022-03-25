@@ -8,7 +8,7 @@ import (
 )
 
 // LambdaOption is a function type that can be supplied to alter the behaviour of the
-// Lambda*Middleware functions.
+// LambdaMiddleware functions.
 type LambdaOption func(o *lambdaOptions)
 
 // lambdaOptions configures the way Sentry is used in the context of a

@@ -62,8 +62,7 @@ func Example() {
 // Lambda event.
 func Handler(ctx context.Context, event events.KinesisEvent) error {
 	for _, record := range event.Records {
-		err := processRecord(ctx, record)
-		if err != nil {
+		if err := processRecord(ctx, record); err != nil {
 			return err
 		}
 	}
