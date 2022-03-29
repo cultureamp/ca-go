@@ -2,6 +2,7 @@ package flags
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -21,13 +22,30 @@ type Client struct {
 	wrappedClient    *ld.LDClient
 }
 
-// NewClient configures and returns an instance of the client. An error is
+// NewClient configures and returns an instance of the client. It configures the client automatically based on the value of the
+// LAUNCHDARKLY_CONFIGURATION environment variable. You should declare this
+// variable in your CDK configuration for your infrastructure. The correct value
+// can be retrieved from the AWS Secrets Manager under the key
+// `/common/launchdarkly-ops/sdk-configuration/<farm>`. An error is
 // returned if mandatory ConfigOptions are not supplied, or an invalid
 // combination of options is provided.
 func NewClient(opts ...ConfigOption) (*Client, error) {
 	c := &Client{
 		initWait: 5 * time.Second, // wait up to 5 seconds for LD to connect
 	}
+
+	var parsedConfig configurationJSON
+
+	configEnvVar, ok := os.LookupEnv("LAUNCHDARKLY_CONFIGURATION")
+	if !ok {
+		return nil, errors.New("environment variable LAUNCHDARKLY_CONFIGURATION does not exist")
+	}
+
+	if err := json.Unmarshal([]byte(configEnvVar), &parsedConfig); err != nil {
+		return nil, fmt.Errorf("parse LAUNCHDARKLY_CONFIGURATION: %w", err)
+	}
+
+	c.sdkKey = parsedConfig.SDKKey
 
 	for _, opt := range opts {
 		opt(c)

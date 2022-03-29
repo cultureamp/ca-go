@@ -1,11 +1,8 @@
 package flags
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -35,39 +32,6 @@ type configurationJSON struct {
 // ConfigOption are functions that can be supplied to Configure and NewClient to
 // configure the flags client.
 type ConfigOption func(c *Client)
-
-// FromEnvironment configures the client automatically based on the value of the
-// LAUNCHDARKLY_CONFIGURATION environment variable. You should declare this
-// variable in your CDK configuration for your infrastructure. The correct value
-// can be retrieved from the AWS Secrets Manager under the key
-// `/common/launchdarkly-ops/sdk-configuration/<farm>`.
-//
-// This option panics if LAUNCHDARKLY_CONFIGURATION could not be found or
-// parsed.
-func FromEnvironment() ConfigOption {
-	var parsedConfig configurationJSON
-
-	configEnvVar, ok := os.LookupEnv("LAUNCHDARKLY_CONFIGURATION")
-	if !ok {
-		panic(errors.New("environment variable LAUNCHDARKLY_CONFIGURATION does not exist"))
-	}
-
-	if err := json.Unmarshal([]byte(configEnvVar), &parsedConfig); err != nil {
-		panic(fmt.Errorf("parse LAUNCHDARKLY_CONFIGURATION: %w", err))
-	}
-
-	return func(c *Client) {
-		c.sdkKey = parsedConfig.SDKKey
-	}
-}
-
-// WithSDKKey configures the client to use the given SDK key to authenticate
-// against LaunchDarkly.
-func WithSDKKey(key string) ConfigOption {
-	return func(c *Client) {
-		c.sdkKey = key
-	}
-}
 
 // WithInitWait configures the client to wait for the given duration for the
 // LaunchDarkly client to connect.

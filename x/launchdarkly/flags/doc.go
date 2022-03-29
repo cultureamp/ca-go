@@ -13,7 +13,7 @@
 // a handle on the flags client.
 //
 // To configure the client as a singleton:
-//   err := flags.Configure(flags.FromEnvironment())
+//   err := flags.Configure()
 //   if err != nil {
 //     // handle invalid configuration
 //   }
@@ -24,7 +24,7 @@
 //   }
 //
 // To configure the client as a instance that you manage:
-//   client, err := flags.NewClient(flags.FromEnvironment())
+//   client, err := flags.NewClient()
 //   if err != nil {
 //     // handle invalid configuration
 //   }
@@ -50,9 +50,7 @@
 // In most cases, the client can automatically build the evaluation context from
 // the request context (provided the context has been augmented with the
 // ca-go/request package):
-//   flagVal, err := client.QueryBool(ctx, "flag.my-flag", false)
-//
-//   toggleVal, err := client.QueryToggle(ctx, "toggle.my-toggle", false)
+//   flagVal, err := client.QueryBool(ctx, "my-flag", false)
 //
 // You can also supply your own evaluation context:
 //   user := flags.NewUser(
@@ -60,7 +58,7 @@
 //             flags.WithAccountID("account-id"),
 //   )
 //
-//   val, err := client.QueryBoolWithEvaluationContext("flag.my-flag", user, false)
+//   val, err := client.QueryBoolWithEvaluationContext("my-flag", user, false)
 //
 // When your application is shutting down, you should call Shutdown() to gracefully
 // close connections to LaunchDarkly:
