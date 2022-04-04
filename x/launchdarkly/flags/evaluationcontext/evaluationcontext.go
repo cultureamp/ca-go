@@ -1,8 +1,6 @@
 package evaluationcontext
 
 import (
-	"fmt"
-
 	"gopkg.in/launchdarkly/go-sdk-common.v2/lduser"
 )
 
@@ -12,8 +10,4 @@ type Context interface {
 	// ToLDUser transforms the context implementation into an LDUser object that can
 	// be understood by LaunchDarkly when evaluating a flag.
 	ToLDUser() lduser.User
-}
-
-func ldKey(prefix, key string) string {
-	return fmt.Sprintf("%s.%s", prefix, key)
 }

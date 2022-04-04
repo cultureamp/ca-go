@@ -14,23 +14,23 @@ import (
 func TestNewUser(t *testing.T) {
 	t.Run("can create an anonymous user", func(t *testing.T) {
 		user := evaluationcontext.NewAnonymousUser("")
-		assertUserAttributes(t, user, "user.ANONYMOUS_USER", "", "")
+		assertUserAttributes(t, user, "ANONYMOUS_USER", "", "")
 	})
 
 	t.Run("can create an anonymous user with session/request key", func(t *testing.T) {
 		user := evaluationcontext.NewAnonymousUser("my-request-id")
-		assertUserAttributes(t, user, "user.my-request-id", "", "")
+		assertUserAttributes(t, user, "my-request-id", "", "")
 	})
 
 	t.Run("can create an identified user", func(t *testing.T) {
 		user := evaluationcontext.NewUser("not-a-uuid")
-		assertUserAttributes(t, user, "user.not-a-uuid", "", "")
+		assertUserAttributes(t, user, "not-a-uuid", "", "")
 
 		user = evaluationcontext.NewUser(
 			"not-a-uuid",
 			evaluationcontext.WithAccountID("not-a-uuid"),
 			evaluationcontext.WithRealUserID("not-a-uuid"))
-		assertUserAttributes(t, user, "user.not-a-uuid", "not-a-uuid", "not-a-uuid")
+		assertUserAttributes(t, user, "not-a-uuid", "not-a-uuid", "not-a-uuid")
 	})
 
 	t.Run("can create a user from context", func(t *testing.T) {
@@ -45,7 +45,7 @@ func TestNewUser(t *testing.T) {
 
 		flagsUser, err := evaluationcontext.UserFromContext(ctx)
 		require.NoError(t, err)
-		assertUserAttributes(t, flagsUser, "user.789", "456", "123")
+		assertUserAttributes(t, flagsUser, "789", "456", "123")
 	})
 }
 

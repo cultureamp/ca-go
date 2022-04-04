@@ -13,7 +13,6 @@ const (
 	anonymousUser           = "ANONYMOUS_USER"
 	userAttributeAccountID  = "accountID"
 	userAttributeRealUserID = "realUserID"
-	userEntityPrefix        = "user"
 )
 
 // User is a type of context, representing the identifiers and attributes of
@@ -62,7 +61,7 @@ func NewAnonymousUser(key string) User {
 	}
 
 	u := User{
-		key: ldKey(userEntityPrefix, key),
+		key: key,
 	}
 
 	userBuilder := lduser.NewUserBuilder(u.key)
@@ -77,7 +76,7 @@ func NewAnonymousUser(key string) User {
 // be a "user_aggregate_id".
 func NewUser(userID string, opts ...UserOption) User {
 	u := &User{
-		key: ldKey(userEntityPrefix, userID),
+		key: userID,
 	}
 
 	for _, opt := range opts {
