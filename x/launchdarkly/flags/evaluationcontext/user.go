@@ -5,12 +5,12 @@ import (
 	"errors"
 
 	"github.com/cultureamp/ca-go/x/request"
+	"github.com/google/uuid"
 	"gopkg.in/launchdarkly/go-sdk-common.v2/lduser"
 	"gopkg.in/launchdarkly/go-sdk-common.v2/ldvalue"
 )
 
 const (
-	anonymousUser           = "ANONYMOUS_USER"
 	userAttributeAccountID  = "accountID"
 	userAttributeRealUserID = "realUserID"
 )
@@ -57,7 +57,7 @@ func WithRealUserID(id string) UserOption {
 // will not be supported.
 func NewAnonymousUser(key string) User {
 	if key == "" {
-		key = anonymousUser
+		key = uuid.NewString()
 	}
 
 	u := User{
@@ -93,12 +93,6 @@ func NewUser(userID string, opts ...UserOption) User {
 	u.ldUser = userBuilder.Build()
 
 	return *u
-}
-
-// RawUser returns the wrapped LaunchDarkly user object. The return value should
-// be casted to an lduser.User object.
-func (u User) RawUser() interface{} {
-	return u.ldUser
 }
 
 // UserFromContext extracts the effective user aggregate ID, real user aggregate

@@ -8,13 +8,13 @@ import (
 	"github.com/cultureamp/ca-go/x/request"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/launchdarkly/go-sdk-common.v2/lduser"
 )
 
 func TestNewUser(t *testing.T) {
 	t.Run("can create an anonymous user", func(t *testing.T) {
 		user := evaluationcontext.NewAnonymousUser("")
-		assertUserAttributes(t, user, "ANONYMOUS_USER", "", "")
+		ldUser := user.ToLDUser()
+		assert.True(t, ldUser.GetAnonymous())
 	})
 
 	t.Run("can create an anonymous user with session/request key", func(t *testing.T) {
@@ -52,8 +52,7 @@ func TestNewUser(t *testing.T) {
 func assertUserAttributes(t *testing.T, user evaluationcontext.User, userID, realUserID, accountID string) {
 	t.Helper()
 
-	ldUser, ok := user.RawUser().(lduser.User)
-	require.True(t, ok, "should be castable to a LaunchDarkly user object")
+	ldUser := user.ToLDUser()
 
 	assert.Equal(t, userID, ldUser.GetKey())
 	assert.Equal(t, realUserID, ldUser.GetAttribute("realUserID").StringValue())
