@@ -54,7 +54,7 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 	if c.sdkKey == "" {
 		defaultSDKKey, ok := os.LookupEnv(defaultSDKKeyEnvironmentVariable)
 		if !ok {
-			return nil, errors.New("LaunchDarkly SDK key not supplied via config option and the LAUNCHDARKLY_SDK_KEY environment variable does not exist")
+			return nil, errors.New("LaunchDarkly SDK key not supplied via config option and the LAUNCHDARKLY_CONFIGURATION environment variable does not exist")
 		}
 		c.sdkKey = defaultSDKKey
 	}
@@ -63,10 +63,10 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		return nil, errors.New("cannot configure the SDK for Proxy and Daemon modes simultaneously")
 	}
 
-	if c.proxyModeConfig != nil {
-		c.wrappedConfig = configForProxyMode(c.proxyModeConfig)
-	} else if c.daemonModeConfig != nil {
-		c.wrappedConfig = configForDaemonMode(c.daemonModeConfig)
+	if parsedConfig.Options.Proxy != nil {
+		c.wrappedConfig = configForProxyMode(parsedConfig.Options.Proxy)
+	} else if parsedConfig.Options.DaemonMode != nil {
+		c.wrappedConfig = configForDaemonMode(parsedConfig.Options.DaemonMode)
 	}
 
 	return c, nil

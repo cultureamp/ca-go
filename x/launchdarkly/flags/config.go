@@ -2,7 +2,6 @@ package flags
 
 import (
 	"errors"
-	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -14,19 +13,37 @@ import (
 var errClientNotConfigured = errors.New("client not configured")
 
 type proxyModeConfig struct {
-	relayProxyURL string
+	RelayProxyURL string `json:"url"`
 }
 
 type daemonModeConfig struct {
-	dynamoTableName string
-	dynamoBaseURL   string
-	cacheTTL        time.Duration
+	DynamoTableName string `json:"DynamoTableName"`
+	DynamoBaseURL   string `json:"DynamoBaseUrl"`
+	CacheTTLSeconds int64  `json:"dynamoCacheTTLSeconds"`
 }
 
+//  The EnvConfig class holds the configuration values. It is expecting
+//  attributes to be in the following structure:
+//  '{
+//     "sdkKey": "super-secret-key",
+//     "options": {
+//       "daemonMode": {
+//         "dynamo_base_url": "url-here"
+//         "DynamoTableName": "my-dynamo-table",
+//         "dynamoCacheTTLSeconds": 30
+//       },
+//       "proxyMode": {
+//         "url": "https://relay-proxy.cultureamp.net"
+//       }
+//    }'
 // configurationJSON is the structure of the LAUNCHDARKLY_CONFIGURATION
 // environment variable.
 type configurationJSON struct {
-	SDKKey string `json:"sdkKey"`
+	SDKKey  string `json:"sdkKey"`
+	Options struct {
+		DaemonMode *daemonModeConfig `json:"daemonMode"`
+		Proxy      *proxyModeConfig  `json:"proxyMode"`
+	} `json:"options"`
 }
 
 // ConfigOption are functions that can be supplied to Configure and NewClient to
@@ -43,63 +60,23 @@ func WithInitWait(t time.Duration) ConfigOption {
 	}
 }
 
-// WithProxyMode configures the client to establish a connection to LaunchDarkly
-// via a Relay Proxy.
-func WithProxyMode(proxyURL *url.URL) ConfigOption {
-	return func(c *Client) {
-		c.proxyModeConfig = &proxyModeConfig{
-			relayProxyURL: proxyURL.String(),
-		}
-	}
-}
-
-// WithDaemonMode configures the client to source flag data from a DynamoDB
-// table, bypassing a direct connection to LaunchDarkly completely.
-func WithDaemonMode(dynamoTableName string, cacheTTL time.Duration) ConfigOption {
-	return func(c *Client) {
-		if c.daemonModeConfig == nil {
-			c.daemonModeConfig = &daemonModeConfig{}
-		}
-
-		c.daemonModeConfig = &daemonModeConfig{
-			dynamoTableName: dynamoTableName,
-			cacheTTL:        cacheTTL,
-		}
-	}
-}
-
-// WithDynamoBaseURL configures the client to use the given base URL for
-// DyanmoDB, overriding any AWS configuration implicit in the environment.
-//
-// This will typically only be used in local development or testing, where you
-// might supply the URL of a local DynamoDB instance.
-func WithDynamoBaseURL(baseURL *url.URL) ConfigOption {
-	return func(c *Client) {
-		if c.daemonModeConfig == nil {
-			c.daemonModeConfig = &daemonModeConfig{}
-		}
-
-		c.daemonModeConfig.dynamoBaseURL = baseURL.String()
-	}
-}
-
 func configForProxyMode(cfg *proxyModeConfig) ld.Config {
 	return ld.Config{
-		ServiceEndpoints: ldcomponents.RelayProxyEndpoints(cfg.relayProxyURL),
+		ServiceEndpoints: ldcomponents.RelayProxyEndpoints(cfg.RelayProxyURL),
 	}
 }
 
 func configForDaemonMode(cfg *daemonModeConfig) ld.Config {
-	datastoreBuilder := lddynamodb.DataStore(cfg.dynamoTableName)
+	datastoreBuilder := lddynamodb.DataStore(cfg.DynamoTableName)
 
-	if cfg.dynamoBaseURL != "" {
-		datastoreBuilder.ClientConfig(aws.NewConfig().WithEndpoint(cfg.dynamoBaseURL))
+	if cfg.DynamoBaseURL != "" {
+		datastoreBuilder.ClientConfig(aws.NewConfig().WithEndpoint(cfg.DynamoBaseURL))
 	}
 
 	return ld.Config{
 		DataSource: ldcomponents.ExternalUpdatesOnly(),
 		DataStore: ldcomponents.PersistentDataStore(
 			datastoreBuilder,
-		).CacheTime(cfg.cacheTTL),
+		).CacheTime(time.Duration(cfg.CacheTTLSeconds) * time.Second),
 	}
 }
