@@ -2,10 +2,8 @@ package flags
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/cultureamp/ca-go/x/launchdarkly/flags/evaluationcontext"
@@ -14,35 +12,32 @@ import (
 
 // Client is a wrapper around the LaunchDarkly client.
 type Client struct {
-	sdkKey           string
-	initWait         time.Duration
-	proxyModeConfig  *proxyModeConfig
-	daemonModeConfig *daemonModeConfig
-	wrappedConfig    ld.Config
-	wrappedClient    *ld.LDClient
+	sdkKey        string
+	initWait      time.Duration
+	mode          mode
+	wrappedConfig ld.Config
+	wrappedClient *ld.LDClient
 }
 
-// NewClient configures and returns an instance of the client. It configures the client automatically based on the value of the
-// LAUNCHDARKLY_CONFIGURATION environment variable. You should declare this
-// variable in your CDK configuration for your infrastructure. The correct value
-// can be retrieved from the AWS Secrets Manager under the key
-// `/common/launchdarkly-ops/sdk-configuration/<farm>`. An error is
-// returned if mandatory ConfigOptions are not supplied, or an invalid
-// combination of options is provided.
+// The mode the SDK should be configured for.
+type mode int
+
+const (
+	modeProxy  mode = iota // proxies requests through the LD Relay.
+	modeLambda             // connects directly to DynamoDB.
+)
+
+// NewClient configures and returns an instance of the client. An
+// error is returned if unable to configure from environment variable
 func NewClient(opts ...ConfigOption) (*Client, error) {
 	c := &Client{
-		initWait: 5 * time.Second, // wait up to 5 seconds for LD to connect
+		initWait: 5 * time.Second, // wait up to 5 seconds for LD to connect.
+		mode:     modeProxy,       // defaults to proxying requests through the LD Relay.
 	}
 
-	var parsedConfig configurationJSON
-
-	configEnvVar, ok := os.LookupEnv("LAUNCHDARKLY_CONFIGURATION")
-	if !ok {
-		return nil, errors.New("environment variable LAUNCHDARKLY_CONFIGURATION does not exist")
-	}
-
-	if err := json.Unmarshal([]byte(configEnvVar), &parsedConfig); err != nil {
-		return nil, fmt.Errorf("parse LAUNCHDARKLY_CONFIGURATION: %w", err)
+	parsedConfig, err := configFromEnvironment()
+	if err != nil {
+		return nil, fmt.Errorf("configure from environment variable: %w", err)
 	}
 
 	c.sdkKey = parsedConfig.SDKKey
@@ -51,22 +46,12 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		opt(c)
 	}
 
-	if c.sdkKey == "" {
-		defaultSDKKey, ok := os.LookupEnv(defaultSDKKeyEnvironmentVariable)
-		if !ok {
-			return nil, errors.New("LaunchDarkly SDK key not supplied via config option and the LAUNCHDARKLY_CONFIGURATION environment variable does not exist")
-		}
-		c.sdkKey = defaultSDKKey
-	}
-
-	if c.proxyModeConfig != nil && c.daemonModeConfig != nil {
-		return nil, errors.New("cannot configure the SDK for Proxy and Daemon modes simultaneously")
-	}
-
-	if parsedConfig.Options.Proxy != nil {
+	if parsedConfig.Options.Proxy != nil && c.mode == modeProxy {
 		c.wrappedConfig = configForProxyMode(parsedConfig.Options.Proxy)
-	} else if parsedConfig.Options.DaemonMode != nil {
-		c.wrappedConfig = configForDaemonMode(parsedConfig.Options.DaemonMode)
+	}
+
+	if parsedConfig.Options.DaemonMode != nil && c.mode == modeLambda {
+		c.wrappedConfig = configForLambdaMode(parsedConfig.Options.DaemonMode)
 	}
 
 	return c, nil
@@ -85,7 +70,7 @@ func (c *Client) Connect() error {
 		return fmt.Errorf("create LaunchDarkly client: %w", err)
 	}
 
-	flagsClient.wrappedClient = wrappedClient
+	c.wrappedClient = wrappedClient
 
 	return nil
 }

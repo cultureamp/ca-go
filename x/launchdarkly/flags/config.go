@@ -1,7 +1,10 @@
 package flags
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -12,31 +15,21 @@ import (
 
 var errClientNotConfigured = errors.New("client not configured")
 
+const configurationEnvVar = "LAUNCHDARKLY_CONFIGURATION"
+
+// proxyModeConfig declares the structure of the Proxy Option in configurationJSON
 type proxyModeConfig struct {
 	RelayProxyURL string `json:"url"`
 }
 
+// daemonModeConfig declares the structure of the DaemonMode Option in configurationJSON
 type daemonModeConfig struct {
 	DynamoTableName string `json:"DynamoTableName"`
 	DynamoBaseURL   string `json:"DynamoBaseUrl"`
 	CacheTTLSeconds int64  `json:"dynamoCacheTTLSeconds"`
 }
 
-//  The EnvConfig class holds the configuration values. It is expecting
-//  attributes to be in the following structure:
-//  '{
-//     "sdkKey": "super-secret-key",
-//     "options": {
-//       "daemonMode": {
-//         "dynamo_base_url": "url-here"
-//         "DynamoTableName": "my-dynamo-table",
-//         "dynamoCacheTTLSeconds": 30
-//       },
-//       "proxyMode": {
-//         "url": "https://relay-proxy.cultureamp.net"
-//       }
-//    }'
-// configurationJSON is the structure of the LAUNCHDARKLY_CONFIGURATION
+// configurationJSON declares the structure of the LAUNCHDARKLY_CONFIGURATION
 // environment variable.
 type configurationJSON struct {
 	SDKKey  string `json:"sdkKey"`
@@ -60,13 +53,38 @@ func WithInitWait(t time.Duration) ConfigOption {
 	}
 }
 
+// WithLambdaMode configures the client to connect to Dynamo for feature flags
+func WithLambdaMode() ConfigOption {
+	return func(c *Client) {
+		c.mode = modeLambda
+	}
+}
+
+func configFromEnvironment() (parsedConfig configurationJSON, err error) {
+	configEnvVar, ok := os.LookupEnv(configurationEnvVar)
+	if !ok {
+		return parsedConfig, fmt.Errorf("the %s environment variable was not found", configurationEnvVar)
+	}
+
+	if err := json.Unmarshal([]byte(configEnvVar), &parsedConfig); err != nil {
+		return parsedConfig, fmt.Errorf("parse %s: %w", configurationEnvVar, err)
+	}
+
+	// At a minimum the JSON should have an SDK key.
+	if parsedConfig.SDKKey == "" {
+		return parsedConfig, fmt.Errorf("%s did not contain an SDK key", configurationEnvVar)
+	}
+
+	return parsedConfig, nil
+}
+
 func configForProxyMode(cfg *proxyModeConfig) ld.Config {
 	return ld.Config{
 		ServiceEndpoints: ldcomponents.RelayProxyEndpoints(cfg.RelayProxyURL),
 	}
 }
 
-func configForDaemonMode(cfg *daemonModeConfig) ld.Config {
+func configForLambdaMode(cfg *daemonModeConfig) ld.Config {
 	datastoreBuilder := lddynamodb.DataStore(cfg.DynamoTableName)
 
 	if cfg.DynamoBaseURL != "" {

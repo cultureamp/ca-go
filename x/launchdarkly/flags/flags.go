@@ -6,14 +6,10 @@ import (
 
 var flagsClient *Client
 
-const defaultSDKKeyEnvironmentVariable = "LAUNCHDARKLY_SDK_KEY"
-
 // FlagName establishes a type for flag names.
 type FlagName string
 
-// Configure configures the client as a managed singleton. An error is returned
-// if mandatory ConfigOptions are not supplied, or an invalid combination of
-// options is provided.
+// Configure configures the client as a managed singleton.
 func Configure(opts ...ConfigOption) error {
 	c, err := NewClient(opts...)
 	if err != nil {

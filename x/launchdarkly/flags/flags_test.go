@@ -1,26 +1,26 @@
-package flags_test
+package flags
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
-	"github.com/cultureamp/ca-go/x/launchdarkly/flags"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSingletonInitialisation(t *testing.T) {
-	t.Run("errors if LAUNCHDARKLY_CONFIGURATION is not present in environment", func(t *testing.T) {
-		err := flags.Configure()
+	t.Run(fmt.Sprintf("errors if %s is not present in environment", configurationEnvVar), func(t *testing.T) {
+		err := Configure()
 		require.Error(t, err)
 
-		_, err = flags.GetDefaultClient()
+		_, err = GetDefaultClient()
 		require.Error(t, err)
 	})
 
 	t.Run("does not error if SDK key supplied as env var", func(t *testing.T) {
-		os.Setenv("LAUNCHDARKLY_CONFIGURATION", "{\"sdkKey\": \"abc\"}")
-		defer os.Unsetenv("LAUNCHDARKLY_CONFIGURATION")
-		err := flags.Configure()
+		os.Setenv(configurationEnvVar, validConfigJSON)
+		defer os.Unsetenv(configurationEnvVar)
+		err := Configure()
 		require.NoError(t, err)
 	})
 }
