@@ -45,7 +45,7 @@ func TestInitialisationClient(t *testing.T) {
 		os.Setenv(configurationEnvVar, validConfigJSON)
 		defer os.Unsetenv(configurationEnvVar)
 
-		client, err := NewClient(WithLambdaMode())
+		client, err := NewClient(WithLambdaMode(nil))
 		require.NoError(t, err)
 
 		err = client.Connect()
@@ -54,7 +54,26 @@ func TestInitialisationClient(t *testing.T) {
 		assert.True(t, client.wrappedClient.GetDataStoreStatusProvider().GetStatus().Available)
 	})
 
-	t.Run("configures for proxy mode", func(t *testing.T) {
+	t.Run("configures for Lambda mode with optional overrides", func(t *testing.T) {
+		os.Setenv(configurationEnvVar, validConfigJSON)
+		defer os.Unsetenv(configurationEnvVar)
+
+		client, err := NewClient(WithLambdaMode(&LambdaModeConfig{
+			DynamoCacheTTL: 10 * time.Second,
+			DynamoBaseURL:  "https://dynamo.us-east-1.amazonaws.com",
+		}))
+		require.NoError(t, err)
+
+		assert.Equal(t, 10*time.Second, client.lambdaModeConfig.DynamoCacheTTL)
+		assert.Equal(t, "https://dynamo.us-east-1.amazonaws.com", client.lambdaModeConfig.DynamoBaseURL)
+
+		err = client.Connect()
+		require.NoError(t, err)
+
+		assert.True(t, client.wrappedClient.GetDataStoreStatusProvider().GetStatus().Available)
+	})
+
+	t.Run("configures for Proxy mode", func(t *testing.T) {
 		os.Setenv(configurationEnvVar, validConfigJSON)
 		defer os.Unsetenv(configurationEnvVar)
 		client, err := NewClient()
@@ -63,5 +82,18 @@ func TestInitialisationClient(t *testing.T) {
 		assert.Equal(t, "https://relay-proxy.cultureamp.net", client.wrappedConfig.ServiceEndpoints.Streaming)
 		assert.Equal(t, "https://relay-proxy.cultureamp.net", client.wrappedConfig.ServiceEndpoints.Events)
 		assert.Equal(t, "https://relay-proxy.cultureamp.net", client.wrappedConfig.ServiceEndpoints.Polling)
+	})
+
+	t.Run("configures for Proxy mode with optional overrides", func(t *testing.T) {
+		os.Setenv(configurationEnvVar, validConfigJSON)
+		defer os.Unsetenv(configurationEnvVar)
+		client, err := NewClient(WithProxyMode(&ProxyModeConfig{
+			RelayProxyURL: "https://foo.bar",
+		}))
+		require.NoError(t, err)
+
+		assert.Equal(t, "https://foo.bar", client.wrappedConfig.ServiceEndpoints.Streaming)
+		assert.Equal(t, "https://foo.bar", client.wrappedConfig.ServiceEndpoints.Events)
+		assert.Equal(t, "https://foo.bar", client.wrappedConfig.ServiceEndpoints.Polling)
 	})
 }

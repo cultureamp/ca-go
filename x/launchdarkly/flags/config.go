@@ -17,26 +17,31 @@ var errClientNotConfigured = errors.New("client not configured")
 
 const configurationEnvVar = "LAUNCHDARKLY_CONFIGURATION"
 
-// proxyModeConfig declares the structure of the Proxy Option in configurationJSON
-type proxyModeConfig struct {
-	RelayProxyURL string `json:"url"`
-}
-
-// daemonModeConfig declares the structure of the DaemonMode Option in configurationJSON
-type daemonModeConfig struct {
-	DynamoTableName string `json:"DynamoTableName"`
-	DynamoBaseURL   string `json:"DynamoBaseUrl"`
-	CacheTTLSeconds int64  `json:"dynamoCacheTTLSeconds"`
-}
-
 // configurationJSON declares the structure of the LAUNCHDARKLY_CONFIGURATION
 // environment variable.
 type configurationJSON struct {
 	SDKKey  string `json:"sdkKey"`
 	Options struct {
-		DaemonMode *daemonModeConfig `json:"daemonMode"`
-		Proxy      *proxyModeConfig  `json:"proxyMode"`
+		DaemonMode *struct {
+			DynamoTableName string `json:"DynamoTableName"`
+		} `json:"daemonMode"`
+		Proxy *struct {
+			RelayProxyURL string `json:"url"`
+		} `json:"proxyMode"`
 	} `json:"options"`
+}
+
+// ProxyModeConfig declares optional overrides for configuring the client
+// in Proxy mode.
+type ProxyModeConfig struct {
+	RelayProxyURL string
+}
+
+// LambdaModeConfig declares optional overrides for configuring the client
+// in Lambda mode.
+type LambdaModeConfig struct {
+	DynamoCacheTTL time.Duration
+	DynamoBaseURL  string
 }
 
 // ConfigOption are functions that can be supplied to Configure and NewClient to
@@ -53,10 +58,22 @@ func WithInitWait(t time.Duration) ConfigOption {
 	}
 }
 
-// WithLambdaMode configures the client to connect to Dynamo for feature flags
-func WithLambdaMode() ConfigOption {
+// WithLambdaMode configures the client to connect to Dynamo for flags.
+func WithLambdaMode(cfg *LambdaModeConfig) ConfigOption {
 	return func(c *Client) {
 		c.mode = modeLambda
+		c.lambdaModeConfig = cfg
+	}
+}
+
+// WithProxyMode configures the client to connect to LaunchDarkly via the
+// Relay Proxy. This is typically set automatically based on the LAUNCHDARKLY_CONFIGURATION
+// environment variable. Only use this ConfigOption if you need to override
+// the URL of the Relay Proxy to connect to.
+func WithProxyMode(cfg *ProxyModeConfig) ConfigOption {
+	return func(c *Client) {
+		c.mode = modeProxy
+		c.proxyModeConfig = cfg
 	}
 }
 
@@ -78,23 +95,38 @@ func configFromEnvironment() (parsedConfig configurationJSON, err error) {
 	return parsedConfig, nil
 }
 
-func configForProxyMode(cfg *proxyModeConfig) ld.Config {
+func configForProxyMode(env configurationJSON, cfg *ProxyModeConfig) ld.Config {
+	urlToUse := env.Options.Proxy.RelayProxyURL
+	// Override the Relay URL from the environment variable if one was provided
+	// explicitly.
+	if cfg != nil && cfg.RelayProxyURL != "" {
+		urlToUse = cfg.RelayProxyURL
+	}
+
 	return ld.Config{
-		ServiceEndpoints: ldcomponents.RelayProxyEndpoints(cfg.RelayProxyURL),
+		ServiceEndpoints: ldcomponents.RelayProxyEndpoints(urlToUse),
 	}
 }
 
-func configForLambdaMode(cfg *daemonModeConfig) ld.Config {
-	datastoreBuilder := lddynamodb.DataStore(cfg.DynamoTableName)
+func configForLambdaMode(env configurationJSON, cfg *LambdaModeConfig) ld.Config {
+	datastoreBuilder := lddynamodb.DataStore(env.Options.DaemonMode.DynamoTableName)
 
-	if cfg.DynamoBaseURL != "" {
+	// Set the Dynamo base URL if one was provided explicitly.
+	if cfg != nil && cfg.DynamoBaseURL != "" {
 		datastoreBuilder.ClientConfig(aws.NewConfig().WithEndpoint(cfg.DynamoBaseURL))
+	}
+
+	datastore := ldcomponents.PersistentDataStore(
+		datastoreBuilder,
+	)
+
+	// Override the default cache TTL if one was provided explicitly.
+	if cfg != nil && cfg.DynamoCacheTTL != 0 {
+		datastore.CacheTime(cfg.DynamoCacheTTL)
 	}
 
 	return ld.Config{
 		DataSource: ldcomponents.ExternalUpdatesOnly(),
-		DataStore: ldcomponents.PersistentDataStore(
-			datastoreBuilder,
-		).CacheTime(time.Duration(cfg.CacheTTLSeconds) * time.Second),
+		DataStore:  datastore,
 	}
 }

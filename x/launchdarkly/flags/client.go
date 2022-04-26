@@ -17,6 +17,10 @@ type Client struct {
 	mode          mode
 	wrappedConfig ld.Config
 	wrappedClient *ld.LDClient
+
+	// Optional config overrides.
+	proxyModeConfig  *ProxyModeConfig
+	lambdaModeConfig *LambdaModeConfig
 }
 
 // The mode the SDK should be configured for.
@@ -47,11 +51,11 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 	}
 
 	if parsedConfig.Options.Proxy != nil && c.mode == modeProxy {
-		c.wrappedConfig = configForProxyMode(parsedConfig.Options.Proxy)
+		c.wrappedConfig = configForProxyMode(parsedConfig, c.proxyModeConfig)
 	}
 
 	if parsedConfig.Options.DaemonMode != nil && c.mode == modeLambda {
-		c.wrappedConfig = configForLambdaMode(parsedConfig.Options.DaemonMode)
+		c.wrappedConfig = configForLambdaMode(parsedConfig, c.lambdaModeConfig)
 	}
 
 	return c, nil

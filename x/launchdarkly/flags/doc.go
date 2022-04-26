@@ -9,6 +9,10 @@
 // in can be retrieved from the AWS Secrets Manager under the key
 // `/common/launchdarkly-ops/sdk-configuration/<farm>`.
 //
+// You can provide overrides for some of the properties of LAUNCHDARKLY_CONFIGURATION.
+// Refer to the documentation for the WithProxyMode and WithLambdaMode options in
+// config.go.
+//
 // The client can be configured and used as a managed singleton or as an
 // instance returned from a constructor function. The managed singleton provides
 // a layer of convenience by removing the need for your application to maintain
