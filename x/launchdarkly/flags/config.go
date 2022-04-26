@@ -11,6 +11,9 @@ import (
 	lddynamodb "github.com/launchdarkly/go-server-sdk-dynamodb"
 	ld "gopkg.in/launchdarkly/go-server-sdk.v5"
 	"gopkg.in/launchdarkly/go-server-sdk.v5/ldcomponents"
+	"gopkg.in/launchdarkly/go-server-sdk.v5/ldfiledata"
+	"gopkg.in/launchdarkly/go-server-sdk.v5/ldfilewatch"
+	"gopkg.in/launchdarkly/go-server-sdk.v5/testhelpers/ldtestdata"
 )
 
 var errClientNotConfigured = errors.New("client not configured")
@@ -44,6 +47,14 @@ type LambdaModeConfig struct {
 	DynamoBaseURL  string
 }
 
+// TestModeConfig declares configuration for running the client in test
+// mode. Provide an instance of this struct if you wish to use a local
+// JSON file as the source of flag data.
+type TestModeConfig struct {
+	FlagFilename string
+	datasource   *ldtestdata.TestDataSource
+}
+
 // ConfigOption are functions that can be supplied to Configure and NewClient to
 // configure the flags client.
 type ConfigOption func(c *Client)
@@ -74,6 +85,18 @@ func WithProxyMode(cfg *ProxyModeConfig) ConfigOption {
 	return func(c *Client) {
 		c.mode = modeProxy
 		c.proxyModeConfig = cfg
+	}
+}
+
+// WithTestMode configures the client in test mode. No connections are made
+// to LaunchDarkly in this mode; all flag results are sourced from a local
+// JSON file or at runtime through a test data source. See
+// https://docs.launchdarkly.com/sdk/features/test-data-sources for more
+// information on test data sources.
+func WithTestMode(cfg *TestModeConfig) ConfigOption {
+	return func(c *Client) {
+		c.mode = modeTest
+		c.testModeConfig = cfg
 	}
 }
 
@@ -128,5 +151,21 @@ func configForLambdaMode(env configurationJSON, cfg *LambdaModeConfig) ld.Config
 	return ld.Config{
 		DataSource: ldcomponents.ExternalUpdatesOnly(),
 		DataStore:  datastore,
+	}
+}
+
+func configForTestMode(cfg *TestModeConfig) ld.Config {
+	if cfg != nil && cfg.FlagFilename != "" {
+		return ld.Config{
+			DataSource: ldfiledata.DataSource().
+				FilePaths(cfg.FlagFilename).Reloader(ldfilewatch.WatchFiles),
+			Events: ldcomponents.NoEvents(),
+		}
+	}
+
+	cfg.datasource = ldtestdata.DataSource()
+	return ld.Config{
+		DataSource: cfg.datasource,
+		Events:     ldcomponents.NoEvents(),
 	}
 }

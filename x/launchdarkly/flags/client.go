@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/cultureamp/ca-go/x/launchdarkly/flags/evaluationcontext"
 	ld "gopkg.in/launchdarkly/go-server-sdk.v5"
+	"gopkg.in/launchdarkly/go-server-sdk.v5/testhelpers/ldtestdata"
 )
 
 // Client is a wrapper around the LaunchDarkly client.
@@ -17,6 +19,8 @@ type Client struct {
 	mode          mode
 	wrappedConfig ld.Config
 	wrappedClient *ld.LDClient
+
+	testModeConfig *TestModeConfig
 
 	// Optional config overrides.
 	proxyModeConfig  *ProxyModeConfig
@@ -29,6 +33,7 @@ type mode int
 const (
 	modeProxy  mode = iota // proxies requests through the LD Relay.
 	modeLambda             // connects directly to DynamoDB.
+	modeTest               // allows test data to be supplied.
 )
 
 // NewClient configures and returns an instance of the client. An
@@ -39,16 +44,29 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		mode:     modeProxy,       // defaults to proxying requests through the LD Relay.
 	}
 
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	// Use test mode if LAUNCHDARKLY_CONFIGURATION isn't set OR if the user
+	// explicitly configured the client for test mode.
+	if _, ok := os.LookupEnv(configurationEnvVar); !ok || c.mode == modeTest {
+		c.mode = modeTest
+		if c.testModeConfig == nil {
+			c.testModeConfig = &TestModeConfig{}
+		}
+		c.wrappedConfig = configForTestMode(c.testModeConfig)
+
+		// Short-circuit the rest of the configuration.
+		return c, nil
+	}
+
 	parsedConfig, err := configFromEnvironment()
 	if err != nil {
 		return nil, fmt.Errorf("configure from environment variable: %w", err)
 	}
 
 	c.sdkKey = parsedConfig.SDKKey
-
-	for _, opt := range opts {
-		opt(c)
-	}
 
 	if parsedConfig.Options.Proxy != nil && c.mode == modeProxy {
 		c.wrappedConfig = configForProxyMode(parsedConfig, c.proxyModeConfig)
@@ -146,4 +164,16 @@ func (c *Client) RawClient() interface{} {
 // connections and flush any flag evaluation events.
 func (c *Client) Shutdown() error {
 	return c.wrappedClient.Close()
+}
+
+// TestDataSource returns the test data source used by the client, or an
+// error if the client wasn't configured in test mode. See
+// https://docs.launchdarkly.com/sdk/features/test-data-sources for more
+// information on using the test data source.
+func (c *Client) TestDataSource() (*ldtestdata.TestDataSource, error) {
+	if c.testModeConfig == nil || c.testModeConfig.datasource == nil {
+		return nil, errors.New("client not initialised with test data source")
+	}
+
+	return c.testModeConfig.datasource, nil
 }

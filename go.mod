@@ -16,6 +16,13 @@ require (
 )
 
 require (
+	github.com/fsnotify/fsnotify v1.4.7 // indirect
+	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9 // indirect
+	gopkg.in/ghodss/yaml.v1 v1.0.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
+)
+
+require (
 	github.com/aws/aws-lambda-go v1.28.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/uuid v1.3.0
