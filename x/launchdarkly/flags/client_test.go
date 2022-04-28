@@ -27,7 +27,7 @@ const validConfigJSON = `
 }
 `
 
-func TestInitialisationClient(t *testing.T) {
+func TestClientTestMode(t *testing.T) {
 	t.Run("configures for Test mode if LAUNCHDARKLY_CONFIGURATION is not set", func(t *testing.T) {
 		c, err := NewClient()
 		require.NoError(t, err)
@@ -48,7 +48,7 @@ func TestInitialisationClient(t *testing.T) {
 		assert.Equal(t, false, res)
 	})
 
-	t.Run("configures for Test mode when explicitly told to", func(t *testing.T) {
+	t.Run("configures for Test mode with data set at runtime", func(t *testing.T) {
 		c, err := NewClient(WithTestMode(nil))
 		require.NoError(t, err)
 
@@ -68,7 +68,7 @@ func TestInitialisationClient(t *testing.T) {
 		assert.Equal(t, false, res)
 	})
 
-	t.Run("configures for Test mode with a JSON file data source", func(t *testing.T) {
+	t.Run("configures for Test mode data sourced from a local JSON file", func(t *testing.T) {
 		jsonFilename, err := ioutil.TempFile("", "test-flags.json")
 		require.NoError(t, err)
 
@@ -100,17 +100,9 @@ func TestInitialisationClient(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 3, res3)
 	})
+}
 
-	t.Run("allows an initialisation wait time to be specified", func(t *testing.T) {
-		os.Setenv(configurationEnvVar, validConfigJSON)
-		defer os.Unsetenv(configurationEnvVar)
-
-		client, err := NewClient(
-			WithInitWait(2 * time.Second))
-		require.NoError(t, err)
-		assert.Equal(t, client.initWait, 2*time.Second)
-	})
-
+func TestClientLambdaMode(t *testing.T) {
 	t.Run("configures for Lambda (daemon) mode", func(t *testing.T) {
 		os.Setenv(configurationEnvVar, validConfigJSON)
 		defer os.Unsetenv(configurationEnvVar)
@@ -141,6 +133,18 @@ func TestInitialisationClient(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.True(t, client.wrappedClient.GetDataStoreStatusProvider().GetStatus().Available)
+	})
+}
+
+func TestClientInitialisation(t *testing.T) {
+	t.Run("allows an initialisation wait time to be specified", func(t *testing.T) {
+		os.Setenv(configurationEnvVar, validConfigJSON)
+		defer os.Unsetenv(configurationEnvVar)
+
+		client, err := NewClient(
+			WithInitWait(2 * time.Second))
+		require.NoError(t, err)
+		assert.Equal(t, client.initWait, 2*time.Second)
 	})
 
 	t.Run("configures for Proxy mode", func(t *testing.T) {
