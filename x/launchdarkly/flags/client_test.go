@@ -3,6 +3,7 @@ package flags
 import (
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 	"time"
 
@@ -24,6 +25,16 @@ const validConfigJSON = `
             "url":"https://relay-proxy.cultureamp.net"
         }
     }
+}
+`
+
+const validFlagsJSON = `
+{
+	"flagValues": {
+	  "my-string-flag-key": "value-1",
+	  "my-boolean-flag-key": true,
+	  "my-integer-flag-key": 3
+	}
 }
 `
 
@@ -72,15 +83,7 @@ func TestClientTestMode(t *testing.T) {
 		jsonFilename, err := ioutil.TempFile("", "test-flags.json")
 		require.NoError(t, err)
 
-		_, err = jsonFilename.Write([]byte(`
-		{
-			"flagValues": {
-			  "my-string-flag-key": "value-1",
-			  "my-boolean-flag-key": true,
-			  "my-integer-flag-key": 3
-			}
-		}	
-		`))
+		_, err = jsonFilename.Write([]byte(validFlagsJSON))
 		require.NoError(t, err)
 
 		c, err := NewClient(WithTestMode(&TestModeConfig{FlagFilename: jsonFilename.Name()}))
@@ -88,18 +91,57 @@ func TestClientTestMode(t *testing.T) {
 
 		require.NoError(t, c.Connect())
 
-		res, err := c.QueryStringWithEvaluationContext("my-string-flag-key", evaluationcontext.NewAnonymousUser(""), "value-2")
-		require.NoError(t, err)
-		assert.Equal(t, "value-1", res)
-
-		res2, err := c.QueryBoolWithEvaluationContext("my-boolean-flag-key", evaluationcontext.NewAnonymousUser(""), false)
-		require.NoError(t, err)
-		assert.Equal(t, true, res2)
-
-		res3, err := c.QueryIntWithEvaluationContext("my-integer-flag-key", evaluationcontext.NewAnonymousUser(""), 1)
-		require.NoError(t, err)
-		assert.Equal(t, 3, res3)
+		assertTestJSONFlags(t, c)
 	})
+
+	t.Run("configures for Test mode with data sourced from the default JSON file", func(t *testing.T) {
+		testDir, err := os.Getwd()
+		require.NoError(t, err)
+
+		flagsFilename := path.Join(testDir, flagsJSONFilename)
+
+		// #nosec G306
+		require.NoError(t, ioutil.WriteFile(flagsFilename, []byte(validFlagsJSON), 0666))
+		defer func() {
+			require.NoError(t, os.Remove(flagsFilename))
+		}()
+
+		c, err := NewClient()
+		require.NoError(t, err)
+
+		require.NoError(t, c.Connect())
+
+		assertTestJSONFlags(t, c)
+	})
+
+	t.Run("returns an error when getting the test data source if not configured in test mode", func(t *testing.T) {
+		os.Setenv(configurationEnvVar, validConfigJSON)
+		defer os.Unsetenv(configurationEnvVar)
+
+		client, err := NewClient()
+		require.NoError(t, err)
+
+		_, err = client.TestDataSource()
+		require.Error(t, err)
+	})
+}
+
+func assertTestJSONFlags(t *testing.T, c *Client) {
+	t.Helper()
+
+	evalContext := evaluationcontext.NewAnonymousUser("")
+
+	res, err := c.QueryStringWithEvaluationContext("my-string-flag-key", evalContext, "value-2")
+	require.NoError(t, err)
+	assert.Equal(t, "value-1", res)
+
+	res2, err := c.QueryBoolWithEvaluationContext("my-boolean-flag-key", evalContext, false)
+	require.NoError(t, err)
+	assert.Equal(t, true, res2)
+
+	res3, err := c.QueryIntWithEvaluationContext("my-integer-flag-key", evalContext, 1)
+	require.NoError(t, err)
+	assert.Equal(t, 3, res3)
 }
 
 func TestClientLambdaMode(t *testing.T) {

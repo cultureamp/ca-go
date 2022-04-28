@@ -13,6 +13,14 @@
 // Refer to the documentation for the WithProxyMode and WithLambdaMode options in
 // config.go.
 //
+// If the LAUNCHDARKLY_CONFIGURATION variable does not exist, the SDK will fall-back
+// to test mode. Test mode disables connections to LaunchDarkly and allows you to
+// specify your own values for flags. By default, it attempts to find a file named
+// .ld-flags.json in the directory that you invoked your Go program from. Failing
+// this, it configures the SDK to use dynamic test data sourced at runtime. You can
+// also specify your own path to a JSON file to source flag data from. See
+// WithTestMode() in config.go for more information.
+//
 // The client can be configured and used as a managed singleton or as an
 // instance returned from a constructor function. The managed singleton provides
 // a layer of convenience by removing the need for your application to maintain

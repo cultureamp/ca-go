@@ -36,8 +36,10 @@ const (
 	modeTest               // allows test data to be supplied.
 )
 
-// NewClient configures and returns an instance of the client. An
-// error is returned if unable to configure from environment variable
+// NewClient configures and returns an instance of the client. The client is
+// configured automatically from the LAUNCHDARKLY_CONFIGURATION environment
+// variable if it exists. Otherwise, the client falls back to test mode. See
+// launchdarkly/flags/doc.go for more information.
 func NewClient(opts ...ConfigOption) (*Client, error) {
 	c := &Client{
 		initWait: 5 * time.Second, // wait up to 5 seconds for LD to connect.
@@ -166,13 +168,16 @@ func (c *Client) Shutdown() error {
 	return c.wrappedClient.Close()
 }
 
-// TestDataSource returns the test data source used by the client, or an
-// error if the client wasn't configured in test mode. See
-// https://docs.launchdarkly.com/sdk/features/test-data-sources for more
-// information on using the test data source.
+// TestDataSource returns the dynamic test data source used by the client, or an
+// error if:
+// - the client wasn't configured in test mode.
+// - the client was configured to read test data from a JSON file.
+//
+// See https://docs.launchdarkly.com/sdk/features/test-data-sources for more
+// information on using the test data source returned by this method.
 func (c *Client) TestDataSource() (*ldtestdata.TestDataSource, error) {
 	if c.testModeConfig == nil || c.testModeConfig.datasource == nil {
-		return nil, errors.New("client not initialised with test data source")
+		return nil, errors.New("client not initialised with dynamic test data source")
 	}
 
 	return c.testModeConfig.datasource, nil

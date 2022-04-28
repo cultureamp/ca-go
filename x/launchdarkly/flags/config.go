@@ -18,7 +18,10 @@ import (
 
 var errClientNotConfigured = errors.New("client not configured")
 
-const configurationEnvVar = "LAUNCHDARKLY_CONFIGURATION"
+const (
+	configurationEnvVar = "LAUNCHDARKLY_CONFIGURATION"
+	flagsJSONFilename   = ".ld-flags.json"
+)
 
 // configurationJSON declares the structure of the LAUNCHDARKLY_CONFIGURATION
 // environment variable.
@@ -90,8 +93,9 @@ func WithProxyMode(cfg *ProxyModeConfig) ConfigOption {
 
 // WithTestMode configures the client in test mode. No connections are made
 // to LaunchDarkly in this mode; all flag results are sourced from a local
-// JSON file or at runtime through a test data source. See
-// https://docs.launchdarkly.com/sdk/features/test-data-sources for more
+// JSON file or at runtime through a dynamic test data source. See
+// https://docs.launchdarkly.com/sdk/features/test-data-sources and
+// https://docs.launchdarkly.com/sdk/features/flags-from-files for more
 // information on test data sources.
 func WithTestMode(cfg *TestModeConfig) ConfigOption {
 	return func(c *Client) {
@@ -155,6 +159,18 @@ func configForLambdaMode(env configurationJSON, cfg *LambdaModeConfig) ld.Config
 }
 
 func configForTestMode(cfg *TestModeConfig) ld.Config {
+	// 1. If a .ld-flags.json file exists in the directory the binary was
+	// executed from, use that as the test data source.
+	if _, err := os.Stat(flagsJSONFilename); err == nil {
+		return ld.Config{
+			DataSource: ldfiledata.DataSource().
+				FilePaths(flagsJSONFilename).Reloader(ldfilewatch.WatchFiles),
+			Events: ldcomponents.NoEvents(),
+		}
+	}
+
+	// 2. If the filename of a JSON file was provided, use that as the
+	// test data source.
 	if cfg != nil && cfg.FlagFilename != "" {
 		return ld.Config{
 			DataSource: ldfiledata.DataSource().
@@ -163,6 +179,7 @@ func configForTestMode(cfg *TestModeConfig) ld.Config {
 		}
 	}
 
+	// 3. Use the dynamic test data source which can be modified at runtime.
 	cfg.datasource = ldtestdata.DataSource()
 	return ld.Config{
 		DataSource: cfg.datasource,
