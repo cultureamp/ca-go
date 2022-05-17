@@ -1,9 +1,15 @@
+#
+# Running locally:
+#   docker run --rm -v $(pwd):/app -w /app golangci/golangci-lint:v1.46.1 golangci-lint run -v
+#
+
 run:
   go: 1.18
 
 linters:
   enable-all: true
   disable:
+  - exhaustruct # issues introduced by latest golangci-lint:v1.46.1, fix this in a separate PR
   - gofumpt
   - gochecknoglobals
   - wrapcheck
@@ -49,3 +55,10 @@ linters-settings:
         audit: disabled
       G101: # "Look for hard-coded credentials"
         mode: strict
+
+issues:
+  exclude-rules:
+    # issues introduced by latest golangci-lint:v1.46.1, fix this in a separate PR
+    - path: config.go
+      linters:
+        - nonamedreturns
