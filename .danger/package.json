@@ -1,8 +1,0 @@
-{
-  "name": "danger",
-  "type": "module",
-  "devDependencies": {
-    "danger": "^10.6.6",
-    "typescript": "^4.3.5"
-  }
-}
