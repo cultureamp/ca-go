@@ -2,7 +2,8 @@
 
 [![Godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/cultureamp/ca-go)
 [![License](https://img.shields.io/github/license/cultureamp/ca-go)](https://github.com/cultureamp/ca-go/blob/main/LICENSE.txt)
-![build](https://github.com/cultureamp/ca-go/workflows/pipeline/badge.svg)
+![Build](https://github.com/cultureamp/ca-go/workflows/pipeline/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/cultureamp/ca-go/badge.svg?branch=main)](https://coveralls.io/github/cultureamp/ca-go?branch=main)
 
 A Go library with multiple packages to be shared by services.
 
