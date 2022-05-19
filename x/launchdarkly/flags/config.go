@@ -104,7 +104,9 @@ func WithTestMode(cfg *TestModeConfig) ConfigOption {
 	}
 }
 
-func configFromEnvironment() (parsedConfig configurationJSON, err error) {
+func configFromEnvironment() (configurationJSON, error) {
+	parsedConfig := configurationJSON{}
+
 	configEnvVar, ok := os.LookupEnv(configurationEnvVar)
 	if !ok {
 		return parsedConfig, fmt.Errorf("the %s environment variable was not found", configurationEnvVar)

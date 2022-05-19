@@ -30,8 +30,11 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Lint code
-        uses: golangci/golangci-lint-action@v2
+      - name: Lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.46.2
+          args: "-v"
 
   go-test:
     runs-on: ubuntu-latest

@@ -4,38 +4,39 @@ run:
 linters:
   enable-all: true
   disable:
-  - gofumpt
-  - gochecknoglobals
-  - wrapcheck
-  - varnamelen
-  - tagliatelle
-  - testpackage
-  - paralleltest
-  - gomnd
-  - goerr113
+  - asciicheck
   - dupl
+  - errname
+  - exhaustruct
   - forbidigo
   - funlen
-  - unparam
-  - wsl
-  - errname
-  - exhaustivestruct
-  - nilnil
-  - nlreturn
-  - goconst
-  - lll
-  - asciicheck
+  - gochecknoglobals
   - gocognit
+  - goconst
   - godot
   - godox
+  - goerr113
+  - gofumpt
+  - gomnd
+  - lll
   - nestif
+  - nilnil
+  - nlreturn
+  - paralleltest
   - prealloc
   - revive
+  - tagliatelle
+  - testpackage
+  - unparam
+  - varnamelen
+  - wrapcheck
+  - wsl
   # deprecated linters
-  - interfacer
+  - exhaustivestruct
   - golint
-  - scopelint
+  - interfacer
   - maligned
+  - scopelint
 
 linters-settings:
   gosec:
