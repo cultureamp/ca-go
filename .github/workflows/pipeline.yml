@@ -1,12 +1,6 @@
 name: pipeline
 on:
-  # use PR target to allow for forks
-  pull_request_target:
-
-  # run on push to main so coverage is generated
   push:
-    branches:
-      - "main"
 
 env:
   GO_VERSION: 1.18
