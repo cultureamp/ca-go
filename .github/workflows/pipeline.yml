@@ -1,6 +1,10 @@
 name: pipeline
 on:
   push:
+    branches:
+      - main
+
+  pull_request:
 
 env:
   GO_VERSION: 1.18
@@ -64,5 +68,3 @@ jobs:
       - uses: shogo82148/actions-goveralls@v1
         with:
           path-to-profile: artifacts/count.out
-        env:
-          COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
