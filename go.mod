@@ -12,12 +12,14 @@ require (
 
 require (
 	github.com/getsentry/sentry-go v0.11.0
-	goa.design/goa/v3 v3.6.0
+	goa.design/goa/v3 v3.7.5
 )
 
 require (
+	github.com/dimfeld/httptreemux/v5 v5.4.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
-	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9 // indirect
+	github.com/gorilla/websocket v1.5.0 // indirect
+	golang.org/x/sys v0.0.0-20220317061510-51cd9980dadf // indirect
 	gopkg.in/ghodss/yaml.v1 v1.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
