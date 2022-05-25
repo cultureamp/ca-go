@@ -27,7 +27,7 @@ func Init(opts ...Option) error {
 		missingMandatoryConfigs = append(missingMandatoryConfigs, "environment")
 	}
 
-	if cfg.dsn == "" {
+	if cfg.dsn == "" && cfg.environment != "local" {
 		missingMandatoryConfigs = append(missingMandatoryConfigs, "DSN")
 	}
 

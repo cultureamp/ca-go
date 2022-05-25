@@ -72,6 +72,14 @@ func TestConfigure(t *testing.T) {
 		require.EqualError(t, err, "mandatory fields missing: DSN")
 	})
 
+	t.Run("No error when DSN is missing, but environment is local", func(t *testing.T) {
+		err := errorreport.Init(
+			errorreport.WithEnvironment("local"),
+			errorreport.WithRelease("my-app", "1.0.0"),
+		)
+		require.NoError(t, err)
+	})
+
 	t.Run("errors when release is missing", func(t *testing.T) {
 		err := errorreport.Init(
 			errorreport.WithEnvironment("test"),
