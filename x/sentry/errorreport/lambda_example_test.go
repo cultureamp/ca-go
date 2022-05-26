@@ -44,6 +44,15 @@ func Example() {
 		errorreport.WithEnvironment(settings.AppEnv),
 		errorreport.WithBuildDetails(settings.Farm, buildNumber, branch, commit),
 		errorreport.WithServerlessTransport(),
+
+		// optionally add a tag to every error report
+		errorreport.WithTag("animal", "gopher"),
+
+		// or add multiple tags at once to be added to every error report
+		errorreport.WithTags(map[string]string{
+			"genus":   "phoenicoparrus",
+			"species": "jamesi",
+		}),
 	)
 	if err != nil {
 		// FIX: write error to log
