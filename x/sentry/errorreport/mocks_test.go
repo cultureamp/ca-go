@@ -10,15 +10,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupMockSentryTransport(t *testing.T) *transportMock {
+func setupMockSentryTransport(t *testing.T, opts ...errorreport.Option) *transportMock {
 	t.Helper()
 
 	mockSentryTransport := &transportMock{}
-	err := errorreport.Init(
+
+	defaultOpts := []errorreport.Option{
 		errorreport.WithEnvironment("test"),
 		errorreport.WithDSN("https://public@sentry.example.com/1"),
 		errorreport.WithRelease("my-app", "1.0.0"),
-		errorreport.WithTransport(mockSentryTransport),
+	}
+
+	allOpts := make([]errorreport.Option, 0, len(defaultOpts)+len(opts)+1)
+
+	// merge default options with user-supplied options, ensuring that the transport is the last option
+	allOpts = append(allOpts, defaultOpts...)
+	allOpts = append(allOpts, opts...)
+	allOpts = append(allOpts, errorreport.WithTransport(mockSentryTransport))
+
+	err := errorreport.Init(
+		allOpts...,
 	)
 	require.NoError(t, err)
 
