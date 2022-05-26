@@ -12,13 +12,18 @@ type config struct {
 	release     string
 	debug       bool
 
-	buildNumber string
-	branch      string
-	commit      string
-	farm        string
+	tags map[string]string
 
 	beforeFilter SentryBeforeFilter
 	transport    sentry.Transport
+}
+
+// tag adds the specified name/value pair to the tags map, skipping any where
+// the key or the value is zero-length.
+func (c *config) tag(name string, value string) {
+	if len(name) > 0 && len(value) > 0 {
+		c.tags[name] = value
+	}
 }
 
 // Option is a function type that can be provided to Configure to modify the
@@ -90,9 +95,31 @@ func WithServerlessTransport() Option {
 // error reports.
 func WithBuildDetails(farm, buildNumber, branch, commit string) Option {
 	return func(c *config) {
-		c.farm = farm
-		c.buildNumber = buildNumber
-		c.branch = branch
-		c.commit = commit
+		c.tag("farm", farm)
+		c.tag("build_number", buildNumber)
+		c.tag("branch", branch)
+		c.tag("commit", commit)
+	}
+}
+
+// WithTag adds the specified name/value pair as a tag on every error report.
+// Tags are used for grouping and searching error reports.
+func WithTag(name string, value string) Option {
+	return func(c *config) {
+		c.tag(name, value)
+	}
+}
+
+// WithTag adds multiple name/value pairs as tags on every error report. Tags
+// are used for grouping and searching error reports.
+func WithTags(tags map[string]string) Option {
+	return func(c *config) {
+		if tags == nil {
+			return
+		}
+
+		for name, value := range tags {
+			c.tag(name, value)
+		}
 	}
 }

@@ -16,7 +16,9 @@ const (
 // Init initialises the Sentry client with the given options. It returns
 // an error if mandatory options are not supplied.
 func Init(opts ...Option) error {
-	cfg := &config{}
+	cfg := &config{
+		tags: make(map[string]string),
+	}
 	for _, opt := range opts {
 		opt(cfg)
 	}
@@ -61,10 +63,9 @@ func Init(opts ...Option) error {
 	// Add build information to the scope for all error reports.
 	// This can't be done before we initialise the Sentry client.
 	sentry.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetTag("build_number", cfg.buildNumber)
-		scope.SetTag("branch", cfg.branch)
-		scope.SetTag("commit", cfg.commit)
-		scope.SetTag("farm", cfg.farm)
+		if cfg.tags != nil {
+			scope.SetTags(cfg.tags)
+		}
 	})
 
 	return nil
