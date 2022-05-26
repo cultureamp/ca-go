@@ -18,6 +18,8 @@ type config struct {
 	transport    sentry.Transport
 }
 
+// tag adds the specified name/value pair to the tags map, skipping any where
+// the key or the value is zero-length.
 func (c *config) tag(name string, value string) {
 	if len(name) > 0 && len(value) > 0 {
 		c.tags[name] = value
