@@ -19,7 +19,7 @@ func TestNewUser(t *testing.T) {
 
 	t.Run("can create an anonymous user with session/request key", func(t *testing.T) {
 		user := evaluationcontext.NewAnonymousUser("my-request-id")
-		assertUserAttributes(t, user, "my-request-id", "", "")
+		assert.Equal(t, "my-request-id", user.ToLDUser().GetKey())
 	})
 
 	t.Run("can create an identified user", func(t *testing.T) {
@@ -55,12 +55,7 @@ func assertUserAttributes(t *testing.T, user evaluationcontext.User, userID, rea
 	ldUser := user.ToLDUser()
 
 	assert.Equal(t, userID, ldUser.GetKey())
-	// anonymous users will not have a userID
-	if ldUser.GetAnonymous() {
-		assert.Equal(t, "", ldUser.GetAttribute("userID").StringValue())
-	} else {
-		assert.Equal(t, userID, ldUser.GetAttribute("userID").StringValue())
-	}
+	assert.Equal(t, userID, ldUser.GetAttribute("userID").StringValue())
 	assert.Equal(t, realUserID, ldUser.GetAttribute("realUserID").StringValue())
 	assert.Equal(t, accountID, ldUser.GetAttribute("accountID").StringValue())
 }
