@@ -10,7 +10,7 @@ const (
 )
 
 // Survey is a type of context, representing the identifiers and attributes of
-// a human user to evaluate a flag against.
+// a survey to evaluate a flag against.
 type Survey struct {
 	key      string
 	surveyID string
@@ -22,7 +22,7 @@ func (u Survey) ToLDUser() lduser.User {
 	return u.ldUser
 }
 
-// NewSurvey returns a new user object with the given survey ID, there are no options.
+// NewSurvey returns a new Survey object with the given survey ID, there are no options.
 // surveyID is the ID of the currently authenticated survey, and will generally
 // be a "survey_aggregate_id".
 func NewSurvey(surveyID string) Survey {

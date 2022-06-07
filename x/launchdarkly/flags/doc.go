@@ -75,7 +75,9 @@
 //
 //   val, err := client.QueryBoolWithEvaluationContext("my-flag", user, false)
 //
-// When your application is shutting down, you should call Shutdown() to gracefully
-// close connections to LaunchDarkly:
+// You will not need to manually shut down your SDK in most situations. If you
+// know your application is about to terminate, or if you're testing an app,
+// you should manually Shutdown() the LaunchDarkly client before quitting to ensure
+// it delivers any pending analytics events to LaunchDarkly:
 //   client.Shutdown()
 package flags

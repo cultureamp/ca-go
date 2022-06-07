@@ -55,8 +55,8 @@ func WithRealUserID(id string) UserOption {
 // NewAnonymousUser returns a user object suitable for use in unauthenticated
 // requests or requests with no access to user identifiers.
 // Provide a unique session or request identifier as the key if possible. If the
-// key is empty, it will default to 'ANONYMOUS_USER' and percentage rollouts
-// will not be supported.
+// key is empty, it will default to an uuid so percentage rollouts will still apply.
+// No userID will be given to an anonymous user.
 func NewAnonymousUser(key string) User {
 	if key == "" {
 		key = uuid.NewString()
