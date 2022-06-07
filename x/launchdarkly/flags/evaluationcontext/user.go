@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	userAttributeUserID     = "userID"
 	userAttributeAccountID  = "accountID"
 	userAttributeRealUserID = "realUserID"
 )
@@ -19,6 +20,7 @@ const (
 // a human user to evaluate a flag against.
 type User struct {
 	key        string
+	userID     string
 	realUserID string
 	accountID  string
 
@@ -53,8 +55,8 @@ func WithRealUserID(id string) UserOption {
 // NewAnonymousUser returns a user object suitable for use in unauthenticated
 // requests or requests with no access to user identifiers.
 // Provide a unique session or request identifier as the key if possible. If the
-// key is empty, it will default to 'ANONYMOUS_USER' and percentage rollouts
-// will not be supported.
+// key is empty, it will default to an uuid so percentage rollouts will still apply.
+// No userID will be given to an anonymous user.
 func NewAnonymousUser(key string) User {
 	if key == "" {
 		key = uuid.NewString()
@@ -76,7 +78,8 @@ func NewAnonymousUser(key string) User {
 // be a "user_aggregate_id".
 func NewUser(userID string, opts ...UserOption) User {
 	u := &User{
-		key: userID,
+		key:    userID,
+		userID: userID,
 	}
 
 	for _, opt := range opts {
@@ -90,6 +93,9 @@ func NewUser(userID string, opts ...UserOption) User {
 	userBuilder.Custom(
 		userAttributeRealUserID,
 		ldvalue.String(u.realUserID))
+	userBuilder.Custom(
+		userAttributeUserID,
+		ldvalue.String(u.userID))
 	u.ldUser = userBuilder.Build()
 
 	return *u

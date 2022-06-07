@@ -17,9 +17,4 @@
 // attributes as you can to give yourself more flexibility when writing new
 // targeting rules. When you query a flag containing a rule that works on
 // attribute "foo", you must supply attribute "foo" in the evaluation context.
-//
-// The constructor functions will namespace the key of the evaluation context
-// you send in the query. You do not need to prefix the values provided to
-// the constructor functions with the entity type. For example, supply the user
-// ID as-is rather than prefixing as `user.<user-id>`.
 package evaluationcontext
