@@ -56,3 +56,11 @@ func TestDefaultProducerConfiguration(t *testing.T) {
 	assert.True(t, config.Net.TLS.Enable)
 	assert.True(t, config.Net.SASL.Enable)
 }
+
+func TestNonSSLProducerConfiguration(t *testing.T) {
+	config := kafkaclient.NonSSLProducerConfiguration("test_client_tag")
+
+	assert.Equal(t, "test_client_tag", config.ClientID)
+	assert.False(t, config.Net.TLS.Enable)
+	assert.False(t, config.Net.SASL.Enable)
+}

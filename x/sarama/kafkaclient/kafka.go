@@ -2,9 +2,16 @@ package kafkaclient
 
 import (
 	"crypto/tls"
+	"log"
+	"os"
 
 	"github.com/Shopify/sarama"
 )
+
+// EnableDebugLog provides more details on how sarama connecting to brokers
+func EnableDebugLog() {
+	sarama.Logger = log.New(os.Stdout, "[sarama] ", log.LstdFlags)
+}
 
 // DefaultProducerConfiguration creates a Sarama configuration with the default settings
 // appropriate for use by a Sarama SyncProducer in a SASL environment.
@@ -35,6 +42,19 @@ func DefaultProducerConfiguration(clientID string, username string, password str
 	conf.Net.TLS.Config = &tls.Config{
 		MinVersion: tls.VersionTLS12,
 	}
+
+	return conf
+}
+
+// NonSSLProducerConfiguration creates a Sarama configuration with the default settings without SSL config
+// appropriate for use to test connection with local Kafka
+func NonSSLProducerConfiguration(clientID string) *sarama.Config {
+	conf := sarama.NewConfig()
+
+	conf.Producer.RequiredAcks = sarama.WaitForAll
+	conf.Producer.Return.Successes = true
+	conf.Producer.Return.Errors = true
+	conf.ClientID = clientID
 
 	return conf
 }
