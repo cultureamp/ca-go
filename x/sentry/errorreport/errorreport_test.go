@@ -120,6 +120,21 @@ func TestConfigure(t *testing.T) {
 	})
 }
 
+func TestConfigureWithBeforeFilter(t *testing.T) {
+	testingScope(t)
+	ctx := context.Background()
+	mockSentryTransport := setupMockSentryTransport(t,
+		errorreport.WithBeforeFilter(errorreport.RootCauseAsTitle),
+	)
+
+	errorreport.ReportError(ctx, errors.New("a flamingo"))
+
+	require.Len(t, mockSentryTransport.events, 1)
+
+	event := mockSentryTransport.events[0]
+	assert.Equal(t, "a flamingo", event.Exception[0].Type)
+}
+
 func TestConfigureWithTag(t *testing.T) {
 	testingScope(t)
 	ctx := context.Background()

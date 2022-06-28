@@ -53,6 +53,9 @@ func Example() {
 			"genus":   "phoenicoparrus",
 			"species": "jamesi",
 		}),
+
+		// optionally customise error title with the root cause message
+		errorreport.WithBeforeFilter(errorreport.RootCauseAsTitle),
 	)
 	if err != nil {
 		// FIX: write error to log
