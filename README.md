@@ -26,6 +26,7 @@ Current packages:
 - `launchdarkly/flags`: eases the implementation and usage of LaunchDarkly for feature flags, encapsulating usage patterns in Culture Amp
 - `request`: encapsulates the availability of request information on the request context
 - `sentry/errorreport`: eases the implementation and usage of Sentry for error reporting
+- `secrets`: provides methods for fetching secrets from AWS secret manager
 
 ## Context
 
