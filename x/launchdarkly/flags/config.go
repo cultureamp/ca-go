@@ -140,6 +140,8 @@ func configForProxyMode(env configurationJSON, cfg *ProxyModeConfig) ld.Config {
 func configForLambdaMode(env configurationJSON, cfg *LambdaModeConfig) ld.Config {
 	datastoreBuilder := lddynamodb.DataStore(env.Options.DaemonMode.DynamoTableName)
 
+	bigSegmentStore := ldcomponents.BigSegments(datastoreBuilder)
+
 	// Set the Dynamo base URL if one was provided explicitly.
 	if cfg != nil && cfg.DynamoBaseURL != "" {
 		datastoreBuilder.ClientConfig(aws.NewConfig().WithEndpoint(cfg.DynamoBaseURL))
@@ -155,8 +157,9 @@ func configForLambdaMode(env configurationJSON, cfg *LambdaModeConfig) ld.Config
 	}
 
 	return ld.Config{
-		DataSource: ldcomponents.ExternalUpdatesOnly(),
-		DataStore:  datastore,
+		DataSource:  ldcomponents.ExternalUpdatesOnly(),
+		DataStore:   datastore,
+		BigSegments: bigSegmentStore,
 	}
 }
 
