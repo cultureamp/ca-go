@@ -70,12 +70,17 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 
 	c.sdkKey = parsedConfig.SDKKey
 
-	if parsedConfig.Options.Proxy != nil && c.mode == modeProxy {
+	if parsedConfig.Proxy != nil && c.mode == modeProxy {
 		c.wrappedConfig = configForProxyMode(parsedConfig, c.proxyModeConfig)
 	}
 
-	if parsedConfig.Options.DaemonMode != nil && c.mode == modeLambda {
+	if parsedConfig.Storage != nil && c.mode == modeLambda {
 		c.wrappedConfig = configForLambdaMode(parsedConfig, c.lambdaModeConfig)
+	}
+
+	// Configure big segments if the storage table name is present
+	if parsedConfig.Storage != nil && parsedConfig.Storage.TableName != "" {
+		c.wrappedConfig.BigSegments = configForBigSegments(parsedConfig).BigSegments
 	}
 
 	return c, nil
