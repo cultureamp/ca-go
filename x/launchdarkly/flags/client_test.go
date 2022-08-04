@@ -14,26 +14,24 @@ import (
 
 const validConfigJSON = `
 {
-    "sdkKey":"super-secret-key",
-    "options":{
-        "daemonMode":{
-            "dynamo_base_url":"url-here",
-            "DynamoTableName":"my-dynamo-table",
-            "dynamoCacheTTLSeconds":30
-        },
-        "proxyMode":{
-            "url":"https://relay-proxy.cultureamp.net"
-        }
-    }
+	"sdkKey":"super-secret-key",
+	"storage":{
+		"dynamo_base_url":"url-here",
+		"tableName":"my-dynamo-table",
+		"dynamoCacheTTLSeconds":30
+	},
+	"proxy":{
+		"url":"https://relay-proxy.cultureamp.net"
+	}
 }
 `
 
 const validFlagsJSON = `
 {
 	"flagValues": {
-	  "my-string-flag-key": "value-1",
-	  "my-boolean-flag-key": true,
-	  "my-integer-flag-key": 3
+		"my-string-flag-key": "value-1",
+		"my-boolean-flag-key": true,
+		"my-integer-flag-key": 3
 	}
 }
 `

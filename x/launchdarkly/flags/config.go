@@ -27,14 +27,12 @@ const (
 // environment variable.
 type configurationJSON struct {
 	SDKKey  string `json:"sdkKey"`
-	Options struct {
-		DaemonMode *struct {
-			DynamoTableName string `json:"DynamoTableName"`
-		} `json:"daemonMode"`
-		Proxy *struct {
-			RelayProxyURL string `json:"url"`
-		} `json:"proxyMode"`
-	} `json:"options"`
+	Storage *struct {
+		TableName string `json:"tableName"`
+	} `json:"storage"`
+	Proxy *struct {
+		RelayProxyURL string `json:"url"`
+	} `json:"proxy"`
 }
 
 // ProxyModeConfig declares optional overrides for configuring the client
@@ -124,8 +122,16 @@ func configFromEnvironment() (configurationJSON, error) {
 	return parsedConfig, nil
 }
 
+func configForBigSegments(env configurationJSON) ld.Config {
+	datastoreBuilder := lddynamodb.DataStore(env.Storage.TableName)
+
+	return ld.Config{
+		BigSegments: ldcomponents.BigSegments(datastoreBuilder),
+	}
+}
+
 func configForProxyMode(env configurationJSON, cfg *ProxyModeConfig) ld.Config {
-	urlToUse := env.Options.Proxy.RelayProxyURL
+	urlToUse := env.Proxy.RelayProxyURL
 	// Override the Relay URL from the environment variable if one was provided
 	// explicitly.
 	if cfg != nil && cfg.RelayProxyURL != "" {
@@ -138,9 +144,7 @@ func configForProxyMode(env configurationJSON, cfg *ProxyModeConfig) ld.Config {
 }
 
 func configForLambdaMode(env configurationJSON, cfg *LambdaModeConfig) ld.Config {
-	datastoreBuilder := lddynamodb.DataStore(env.Options.DaemonMode.DynamoTableName)
-
-	bigSegmentStore := ldcomponents.BigSegments(datastoreBuilder)
+	datastoreBuilder := lddynamodb.DataStore(env.Storage.TableName)
 
 	// Set the Dynamo base URL if one was provided explicitly.
 	if cfg != nil && cfg.DynamoBaseURL != "" {
@@ -157,9 +161,8 @@ func configForLambdaMode(env configurationJSON, cfg *LambdaModeConfig) ld.Config
 	}
 
 	return ld.Config{
-		DataSource:  ldcomponents.ExternalUpdatesOnly(),
-		DataStore:   datastore,
-		BigSegments: bigSegmentStore,
+		DataSource: ldcomponents.ExternalUpdatesOnly(),
+		DataStore:  datastore,
 	}
 }
 
