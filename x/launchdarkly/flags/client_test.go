@@ -55,6 +55,16 @@ func TestClientTestMode(t *testing.T) {
 		res, err = c.QueryBoolWithEvaluationContext("test-flag", evaluationcontext.NewAnonymousUser(""), true)
 		require.NoError(t, err)
 		assert.Equal(t, false, res)
+
+		td.Update(td.Flag("test-flag").VariationForAllUsers(true))
+		res, err = c.QueryBoolWithLDUser("test-flag", evaluationcontext.NewAnonymousUser("").ToLDUser(), false)
+		require.NoError(t, err)
+		assert.Equal(t, true, res)
+
+		td.Update(td.Flag("test-flag").VariationForAllUsers(false))
+		res, err = c.QueryBoolWithLDUser("test-flag", evaluationcontext.NewAnonymousUser("").ToLDUser(), true)
+		require.NoError(t, err)
+		assert.Equal(t, false, res)
 	})
 
 	t.Run("configures for Test mode with data set at runtime", func(t *testing.T) {
@@ -73,6 +83,16 @@ func TestClientTestMode(t *testing.T) {
 
 		td.Update(td.Flag("test-flag").VariationForAllUsers(false))
 		res, err = c.QueryBoolWithEvaluationContext("test-flag", evaluationcontext.NewAnonymousUser(""), true)
+		require.NoError(t, err)
+		assert.Equal(t, false, res)
+
+		td.Update(td.Flag("test-flag").VariationForAllUsers(true))
+		res, err = c.QueryBoolWithLDUser("test-flag", evaluationcontext.NewAnonymousUser("").ToLDUser(), false)
+		require.NoError(t, err)
+		assert.Equal(t, true, res)
+
+		td.Update(td.Flag("test-flag").VariationForAllUsers(false))
+		res, err = c.QueryBoolWithLDUser("test-flag", evaluationcontext.NewAnonymousUser("").ToLDUser(), true)
 		require.NoError(t, err)
 		assert.Equal(t, false, res)
 	})

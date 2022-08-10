@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cultureamp/ca-go/x/launchdarkly/flags/evaluationcontext"
+	"gopkg.in/launchdarkly/go-sdk-common.v2/lduser"
 	ld "gopkg.in/launchdarkly/go-server-sdk.v5"
 	"gopkg.in/launchdarkly/go-server-sdk.v5/testhelpers/ldtestdata"
 )
@@ -121,6 +122,13 @@ func (c *Client) QueryBool(ctx context.Context, key FlagName, fallbackValue bool
 // returned value regardless of whether an error occurs.
 func (c *Client) QueryBoolWithEvaluationContext(key FlagName, evalContext evaluationcontext.Context, fallbackValue bool) (bool, error) {
 	return c.wrappedClient.BoolVariation(string(key), evalContext.ToLDUser(), fallbackValue)
+}
+
+// QueryBoolWithEvaluationContext retrieves the value of a boolean flag. An lduser User
+// must be supplied manually. The supplied fallback value is always reflected in the
+// returned value regardless of whether an error occurs.
+func (c *Client) QueryBoolWithLDUser(key FlagName, user lduser.User, fallbackValue bool) (bool, error) {
+	return c.wrappedClient.BoolVariation(string(key), user, fallbackValue)
 }
 
 // QueryString retrieves the value of a string flag. User attributes are
