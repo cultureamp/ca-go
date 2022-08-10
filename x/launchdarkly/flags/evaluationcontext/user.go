@@ -14,6 +14,7 @@ const (
 	userAttributeUserID     = "userID"
 	userAttributeAccountID  = "accountID"
 	userAttributeRealUserID = "realUserID"
+	userAttributeSubdomain  = "subdomain"
 )
 
 // User is a type of context, representing the identifiers and attributes of
@@ -62,15 +63,34 @@ func NewAnonymousUser(key string) User {
 		key = uuid.NewString()
 	}
 
-	u := User{
+	return User{
 		key: key,
+		ldUser: lduser.NewUserBuilder(key).
+			Anonymous(true).
+			Build(),
+	}
+}
+
+// NewAnonymousUserWithSubdomain returns a user object suitable for use in unauthenticated with known subdomain
+// requests or requests with no access to user identifiers.
+// Provide a unique session or request identifier as the key if possible. If the
+// key is empty, it will default to an uuid so percentage rollouts will still apply.
+// No userID will be given to an anonymous user.
+func NewAnonymousUserWithSubdomain(key string, subdomain string) User {
+	if key == "" {
+		key = uuid.NewString()
 	}
 
-	userBuilder := lduser.NewUserBuilder(u.key)
-	userBuilder.Anonymous(true)
-	u.ldUser = userBuilder.Build()
-
-	return u
+	return User{
+		key: key,
+		ldUser: lduser.NewUserBuilder(key).
+			Anonymous(true).
+			Custom(
+				userAttributeSubdomain,
+				ldvalue.String(subdomain),
+			).
+			Build(),
+	}
 }
 
 // NewUser returns a new user object with the given user ID and options.
