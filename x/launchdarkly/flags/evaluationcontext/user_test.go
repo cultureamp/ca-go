@@ -8,6 +8,7 @@ import (
 	"github.com/cultureamp/ca-go/x/request"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/launchdarkly/go-sdk-common.v2/ldvalue"
 )
 
 func TestNewUser(t *testing.T) {
@@ -20,6 +21,26 @@ func TestNewUser(t *testing.T) {
 	t.Run("can create an anonymous user with session/request key", func(t *testing.T) {
 		user := evaluationcontext.NewAnonymousUser("my-request-id")
 		assert.Equal(t, "my-request-id", user.ToLDUser().GetKey())
+	})
+
+	t.Run("can create an anonymous user with subdomain", func(t *testing.T) {
+		user := evaluationcontext.NewAnonymousUserWithSubdomain("", "cultureamp")
+		ldUser := user.ToLDUser()
+		assert.True(t, ldUser.GetAnonymous())
+
+		value, result := ldUser.GetCustom("subdomain")
+		assert.Equal(t, ldvalue.String("cultureamp"), value)
+		assert.True(t, result)
+	})
+
+	t.Run("can create an anonymous user with session/request key and subdomain", func(t *testing.T) {
+		user := evaluationcontext.NewAnonymousUserWithSubdomain("my-request-id", "cultureamp")
+		assert.Equal(t, "my-request-id", user.ToLDUser().GetKey())
+
+		ldUser := user.ToLDUser()
+		value, result := ldUser.GetCustom("subdomain")
+		assert.Equal(t, ldvalue.String("cultureamp"), value)
+		assert.True(t, result)
 	})
 
 	t.Run("can create an identified user", func(t *testing.T) {
