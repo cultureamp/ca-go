@@ -11,24 +11,29 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
+type Client interface {
+	RenewClient(ctx context.Context) error
+	GetSecret(batch []interface{}, keyReference string) (*vaultapi.Secret, error)
+}
+
 type VaultDecrypter interface {
 	Decrypt(keyReferences []string, encryptedData []string) ([]string, error)
 }
 
 type vaultDecrypter struct {
-	vaultClient *vaultapi.Client
+	vaultClient Client
 	settings    *VaultSettings
 }
 
-func DefaultVaultDecrypter(ctx context.Context, settings *VaultSettings) (*vaultDecrypter, error) {
-	client, err := DefaultVaultClients(settings).NewAwsIamVaultDecrypterClient(ctx)
+func DefaultVaultDecrypter(ctx context.Context, settings *VaultSettings, client *VaultClient) (*vaultDecrypter, error) {
+	client, err := NewVaultClient(settings, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize Vault decrypter: %w", err)
 	}
 	return &vaultDecrypter{client, settings}, nil
 }
 
-func NewVaultDecrypter(vaultClient *vaultapi.Client, settings *VaultSettings) *vaultDecrypter {
+func NewVaultDecrypter(vaultClient Client, settings *VaultSettings) *vaultDecrypter {
 	return &vaultDecrypter{vaultClient, settings}
 }
 
@@ -40,7 +45,7 @@ func (v vaultDecrypter) Decrypt(keyReferences []string, encryptedData []string, 
 
 	result := encryptedData
 	for _, keyReference := range reverse(keyReferences) {
-		decryptedByKeyReference, err := v.decryptKey(keyReference, result, *logger, ctx)
+		decryptedByKeyReference, err := v.decryptByKey(keyReference, result, *logger, ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error decrypting with key reference %w", err)
 		}
@@ -50,7 +55,7 @@ func (v vaultDecrypter) Decrypt(keyReferences []string, encryptedData []string, 
 	return result, nil
 }
 
-func (v vaultDecrypter) decryptKey(keyReference string, encryptedData []string, logger log.Logger, ctx context.Context) ([]string, error) {
+func (v vaultDecrypter) decryptByKey(keyReference string, encryptedData []string, logger log.Logger, ctx context.Context) ([]string, error) {
 	var batch []interface{}
 	for _, field := range encryptedData {
 		batch = append(batch, map[string]interface{}{
@@ -82,8 +87,9 @@ func (v vaultDecrypter) decryptKey(keyReference string, encryptedData []string, 
 			result = append(result, string(base64Decoded))
 		}
 	} else {
-		err = fmt.Errorf("batch results of secret could not be cast")
-		logger.Error("batch results of secret could not be cast", err)
+		errStr := "batch results of secret could not be cast to []interface{}"
+		err = fmt.Errorf(errStr)
+		logger.Error(errStr, err)
 		return nil, err
 	}
 
@@ -94,24 +100,18 @@ func (v vaultDecrypter) decryptWithVault(keyReference string, batch []interface{
 	var secret *vaultapi.Secret
 	var err error
 	for i := 0; i < maxRetries; i++ {
-		secret, err = v.vaultClient.Logical().Write(fmt.Sprintf("transit/decryptKey/%s", keyReference), map[string]interface{}{
-			"batch_input": batch,
-		})
-
+		secret, err = v.vaultClient.GetSecret(batch, keyReference)
 		if err != nil {
 			if strings.Contains(err.Error(), vaultPermissionError) {
-				client, e := DefaultVaultClients(v.settings).NewAwsIamVaultDecrypterClient(ctx)
-				if e != nil {
-					return nil, fmt.Errorf("unable to initialize Vault decrypter: %w", e)
+				err = v.vaultClient.RenewClient(ctx)
+				if err != nil {
+					logger.Info("unable to renew vault client", log.Fields{"err": err.Error()})
+					return nil, fmt.Errorf("unable to initialize Vault decrypter: %w", err)
 				}
-				v.vaultClient = client
-				logger.Info("Renewing vault client", log.Fields{
-					"err": err.Error(),
-				})
 				continue
 			}
 			logger.Error("Vault client returned unhandled error", err)
-			return nil, fmt.Errorf("error calling vault decryptKey API %w", err)
+			return nil, fmt.Errorf("error calling vault decryptByKey API %w", err)
 		} else {
 			break
 		}
