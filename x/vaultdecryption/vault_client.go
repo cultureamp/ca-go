@@ -3,6 +3,7 @@ package vaultdecryption
 import (
 	"context"
 	"fmt"
+
 	vaultapi "github.com/hashicorp/vault/api"
 )
 
@@ -18,23 +19,22 @@ type VaultSettings struct {
 }
 
 type VaultClients struct {
-	ctx      context.Context
 	settings *VaultSettings
 }
 
-func DefaultVaultClients(ctx context.Context, settings *VaultSettings) *VaultClients {
-	return &VaultClients{ctx, settings}
+func DefaultVaultClients(settings *VaultSettings) *VaultClients {
+	return &VaultClients{settings}
 }
 
-func (v *VaultClients) NewAwsIamVaultDecrypterClient() (*vaultapi.Client, error) {
+func (v *VaultClients) NewAwsIamVaultDecrypterClient(ctx context.Context) (*vaultapi.Client, error) {
 	decrypterRoleArn := v.settings.DecrypterRoleArn
 	if decrypterRoleArn == "" {
 		return nil, fmt.Errorf("decrypter role ARN is not set")
 	}
-	return v.newVaultClient(NewAWSIamAuth(vaultDecrypterRole, decrypterRoleArn))
+	return v.newVaultClient(NewAWSIamAuth(vaultDecrypterRole, decrypterRoleArn), ctx)
 }
 
-func (v *VaultClients) newVaultClient(authMethod vaultapi.AuthMethod) (*vaultapi.Client, error) {
+func (v *VaultClients) newVaultClient(authMethod vaultapi.AuthMethod, ctx context.Context) (*vaultapi.Client, error) {
 	vaultAddr := v.settings.VaultAddr
 	if vaultAddr == "" {
 		return nil, fmt.Errorf("vault address is not set")
@@ -46,7 +46,7 @@ func (v *VaultClients) newVaultClient(authMethod vaultapi.AuthMethod) (*vaultapi
 		return nil, fmt.Errorf("unable to initialize Vault client: %w", err)
 	}
 
-	secret, err := client.Auth().Login(v.ctx, authMethod)
+	secret, err := client.Auth().Login(ctx, authMethod)
 	if err != nil {
 		return nil, fmt.Errorf("unable to login with auth method: %w", err)
 	}

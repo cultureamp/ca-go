@@ -3,6 +3,7 @@ package vaultdecryption
 import (
 	"context"
 	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/hashicorp/go-hclog"
@@ -27,8 +28,9 @@ func NewAWSIamAuth(vaultRole string, roleArn string) *AWSIamAuth {
 	}
 }
 
-func (a *AWSIamAuth) Login(ctx context.Context, client *vaultapi.Client) (secret *vaultapi.Secret, err error) {
+func (a *AWSIamAuth) Login(ctx context.Context, client *vaultapi.Client) (*vaultapi.Secret, error) {
 	var awsSession *session.Session
+	var err error
 	if awsSession, err = session.NewSession(); err != nil {
 		return nil, fmt.Errorf("failed to create AWS session: %w", err)
 	}
@@ -45,7 +47,7 @@ func (a *AWSIamAuth) Login(ctx context.Context, client *vaultapi.Client) (secret
 
 	loginData["role"] = a.vaultRole
 
-	secret, err = client.Logical().WriteWithContext(ctx, loginPath, loginData)
+	secret, err := client.Logical().WriteWithContext(ctx, loginPath, loginData)
 	if err != nil {
 		return nil, fmt.Errorf("unable to log in with AWS auth: %w", err)
 	}

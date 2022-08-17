@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-
 	"strings"
 
 	"github.com/cultureamp/glamplify/log"
@@ -17,33 +16,31 @@ type VaultDecrypter interface {
 }
 
 type vaultDecrypter struct {
-	ctx         context.Context
 	vaultClient *vaultapi.Client
-	logger      *log.Logger
 	settings    *VaultSettings
 }
 
 func DefaultVaultDecrypter(ctx context.Context, settings *VaultSettings) (*vaultDecrypter, error) {
-	client, err := DefaultVaultClients(ctx, settings).NewAwsIamVaultDecrypterClient()
-	logger := log.NewFromCtx(ctx)
+	client, err := DefaultVaultClients(settings).NewAwsIamVaultDecrypterClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize Vault decrypter: %w", err)
 	}
-	return &vaultDecrypter{ctx, client, logger, settings}, nil
+	return &vaultDecrypter{client, settings}, nil
 }
 
-func NewVaultDecrypter(ctx context.Context, vaultClient *vaultapi.Client, settings *VaultSettings) *vaultDecrypter {
+func NewVaultDecrypter(vaultClient *vaultapi.Client, settings *VaultSettings) *vaultDecrypter {
+	return &vaultDecrypter{vaultClient, settings}
+}
+
+func (v vaultDecrypter) Decrypt(keyReferences []string, encryptedData []string, ctx context.Context) ([]string, error) {
 	logger := log.NewFromCtx(ctx)
-	return &vaultDecrypter{ctx, vaultClient, logger, settings}
-}
-
-func (v vaultDecrypter) Decrypt(keyReferences []string, encryptedData []string) (decryptedData []string, err error) {
-	span, _ := tracer.StartSpanFromContext(v.ctx, "vault-decrypter")
+	var err error
+	span, _ := tracer.StartSpanFromContext(ctx, "vault-decrypter")
 	defer span.Finish(tracer.WithError(err))
 
 	result := encryptedData
 	for _, keyReference := range reverse(keyReferences) {
-		decryptedByKeyReference, err := v.decrypt(keyReference, result)
+		decryptedByKeyReference, err := v.decryptKey(keyReference, result, *logger, ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error decrypting with key reference %w", err)
 		}
@@ -53,7 +50,7 @@ func (v vaultDecrypter) Decrypt(keyReferences []string, encryptedData []string) 
 	return result, nil
 }
 
-func (v vaultDecrypter) decrypt(keyReference string, encryptedData []string) ([]string, error) {
+func (v vaultDecrypter) decryptKey(keyReference string, encryptedData []string, logger log.Logger, ctx context.Context) ([]string, error) {
 	var batch []interface{}
 	for _, field := range encryptedData {
 		batch = append(batch, map[string]interface{}{
@@ -61,46 +58,60 @@ func (v vaultDecrypter) decrypt(keyReference string, encryptedData []string) ([]
 		})
 	}
 
-	secret, err := v.decryptWithVault(keyReference, batch)
+	secret, err := v.decryptWithVault(keyReference, batch, logger, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting with Vault %w", err)
 	}
 
-	batchResults := secret.Data["batch_results"]
+	batchResults, ok := secret.Data["batch_results"].([]interface{})
 	var result []string
-	for _, r := range batchResults.([]interface{}) {
-		plaintext := fmt.Sprintf("%v", r.(map[string]interface{})["plaintext"])
-		base64Decoded, err := base64.StdEncoding.DecodeString(plaintext)
-		if err != nil {
-			return nil, fmt.Errorf("error base64 decoding %w", err)
+	if ok {
+		for _, r := range batchResults {
+			rmap, ok := r.(map[string]interface{})
+			if !ok {
+				err = fmt.Errorf("batch result is not map[string]interface{}")
+				logger.Error("batch result is not map[string]interface{}", err)
+				return nil, err
+			}
+			plaintext := fmt.Sprintf("%v", rmap["plaintext"])
+			base64Decoded, err := base64.StdEncoding.DecodeString(plaintext)
+			if err != nil {
+				logger.Error("Error base64 decoding", err)
+				return nil, fmt.Errorf("error base64 decoding %w", err)
+			}
+			result = append(result, string(base64Decoded))
 		}
-		result = append(result, string(base64Decoded))
+	} else {
+		err = fmt.Errorf("batch results of secret could not be cast")
+		logger.Error("batch results of secret could not be cast", err)
+		return nil, err
 	}
 
 	return result, nil
 }
 
-func (v vaultDecrypter) decryptWithVault(keyReference string, batch []interface{}) (secret *vaultapi.Secret, err error) {
+func (v vaultDecrypter) decryptWithVault(keyReference string, batch []interface{}, logger log.Logger, ctx context.Context) (*vaultapi.Secret, error) {
+	var secret *vaultapi.Secret
+	var err error
 	for i := 0; i < maxRetries; i++ {
-		secret, err = v.vaultClient.Logical().Write(fmt.Sprintf("transit/decrypt/%s", keyReference), map[string]interface{}{
+		secret, err = v.vaultClient.Logical().Write(fmt.Sprintf("transit/decryptKey/%s", keyReference), map[string]interface{}{
 			"batch_input": batch,
 		})
 
 		if err != nil {
 			if strings.Contains(err.Error(), vaultPermissionError) {
-				client, e := DefaultVaultClients(v.ctx, v.settings).NewAwsIamVaultDecrypterClient()
+				client, e := DefaultVaultClients(v.settings).NewAwsIamVaultDecrypterClient(ctx)
 				if e != nil {
 					return nil, fmt.Errorf("unable to initialize Vault decrypter: %w", e)
 				}
 				v.vaultClient = client
-				v.logger.Info("Renewing vault client", log.Fields{
+				logger.Info("Renewing vault client", log.Fields{
 					"err": err.Error(),
 				})
 				continue
 			}
-
-			v.logger.Error("Vault client returned unhandled error", err)
-			return nil, fmt.Errorf("error calling vault decrypt API %w", err)
+			logger.Error("Vault client returned unhandled error", err)
+			return nil, fmt.Errorf("error calling vault decryptKey API %w", err)
 		} else {
 			break
 		}
