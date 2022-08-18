@@ -35,5 +35,4 @@ func TestVaultClientErrors(t *testing.T) {
 			assert.NotNil(t, err)
 		})
 	}
-
 }

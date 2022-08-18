@@ -59,7 +59,7 @@ func newVaultClient(authMethod vaultapi.AuthMethod, ctx context.Context, setting
 	return client, nil
 }
 
-func (v VaultClient) RenewClient(ctx context.Context) error {
+func (v *VaultClient) RenewClient(ctx context.Context) error {
 	newClient, err := NewVaultClient(v.settings, ctx)
 	logger := log.NewFromCtx(ctx)
 	if err != nil {
