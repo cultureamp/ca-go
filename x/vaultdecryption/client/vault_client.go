@@ -14,6 +14,12 @@ const (
 	VaultPermissionError = "Code: 403"
 )
 
+var (
+	Create    = NewVaultClient
+	Login     = wrappedLogin
+	NewClient = wrappedNewVClient
+)
+
 type VaultSettings struct {
 	DecrypterRoleArn string
 	VaultAddr        string
@@ -32,39 +38,38 @@ func NewVaultClient(settings *VaultSettings, ctx context.Context) (*VaultClient,
 		logger.Error("VaultClient settings incomplete", err, log.Fields{"VaultSettings": settings})
 		return nil, err
 	}
-	client, err := newVaultClient(auth.NewAWSIamAuth(vaultDecrypterRole, decrypterRoleArn), ctx, *settings)
+	client, err := NewClient(settings.VaultAddr)
 	if err != nil {
-		logger.Error("client could not be initialised", err)
 		return nil, err
 	}
-	return &VaultClient{settings, client}, nil
-}
 
-func newVaultClient(authMethod vaultapi.AuthMethod, ctx context.Context, settings VaultSettings) (*vaultapi.Client, error) {
-	client, err := vaultapi.NewClient(&vaultapi.Config{
-		Address: settings.VaultAddr,
-	})
+	secret, err := Login(client, ctx, auth.NewAWSIamAuth(vaultDecrypterRole, decrypterRoleArn))
 	if err != nil {
-		return nil, fmt.Errorf("unable to initialize Vault client: %w", err)
-	}
-
-	secret, err := client.Auth().Login(ctx, authMethod)
-	if err != nil {
-		return nil, fmt.Errorf("unable to login with auth method: %w", err)
+		return nil, err
 	}
 	if secret == nil {
 		return nil, fmt.Errorf("no auth info was returned after login")
 	}
 
-	return client, nil
+	return &VaultClient{settings, client}, nil
+}
+
+func wrappedLogin(client *vaultapi.Client, ctx context.Context, authMethod vaultapi.AuthMethod) (*vaultapi.Secret, error) {
+	return client.Auth().Login(ctx, authMethod)
+}
+
+func wrappedNewVClient(vaultAddr string) (*vaultapi.Client, error) {
+	return vaultapi.NewClient(&vaultapi.Config{
+		Address: vaultAddr,
+	})
 }
 
 func (v *VaultClient) RenewClient(ctx context.Context) error {
-	newClient, err := NewVaultClient(v.settings, ctx)
 	logger := log.NewFromCtx(ctx)
+	newClient, err := Create(v.settings, ctx)
 	if err != nil {
 		logger.Info("unable to renew vault client", log.Fields{"err": err.Error()})
-		return fmt.Errorf("unable to renew vault client")
+		return err
 	}
 	v.client = newClient.client
 	logger.Info("Renewed vault client")
