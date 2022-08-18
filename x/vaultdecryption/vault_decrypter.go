@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cultureamp/ca-go/x/vaultdecryption/client"
 	"github.com/cultureamp/glamplify/log"
 	vaultapi "github.com/hashicorp/vault/api"
 )
@@ -21,10 +22,10 @@ type VaultDecrypter interface {
 
 type vaultDecrypter struct {
 	vaultClient Client
-	settings    *VaultSettings
+	settings    *client.VaultSettings
 }
 
-func NewVaultDecrypter(vaultClient Client, settings *VaultSettings) *vaultDecrypter {
+func NewVaultDecrypter(vaultClient Client, settings *client.VaultSettings) *vaultDecrypter {
 	return &vaultDecrypter{vaultClient, settings}
 }
 
@@ -87,10 +88,11 @@ func (v vaultDecrypter) decryptByKey(keyReference string, encryptedData []string
 func (v vaultDecrypter) decryptWithVault(keyReference string, batch []interface{}, logger log.Logger, ctx context.Context) (*vaultapi.Secret, error) {
 	var secret *vaultapi.Secret
 	var err error
+	maxRetries := 5
 	for i := 0; i < maxRetries; i++ {
 		secret, err = v.vaultClient.GetSecret(batch, keyReference)
 		if err != nil {
-			if strings.Contains(err.Error(), vaultPermissionError) {
+			if strings.Contains(err.Error(), client.VaultPermissionError) {
 				err = v.vaultClient.RenewClient(ctx)
 				if err != nil {
 					logger.Info("unable to renew vault client", log.Fields{"err": err.Error()})

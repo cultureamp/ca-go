@@ -1,4 +1,4 @@
-package vaultdecryption
+package auth
 
 import (
 	"context"

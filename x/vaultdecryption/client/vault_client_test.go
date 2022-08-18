@@ -1,4 +1,4 @@
-package vaultdecryption
+package client
 
 import (
 	"context"

@@ -1,17 +1,17 @@
-package vaultdecryption
+package client
 
 import (
 	"context"
 	"fmt"
 
+	"github.com/cultureamp/ca-go/x/vaultdecryption/auth"
 	"github.com/cultureamp/glamplify/log"
 	vaultapi "github.com/hashicorp/vault/api"
 )
 
 const (
 	vaultDecrypterRole   = "decrypter"
-	vaultPermissionError = "Code: 403"
-	maxRetries           = 5
+	VaultPermissionError = "Code: 403"
 )
 
 type VaultSettings struct {
@@ -32,7 +32,7 @@ func NewVaultClient(settings *VaultSettings, ctx context.Context) (*VaultClient,
 		logger.Error("VaultClient settings incomplete", err, log.Fields{"VaultSettings": settings})
 		return nil, err
 	}
-	client, err := newVaultClient(NewAWSIamAuth(vaultDecrypterRole, decrypterRoleArn), ctx, *settings)
+	client, err := newVaultClient(auth.NewAWSIamAuth(vaultDecrypterRole, decrypterRoleArn), ctx, *settings)
 	if err != nil {
 		logger.Error("client could not be initialised", err)
 		return nil, err

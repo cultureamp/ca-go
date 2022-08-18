@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/cultureamp/ca-go/x/vaultdecryption/client"
 	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/stretchr/testify/assert"
 )
@@ -68,7 +69,7 @@ func TestDecrypt(t *testing.T) {
 				},
 			},
 			true,
-			fmt.Errorf(vaultPermissionError),
+			fmt.Errorf(client.VaultPermissionError),
 			nil,
 		},
 		{
@@ -76,8 +77,8 @@ func TestDecrypt(t *testing.T) {
 			nil,
 			nil,
 			false,
-			fmt.Errorf(vaultPermissionError),
-			fmt.Errorf(vaultPermissionError),
+			fmt.Errorf(client.VaultPermissionError),
+			fmt.Errorf(client.VaultPermissionError),
 		},
 		{
 			"should error when batch_results is not []interface{}",
@@ -149,7 +150,7 @@ func TestDecrypt(t *testing.T) {
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
-			v := NewVaultDecrypter(mockClient, &VaultSettings{
+			v := NewVaultDecrypter(mockClient, &client.VaultSettings{
 				DecrypterRoleArn: "arn:1234",
 				VaultAddr:        "1234",
 			})
