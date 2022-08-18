@@ -8,7 +8,6 @@ import (
 
 	"github.com/cultureamp/glamplify/log"
 	vaultapi "github.com/hashicorp/vault/api"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 type Client interface {
@@ -25,7 +24,7 @@ type vaultDecrypter struct {
 	settings    *VaultSettings
 }
 
-func DefaultVaultDecrypter(ctx context.Context, settings *VaultSettings, client *VaultClient) (*vaultDecrypter, error) {
+func DefaultVaultDecrypter(ctx context.Context, settings *VaultSettings) (*vaultDecrypter, error) {
 	client, err := NewVaultClient(settings, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize Vault decrypter: %w", err)
@@ -39,15 +38,12 @@ func NewVaultDecrypter(vaultClient Client, settings *VaultSettings) *vaultDecryp
 
 func (v vaultDecrypter) Decrypt(keyReferences []string, encryptedData []string, ctx context.Context) ([]string, error) {
 	logger := log.NewFromCtx(ctx)
-	var err error
-	span, _ := tracer.StartSpanFromContext(ctx, "vault-decrypter")
-	defer span.Finish(tracer.WithError(err))
 
 	result := encryptedData
 	for _, keyReference := range reverse(keyReferences) {
 		decryptedByKeyReference, err := v.decryptByKey(keyReference, result, *logger, ctx)
 		if err != nil {
-			return nil, fmt.Errorf("error decrypting with key reference %w", err)
+			return nil, err
 		}
 		result = decryptedByKeyReference
 	}
@@ -65,7 +61,7 @@ func (v vaultDecrypter) decryptByKey(keyReference string, encryptedData []string
 
 	secret, err := v.decryptWithVault(keyReference, batch, logger, ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error decrypting with Vault %w", err)
+		return nil, err
 	}
 
 	batchResults, ok := secret.Data["batch_results"].([]interface{})
@@ -74,15 +70,15 @@ func (v vaultDecrypter) decryptByKey(keyReference string, encryptedData []string
 		for _, r := range batchResults {
 			rmap, ok := r.(map[string]interface{})
 			if !ok {
-				err = fmt.Errorf("batch result is not map[string]interface{}")
-				logger.Error("batch result is not map[string]interface{}", err)
+				err = fmt.Errorf("batch result element is not map[string]interface{}")
+				logger.Error("batch result element is not map[string]interface{}", err)
 				return nil, err
 			}
 			plaintext := fmt.Sprintf("%v", rmap["plaintext"])
 			base64Decoded, err := base64.StdEncoding.DecodeString(plaintext)
 			if err != nil {
 				logger.Error("Error base64 decoding", err)
-				return nil, fmt.Errorf("error base64 decoding %w", err)
+				return nil, err
 			}
 			result = append(result, string(base64Decoded))
 		}
@@ -106,12 +102,12 @@ func (v vaultDecrypter) decryptWithVault(keyReference string, batch []interface{
 				err = v.vaultClient.RenewClient(ctx)
 				if err != nil {
 					logger.Info("unable to renew vault client", log.Fields{"err": err.Error()})
-					return nil, fmt.Errorf("unable to initialize Vault decrypter: %w", err)
+					return nil, err
 				}
 				continue
 			}
 			logger.Error("Vault client returned unhandled error", err)
-			return nil, fmt.Errorf("error calling vault decryptByKey API %w", err)
+			return nil, err
 		} else {
 			break
 		}
