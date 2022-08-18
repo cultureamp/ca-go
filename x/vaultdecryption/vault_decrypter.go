@@ -24,14 +24,6 @@ type vaultDecrypter struct {
 	settings    *VaultSettings
 }
 
-func DefaultVaultDecrypter(ctx context.Context, settings *VaultSettings) (*vaultDecrypter, error) {
-	client, err := NewVaultClient(settings, ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unable to initialize Vault decrypter: %w", err)
-	}
-	return &vaultDecrypter{client, settings}, nil
-}
-
 func NewVaultDecrypter(vaultClient Client, settings *VaultSettings) *vaultDecrypter {
 	return &vaultDecrypter{vaultClient, settings}
 }
