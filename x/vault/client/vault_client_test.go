@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewVaultClient(t *testing.T) {
-	settingsErr := fmt.Errorf("VaultClient settings incomplete, must provide DecrypterRoleArn and VaultAddr")
+	settingsErr := fmt.Errorf("VaultClient settings incomplete, must provide RoleArn and VaultAddr")
 	tests := []struct {
 		name              string
 		settings          VaultSettings
@@ -19,10 +19,20 @@ func TestNewVaultClient(t *testing.T) {
 		expErr            error
 	}{
 		{
+			"should not error when expected values are given",
+			VaultSettings{
+				RoleArn:   "arn",
+				VaultAddr: "1234",
+			},
+			nil,
+			nil,
+			nil,
+		},
+		{
 			"should error when DecryptionRoleArn is empty",
 			VaultSettings{
-				DecrypterRoleArn: "",
-				VaultAddr:        "1234",
+				RoleArn:   "",
+				VaultAddr: "1234",
 			},
 			nil,
 			nil,
@@ -31,8 +41,8 @@ func TestNewVaultClient(t *testing.T) {
 		{
 			"should error when VaultAddr is empty",
 			VaultSettings{
-				DecrypterRoleArn: "arn",
-				VaultAddr:        "",
+				RoleArn:   "arn",
+				VaultAddr: "",
 			},
 			nil,
 			nil,
@@ -41,8 +51,8 @@ func TestNewVaultClient(t *testing.T) {
 		{
 			"should error when client creator returns error",
 			VaultSettings{
-				DecrypterRoleArn: "arn",
-				VaultAddr:        "1234",
+				RoleArn:   "arn",
+				VaultAddr: "1234",
 			},
 			fmt.Errorf("error with client"),
 			nil,
@@ -51,8 +61,8 @@ func TestNewVaultClient(t *testing.T) {
 		{
 			"should error when login returns error",
 			VaultSettings{
-				DecrypterRoleArn: "arn",
-				VaultAddr:        "1234",
+				RoleArn:   "arn",
+				VaultAddr: "1234",
 			},
 			nil,
 			fmt.Errorf("error with login"),
@@ -61,8 +71,8 @@ func TestNewVaultClient(t *testing.T) {
 		{
 			"should error when login returns no secret",
 			VaultSettings{
-				DecrypterRoleArn: "arn",
-				VaultAddr:        "1234",
+				RoleArn:   "arn",
+				VaultAddr: "1234",
 			},
 			nil,
 			nil,
@@ -78,7 +88,11 @@ func TestNewVaultClient(t *testing.T) {
 			return client, tt.returnedClientErr
 		}
 		Login = func(client *vaultapi.Client, ctx context.Context, authMethod vaultapi.AuthMethod) (*vaultapi.Secret, error) {
-			return nil, tt.returnedLoginErr
+			secret := &vaultapi.Secret{}
+			if tt.returnedLoginErr != nil || tt.expErr != nil {
+				secret = nil
+			}
+			return secret, tt.returnedLoginErr
 		}
 		ctx := context.Background()
 
@@ -119,8 +133,8 @@ func TestVaultClient_RenewClient(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			v := VaultClient{
 				settings: &VaultSettings{
-					DecrypterRoleArn: "arn",
-					VaultAddr:        "123",
+					RoleArn:   "arn",
+					VaultAddr: "123",
 				},
 				client: nil,
 			}

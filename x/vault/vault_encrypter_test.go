@@ -2,7 +2,6 @@ package vault
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"testing"
 
@@ -11,38 +10,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type MockClient struct {
-	renewClient func(ctx context.Context) error
-	getSecret   func(batch []interface{}, keyReference string, action string) (*vaultapi.Secret, error)
-}
-
-func (m MockClient) RenewClient(ctx context.Context) error {
-	return m.renewClient(ctx)
-}
-func (m MockClient) GetSecret(batch []interface{}, keyReference string, action string) (*vaultapi.Secret, error) {
-	return m.getSecret(batch, keyReference, action)
-}
-
-const (
-	decryptedString = "abc123!?$*&()'-=@~"
-)
-
-func TestDecrypt(t *testing.T) {
+func TestEncrypt(t *testing.T) {
+	const encStr = "encrypted string"
 	tests := []struct {
-		name            string
-		decryptedSecret []string
-		data            map[string]interface{}
-		shouldRenew     bool
-		returnErr       error
-		expErr          error
+		name        string
+		secretData  map[string]interface{}
+		shouldRenew bool
+		returnErr   error
+		expErr      error
 	}{
 		{
-			"should not error when secret is returned as usual",
-			[]string{decryptedString},
+			"should not error when one secret is returned as usual",
 			map[string]interface{}{
 				"batch_results": []interface{}{
 					map[string]interface{}{
-						"plaintext": base64.StdEncoding.EncodeToString([]byte(decryptedString)),
+						"ciphertext": encStr,
 					},
 				},
 			},
@@ -52,24 +34,35 @@ func TestDecrypt(t *testing.T) {
 		},
 		{
 			"should error when secret is returns wrong number of results",
-			nil,
 			map[string]interface{}{
 				"batch_results": []interface{}{
 					map[string]interface{}{
-						"plaintext": base64.StdEncoding.EncodeToString([]byte(decryptedString)),
+						"ciphertext": encStr,
 					},
 					map[string]interface{}{
-						"plaintext": base64.StdEncoding.EncodeToString([]byte(decryptedString)),
+						"plaintext": encStr,
 					},
 				},
 			},
 			false,
 			nil,
-			fmt.Errorf("incorrect number of decrypted values returned"),
+			fmt.Errorf("incorrect number of encrypted values returned"),
+		},
+		{
+			"should not error when multiple secrets are returned as usual",
+			map[string]interface{}{
+				"batch_results": []interface{}{
+					map[string]interface{}{
+						"ciphertext": encStr,
+					},
+				},
+			},
+			false,
+			nil,
+			nil,
 		},
 		{
 			"should error when getSecret errors",
-			nil,
 			nil,
 			false,
 			fmt.Errorf("secretError"),
@@ -77,11 +70,10 @@ func TestDecrypt(t *testing.T) {
 		},
 		{
 			"should renew then continue when getSecret returns permission error",
-			[]string{decryptedString},
 			map[string]interface{}{
 				"batch_results": []interface{}{
 					map[string]interface{}{
-						"plaintext": base64.StdEncoding.EncodeToString([]byte(decryptedString)),
+						"ciphertext": encStr,
 					},
 				},
 			},
@@ -92,50 +84,33 @@ func TestDecrypt(t *testing.T) {
 		{
 			"should error when renewClient returns error",
 			nil,
-			nil,
 			false,
 			fmt.Errorf(client.VaultPermissionError),
 			fmt.Errorf(client.VaultPermissionError),
 		},
 		{
 			"should error when batch_results is not []interface{}",
-			nil,
 			map[string]interface{}{
 				"batch_results": map[string]interface{}{
-					"plaintext": decryptedString,
+					"cyphertext": decryptedString,
 				},
 			},
 			false,
 			nil,
-			fmt.Errorf("batch results of decryption secret could not be cast to []interface{}"),
+			fmt.Errorf("batch results of encryption secret could not be cast to []interface{}"),
 		},
 		{
 			"should error when batch_results entries are not map[string]interface{}",
-			nil,
 			map[string]interface{}{
-				"batch_results": []interface{}{"plaintext"},
+				"batch_results": []interface{}{"ciphertext"},
 			},
 			false,
 			nil,
-			fmt.Errorf("batch result decryption element is not map[string]interface{}"),
-		},
-		{
-			"should error when not base64 encoded",
-			nil,
-			map[string]interface{}{
-				"batch_results": []interface{}{
-					map[string]interface{}{
-						"plaintext": decryptedString,
-					},
-				},
-			},
-			false,
-			nil,
-			base64.CorruptInputError(6),
+			fmt.Errorf("encrypt batch result element is not map[string]interface{}"),
 		},
 	}
 	keyReferences := []string{"keyRef1"}
-	encryptedData := []string{"encrypted1"}
+	decryptedData := []string{"decrypted1"}
 	ctx := context.Background()
 	for _, tt := range tests {
 		renewed := false
@@ -154,7 +129,7 @@ func TestDecrypt(t *testing.T) {
 					LeaseID:       "",
 					LeaseDuration: 0,
 					Renewable:     false,
-					Data:          tt.data,
+					Data:          tt.secretData,
 					Warnings:      nil,
 					Auth:          nil,
 					WrapInfo:      nil,
@@ -167,12 +142,11 @@ func TestDecrypt(t *testing.T) {
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
-			v := NewVaultDecrypter(mockClient, client.VaultSettings{
+			v := NewVaultEncrypter(mockClient, client.VaultSettings{
 				RoleArn:   "arn:1234",
 				VaultAddr: "1234",
 			})
-			decryptedSecret, err := v.Decrypt(keyReferences, encryptedData, ctx)
-			assert.Equal(t, tt.decryptedSecret, decryptedSecret)
+			_, err := v.Encrypt(keyReferences, decryptedData, ctx)
 			assert.Equal(t, tt.shouldRenew, renewed)
 			fmt.Printf("tt err: %v, err: %v\n", tt.expErr, err)
 			assert.Equal(t, tt.expErr, err)

@@ -13,7 +13,7 @@ import (
 
 type Client interface {
 	RenewClient(ctx context.Context) error
-	GetSecret(batch []interface{}, keyReference string) (*vaultapi.Secret, error)
+	GetSecret(batch []interface{}, keyReference string, action string) (*vaultapi.Secret, error)
 }
 
 type vaultDecrypter struct {
@@ -27,20 +27,24 @@ func NewVaultDecrypter(vaultClient Client, settings client.VaultSettings) *vault
 
 func (v *vaultDecrypter) Decrypt(keyReferences []string, encryptedData []string, ctx context.Context) ([]string, error) {
 	logger := log.NewFromCtx(ctx)
-
 	result := encryptedData
 	for _, keyReference := range reverse(keyReferences) {
-		decryptedByKeyReference, err := v.decryptByKey(keyReference, result, *logger, ctx)
+		decryptedByKeyReference, err := v.decryptByKey(keyReference, result, logger, ctx)
 		if err != nil {
 			return nil, err
 		}
 		result = decryptedByKeyReference
 	}
+	if len(result) != len(encryptedData) {
+		err := fmt.Errorf("incorrect number of decrypted values returned")
+		logger.Error("decryption secret qty err", err)
+		return nil, err
+	}
 
 	return result, nil
 }
 
-func (v *vaultDecrypter) decryptByKey(keyReference string, encryptedData []string, logger log.Logger, ctx context.Context) ([]string, error) {
+func (v *vaultDecrypter) decryptByKey(keyReference string, encryptedData []string, logger *log.Logger, ctx context.Context) ([]string, error) {
 	var batch []interface{}
 	for _, field := range encryptedData {
 		batch = append(batch, map[string]interface{}{
@@ -54,39 +58,38 @@ func (v *vaultDecrypter) decryptByKey(keyReference string, encryptedData []strin
 	}
 
 	batchResults, ok := secret.Data["batch_results"].([]interface{})
-	var result []string
-	if ok {
-		for _, r := range batchResults {
-			rmap, ok := r.(map[string]interface{})
-			if !ok {
-				err = fmt.Errorf("batch result element is not map[string]interface{}")
-				logger.Error("batch result element is not map[string]interface{}", err)
-				return nil, err
-			}
-			plaintext := fmt.Sprintf("%v", rmap["plaintext"])
-			base64Decoded, err := base64.StdEncoding.DecodeString(plaintext)
-			if err != nil {
-				logger.Error("Error base64 decoding", err)
-				return nil, err
-			}
-			result = append(result, string(base64Decoded))
-		}
-	} else {
-		errStr := "batch results of secret could not be cast to []interface{}"
+	if !ok {
+		errStr := "batch results of decryption secret could not be cast to []interface{}"
 		err = fmt.Errorf(errStr)
 		logger.Error(errStr, err)
 		return nil, err
 	}
 
+	var result []string
+	for _, r := range batchResults {
+		rmap, ok := r.(map[string]interface{})
+		if !ok {
+			err = fmt.Errorf("batch result decryption element is not map[string]interface{}")
+			logger.Error("batch result casting error", err)
+			return nil, err
+		}
+		plaintext := fmt.Sprintf("%v", rmap["plaintext"])
+		base64Decoded, err := base64.StdEncoding.DecodeString(plaintext)
+		if err != nil {
+			logger.Error("Error base64 decoding", err)
+			return nil, err
+		}
+		result = append(result, string(base64Decoded))
+	}
 	return result, nil
 }
 
-func (v *vaultDecrypter) decryptWithVault(keyReference string, batch []interface{}, logger log.Logger, ctx context.Context) (*vaultapi.Secret, error) {
+func (v *vaultDecrypter) decryptWithVault(keyReference string, batch []interface{}, logger *log.Logger, ctx context.Context) (*vaultapi.Secret, error) {
 	var secret *vaultapi.Secret
 	var err error
 	maxRetries := 5
 	for i := 0; i < maxRetries; i++ {
-		secret, err = v.vaultClient.GetSecret(batch, keyReference)
+		secret, err = v.vaultClient.GetSecret(batch, keyReference, client.DecryptionAction)
 		if err != nil {
 			if strings.Contains(err.Error(), client.VaultPermissionError) {
 				err = v.vaultClient.RenewClient(ctx)

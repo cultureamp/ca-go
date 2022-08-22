@@ -12,6 +12,8 @@ import (
 const (
 	vaultDecrypterRole   = "decrypter"
 	VaultPermissionError = "Code: 403"
+	EncryptionAction     = "encrypt"
+	DecryptionAction     = "decryptByKey"
 )
 
 var (
@@ -21,8 +23,8 @@ var (
 )
 
 type VaultSettings struct {
-	DecrypterRoleArn string
-	VaultAddr        string
+	RoleArn   string
+	VaultAddr string
 }
 
 type VaultClient struct {
@@ -32,9 +34,9 @@ type VaultClient struct {
 
 func NewVaultClient(settings *VaultSettings, ctx context.Context) (*VaultClient, error) {
 	logger := log.NewFromCtx(ctx)
-	decrypterRoleArn := settings.DecrypterRoleArn
+	decrypterRoleArn := settings.RoleArn
 	if decrypterRoleArn == "" || settings.VaultAddr == "" {
-		err := fmt.Errorf("VaultClient settings incomplete, must provide DecrypterRoleArn and VaultAddr")
+		err := fmt.Errorf("VaultClient settings incomplete, must provide RoleArn and VaultAddr")
 		logger.Error("VaultClient settings incomplete", err, log.Fields{"VaultSettings": settings})
 		return nil, err
 	}
@@ -76,10 +78,11 @@ func (v *VaultClient) RenewClient(ctx context.Context) error {
 	return nil
 }
 
-func (v VaultClient) GetSecret(batch []interface{}, keyReference string) (*vaultapi.Secret, error) {
-	secret, err := v.client.Logical().Write(fmt.Sprintf("transit/decryptByKey/%s", keyReference), map[string]interface{}{
+func (v VaultClient) GetSecret(batch []interface{}, keyReference string, action string) (*vaultapi.Secret, error) {
+	secret, err := v.client.Logical().Write(fmt.Sprintf("transit/%s/%s", action, keyReference), map[string]interface{}{
 		"batch_input": batch,
 	})
+
 	if err != nil {
 		return nil, err
 	}
