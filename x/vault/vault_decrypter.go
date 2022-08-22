@@ -9,6 +9,7 @@ import (
 	"github.com/cultureamp/ca-go/x/vault/client"
 	"github.com/cultureamp/glamplify/log"
 	vaultapi "github.com/hashicorp/vault/api"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 type Client interface {
@@ -26,6 +27,9 @@ func NewVaultDecrypter(vaultClient Client, settings client.VaultSettings) *vault
 }
 
 func (v *vaultDecrypter) Decrypt(keyReferences []string, encryptedData []string, ctx context.Context) ([]string, error) {
+	var err error
+	span, _ := tracer.StartSpanFromContext(ctx, "vault-decrypter")
+	defer span.Finish(tracer.WithError(err))
 	logger := log.NewFromCtx(ctx)
 	result := encryptedData
 	for _, keyReference := range reverse(keyReferences) {
