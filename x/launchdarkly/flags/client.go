@@ -91,7 +91,7 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 // connection error occurs.
 func (c *Client) Connect() error {
 	if c.wrappedClient != nil {
-		return errors.New("attempted to call GetVaultClient on a connected client")
+		return errors.New("attempted to call Connect on a connected client")
 	}
 
 	wrappedClient, err := ld.MakeCustomClient(c.sdkKey, c.wrappedConfig, c.initWait)

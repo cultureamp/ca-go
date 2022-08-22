@@ -1,4 +1,4 @@
-package vaultdecryption
+package vault
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cultureamp/ca-go/x/vaultdecryption/client"
+	"github.com/cultureamp/ca-go/x/vault/client"
 	"github.com/cultureamp/glamplify/log"
 	vaultapi "github.com/hashicorp/vault/api"
 )
@@ -16,20 +16,16 @@ type Client interface {
 	GetSecret(batch []interface{}, keyReference string) (*vaultapi.Secret, error)
 }
 
-type VaultDecrypter interface {
-	Decrypt(keyReferences []string, encryptedData []string) ([]string, error)
-}
-
 type vaultDecrypter struct {
 	vaultClient Client
-	settings    *client.VaultSettings
+	settings    client.VaultSettings
 }
 
-func NewVaultDecrypter(vaultClient Client, settings *client.VaultSettings) *vaultDecrypter {
+func NewVaultDecrypter(vaultClient Client, settings client.VaultSettings) *vaultDecrypter {
 	return &vaultDecrypter{vaultClient, settings}
 }
 
-func (v vaultDecrypter) Decrypt(keyReferences []string, encryptedData []string, ctx context.Context) ([]string, error) {
+func (v *vaultDecrypter) Decrypt(keyReferences []string, encryptedData []string, ctx context.Context) ([]string, error) {
 	logger := log.NewFromCtx(ctx)
 
 	result := encryptedData
@@ -44,7 +40,7 @@ func (v vaultDecrypter) Decrypt(keyReferences []string, encryptedData []string, 
 	return result, nil
 }
 
-func (v vaultDecrypter) decryptByKey(keyReference string, encryptedData []string, logger log.Logger, ctx context.Context) ([]string, error) {
+func (v *vaultDecrypter) decryptByKey(keyReference string, encryptedData []string, logger log.Logger, ctx context.Context) ([]string, error) {
 	var batch []interface{}
 	for _, field := range encryptedData {
 		batch = append(batch, map[string]interface{}{
@@ -85,7 +81,7 @@ func (v vaultDecrypter) decryptByKey(keyReference string, encryptedData []string
 	return result, nil
 }
 
-func (v vaultDecrypter) decryptWithVault(keyReference string, batch []interface{}, logger log.Logger, ctx context.Context) (*vaultapi.Secret, error) {
+func (v *vaultDecrypter) decryptWithVault(keyReference string, batch []interface{}, logger log.Logger, ctx context.Context) (*vaultapi.Secret, error) {
 	var secret *vaultapi.Secret
 	var err error
 	maxRetries := 5

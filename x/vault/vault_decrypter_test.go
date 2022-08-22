@@ -1,4 +1,4 @@
-package vaultdecryption
+package vault
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cultureamp/ca-go/x/vaultdecryption/client"
+	"github.com/cultureamp/ca-go/x/vault/client"
 	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/stretchr/testify/assert"
 )

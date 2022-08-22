@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cultureamp/ca-go/x/vaultdecryption/auth"
+	"github.com/cultureamp/ca-go/x/vault/auth"
 	"github.com/cultureamp/glamplify/log"
 	vaultapi "github.com/hashicorp/vault/api"
 )
