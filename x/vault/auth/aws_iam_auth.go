@@ -13,8 +13,7 @@ import (
 )
 
 const (
-	defaultStsRegion = "us-east-1"
-	loginPath        = "auth/aws/login"
+	loginPath = "auth/aws/login"
 )
 
 type AWSIamAuth struct {
@@ -36,7 +35,7 @@ func (auth *AWSIamAuth) Login(ctx context.Context, client *vaultapi.Client) (*va
 	}
 	region, ok := os.LookupEnv("AWS_REGION")
 	if !ok {
-		region = defaultStsRegion
+		region = ""
 	}
 	loginData, err := awsutil.GenerateLoginData(
 		stscreds.NewCredentials(awsSession, auth.roleArn),
