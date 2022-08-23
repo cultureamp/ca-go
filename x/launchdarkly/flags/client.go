@@ -42,8 +42,8 @@ const (
 // launchdarkly/flags/doc.go for more information.
 func NewClient(opts ...ConfigOption) (*Client, error) {
 	c := &Client{
-		initWait: 5 * time.Second, // wait up to 5 seconds for LD to connect.
-		mode:     modeProxy,       // defaults to proxying requests through the LD Relay.
+		initWait: 0,         // wait up to 5 seconds for LD to connect.
+		mode:     modeProxy, // defaults to proxying requests through the LD Relay.
 	}
 
 	for _, opt := range opts {
