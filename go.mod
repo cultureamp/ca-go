@@ -4,9 +4,9 @@ go 1.18
 
 require (
 	github.com/aws/aws-sdk-go v1.42.7
-	github.com/launchdarkly/go-server-sdk-dynamodb v1.1.0
+	github.com/launchdarkly/go-server-sdk-dynamodb v1.1.1
 	github.com/stretchr/testify v1.7.0
-	gopkg.in/launchdarkly/go-sdk-common.v2 v2.5.0
+	gopkg.in/launchdarkly/go-sdk-common.v2 v2.5.1
 	gopkg.in/launchdarkly/go-server-sdk.v5 v5.8.1
 )
 
