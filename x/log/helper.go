@@ -21,8 +21,9 @@ func ToSnakeCase(s string) string {
 				if !unicode.IsSpace(in[i-1]) {
 					sb.WriteRune('_')
 				}
+			} else {
+				sb.WriteRune(r)
 			}
-			sb.WriteRune(r)
 		}
 	}
 
