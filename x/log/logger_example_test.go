@@ -2,13 +2,14 @@ package log_test
 
 import (
 	"context"
+
 	"github.com/cultureamp/ca-go/x/log"
 	"github.com/cultureamp/ca-go/x/request"
 )
 
 // This example illustrates how to use NewFromCtx to initialise a logger with values from context.
-func Example_NewFromCtx() {
-	ctx := context.WithValue(context.Background(), "time", "2022-08-24T15:33:22+10:00")
+func Example() {
+	ctx := context.Background()
 
 	ctx = log.ContextWithEnvConfig(ctx, log.EnvConfig{
 		AppName:    "test-app",
@@ -29,5 +30,5 @@ func Example_NewFromCtx() {
 		Msg("initialise handler")
 
 	// Output:
-	// {"level":"debug","AppName":"test-app","AppVersion":"1.0.0","AwsRegion":"us-east-1","AwsAccountId":"","Farm":"test-farm","RequestID":"id1","CorrelationID":"id2","test-str":"str","test-number":1,"message":"initialise handler"}
+	// {"level":"debug","AppName":"test-app","AppVersion":"1.0.0","AwsRegion":"us-east-1","AwsAccountId":"","Farm":"test-farm","RequestID":"id1","CorrelationID":"id2","test-str":"str","test-number":1,"event":"initialise_handler","message":"initialise handler"}
 }

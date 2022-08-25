@@ -2,11 +2,12 @@ package log
 
 import (
 	"context"
-	"github.com/cultureamp/ca-go/x/request"
-	"github.com/rs/zerolog"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/cultureamp/ca-go/x/request"
+	"github.com/rs/zerolog"
 )
 
 type Logger struct {
@@ -35,7 +36,7 @@ func (l *Logger) WithTimestamp() *Logger {
 }
 
 func newDefaultLogger(config EnvConfig) *Logger {
-	logger := &Logger{zerolog.New(os.Stdout)}
+	logger := &Logger{zerolog.New(os.Stdout).Hook(EventHook{})}
 	logger.SetupFormatter(config.Farm)
 
 	logger.UpdateContext(func(c zerolog.Context) zerolog.Context {
@@ -43,7 +44,7 @@ func newDefaultLogger(config EnvConfig) *Logger {
 			Str("AppName", config.AppName).
 			Str("AppVersion", config.AppVersion).
 			Str("AwsRegion", config.AwsRegion).
-			Str("AwsAccountId", config.AwsAccountId).
+			Str("AwsAccountId", config.AwsAccountID).
 			Str("Farm", config.Farm)
 	})
 
@@ -86,8 +87,4 @@ func NewFromCtx(ctx context.Context) *Logger {
 // If the context does not contain then, then this method will NOT add them in.
 func NewFromRequest(r *http.Request) *Logger {
 	return NewFromCtx(r.Context())
-}
-
-func (l *Logger) WithDatadogHook() {
-	// TODO: implement me
 }

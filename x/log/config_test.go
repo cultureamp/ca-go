@@ -2,24 +2,25 @@ package log
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEnvConfigFromContext(t *testing.T) {
 	tests := []struct {
 		name        string
-		ctx         context.Context
+		env         *EnvConfig
 		expectedCfg EnvConfig
 	}{
 		{
 			name: "should overwrite default env config values if provided in context",
-			ctx: context.WithValue(context.Background(), envConfigKey, EnvConfig{
+			env: &EnvConfig{
 				AppName:    "test-app",
 				AppVersion: "1.0.0",
 				AwsRegion:  "us-east-1",
 				Farm:       "test-farm",
-			}),
+			},
 			expectedCfg: EnvConfig{
 				AppName:    "test-app",
 				AppVersion: "1.0.0",
@@ -29,12 +30,11 @@ func TestEnvConfigFromContext(t *testing.T) {
 		},
 		{
 			name: "should have default env config values if not provided in context",
-			ctx:  context.Background(),
 			expectedCfg: EnvConfig{
 				AppName:      "",
 				AppVersion:   "0.0.0",
 				AwsRegion:    "",
-				AwsAccountId: "",
+				AwsAccountID: "",
 				Farm:         "local",
 			},
 		},
@@ -42,7 +42,11 @@ func TestEnvConfigFromContext(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := EnvConfigFromContext(tt.ctx)
+			ctx := context.Background()
+			if tt.env != nil {
+				ctx = context.WithValue(context.Background(), envConfigKey, *tt.env)
+			}
+			cfg := EnvConfigFromContext(ctx)
 			assert.Equal(t, tt.expectedCfg, cfg)
 		})
 	}
@@ -64,7 +68,6 @@ func TestContextWithEnvConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			ctx := ContextWithEnvConfig(context.Background(), tt.cfg)
 			assert.Equal(t, tt.cfg, ctx.Value(envConfigKey))
 		})

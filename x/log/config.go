@@ -15,7 +15,7 @@ type EnvConfig struct {
 	AppName      string `envconfig:"APP"`                    // The name of the application the log was generated from
 	AppVersion   string `default:"0.0.0" split_words:"true"` // The version of the application
 	AwsRegion    string `split_words:"true"`                 // the AWS region this code is running in
-	AwsAccountId string `split_words:"true"`                 // the AWS account Id this code is running in
+	AwsAccountID string `split_words:"true"`                 // the AWS account ID this code is running in
 	Farm         string `default:"local" envconfig:"FARM"`   // The name of the farm or where the code is running
 }
 
