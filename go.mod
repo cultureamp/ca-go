@@ -12,7 +12,7 @@ require (
 
 require (
 	github.com/Shopify/sarama v1.34.0
-	github.com/getsentry/sentry-go v0.11.0
+	github.com/getsentry/sentry-go v0.13.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rs/zerolog v1.27.0
 	goa.design/goa/v3 v3.6.0
