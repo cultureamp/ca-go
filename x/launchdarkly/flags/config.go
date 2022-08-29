@@ -102,9 +102,9 @@ func WithTestMode(cfg *TestModeConfig) ConfigOption {
 	}
 }
 
-func WithBigSegmentEnabled() ConfigOption {
+func WithBigSegmentsDisabled() ConfigOption {
 	return func(c *Client) {
-		c.bigSegmentsEnabled = true
+		c.bigSegmentsEnabled = false
 	}
 }
 

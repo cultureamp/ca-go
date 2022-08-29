@@ -211,13 +211,13 @@ func TestClientInitialisation(t *testing.T) {
 		assert.Equal(t, "https://foo.bar", client.wrappedConfig.ServiceEndpoints.Polling)
 	})
 
-	t.Run("allows big segments to be enabled", func(t *testing.T) {
+	t.Run("allows big segments to be disabled", func(t *testing.T) {
 		os.Setenv(configurationEnvVar, validConfigJSON)
 		defer os.Unsetenv(configurationEnvVar)
 
 		client, err := NewClient(
-			WithBigSegmentEnabled())
+			WithBigSegmentsDisabled())
 		require.NoError(t, err)
-		assert.Equal(t, client.bigSegmentsEnabled, true)
+		assert.Equal(t, client.bigSegmentsEnabled, false)
 	})
 }

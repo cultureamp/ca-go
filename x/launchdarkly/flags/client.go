@@ -45,7 +45,7 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 	c := &Client{
 		initWait:           5 * time.Second, // wait up to 5 seconds for LD to connect.
 		mode:               modeProxy,       // defaults to proxying requests through the LD Relay.
-		bigSegmentsEnabled: false,           // defaults to disable big segments
+		bigSegmentsEnabled: true,            // defaults to enable big segments
 	}
 
 	for _, opt := range opts {
