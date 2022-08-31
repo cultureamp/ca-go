@@ -107,7 +107,7 @@ func TestDecrypt(t *testing.T) {
 			},
 			false,
 			nil,
-			fmt.Errorf("batch results of decryption secret could not be cast to []interface{}"),
+			fmt.Errorf("batch results casting error"),
 		},
 		{
 			"should error when batch_results entries are not map[string]interface{}",
@@ -117,7 +117,7 @@ func TestDecrypt(t *testing.T) {
 			},
 			false,
 			nil,
-			fmt.Errorf("batch result decryption element is not map[string]interface{}"),
+			fmt.Errorf("batch result casting error"),
 		},
 		{
 			"should error when not base64 encoded",
@@ -167,10 +167,7 @@ func TestDecrypt(t *testing.T) {
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
-			v := NewVaultDecrypter(mockClient, client.VaultSettings{
-				RoleArn:   "arn:1234",
-				VaultAddr: "1234",
-			})
+			v := NewVaultDecrypter(mockClient)
 			decryptedSecret, err := v.Decrypt(keyReferences, encryptedData, ctx)
 			assert.Equal(t, tt.decryptedSecret, decryptedSecret)
 			assert.Equal(t, tt.shouldRenew, renewed)

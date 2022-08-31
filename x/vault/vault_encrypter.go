@@ -12,16 +12,15 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
-type vaultEncrypter struct {
+type Encrypter struct {
 	vaultClient Client
-	settings    client.VaultSettings
 }
 
-func NewVaultEncrypter(vaultClient Client, settings client.VaultSettings) *vaultEncrypter {
-	return &vaultEncrypter{vaultClient, settings}
+func NewVaultEncrypter(vaultClient Client) *Encrypter {
+	return &Encrypter{vaultClient}
 }
 
-func (v vaultEncrypter) Encrypt(keyReferences []string, protectedData []string, ctx context.Context) ([]string, error) {
+func (v Encrypter) Encrypt(keyReferences []string, protectedData []string, ctx context.Context) ([]string, error) {
 	var err error
 	span, _ := tracer.StartSpanFromContext(ctx, "vault-encrypter")
 	defer span.Finish(tracer.WithError(err))
@@ -43,7 +42,7 @@ func (v vaultEncrypter) Encrypt(keyReferences []string, protectedData []string, 
 	return result, nil
 }
 
-func (v vaultEncrypter) encrypt(keyReference string, protectedData []string, logger *log.Logger, ctx context.Context) ([]string, error) {
+func (v Encrypter) encrypt(keyReference string, protectedData []string, logger *log.Logger, ctx context.Context) ([]string, error) {
 	var batch []interface{}
 	for _, field := range protectedData {
 		batch = append(batch, map[string]interface{}{
@@ -77,7 +76,7 @@ func (v vaultEncrypter) encrypt(keyReference string, protectedData []string, log
 	return result, nil
 }
 
-func (v vaultEncrypter) encryptWithVault(keyReference string, batch []interface{}, logger *log.Logger, ctx context.Context) (*vaultapi.Secret, error) {
+func (v Encrypter) encryptWithVault(keyReference string, batch []interface{}, logger *log.Logger, ctx context.Context) (*vaultapi.Secret, error) {
 	maxRetries := 5
 	var secret *vaultapi.Secret
 	var err error

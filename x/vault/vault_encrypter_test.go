@@ -46,7 +46,7 @@ func TestEncrypt(t *testing.T) {
 			},
 			false,
 			nil,
-			fmt.Errorf("incorrect number of encrypted values returned"),
+			fmt.Errorf("encryption secret qty err"),
 		},
 		{
 			"should not error when multiple secrets are returned as usual",
@@ -142,10 +142,7 @@ func TestEncrypt(t *testing.T) {
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
-			v := NewVaultEncrypter(mockClient, client.VaultSettings{
-				RoleArn:   "arn:1234",
-				VaultAddr: "1234",
-			})
+			v := NewVaultEncrypter(mockClient)
 			_, err := v.Encrypt(keyReferences, decryptedData, ctx)
 			assert.Equal(t, tt.shouldRenew, renewed)
 			fmt.Printf("tt err: %v, err: %v\n", tt.expErr, err)

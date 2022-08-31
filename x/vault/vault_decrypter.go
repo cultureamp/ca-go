@@ -17,16 +17,15 @@ type Client interface {
 	GetSecret(batch []interface{}, keyReference string, action string) (*vaultapi.Secret, error)
 }
 
-type vaultDecrypter struct {
+type Decrypter struct {
 	vaultClient Client
-	settings    client.VaultSettings
 }
 
-func NewVaultDecrypter(vaultClient Client, settings client.VaultSettings) *vaultDecrypter {
-	return &vaultDecrypter{vaultClient, settings}
+func NewVaultDecrypter(vaultClient Client) *Decrypter {
+	return &Decrypter{vaultClient}
 }
 
-func (v *vaultDecrypter) Decrypt(keyReferences []string, encryptedData []string, ctx context.Context) ([]string, error) {
+func (v *Decrypter) Decrypt(keyReferences []string, encryptedData []string, ctx context.Context) ([]string, error) {
 	var err error
 	span, _ := tracer.StartSpanFromContext(ctx, "vault-decrypter")
 	defer span.Finish(tracer.WithError(err))
@@ -48,7 +47,7 @@ func (v *vaultDecrypter) Decrypt(keyReferences []string, encryptedData []string,
 	return result, nil
 }
 
-func (v *vaultDecrypter) decryptByKey(keyReference string, encryptedData []string, logger *log.Logger, ctx context.Context) ([]string, error) {
+func (v *Decrypter) decryptByKey(keyReference string, encryptedData []string, logger *log.Logger, ctx context.Context) ([]string, error) {
 	var batch []interface{}
 	for _, field := range encryptedData {
 		batch = append(batch, map[string]interface{}{
@@ -88,7 +87,7 @@ func (v *vaultDecrypter) decryptByKey(keyReference string, encryptedData []strin
 	return result, nil
 }
 
-func (v *vaultDecrypter) decryptWithVault(keyReference string, batch []interface{}, logger *log.Logger, ctx context.Context) (*vaultapi.Secret, error) {
+func (v *Decrypter) decryptWithVault(keyReference string, batch []interface{}, logger *log.Logger, ctx context.Context) (*vaultapi.Secret, error) {
 	var secret *vaultapi.Secret
 	var err error
 	maxRetries := 5
