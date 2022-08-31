@@ -16,19 +16,12 @@ func Configure(opts ...ConfigOption) error {
 		return fmt.Errorf("configure client: %w", err)
 	}
 
-	flagsClient = c
-	return nil
-}
-
-// Connect attempts to connect the managed singleton to LaunchDarkly. An error
-// is returned if the singleton is not yet configured, a connection has already
-// been established, or a connection error occurs.
-func Connect() error {
-	if flagsClient == nil {
-		return errClientNotConfigured
+	if err := c.Connect(); err != nil {
+		return fmt.Errorf("connect client: %w", err)
 	}
 
-	return flagsClient.Connect()
+	flagsClient = c
+	return nil
 }
 
 // GetDefaultClient returns the managed singleton client. An error is returned

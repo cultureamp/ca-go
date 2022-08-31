@@ -14,11 +14,12 @@ import (
 
 // Client is a wrapper around the LaunchDarkly client.
 type Client struct {
-	sdkKey        string
-	initWait      time.Duration
-	mode          mode
-	wrappedConfig ld.Config
-	wrappedClient *ld.LDClient
+	sdkKey             string
+	initWait           time.Duration
+	mode               mode
+	bigSegmentsEnabled bool
+	wrappedConfig      ld.Config
+	wrappedClient      *ld.LDClient
 
 	testModeConfig *TestModeConfig
 
@@ -42,17 +43,28 @@ const (
 // launchdarkly/flags/doc.go for more information.
 func NewClient(opts ...ConfigOption) (*Client, error) {
 	c := &Client{
-		initWait: 5 * time.Second, // wait up to 5 seconds for LD to connect.
-		mode:     modeProxy,       // defaults to proxying requests through the LD Relay.
+		initWait:           5 * time.Second, // wait up to 5 seconds for LD to connect.
+		mode:               modeProxy,       // defaults to proxying requests through the LD Relay.
+		bigSegmentsEnabled: true,            // defaults to enable big segments
 	}
 
 	for _, opt := range opts {
 		opt(c)
 	}
 
+	parsedConfig := configurationJSON{}
+	_, ok := os.LookupEnv(configurationEnvVar)
+	if ok {
+		config, err := configFromEnvironment()
+		if err != nil {
+			return nil, fmt.Errorf("configure from environment variable: %w", err)
+		}
+		parsedConfig = config
+	}
+
 	// Use test mode if LAUNCHDARKLY_CONFIGURATION isn't set OR if the user
 	// explicitly configured the client for test mode.
-	if _, ok := os.LookupEnv(configurationEnvVar); !ok || c.mode == modeTest {
+	if !ok || c.mode == modeTest {
 		c.mode = modeTest
 		if c.testModeConfig == nil {
 			c.testModeConfig = &TestModeConfig{}
@@ -61,11 +73,6 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 
 		// Short-circuit the rest of the configuration.
 		return c, nil
-	}
-
-	parsedConfig, err := configFromEnvironment()
-	if err != nil {
-		return nil, fmt.Errorf("configure from environment variable: %w", err)
 	}
 
 	c.sdkKey = parsedConfig.SDKKey
@@ -79,7 +86,9 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 	}
 
 	// Configure big segments if the storage table name is present
-	if parsedConfig.Storage != nil && parsedConfig.Storage.TableName != "" {
+	if c.bigSegmentsEnabled &&
+		parsedConfig.Storage != nil &&
+		parsedConfig.Storage.TableName != "" {
 		c.wrappedConfig.BigSegments = configForBigSegments(parsedConfig).BigSegments
 	}
 
