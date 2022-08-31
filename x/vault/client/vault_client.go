@@ -40,23 +40,22 @@ type VaultClient struct {
 
 // NewTestingClient creates a test vault cluster and returns a configured API
 // client and closer function.
-func NewTestingClient(t testing.TB) (*VaultClient, func(), error) {
-	t.Helper()
-	client, closer, err := testVaultServerCoreConfig(t, &vault.CoreConfig{
+func NewTestingClient(tb testing.TB) (*VaultClient, func(), error) {
+	tb.Helper()
+	client, closer, err := testVaultServerCoreConfig(tb, &vault.CoreConfig{
 		LogicalBackends: map[string]logical.Factory{
 			"transit": transit.Factory,
 		},
 	})
 	return &VaultClient{nil, client}, closer, err
-
 }
 
 // testVaultServerCoreConfig creates a new vault cluster with the given core
 // configuration. This is a lower-level test helper.
-func testVaultServerCoreConfig(t testing.TB, coreConfig *vault.CoreConfig) (*vaultapi.Client, func(), error) {
-	t.Helper()
+func testVaultServerCoreConfig(tb testing.TB, coreConfig *vault.CoreConfig) (*vaultapi.Client, func(), error) {
+	tb.Helper()
 
-	cluster := vault.NewTestCluster(benchhelpers.TBtoT(t), coreConfig, &vault.TestClusterOptions{
+	cluster := vault.NewTestCluster(benchhelpers.TBtoT(tb), coreConfig, &vault.TestClusterOptions{
 		HandlerFunc: vaulthttp.Handler,
 		NumCores:    1,
 	})
@@ -64,7 +63,7 @@ func testVaultServerCoreConfig(t testing.TB, coreConfig *vault.CoreConfig) (*vau
 
 	// Make it easy to get access to the active
 	core := cluster.Cores[0].Core
-	vault.TestWaitActive(benchhelpers.TBtoT(t), core)
+	vault.TestWaitActive(benchhelpers.TBtoT(tb), core)
 
 	// Get the client already setup for us!
 	client := cluster.Cores[0].Client

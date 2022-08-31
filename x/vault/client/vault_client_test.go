@@ -76,7 +76,7 @@ func TestNewVaultClient(t *testing.T) {
 			},
 			nil,
 			nil,
-			fmt.Errorf("no auth info was returned after login"),
+			fmt.Errorf("login auth error"),
 		},
 	}
 	for _, tt := range tests {

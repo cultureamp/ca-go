@@ -1,9 +1,10 @@
 // Package vault adds helper methods for decrypting using vault
 // To Decrypt or Encrypt, you must first create a client:
-// settings := client.VaultSettings{
-////				RoleArn: <arn here>,
-////				VaultAddr:        <vault address here>,
-////			}
+//
+//	settings := client.VaultSettings{
+//					RoleArn: <arn here>,
+//					VaultAddr:        <vault address here>,
+//				}
 //
 // client, err :=  client.NewVaultClient(&settings, ctx context.Context)
 //
