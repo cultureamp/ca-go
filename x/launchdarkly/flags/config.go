@@ -102,6 +102,12 @@ func WithTestMode(cfg *TestModeConfig) ConfigOption {
 	}
 }
 
+func WithBigSegmentsDisabled() ConfigOption {
+	return func(c *Client) {
+		c.bigSegmentsEnabled = false
+	}
+}
+
 func configFromEnvironment() (configurationJSON, error) {
 	parsedConfig := configurationJSON{}
 
