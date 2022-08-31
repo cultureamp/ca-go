@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/cultureamp/ca-go/x/log"
 	"github.com/cultureamp/ca-go/x/vault/auth"
-	"github.com/cultureamp/glamplify/log"
 	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/builtin/logical/transit"
 	"github.com/hashicorp/vault/helper/benchhelpers"
@@ -85,7 +85,7 @@ func NewVaultClient(settings *VaultSettings, ctx context.Context) (*VaultClient,
 	decrypterRoleArn := settings.RoleArn
 	if decrypterRoleArn == "" || settings.VaultAddr == "" {
 		err := fmt.Errorf("VaultClient settings incomplete, must provide RoleArn and VaultAddr")
-		logger.Error("VaultClient settings incomplete", err, log.Fields{"VaultSettings": settings})
+		logger.Error().Err(err).Msgf("VaultClient settings incomplete: %+v", settings)
 		return nil, err
 	}
 	client, err := NewClient(settings.VaultAddr)
@@ -98,7 +98,9 @@ func NewVaultClient(settings *VaultSettings, ctx context.Context) (*VaultClient,
 		return nil, err
 	}
 	if secret == nil {
-		return nil, fmt.Errorf("no auth info was returned after login")
+		err = fmt.Errorf("login auth error")
+		logger.Error().Err(err).Msg("no auth info was returned after login")
+		return nil, err
 	}
 
 	return &VaultClient{settings, client}, nil
@@ -118,11 +120,11 @@ func (v *VaultClient) RenewClient(ctx context.Context) error {
 	logger := log.NewFromCtx(ctx)
 	newClient, err := Create(v.settings, ctx)
 	if err != nil {
-		logger.Info("unable to renew vault client", log.Fields{"err": err.Error()})
+		logger.Error().Err(err).Msg("unable to renew vault client")
 		return err
 	}
 	v.client = newClient.client
-	logger.Info("Renewed vault client")
+	logger.Info().Msg("Renewed vault client")
 	return nil
 }
 

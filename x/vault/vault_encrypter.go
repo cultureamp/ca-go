@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cultureamp/ca-go/x/log"
 	"github.com/cultureamp/ca-go/x/vault/client"
-	"github.com/cultureamp/glamplify/log"
 	vaultapi "github.com/hashicorp/vault/api"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
@@ -34,8 +34,8 @@ func (v Encrypter) Encrypt(keyReferences []string, protectedData []string, ctx c
 		result = encryptedByKeyReference
 	}
 	if len(result) != len(protectedData) {
-		err := fmt.Errorf("incorrect number of encrypted values returned")
-		logger.Error("encryption secret qty err", err)
+		err := fmt.Errorf("encryption secret qty err")
+		logger.Error().Err(err).Msg("incorrect number of encrypted values returned")
 		return nil, err
 	}
 
@@ -52,14 +52,14 @@ func (v Encrypter) encrypt(keyReference string, protectedData []string, logger *
 
 	secret, err := v.encryptWithVault(keyReference, batch, logger, ctx)
 	if err != nil {
-		logger.Error("error encrypting with Vault %w", err)
+		logger.Error().Err(err).Msg("error encrypting with Vault")
 		return nil, err
 	}
 	batchResults, ok := secret.Data["batch_results"].([]interface{})
 	if !ok {
 		errStr := "batch results of encryption secret could not be cast to []interface{}"
 		err = fmt.Errorf(errStr)
-		logger.Error("batchResult casting error", err)
+		logger.Error().Err(err).Msg("batchResult casting error")
 		return nil, err
 	}
 	var result []string
@@ -67,7 +67,7 @@ func (v Encrypter) encrypt(keyReference string, protectedData []string, logger *
 		rmap, ok := r.(map[string]interface{})
 		if !ok {
 			err = fmt.Errorf("encrypt batch result element is not map[string]interface{}")
-			logger.Error("encryption batch result casting error", err)
+			logger.Error().Err(err).Msg("encryption batch result casting error")
 			return nil, err
 		}
 		ciphertext := fmt.Sprintf("%v", rmap["ciphertext"])
@@ -86,12 +86,12 @@ func (v Encrypter) encryptWithVault(keyReference string, batch []interface{}, lo
 			if strings.Contains(err.Error(), client.VaultPermissionError) {
 				err = v.vaultClient.RenewClient(ctx)
 				if err != nil {
-					logger.Error("unable to initialize Vault encrypter: %w", err)
+					logger.Error().Err(err).Msg("unable to renew Vault encrypter")
 					return nil, err
 				}
 				continue
 			}
-			logger.Error("error calling vault encrypt API %w", err)
+			logger.Error().Err(err).Msg("error calling vault encrypt API")
 			return nil, err
 		} else {
 			break

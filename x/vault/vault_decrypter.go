@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cultureamp/ca-go/x/log"
 	"github.com/cultureamp/ca-go/x/vault/client"
-	"github.com/cultureamp/glamplify/log"
 	vaultapi "github.com/hashicorp/vault/api"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
@@ -40,7 +40,7 @@ func (v *Decrypter) Decrypt(keyReferences []string, encryptedData []string, ctx 
 	}
 	if len(result) != len(encryptedData) {
 		err := fmt.Errorf("incorrect number of decrypted values returned")
-		logger.Error("decryption secret qty err", err)
+		logger.Error().Err(err).Msg("decryption secret qty err")
 		return nil, err
 	}
 
@@ -62,9 +62,8 @@ func (v *Decrypter) decryptByKey(keyReference string, encryptedData []string, lo
 
 	batchResults, ok := secret.Data["batch_results"].([]interface{})
 	if !ok {
-		errStr := "batch results of decryption secret could not be cast to []interface{}"
-		err = fmt.Errorf(errStr)
-		logger.Error(errStr, err)
+		err = fmt.Errorf("batch results casting error")
+		logger.Error().Err(err).Msg("batch results of decryption secret could not be cast to []interface{}")
 		return nil, err
 	}
 
@@ -72,14 +71,14 @@ func (v *Decrypter) decryptByKey(keyReference string, encryptedData []string, lo
 	for _, r := range batchResults {
 		rmap, ok := r.(map[string]interface{})
 		if !ok {
-			err = fmt.Errorf("batch result decryption element is not map[string]interface{}")
-			logger.Error("batch result casting error", err)
+			err = fmt.Errorf("batch result casting error")
+			logger.Error().Err(err).Msg("batch result decryption element is not map[string]interface{}")
 			return nil, err
 		}
 		plaintext := fmt.Sprintf("%v", rmap["plaintext"])
 		base64Decoded, err := base64.StdEncoding.DecodeString(plaintext)
 		if err != nil {
-			logger.Error("Error base64 decoding", err)
+			logger.Error().Err(err).Msg("Error base64 decoding")
 			return nil, err
 		}
 		result = append(result, string(base64Decoded))
@@ -97,12 +96,12 @@ func (v *Decrypter) decryptWithVault(keyReference string, batch []interface{}, l
 			if strings.Contains(err.Error(), client.VaultPermissionError) {
 				err = v.vaultClient.RenewClient(ctx)
 				if err != nil {
-					logger.Info("unable to renew vault client", log.Fields{"err": err.Error()})
+					logger.Error().Err(err).Msg("unable to renew vault client")
 					return nil, err
 				}
 				continue
 			}
-			logger.Error("Vault client returned unhandled error", err)
+			logger.Error().Err(err).Msg("Error calling vault decrypt API")
 			return nil, err
 		} else {
 			break
