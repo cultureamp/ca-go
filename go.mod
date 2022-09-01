@@ -15,7 +15,7 @@ require (
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rs/zerolog v1.28.0
-	goa.design/goa/v3 v3.6.0
+	goa.design/goa/v3 v3.8.4
 )
 
 require (
@@ -24,7 +24,7 @@ require (
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
@@ -41,7 +41,7 @@ require (
 	github.com/xdg-go/stringprep v1.0.3 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/net v0.0.0-20220809184613-07c6da5e1ced // indirect
-	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
+	golang.org/x/sys v0.0.0-20220803195053-6e608f9ce704 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/ghodss/yaml.v1 v1.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
