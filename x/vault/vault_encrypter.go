@@ -25,6 +25,9 @@ func (v Encrypter) Encrypt(keyReferences []string, protectedData []string, ctx c
 	span, _ := tracer.StartSpanFromContext(ctx, "vault-encrypter")
 	defer span.Finish(tracer.WithError(err))
 	logger := log.NewFromCtx(ctx)
+	if len(keyReferences) < 1 {
+		return nil, client.VaultMissingKeysError
+	}
 	result := protectedData
 	for _, keyReference := range keyReferences {
 		encryptedByKeyReference, err := v.encrypt(keyReference, result, logger, ctx)

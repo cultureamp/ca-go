@@ -19,6 +19,8 @@
 //
 // encryptedSecret, err := encrypter.Encrypt(keyReferences, decryptedKeys, ctx)
 //
+// # If no keys are passed to Encrypt or Decrypt a VaultMissingKeysError will be thrown
+//
 // The default aws region for generating AWS login data is 'us-east-1' which
 // can be changed by using the env var AWS_REGION
 package vault

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -23,9 +24,10 @@ const (
 )
 
 var (
-	Create    = NewVaultClient
-	Login     = wrappedLogin
-	NewClient = wrappedNewVClient
+	Create                = NewVaultClient
+	Login                 = wrappedLogin
+	NewClient             = wrappedNewVClient
+	VaultMissingKeysError = errors.New("no key references passed")
 )
 
 type VaultSettings struct {

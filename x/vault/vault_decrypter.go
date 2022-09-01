@@ -30,6 +30,9 @@ func (v *Decrypter) Decrypt(keyReferences []string, encryptedData []string, ctx 
 	span, _ := tracer.StartSpanFromContext(ctx, "vault-decrypter")
 	defer span.Finish(tracer.WithError(err))
 	logger := log.NewFromCtx(ctx)
+	if len(keyReferences) < 1 {
+		return nil, client.VaultMissingKeysError
+	}
 	result := encryptedData
 	for _, keyReference := range reverse(keyReferences) {
 		decryptedByKeyReference, err := v.decryptByKey(keyReference, result, logger, ctx)

@@ -15,6 +15,7 @@ func TestEncrypt(t *testing.T) {
 	tests := []struct {
 		name        string
 		secretData  map[string]interface{}
+		keyRefs     []string
 		shouldRenew bool
 		returnErr   error
 		expErr      error
@@ -28,9 +29,18 @@ func TestEncrypt(t *testing.T) {
 					},
 				},
 			},
+			[]string{"keyRef1"},
 			false,
 			nil,
 			nil,
+		},
+		{
+			"should error when no keys are given",
+			nil,
+			[]string{},
+			false,
+			nil,
+			client.VaultMissingKeysError,
 		},
 		{
 			"should error when secret is returns wrong number of results",
@@ -44,6 +54,7 @@ func TestEncrypt(t *testing.T) {
 					},
 				},
 			},
+			[]string{"keyRef1"},
 			false,
 			nil,
 			fmt.Errorf("encryption secret qty err"),
@@ -57,6 +68,7 @@ func TestEncrypt(t *testing.T) {
 					},
 				},
 			},
+			[]string{"keyRef1"},
 			false,
 			nil,
 			nil,
@@ -64,6 +76,7 @@ func TestEncrypt(t *testing.T) {
 		{
 			"should error when getSecret errors",
 			nil,
+			[]string{"keyRef1"},
 			false,
 			fmt.Errorf("secretError"),
 			fmt.Errorf("secretError"),
@@ -77,6 +90,7 @@ func TestEncrypt(t *testing.T) {
 					},
 				},
 			},
+			[]string{"keyRef1"},
 			true,
 			fmt.Errorf(client.VaultPermissionError),
 			nil,
@@ -84,6 +98,7 @@ func TestEncrypt(t *testing.T) {
 		{
 			"should error when renewClient returns error",
 			nil,
+			[]string{"keyRef1"},
 			false,
 			fmt.Errorf(client.VaultPermissionError),
 			fmt.Errorf(client.VaultPermissionError),
@@ -95,6 +110,7 @@ func TestEncrypt(t *testing.T) {
 					"cyphertext": decryptedString,
 				},
 			},
+			[]string{"keyRef1"},
 			false,
 			nil,
 			fmt.Errorf("batch results of encryption secret could not be cast to []interface{}"),
@@ -104,12 +120,13 @@ func TestEncrypt(t *testing.T) {
 			map[string]interface{}{
 				"batch_results": []interface{}{"ciphertext"},
 			},
+			[]string{"keyRef1"},
 			false,
 			nil,
 			fmt.Errorf("encrypt batch result element is not map[string]interface{}"),
 		},
 	}
-	keyReferences := []string{"keyRef1"}
+
 	decryptedData := []string{"decrypted1"}
 	ctx := context.Background()
 	for _, tt := range tests {
@@ -143,7 +160,7 @@ func TestEncrypt(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			v := NewVaultEncrypter(mockClient)
-			_, err := v.Encrypt(keyReferences, decryptedData, ctx)
+			_, err := v.Encrypt(tt.keyRefs, decryptedData, ctx)
 			assert.Equal(t, tt.shouldRenew, renewed)
 			fmt.Printf("tt err: %v, err: %v\n", tt.expErr, err)
 			assert.Equal(t, tt.expErr, err)
