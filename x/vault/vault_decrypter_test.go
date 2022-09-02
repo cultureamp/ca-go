@@ -59,7 +59,7 @@ func TestDecrypt(t *testing.T) {
 			[]string{},
 			false,
 			nil,
-			client.VaultMissingKeysError,
+			client.ErrVaultMissingKeys,
 		},
 		{
 			"should error when secret is returns wrong number of results",

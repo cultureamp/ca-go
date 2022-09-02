@@ -31,7 +31,7 @@ func (v *Decrypter) Decrypt(keyReferences []string, encryptedData []string, ctx 
 	defer span.Finish(tracer.WithError(err))
 	logger := log.NewFromCtx(ctx)
 	if len(keyReferences) < 1 {
-		return nil, client.VaultMissingKeysError
+		return nil, client.ErrVaultMissingKeys
 	}
 	result := encryptedData
 	for _, keyReference := range reverse(keyReferences) {

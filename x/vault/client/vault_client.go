@@ -24,10 +24,10 @@ const (
 )
 
 var (
-	Create                = NewVaultClient
-	Login                 = wrappedLogin
-	NewClient             = wrappedNewVClient
-	VaultMissingKeysError = errors.New("no key references passed")
+	Create              = NewVaultClient
+	Login               = wrappedLogin
+	NewClient           = wrappedNewVClient
+	ErrVaultMissingKeys = errors.New("no key references passed")
 )
 
 type VaultSettings struct {
