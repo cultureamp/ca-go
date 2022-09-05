@@ -32,24 +32,35 @@ func (u User) ToLDUser() lduser.User {
 	return u.ldUser
 }
 
-// UserOption are functions that can be supplied to configure a new user with
-// additional attributes.
-type UserOption func(*User)
+func (u *User) SetAccountID(accountID string) {
+	u.accountID = accountID
+}
+
+func (u *User) SetRealUserID(realUserID string) {
+	u.realUserID = realUserID
+}
+
+type nameYourInterface interface {
+	SetAccountID(string)
+	SetRealUserID(string)
+}
+
+type Option func(nameYourInterface)
 
 // WithAccountID configures the user with the given account ID.
 // This is the ID of the currently logged in user's parent account/organization,
 // sometimes known as the "account_aggregate_id".
-func WithAccountID(id string) UserOption {
-	return func(u *User) {
-		u.accountID = id
+func WithAccountID(id string) Option {
+	return func(u nameYourInterface) {
+		u.SetAccountID(id)
 	}
 }
 
 // WithRealUserID configures the user with the given real user ID.
 // This is the ID of the user who is currently impersonating the current user.
-func WithRealUserID(id string) UserOption {
-	return func(u *User) {
-		u.realUserID = id
+func WithRealUserID(id string) Option {
+	return func(u nameYourInterface) {
+		u.SetRealUserID(id)
 	}
 }
 
@@ -96,7 +107,7 @@ func NewAnonymousUserWithSubdomain(key string, subdomain string) User {
 // NewUser returns a new user object with the given user ID and options.
 // userID is the ID of the currently authenticated user, and will generally
 // be a "user_aggregate_id".
-func NewUser(userID string, opts ...UserOption) User {
+func NewUser(userID string, opts ...Option) User {
 	u := &User{
 		key:    userID,
 		userID: userID,
