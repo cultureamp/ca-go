@@ -15,7 +15,7 @@ require (
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rs/zerolog v1.28.0
-	goa.design/goa/v3 v3.8.4
+	goa.design/goa/v3 v3.8.5
 )
 
 require (
