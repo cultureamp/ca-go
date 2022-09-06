@@ -49,7 +49,7 @@ func TestNewUser(t *testing.T) {
 
 		user = evaluationcontext.NewUser(
 			"not-a-uuid",
-			evaluationcontext.WithAccountID("not-a-uuid"),
+			evaluationcontext.WithUserAccountID("not-a-uuid"),
 			evaluationcontext.WithRealUserID("not-a-uuid"))
 		assertUserAttributes(t, user, "not-a-uuid", "not-a-uuid", "not-a-uuid")
 	})

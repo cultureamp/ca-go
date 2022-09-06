@@ -28,6 +28,8 @@ type User struct {
 	ldUser lduser.User
 }
 
+// ToLDUser transforms the context implementation into an LDUser object that can
+// be understood by LaunchDarkly when evaluating a flag.
 func (u User) ToLDUser() lduser.User {
 	return u.ldUser
 }
@@ -36,10 +38,10 @@ func (u User) ToLDUser() lduser.User {
 // additional attributes.
 type UserOption func(*User)
 
-// WithAccountID configures the user with the given account ID.
+// WithUserAccountID configures the user with the given account ID.
 // This is the ID of the currently logged in user's parent account/organization,
 // sometimes known as the "account_aggregate_id".
-func WithAccountID(id string) UserOption {
+func WithUserAccountID(id string) UserOption {
 	return func(u *User) {
 		u.accountID = id
 	}
@@ -133,6 +135,6 @@ func UserFromContext(ctx context.Context) (User, error) {
 
 	return NewUser(
 		authenticatedUser.UserID,
-		WithAccountID(authenticatedUser.CustomerAccountID),
+		WithUserAccountID(authenticatedUser.CustomerAccountID),
 		WithRealUserID(authenticatedUser.RealUserID)), nil
 }
