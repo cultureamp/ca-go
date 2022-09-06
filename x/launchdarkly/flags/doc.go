@@ -70,7 +70,7 @@
 // You can also supply your own evaluation context:
 //   user := flags.NewUser(
 //             "user-id",
-//             flags.WithAccountID("account-id"),
+//             flags.WithUserAccountID("account-id"),
 //   )
 //
 //   val, err := client.QueryBoolWithEvaluationContext("my-flag", user, false)
