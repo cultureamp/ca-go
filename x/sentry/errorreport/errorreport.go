@@ -2,8 +2,10 @@ package errorreport
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/cultureamp/ca-go/x/request"
 	"github.com/getsentry/sentry-go"
@@ -91,6 +93,22 @@ func Decorate(tags map[string]string) func() {
 	scope := sentry.CurrentHub().PushScope()
 	scope.SetTags(tags)
 	return sentry.PopScope
+}
+
+// GracefullyShutdown flushes the Sentry client buffered events with blocking for at most the given timeout.
+func GracefullyShutdown(err interface{}, timeout time.Duration) {
+	var newError error
+	switch content := err.(type) {
+	case string:
+		newError = errors.New(content)
+	case error:
+		newError = content
+	default:
+		message := fmt.Sprintf("unknown panic: %T", content)
+		newError = errors.New(message)
+	}
+	sentry.CurrentHub().Recover(newError)
+	sentry.Flush(timeout)
 }
 
 func addRequestFieldsToScope(ctx context.Context, scope *sentry.Scope) {
