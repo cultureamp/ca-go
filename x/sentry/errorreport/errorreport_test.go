@@ -3,7 +3,9 @@ package errorreport_test
 import (
 	"context"
 	"errors"
+	"log"
 	"testing"
+	"time"
 
 	"github.com/cultureamp/ca-go/x/sentry/errorreport"
 	"github.com/getsentry/sentry-go"
@@ -199,6 +201,40 @@ func TestConfigureWithTags(t *testing.T) {
 			tags := mockSentryTransport.events[0].Tags
 
 			assert.Equal(t, expected, tags)
+		})
+	}
+}
+
+func TestGracefullyShutdown(t *testing.T) {
+	type myError struct{}
+
+	cases := []struct {
+		name      string
+		panicFunc func(error)
+		err       error
+	}{
+		{name: "shut down due to panic", panicFunc: func(err error) { panic(err) }, err: errors.New("panic error")},
+		{name: "shut down due to log panic", panicFunc: func(err error) { log.Panic(err) }, err: errors.New("log panic error")},
+		{name: "shut down due to unknown panic", panicFunc: func(err error) { panic(myError{}) }, err: errors.New("unknown panic: errorreport_test.myError")},
+		{name: "shut down due to panic with string message", panicFunc: func(err error) { panic("error with string message") }, err: errors.New("error with string message")},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			testingScope(t)
+			mockSentryTransport := setupMockSentryTransport(t,
+				errorreport.WithBeforeFilter(errorreport.RootCauseAsTitle),
+			)
+
+			defer func() {
+				if err := recover(); err != nil {
+					errorreport.GracefullyShutdown(err, time.Second*1)
+				}
+				require.Len(t, mockSentryTransport.events, 1)
+				event := mockSentryTransport.events[0]
+				assert.Equal(t, tc.err.Error(), event.Exception[0].Type)
+			}()
+			tc.panicFunc(tc.err)
 		})
 	}
 }
