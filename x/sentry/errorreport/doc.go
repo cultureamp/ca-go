@@ -18,6 +18,14 @@
 // Ad-hoc errors can be reported using ReportError():
 //   errorreport.ReportError(ctx, errors.New("We hit a snag!"))
 //
+// For application without middleware,
+// Panic can be captured and reported to sentry in main before the program exits in main
+//   defer func() {
+//     if err := recover(); err != nil {
+//       errorreport.GracefullyShutdown(err, timeout)
+//   }()
+//
+// For application with middleware,
 // HTTP middleware can be used. Passing in nil uses the default panic handler.
 // See the OnRequestPanicHandler type if you wish to supply your own.
 //   mw := middleware.NewHTTPMiddleware(nil)
