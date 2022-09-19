@@ -3,13 +3,14 @@ package errorreport_test
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/cultureamp/ca-go/x/log"
 	"github.com/cultureamp/ca-go/x/sentry/errorreport"
 )
 
-// Set these variables at build time using linker flags (-ldflags)
 var (
 	app         string
 	appVersion  string
@@ -24,18 +25,22 @@ type Settings struct {
 	AppEnv    string
 }
 
-func Example() {
+func getSettings() *Settings {
+	return &Settings{
+		SentryDSN: os.Getenv("SENTRY_DSN"),
+		Farm:      os.Getenv("FARM"),
+		AppEnv:    os.Getenv("APP_ENV"),
+	}
+}
+
+func Example_lambda() {
 	// This is an example of how to use the errorreport package in a Lambda
 	// function. The following is an example `main` function.
 
 	ctx := context.Background()
 
 	// in a real application, use something like "github.com/kelseyhightower/envconfig"
-	settings := &Settings{
-		SentryDSN: os.Getenv("SENTRY_DSN"),
-		Farm:      os.Getenv("FARM"),
-		AppEnv:    os.Getenv("APP_ENV"),
-	}
+	settings := getSettings()
 
 	// configure error reporting settings
 	err := errorreport.Init(
@@ -93,4 +98,56 @@ func processRecord(ctx context.Context, record events.KinesisEventRecord) error 
 
 	// do something with the record
 	return nil
+}
+
+func Example_fargate() {
+	// This is an example of how to use the errorreport package in a Main
+	// function. The following is an example `main` function.
+
+	ctx := context.Background()
+	logger := log.NewFromCtx(ctx)
+
+	settings := getSettings()
+
+	// configure error reporting settings
+	err := errorreport.Init(
+		errorreport.WithDSN(settings.SentryDSN),
+		errorreport.WithRelease(app, appVersion),
+		errorreport.WithEnvironment(settings.AppEnv),
+		errorreport.WithBuildDetails(settings.Farm, buildNumber, branch, commit),
+		errorreport.WithTag("application_name", app),
+		// optionally add a tag to every error report
+		errorreport.WithTag("animal", "gopher"),
+
+		// or add multiple tags at once to be added to every error report
+		errorreport.WithTags(map[string]string{
+			"genus":   "phoenicoparrus",
+			"species": "jamesi",
+		}),
+		errorreport.WithBeforeFilter(errorreport.RootCauseAsTitle),
+	)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("sentry init")
+	}
+
+	// handle core business logic here
+	handleBusinessLogic(ctx)
+
+	// capture panic and report to sentry before the program exits
+	defer func() {
+		if err := recover(); err != nil {
+			errorreport.GracefullyShutdown(err, time.Second*5)
+		}
+	}()
+}
+
+func handleBusinessLogic(ctx context.Context) {
+	if _, err := doSomething(); err != nil {
+		// report a error to sentry
+		errorreport.ReportError(ctx, err)
+	}
+}
+
+func doSomething() (string, error) {
+	return "", nil
 }
