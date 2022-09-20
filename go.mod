@@ -12,7 +12,7 @@ require (
 
 require (
 	github.com/Shopify/sarama v1.34.0
-	github.com/getsentry/sentry-go v0.11.0
+	github.com/getsentry/sentry-go v0.13.0
 	github.com/hashicorp/go-hclog v1.1.0
 	github.com/hashicorp/go-secure-stdlib/awsutil v0.1.6
 	github.com/hashicorp/vault v1.11.2
