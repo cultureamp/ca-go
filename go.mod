@@ -19,7 +19,7 @@ require (
 	github.com/hashicorp/vault/api v1.7.2
 	github.com/hashicorp/vault/sdk v0.5.3
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/rs/zerolog v1.27.0
+	github.com/rs/zerolog v1.28.0
 	goa.design/goa/v3 v3.6.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.34.0
 )
