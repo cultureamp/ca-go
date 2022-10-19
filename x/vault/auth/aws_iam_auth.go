@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -13,7 +12,8 @@ import (
 )
 
 const (
-	loginPath = "auth/aws/login"
+	defaultStsRegion = "us-east-1"
+	loginPath        = "auth/aws/login"
 )
 
 type AWSIamAuth struct {
@@ -33,14 +33,10 @@ func (auth *AWSIamAuth) Login(ctx context.Context, client *vaultapi.Client) (*va
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS session: %w", err)
 	}
-	region, ok := os.LookupEnv("AWS_REGION")
-	if !ok {
-		region = ""
-	}
 	loginData, err := awsutil.GenerateLoginData(
 		stscreds.NewCredentials(awsSession, auth.roleArn),
 		"",
-		region,
+		defaultStsRegion,
 		hclog.Default(),
 	)
 	if err != nil {
