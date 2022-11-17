@@ -1,2 +1,4 @@
 .vscode
 /artifacts
+.DS_Store
+/.idea
