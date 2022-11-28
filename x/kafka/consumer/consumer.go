@@ -117,7 +117,7 @@ func (c *Consumer) Close() error {
 	return nil
 }
 
-func (c *Consumer) consumeMessage(ctx context.Context, handler Handler) (err error) {
+func (c *Consumer) consumeMessage(ctx context.Context, handler Handler) error {
 	msg, err := c.reader.FetchMessage(ctx)
 	if err != nil {
 		if errors.Is(err, io.EOF) {
@@ -295,7 +295,7 @@ func DialerSCRAM512(username string, password string) (*kafka.Dialer, error) {
 		Timeout:       10 * time.Second,
 		DualStack:     true,
 		SASLMechanism: mechanism,
-		TLS:           &tls.Config{},
+		TLS:           &tls.Config{MinVersion: tls.VersionTLS12},
 	}, nil
 }
 
@@ -310,7 +310,7 @@ type HandlerRetryBackOffConstructor func() backoff.BackOff
 //
 // The max interval of 5 hours is intended to leave enough time for manual
 // intervention if necessary.
-func NonStopExponentialBackOff() backoff.BackOff {
+func NonStopExponentialBackOff() backoff.BackOff { //nolint:ireturn
 	bo := backoff.NewExponentialBackOff()
 	bo.RandomizationFactor = 0
 	bo.MaxInterval = 5 * time.Hour

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"sync"
 	"testing"
@@ -15,6 +16,7 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	kafkatrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/segmentio/kafka.go.v0"
 )
 
 func TestNewConsumer(t *testing.T) {
@@ -54,10 +56,14 @@ func TestNewConsumer(t *testing.T) {
 			c := NewConsumer(dialer, tt.config,
 				WithHandlerBackOffRetry(wantBackOff),
 				WithNotifyError(wantNotify),
+				WithReaderLogger(func(s string, i ...interface{}) { log.Println(s) }),
+				WithReaderErrorLogger(func(s string, i ...interface{}) { log.Println(s) }),
+				WithDataDogTracing(),
 			)
 			require.NotNil(t, c)
 			assert.Equal(t, c.readerConfig.Dialer, dialer)
 			assert.NotNil(t, c.reader)
+			assert.IsType(t, &kafkatrace.Reader{}, c.reader)
 			assert.NotNil(t, c.backOffConstructor)
 			assert.NotNil(t, c.notifyErr)
 
@@ -108,13 +114,13 @@ func TestConsumer_Run_error(t *testing.T) {
 	}{
 		{
 			name:         "consumer  unable to handle message",
-			wantError:    errors.New(fmt.Sprintf("consumer %s unable to handle message: %s", wantConsumerID, wantHandlerErr.Error())),
+			wantError:    fmt.Errorf("consumer %s unable to handle message: %w", wantConsumerID, wantHandlerErr),
 			shouldNotify: false,
 			numRetries:   0,
 		},
 		{
 			name:         "handler error after backoff retry and notify",
-			wantError:    errors.New(fmt.Sprintf("consumer %s unable to handle message: %s", wantConsumerID, wantHandlerErr.Error())),
+			wantError:    fmt.Errorf("consumer %s unable to handle message: %w", wantConsumerID, wantHandlerErr),
 			shouldNotify: true,
 			numRetries:   3,
 			setup: func(t *testing.T, consumer *Consumer) {
@@ -152,7 +158,7 @@ func TestConsumer_Run_error(t *testing.T) {
 		},
 		{
 			name:             "consumer context done error",
-			wantError:        errors.New(fmt.Sprintf("consumer %s unable to handle message: context canceled", wantConsumerID)),
+			wantError:        fmt.Errorf("consumer %s unable to handle message: context canceled", wantConsumerID),
 			contextCancelled: true,
 			shouldNotify:     false,
 			numRetries:       0,
@@ -280,6 +286,17 @@ func TestGroup_Run(t *testing.T) {
 	wantCount := len(wantMsgs) * wantConsumers
 	require.Equal(t, wantCount, count.val)
 	require.NoError(t, group.Close())
+}
+
+func TestNonStopExponentialBackOff(t *testing.T) {
+	bo := NonStopExponentialBackOff()
+	assert.Equal(t, 500*time.Millisecond, bo.NextBackOff())
+	assert.Equal(t, 4*time.Second, bo.NextBackOff())
+	assert.Equal(t, 32*time.Second, bo.NextBackOff())
+	assert.Equal(t, (4*time.Minute)+(16*time.Second), bo.NextBackOff())
+	assert.Equal(t, (34*time.Minute)+(8*time.Second), bo.NextBackOff())
+	assert.Equal(t, (4*time.Hour)+(33*time.Minute)+(4*time.Second), bo.NextBackOff())
+	assert.Equal(t, 5*time.Hour, bo.NextBackOff())
 }
 
 type mockReader struct {
