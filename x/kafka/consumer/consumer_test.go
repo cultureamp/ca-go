@@ -48,12 +48,13 @@ func TestNewConsumer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			wantBackOff := NonStopExponentialBackOff
-			wantNotify := func(ctx context.Context, err error, msg kafka.Message, md Metadata) {}
+			wantNotify := func(ctx context.Context, err error, msg Message) {}
 
 			dialer, err := DialerSCRAM512("username", "password")
 			require.NoError(t, err)
 
 			c := NewConsumer(dialer, tt.config,
+				WithGroupBalancers(kafka.RoundRobinGroupBalancer{}),
 				WithHandlerBackOffRetry(wantBackOff),
 				WithNotifyError(wantNotify),
 				WithReaderLogger(func(s string, i ...interface{}) { log.Println(s) }),
@@ -85,8 +86,8 @@ func TestConsumer_Run(t *testing.T) {
 	}
 
 	var gotMsgs []kafka.Message
-	handler := func(ctx context.Context, msg kafka.Message, md Metadata) error {
-		gotMsgs = append(gotMsgs, msg)
+	handler := func(ctx context.Context, msg Message) error {
+		gotMsgs = append(gotMsgs, msg.Message)
 		return nil
 	}
 
@@ -129,10 +130,10 @@ func TestConsumer_Run_error(t *testing.T) {
 						maxAttempts: 3,
 					}
 				}
-				consumer.notifyErr = func(ctx context.Context, err error, msg kafka.Message, md Metadata) {
-					assert.Equal(t, gotAttempts, md.Attempt)
+				consumer.notifyErr = func(ctx context.Context, err error, msg Message) {
+					assert.Equal(t, gotAttempts, msg.Metadata.Attempt)
 					assert.Equal(t, wantHandlerErr, err)
-					assert.Equal(t, wantMsg, msg)
+					assert.Equal(t, wantMsg, msg.Message)
 					didNotify = true
 				}
 			},
@@ -146,12 +147,12 @@ func TestConsumer_Run_error(t *testing.T) {
 				consumer.backOffConstructor = func() backoff.BackOff {
 					return &testBackoff{}
 				}
-				consumer.notifyErr = func(ctx context.Context, err error, msg kafka.Message, md Metadata) {
-					assert.Equal(t, gotAttempts, md.Attempt)
+				consumer.notifyErr = func(ctx context.Context, err error, msg Message) {
+					assert.Equal(t, gotAttempts, msg.Metadata.Attempt)
 					if err != nil {
 						assert.Equal(t, wantHandlerErr, err)
 					}
-					assert.Equal(t, wantMsg, msg)
+					assert.Equal(t, wantMsg, msg.Message)
 					didNotify = true
 				}
 			},
@@ -186,7 +187,7 @@ func TestConsumer_Run_error(t *testing.T) {
 				tt.setup(t, consumer)
 			}
 
-			handler := func(ctx context.Context, msg kafka.Message, md Metadata) error {
+			handler := func(ctx context.Context, msg Message) error {
 				gotAttempts++
 				if wantErr != nil || gotAttempts < tt.numRetries {
 					return wantHandlerErr
@@ -236,7 +237,7 @@ func TestNewGroup(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			wantBackOff := NonStopExponentialBackOff
-			wantNotify := func(ctx context.Context, err error, msg kafka.Message, md Metadata) {}
+			wantNotify := func(ctx context.Context, err error, msg Message) {}
 			wantOpts := []Option{WithHandlerBackOffRetry(wantBackOff), WithNotifyError(wantNotify)}
 
 			g := NewGroup(&kafka.Dialer{}, tt.config, wantOpts...)
@@ -271,7 +272,7 @@ func TestGroup_Run(t *testing.T) {
 	// Concurrent safe counter since handler runs from multiple consumer go routines.
 	var count syncCounter
 
-	handler := func(ctx context.Context, msg kafka.Message, md Metadata) error {
+	handler := func(ctx context.Context, msg Message) error {
 		count.Lock()
 		defer count.Unlock()
 		count.val++
@@ -294,7 +295,7 @@ func TestGroup_Run_readerError(t *testing.T) {
 	wantCloseErr := errors.New("error closing reader")
 	wantConsumers := 1
 
-	handler := func(ctx context.Context, msg kafka.Message, md Metadata) error {
+	handler := func(ctx context.Context, msg Message) error {
 		return nil
 	}
 

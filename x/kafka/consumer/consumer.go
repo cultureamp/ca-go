@@ -25,11 +25,16 @@ type Metadata struct {
 	Attempt    int
 }
 
+type Message struct {
+	kafka.Message
+	Metadata
+}
+
 // NotifyError is a notify-on-error function used to report consumer handler errors.
-type NotifyError func(ctx context.Context, err error, msg kafka.Message, metadata Metadata)
+type NotifyError func(ctx context.Context, err error, msg Message)
 
 // Handler specifies how a consumer should handle a received Kafka message.
-type Handler func(ctx context.Context, message kafka.Message, metadata Metadata) error
+type Handler func(ctx context.Context, msg Message) error
 
 // Reader fetches and commits messages from a Kafka topic.
 type Reader interface {
@@ -71,7 +76,6 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 			GroupID:               config.GroupID,
 			Topic:                 config.Topic,
 			Dialer:                dialer,
-			GroupBalancers:        []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}},
 			WatchPartitionChanges: true,
 		},
 	}
@@ -174,16 +178,20 @@ func (c *Consumer) handle(ctx context.Context, msg kafka.Message, handler Handle
 		}
 
 		attempt++
-		md := Metadata{
-			GroupID:    c.readerConfig.GroupID,
-			ConsumerID: c.id,
-			Attempt:    attempt,
+
+		consumerMsg := Message{
+			Message: msg,
+			Metadata: Metadata{
+				GroupID:    c.readerConfig.GroupID,
+				ConsumerID: c.id,
+				Attempt:    attempt,
+			},
 		}
 
-		err = handler(ctx, msg, md)
+		err = handler(ctx, consumerMsg)
 		if err != nil {
 			if c.notifyErr != nil {
-				c.notifyErr(ctx, err, msg, md)
+				c.notifyErr(ctx, err, consumerMsg)
 			}
 			continue
 		}

@@ -39,9 +39,9 @@ func main() {
 	}
 }
 
-func handle(ctx context.Context, msg kafka.Message, metadata consumer.Metadata) error {
+func handle(ctx context.Context, msg consumer.Message) error {
 	log.Printf("message at consumer: %s topic:%v partition:%v offset:%v	%s = %s\n",
-		metadata.ConsumerID, msg.Topic, msg.Partition, msg.Offset, string(msg.Key), string(msg.Value),
+		msg.Metadata.ConsumerID, msg.Topic, msg.Partition, msg.Offset, string(msg.Key), string(msg.Value),
 	)
 	return nil
 }

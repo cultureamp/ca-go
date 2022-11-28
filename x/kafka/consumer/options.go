@@ -7,6 +7,19 @@ import (
 
 type Option func(consumer *Consumer)
 
+// WithGroupBalancers adds a priority-ordered list of client-side consumer group
+// balancing strategies that will be offered to the coordinator. The first strategy
+// that all group members support will be chosen by the leader.
+//
+// Default: [Range, RoundRobin]
+//
+// Only used when GroupID is set
+func WithGroupBalancers(groupBalancers ...kafka.GroupBalancer) Option {
+	return func(consumer *Consumer) {
+		consumer.readerConfig.GroupBalancers = groupBalancers
+	}
+}
+
 // WithHandlerBackOffRetry adds a back off retry policy on the consumer handler.
 func WithHandlerBackOffRetry(backOffConstructor HandlerRetryBackOffConstructor) Option {
 	return func(consumer *Consumer) {
