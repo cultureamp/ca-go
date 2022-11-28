@@ -277,7 +277,8 @@ func (g *Group) Close() error {
 	}
 
 	if len(errs) > 0 {
-		return fmt.Errorf("error closing consumer group: %s", strings.Join(errs, ", "))
+		err := fmt.Errorf("error closing consumer group: %s", strings.Join(errs, "; "))
+		return err
 	}
 
 	return nil
