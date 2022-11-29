@@ -7,13 +7,24 @@ import (
 
 type Option func(consumer *Consumer)
 
+// WithExplicitCommit enables offset commit only after a message is successfully
+// handled.
+//
+// Do not use this option if the default behaviour of committing offsets on initial
+// read (before handling the message) is required.
+func WithExplicitCommit() Option {
+	return func(consumer *Consumer) {
+		consumer.withExplicitCommit = true
+	}
+}
+
 // WithGroupBalancers adds a priority-ordered list of client-side consumer group
 // balancing strategies that will be offered to the coordinator. The first strategy
 // that all group members support will be chosen by the leader.
 //
 // Default: [Range, RoundRobin]
 //
-// Only used when GroupID is set
+// Only used by consumer group.
 func WithGroupBalancers(groupBalancers ...kafka.GroupBalancer) Option {
 	return func(consumer *Consumer) {
 		consumer.readerConfig.GroupBalancers = groupBalancers

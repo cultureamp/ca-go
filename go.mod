@@ -14,6 +14,7 @@ require (
 	github.com/Shopify/sarama v1.34.0
 	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/getsentry/sentry-go v0.11.0
+	github.com/golang/mock v1.6.0
 	github.com/hashicorp/go-hclog v1.1.0
 	github.com/hashicorp/go-secure-stdlib/awsutil v0.1.6
 	github.com/hashicorp/vault v1.11.2

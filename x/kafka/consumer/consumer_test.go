@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
 	"sync"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
@@ -49,12 +49,14 @@ func TestNewConsumer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			wantBackOff := NonStopExponentialBackOff
 			wantNotify := func(ctx context.Context, err error, msg Message) {}
+			wantBalancers := []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}}
 
 			dialer, err := DialerSCRAM512("username", "password")
 			require.NoError(t, err)
 
 			c := NewConsumer(dialer, tt.config,
-				WithGroupBalancers(kafka.RoundRobinGroupBalancer{}),
+				WithExplicitCommit(),
+				WithGroupBalancers(wantBalancers...),
 				WithHandlerBackOffRetry(wantBackOff),
 				WithNotifyError(wantNotify),
 				WithReaderLogger(func(s string, i ...interface{}) { log.Println(s) }),
@@ -67,6 +69,7 @@ func TestNewConsumer(t *testing.T) {
 			assert.IsType(t, &kafkatrace.Reader{}, c.reader)
 			assert.NotNil(t, c.backOffConstructor)
 			assert.NotNil(t, c.notifyErr)
+			assert.Equal(t, wantBalancers, c.readerConfig.GroupBalancers)
 
 			if tt.wantGenID {
 				assert.NotEmpty(t, c.id)
@@ -78,22 +81,30 @@ func TestNewConsumer(t *testing.T) {
 }
 
 func TestConsumer_Run(t *testing.T) {
-	wantMsgs := dummyMessages(100, 20)
+	var currMsg kafka.Message
+	ctx := context.Background()
+	wantTimes := 50
 
-	consumer := &Consumer{
-		id:     "1",
-		reader: newMockReader(wantMsgs),
-	}
+	reader := NewMockReader(gomock.NewController(t))
+	reader.EXPECT().Close().Return(nil).Times(1)
+	reader.EXPECT().ReadMessage(ctx).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
+		currMsg = randMsg()
+		return currMsg, nil
+	}).Times(wantTimes)
 
-	var gotMsgs []kafka.Message
+	consumer := &Consumer{reader: reader}
+
+	i := 0
 	handler := func(ctx context.Context, msg Message) error {
-		gotMsgs = append(gotMsgs, msg.Message)
+		require.Equal(t, currMsg, msg.Message)
+		i++
+		if i == wantTimes {
+			require.NoError(t, consumer.Close())
+		}
 		return nil
 	}
 
-	require.NoError(t, consumer.Run(context.Background(), handler))
-	require.Equal(t, wantMsgs, gotMsgs)
-	require.NoError(t, consumer.Close())
+	require.NoError(t, consumer.Run(ctx, handler))
 }
 
 func TestConsumer_Run_error(t *testing.T) {
@@ -103,7 +114,6 @@ func TestConsumer_Run_error(t *testing.T) {
 
 	wantConsumerID := "123"
 	wantHandlerErr := errors.New("some downstream error")
-	wantMsg := kafka.Message{Value: []byte(uuid.New().String())}
 
 	tests := []struct {
 		name             string
@@ -133,7 +143,6 @@ func TestConsumer_Run_error(t *testing.T) {
 				consumer.notifyErr = func(ctx context.Context, err error, msg Message) {
 					assert.Equal(t, gotAttempts, msg.Metadata.Attempt)
 					assert.Equal(t, wantHandlerErr, err)
-					assert.Equal(t, wantMsg, msg.Message)
 					didNotify = true
 				}
 			},
@@ -152,7 +161,6 @@ func TestConsumer_Run_error(t *testing.T) {
 					if err != nil {
 						assert.Equal(t, wantHandlerErr, err)
 					}
-					assert.Equal(t, wantMsg, msg.Message)
 					didNotify = true
 				}
 			},
@@ -179,9 +187,13 @@ func TestConsumer_Run_error(t *testing.T) {
 			gotAttempts = 0
 			wantErr = tt.wantError
 
+			reader := NewMockReader(gomock.NewController(t))
+			reader.EXPECT().Close().Return(nil).AnyTimes()
+			reader.EXPECT().ReadMessage(ctx).Return(randMsg(), nil).AnyTimes()
+
 			consumer := &Consumer{
 				id:     wantConsumerID,
-				reader: newMockReader([]kafka.Message{wantMsg}),
+				reader: reader,
 			}
 			if tt.setup != nil {
 				tt.setup(t, consumer)
@@ -192,6 +204,7 @@ func TestConsumer_Run_error(t *testing.T) {
 				if wantErr != nil || gotAttempts < tt.numRetries {
 					return wantHandlerErr
 				}
+				consumer.Close()
 				return nil
 			}
 
@@ -256,97 +269,118 @@ func TestNewGroup(t *testing.T) {
 // partitions to consumers are mutually exclusive, since that is the responsibility
 // of Kafka itself.
 func TestGroup_Run(t *testing.T) {
-	wantMsgs := dummyMessages(1000, 20)
+	ctx := context.Background()
 	wantConsumers := 10
+	wantNumMsgs := 100
 
-	readerFn := func() Reader {
-		return newMockReader(wantMsgs)
-	}
+	// Concurrent safe msg tracker since handler runs from multiple consumer go routines.
+	var msgTracker messageTracker
+
+	reader := NewMockReader(gomock.NewController(t))
+	reader.EXPECT().Close().AnyTimes()
+	reader.EXPECT().ReadMessage(ctx).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
+		msgTracker.Lock()
+		defer msgTracker.Unlock()
+		msg := randMsg()
+		msgTracker.wantMessages = append(msgTracker.wantMessages, msg)
+		return msg, nil
+	}).AnyTimes()
+
 	group := &Group{
-		config: GroupConfig{
-			Count: wantConsumers,
-		},
-		opts: []Option{WithKafkaReader(readerFn)},
+		config: GroupConfig{Count: wantConsumers},
+		opts: []Option{WithKafkaReader(func() Reader {
+			return reader
+		})},
 	}
-
-	// Concurrent safe counter since handler runs from multiple consumer go routines.
-	var count syncCounter
 
 	handler := func(ctx context.Context, msg Message) error {
-		count.Lock()
-		defer count.Unlock()
-		count.val++
+		msgTracker.Lock()
+		defer msgTracker.Unlock()
+		require.Contains(t, msgTracker.wantMessages, msg.Message)
+		if len(msgTracker.wantMessages) == wantNumMsgs {
+			require.NoError(t, group.Close())
+		}
 		return nil
 	}
 
-	errCh := group.Run(context.Background(), handler)
+	errCh := group.Run(ctx, handler)
 	for err := range errCh {
 		require.NoError(t, err)
 	}
-
-	wantCount := len(wantMsgs) * wantConsumers
-	require.Equal(t, wantCount, count.val)
-	require.NoError(t, group.Close())
 }
 
 func TestGroup_Run_readerError(t *testing.T) {
-	wantFetchErr := errors.New("error fetching message")
-	wantCommitErr := errors.New("error committing offset")
-	wantCloseErr := errors.New("error closing reader")
+	wantErr := errors.New("some error")
 	wantConsumers := 1
-
-	handler := func(ctx context.Context, msg Message) error {
-		return nil
-	}
+	wantMsg := randMsg()
 
 	tests := []struct {
-		name          string
-		reader        mockReader
-		wantFetchErr  error
-		wantCommitErr error
-		wantCloseErr  error
+		name               string
+		withExplicitCommit bool
+		setupReader        func(m *MockReader)
+		closeErr           bool
 	}{
 		{
-			name:         "reader fetch error",
-			reader:       mockReader{fetchErr: wantFetchErr},
-			wantFetchErr: wantFetchErr,
+			name: "reader read error",
+			setupReader: func(m *MockReader) {
+				m.EXPECT().ReadMessage(gomock.Any()).Return(kafka.Message{}, wantErr).Times(1)
+				m.EXPECT().Close().Return(nil).Times(1)
+			},
 		},
 		{
-			name:          "reader commit error",
-			reader:        mockReader{commitErr: wantCommitErr},
-			wantCommitErr: wantCommitErr,
+			name:               "reader fetch error",
+			withExplicitCommit: true,
+			setupReader: func(m *MockReader) {
+				m.EXPECT().FetchMessage(gomock.Any()).Return(kafka.Message{}, wantErr).Times(1)
+				m.EXPECT().Close().Return(nil).Times(1)
+			},
 		},
 		{
-			name:         "reader close error",
-			reader:       mockReader{closeErr: wantCloseErr},
-			wantCloseErr: wantCloseErr,
+			name:               "reader commit error",
+			withExplicitCommit: true,
+			setupReader: func(m *MockReader) {
+				m.EXPECT().FetchMessage(gomock.Any()).Return(wantMsg, nil).Times(1)
+				m.EXPECT().CommitMessages(gomock.Any(), wantMsg).Return(wantErr).Times(1)
+				m.EXPECT().Close().Return(nil).Times(1)
+			},
+		},
+		{
+			name:     "reader close error",
+			closeErr: true,
+			setupReader: func(m *MockReader) {
+				m.EXPECT().ReadMessage(gomock.Any()).Return(kafka.Message{}, wantErr).Times(1)
+				m.EXPECT().Close().Return(wantErr).Times(1)
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			reader := NewMockReader(gomock.NewController(t))
+			tt.setupReader(reader)
+
 			group := &Group{
 				config: GroupConfig{
 					Count: wantConsumers,
 				},
 				opts: []Option{WithKafkaReader(func() Reader {
-					return &tt.reader
+					return reader
 				})},
 			}
 
-			errCh := group.Run(context.Background(), handler)
-			for err := range errCh {
-				if tt.wantFetchErr != nil {
-					require.Contains(t, err.Error(), tt.wantFetchErr.Error())
-				}
-				if tt.wantCommitErr != nil {
-					require.Contains(t, err.Error(), tt.wantCommitErr.Error())
-				}
+			if tt.withExplicitCommit {
+				group.opts = append(group.opts, WithExplicitCommit())
 			}
-			err := group.Close()
-			if tt.wantCloseErr != nil {
-				require.Contains(t, err.Error(), tt.wantCloseErr.Error())
-			} else {
+			errCh := group.Run(context.Background(), func(ctx context.Context, msg Message) error {
+				return nil
+			})
+			for err := range errCh {
+				require.True(t, errors.Is(err, wantErr))
+				err = group.Close()
+				if tt.closeErr {
+					require.Contains(t, err.Error(), wantErr.Error())
+					return
+				}
 				require.NoError(t, err)
 			}
 		})
@@ -364,67 +398,17 @@ func TestNonStopExponentialBackOff(t *testing.T) {
 	assert.Equal(t, 5*time.Hour, bo.NextBackOff())
 }
 
-type mockReader struct {
-	msgs      []kafka.Message
-	fetchErr  error
-	commitErr error
-	closeErr  error
-}
-
-func newMockReader(wantMsgs []kafka.Message) *mockReader {
-	return &mockReader{
-		msgs: wantMsgs,
+func randMsg() kafka.Message {
+	return kafka.Message{
+		Topic:     "some-topic",
+		Partition: rand.Intn(20-1) + 1, //nolint:gosec
+		Value:     []byte(uuid.New().String()),
 	}
 }
 
-func (m *mockReader) FetchMessage(ctx context.Context) (kafka.Message, error) {
-	if m.fetchErr != nil {
-		return kafka.Message{}, m.fetchErr
-	}
-	if len(m.msgs) == 0 {
-		return kafka.Message{}, io.EOF
-	}
-
-	msg := m.msgs[0]
-	m.msgs = m.msgs[1:]
-	return msg, nil
-}
-
-func (m *mockReader) CommitMessages(ctx context.Context, msgs ...kafka.Message) error {
-	if m.commitErr != nil {
-		return m.commitErr
-	}
-	return nil
-}
-func (m *mockReader) Close() error {
-	if m.closeErr != nil {
-		return m.closeErr
-	}
-	return nil
-}
-
-func dummyMessages(n int, partitions int) []kafka.Message {
-	rand.Seed(time.Now().UnixNano())
-	var wantMsgs []kafka.Message
-
-	for i := 0; i < n; i++ {
-		partition := 1
-		if partitions > 1 {
-			partition = rand.Intn(partitions-1) + 1 //nolint:gosec
-		}
-		wantMsgs = append(wantMsgs, kafka.Message{
-			Topic:     "some-topic",
-			Partition: partition,
-			Value:     []byte(uuid.New().String()),
-		})
-	}
-
-	return wantMsgs
-}
-
-type syncCounter struct {
+type messageTracker struct {
 	sync.Mutex
-	val int
+	wantMessages []kafka.Message
 }
 
 type testBackoff struct {

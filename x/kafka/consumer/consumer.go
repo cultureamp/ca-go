@@ -1,3 +1,4 @@
+//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -destination=mock_reader_test.go -package consumer . Reader
 package consumer
 
 import (
@@ -38,6 +39,7 @@ type Handler func(ctx context.Context, msg Message) error
 
 // Reader fetches and commits messages from a Kafka topic.
 type Reader interface {
+	ReadMessage(ctx context.Context) (kafka.Message, error)
 	FetchMessage(ctx context.Context) (kafka.Message, error)
 	CommitMessages(ctx context.Context, msgs ...kafka.Message) error
 	Close() error
@@ -60,6 +62,7 @@ type Consumer struct {
 	backOffConstructor HandlerRetryBackOffConstructor
 	notifyErr          NotifyError
 	withDataDogTracing bool
+	withExplicitCommit bool
 	closed             bool
 }
 
@@ -103,41 +106,46 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 		if c.closed {
 			return nil
 		}
-		if err := c.consumeMessage(ctx, handler); err != nil {
-			if errors.Is(err, io.EOF) {
-				return nil
+
+		var msg kafka.Message
+		var err error
+
+		if c.withExplicitCommit {
+			msg, err = c.reader.FetchMessage(ctx)
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					return nil
+				}
+				return fmt.Errorf("consumer %s unable to fetch message: %w", c.id, err)
 			}
-			return err
+		} else {
+			msg, err = c.reader.ReadMessage(ctx)
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					return nil
+				}
+				return fmt.Errorf("consumer %s unable to read message: %w", c.id, err)
+			}
+		}
+
+		if err = c.handle(ctx, msg, handler); err != nil {
+			return fmt.Errorf("consumer %s unable to handle message: %w", c.id, err)
+		}
+
+		if c.withExplicitCommit {
+			if err = c.reader.CommitMessages(ctx, msg); err != nil {
+				return fmt.Errorf("consumer %s unable to commit message: %w", c.id, err)
+			}
 		}
 	}
 }
 
 // Close closes the consumer, preventing it from consuming any more messages.
 func (c *Consumer) Close() error {
-	defer func() { c.closed = true }()
+	c.closed = true
 	if err := c.reader.Close(); err != nil {
 		return fmt.Errorf("unable to close consumer %s: %w", c.id, err)
 	}
-	return nil
-}
-
-func (c *Consumer) consumeMessage(ctx context.Context, handler Handler) error {
-	msg, err := c.reader.FetchMessage(ctx)
-	if err != nil {
-		if errors.Is(err, io.EOF) {
-			return io.EOF
-		}
-		return fmt.Errorf("consumer %s unable to fetch message: %w", c.id, err)
-	}
-
-	if err = c.handle(ctx, msg, handler); err != nil {
-		return fmt.Errorf("consumer %s unable to handle message: %w", c.id, err)
-	}
-
-	if err = c.reader.CommitMessages(ctx, msg); err != nil {
-		return fmt.Errorf("consumer %s unable to commit message: %w", c.id, err)
-	}
-
 	return nil
 }
 
