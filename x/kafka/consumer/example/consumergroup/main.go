@@ -4,7 +4,10 @@ import (
 	"context"
 	"flag"
 	"log"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/segmentio/kafka-go"
 
@@ -31,10 +34,21 @@ func main() {
 	defer consumerGroup.Close()
 
 	log.Printf("consumer group %s started for topic %s\n", consumerGroup.ID, topic)
-	errCh := consumerGroup.Run(context.Background(), handle)
-	for err := range errCh {
-		if err != nil {
+	errs := consumerGroup.Run(context.Background(), handle)
+
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
+
+	for {
+		select {
+		case err, ok := <-errs:
+			if !ok { // err channel closed
+				return
+			}
 			log.Println(err)
+		case <-sigterm:
+			signal.Stop(sigterm)
+			return
 		}
 	}
 }

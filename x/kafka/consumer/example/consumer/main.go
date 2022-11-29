@@ -19,11 +19,11 @@ var (
 func main() {
 	parseFlags()
 
-	groupCfg := consumer.Config{
+	cfg := consumer.Config{
 		Brokers: strings.Split(brokers, ","),
 		Topic:   topic,
 	}
-	c := consumer.NewConsumer(kafka.DefaultDialer, groupCfg)
+	c := consumer.NewConsumer(kafka.DefaultDialer, cfg)
 	defer c.Close()
 
 	log.Printf("consumer started for topic %s\n", topic)

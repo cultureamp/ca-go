@@ -100,7 +100,7 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 }
 
 // Run consumes and handles messages from the topic. The method call blocks until
-// the context is canceled, the consumer's reader is closed, or an error occurs.
+// the context is canceled, the consumer is closed, or an error occurs.
 func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 	for {
 		if c.closed {
@@ -245,7 +245,8 @@ func NewGroup(dialer *kafka.Dialer, config GroupConfig, opts ...Option) *Group {
 // Run concurrently consumes and handles messages from the topic across all
 // consumers in the group. The method call returns an error channel that is used
 // to receive any consumer errors. The run process is only stopped if the context
-// is canceled or the consumer has been closed.
+// is canceled, the consumer has been closed, or all consumers in the group have
+// errored.
 func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 	var wg sync.WaitGroup
 	errCh := make(chan error, g.config.Count)
