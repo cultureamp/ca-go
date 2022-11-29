@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"log"
 	"os"
@@ -23,6 +24,7 @@ var (
 
 func main() {
 	parseFlags()
+	ctx, cancel := context.WithCancel(context.Background())
 
 	groupCfg := consumer.GroupConfig{
 		Count:   consumerCount,
@@ -34,7 +36,7 @@ func main() {
 	defer consumerGroup.Close()
 
 	log.Printf("consumer group %s started for topic %s\n", consumerGroup.ID, topic)
-	errs := consumerGroup.Run(context.Background(), handle)
+	errs := consumerGroup.Run(ctx, handle)
 
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
@@ -42,13 +44,17 @@ func main() {
 	for {
 		select {
 		case err, ok := <-errs:
-			if !ok { // err channel closed
+			if !ok {
+				// Channel closed - all consumers stopped
 				return
 			}
-			log.Println(err)
+
+			if !errors.Is(err, context.Canceled) {
+				log.Println(err)
+			}
 		case <-sigterm:
 			signal.Stop(sigterm)
-			return
+			cancel()
 		}
 	}
 }

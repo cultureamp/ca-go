@@ -178,7 +178,8 @@ func (c *Consumer) handle(ctx context.Context, msg kafka.Message, handler Handle
 			if err == nil {
 				return ctx.Err()
 			}
-			return fmt.Errorf("%s; consumer handler error: %w", ctx.Err().Error(), err)
+
+			return fmt.Errorf("%s: %w", ctx.Err().Error(), fmt.Errorf("consumer handler error: %w", ctx.Err()))
 		case _, ok := <-ticker.C:
 			if !ok {
 				return err
