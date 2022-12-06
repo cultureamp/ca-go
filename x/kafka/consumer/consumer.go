@@ -55,6 +55,9 @@ type Config struct {
 
 // Consumer provides a high level API for consuming and handling messages from
 // a Kafka topic.
+//
+// It is worth noting that publishing failed messages to a dead letter queue is
+// not supported and instead would need to be included in your handler implementation.
 type Consumer struct {
 	id                 string
 	reader             Reader
@@ -159,8 +162,9 @@ func (c *Consumer) handle(ctx context.Context, msg kafka.Message, handler Handle
 		backOff = c.backOffConstructor()
 	}
 
-	ticker := backoff.NewTicker(backOff)
 	attempt := 0
+	ticker := backoff.NewTicker(backOff)
+	defer ticker.Stop()
 
 	if c.withDataDogTracing {
 		spanCtx, err := kafkatrace.ExtractSpanContext(msg)
@@ -221,6 +225,9 @@ type GroupConfig struct {
 // Group groups consumers together to concurrently consume and handle messages
 // from a Kafka topic. Many groups with the same group ID are safe to use, which
 // is particularly useful for groups across separate instances.
+//
+// It is worth noting that publishing failed messages to a dead letter queue is
+// not supported and instead would need to be included in your handler implementation.
 type Group struct {
 	ID        string
 	config    GroupConfig
