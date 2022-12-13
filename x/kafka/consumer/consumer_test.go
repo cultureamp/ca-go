@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -104,6 +106,63 @@ func TestConsumer_Run(t *testing.T) {
 		return nil
 	}
 
+	require.NoError(t, consumer.Run(ctx, handler))
+}
+
+func TestConsumer_Run_withBatching(t *testing.T) {
+	ctx := context.Background()
+	wantTimes := 500
+
+	var fetchInvocations int64 = 0
+
+	reader := NewMockReader(gomock.NewController(t))
+	reader.EXPECT().Close().Return(nil).Times(1)
+	reader.EXPECT().CommitMessages(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	// Mock published messages where the key is 0-5 and the value is a constantly growing number
+	reader.EXPECT().FetchMessage(ctx).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
+		atomic.AddInt64(&fetchInvocations, 1)
+		rand.Seed(time.Now().UnixMilli())
+		msg := kafka.Message{
+			Topic:     "some-topic",
+			Partition: 1, //nolint:gosec
+			Key:       []byte(fmt.Sprintf("%d", fetchInvocations%5)),
+			Value:     []byte(fmt.Sprintf("%d", fetchInvocations)),
+			Time:      time.Now(),
+		}
+		return msg, nil
+	}).AnyTimes()
+
+	consumer := &Consumer{
+		reader:    reader,
+		batchSize: 50,
+		batchKeyFn: func(message kafka.Message) string {
+			return string(message.Key)
+		},
+	}
+
+	var handlerInvocations int64
+	msgKeyLatestValue := new(sync.Map)
+
+	// Handler asserts that each new message handled for a specific key has a value
+	// that was greater than the previous. This proves that order is maintained
+	// for each batch.
+	handler := func(ctx context.Context, msg Message) error {
+		val, err := strconv.Atoi(string(msg.Value))
+		require.NoError(t, err)
+
+		latestVal, ok := msgKeyLatestValue.Load(string(msg.Key))
+		if ok {
+			require.Greater(t, val, latestVal.(int))
+		}
+		msgKeyLatestValue.Store(string(msg.Key), val)
+
+		atomic.AddInt64(&handlerInvocations, 1)
+		if handlerInvocations == int64(wantTimes) {
+			require.NoError(t, consumer.Close())
+		}
+		return nil
+	}
 	require.NoError(t, consumer.Run(ctx, handler))
 }
 
@@ -218,6 +277,38 @@ func TestConsumer_Run_error(t *testing.T) {
 		})
 	}
 }
+
+//func TestConsumerRunBatch(t *testing.T) {
+//	ctx := context.Background()
+//
+//	reader := NewMockReader(gomock.NewController(t))
+//	reader.EXPECT().Close().Return(nil).Times(1)
+//	reader.EXPECT().ReadMessage(ctx).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
+//		return randMsg(), nil
+//	}).Times(wantTimes)
+//
+//	var i int
+//	consumer := &Consumer{
+//		reader:    reader,
+//		batchSize: 20,
+//		batchKeyFn: func(message kafka.Message) string {
+//			i++
+//			return strconv.Itoa(i % 10)
+//		},
+//	}
+//
+//	i := 0
+//	handler := func(ctx context.Context, msg Message) error {
+//		require.Equal(t, currMsg, msg.Message)
+//		i++
+//		if i == wantTimes {
+//			require.NoError(t, consumer.Close())
+//		}
+//		return nil
+//	}
+//
+//	require.NoError(t, consumer.Run(ctx, handler))
+//}
 
 func TestNewGroup(t *testing.T) {
 	tests := []struct {
@@ -399,6 +490,7 @@ func TestNonStopExponentialBackOff(t *testing.T) {
 }
 
 func randMsg() kafka.Message {
+	rand.Seed(time.Now().UnixMilli())
 	return kafka.Message{
 		Topic:     "some-topic",
 		Partition: rand.Intn(20-1) + 1, //nolint:gosec
