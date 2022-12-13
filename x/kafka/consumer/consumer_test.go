@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -217,6 +218,38 @@ func TestConsumer_Run_error(t *testing.T) {
 			assert.Equal(t, tt.shouldNotify, didNotify)
 		})
 	}
+}
+
+func TestConsumerRunBatch(t *testing.T) {
+	ctx := context.Background()
+
+	reader := NewMockReader(gomock.NewController(t))
+	reader.EXPECT().Close().Return(nil).Times(1)
+	reader.EXPECT().ReadMessage(ctx).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
+		return randMsg(), nil
+	}).Times(wantTimes)
+
+	var i int
+	consumer := &Consumer{
+		reader:    reader,
+		batchSize: 20,
+		batchKeyFn: func(message kafka.Message) string {
+			i++
+			return strconv.Itoa(i % 10)
+		},
+	}
+
+	i := 0
+	handler := func(ctx context.Context, msg Message) error {
+		require.Equal(t, currMsg, msg.Message)
+		i++
+		if i == wantTimes {
+			require.NoError(t, consumer.Close())
+		}
+		return nil
+	}
+
+	require.NoError(t, consumer.Run(ctx, handler))
 }
 
 func TestNewGroup(t *testing.T) {

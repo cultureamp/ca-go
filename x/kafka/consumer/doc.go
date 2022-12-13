@@ -30,4 +30,10 @@
 // members. As a result, a consumer group can easily be spread across multiple
 // instances by simply using the same group ID for each Group. Kafka will then
 // take care of re-balancing the group if members are added/removed.
+//
+// Consumers in this package also do not support publishing failed messages to a
+// dead letter queue out of the box. If this behaviour is required, it can simply
+// be implemented in your Handler if an error occurs. However, it is important to
+// return nil and not the error in this Handler approach so that the consumer can
+// safely proceed to the next message.
 package consumer
