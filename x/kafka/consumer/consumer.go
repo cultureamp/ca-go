@@ -261,7 +261,7 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 
 	for i := 0; i < g.config.Count; i++ {
 		wg.Add(1)
-		consumerID := fmt.Sprintf("%s-%s-%d", strings.ToLower(g.config.GroupID), g.ID, i)
+		consumerID := fmt.Sprintf("%s-%d", g.ID, i)
 
 		// Consumers must be created and run in sequential order so that Kafka can
 		// successfully re-balance the group as each is added. This unfortunately
