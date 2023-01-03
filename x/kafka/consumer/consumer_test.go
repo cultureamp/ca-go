@@ -31,7 +31,7 @@ func TestNewConsumer(t *testing.T) {
 				ID:      "some-id",
 				Brokers: []string{"some-address"},
 				Topic:   "some-topic",
-				GroupID: "some-group-id",
+				groupID: "some-group-id",
 			},
 		},
 		{
@@ -39,7 +39,7 @@ func TestNewConsumer(t *testing.T) {
 			config: Config{
 				Brokers: []string{"some-address"},
 				Topic:   "some-topic",
-				GroupID: "some-group-id",
+				groupID: "some-group-id",
 			},
 			wantGenID: true,
 		},

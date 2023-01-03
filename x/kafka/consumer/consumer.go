@@ -50,7 +50,7 @@ type Config struct {
 	ID      string
 	Brokers []string
 	Topic   string
-	GroupID string
+	groupID string
 }
 
 // Consumer provides a high level API for consuming and handling messages from
@@ -79,7 +79,7 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 		id: config.ID,
 		readerConfig: kafka.ReaderConfig{
 			Brokers:               config.Brokers,
-			GroupID:               config.GroupID,
+			GroupID:               config.groupID,
 			Topic:                 config.Topic,
 			Dialer:                dialer,
 			WatchPartitionChanges: true,
@@ -103,7 +103,7 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 }
 
 // Run consumes and handles messages from the topic. The method call blocks until
-// the context is canceled, the consumer is closed, or an error occurs.
+// the consumer is closed, or an error occurs.
 func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 	for {
 		if c.closed {
@@ -271,13 +271,13 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 			ID:      consumerID,
 			Brokers: g.config.Brokers,
 			Topic:   g.config.Topic,
-			GroupID: g.config.GroupID,
+			groupID: g.config.GroupID,
 		}
 		c := NewConsumer(g.dialer, cfg, g.opts...)
 
 		go func() {
 			defer wg.Done()
-			if err := c.Run(ctx, handler); err != nil && !errors.Is(err, context.Canceled) {
+			if err := c.Run(ctx, handler); err != nil {
 				errCh <- fmt.Errorf("consumer %s for group %s failed: %w", c.id, g.config.GroupID, err)
 			}
 		}()
