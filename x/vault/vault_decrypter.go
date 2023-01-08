@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cultureamp/ca-go/x/log"
-	"github.com/cultureamp/ca-go/x/vault/client"
 	vaultapi "github.com/hashicorp/vault/api"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+
+	"github.com/cultureamp/ca-go/x/log"
+	"github.com/cultureamp/ca-go/x/vault/client"
 )
 
 type Client interface {
@@ -104,7 +105,6 @@ func (v *Decrypter) decryptWithVault(keyReference string, batch []interface{}, l
 				}
 				continue
 			}
-			logger.Error().Err(err).Msg("Error calling vault decrypt API")
 			return nil, err
 		} else {
 			break
