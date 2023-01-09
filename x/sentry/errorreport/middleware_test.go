@@ -7,10 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cultureamp/ca-go/x/request"
-	"github.com/cultureamp/ca-go/x/sentry/errorreport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cultureamp/ca-go/x/request"
+	"github.com/cultureamp/ca-go/x/sentry/errorreport"
 )
 
 // setupContextForSentry returns a new context populated with sample
@@ -40,7 +41,7 @@ func setupContextForSentry() (context.Context, func(t *testing.T, transport *tra
 		assert.Equal(t, "789", sentryEvent.Tags["user.real"])
 		assert.Equal(t, "abc", sentryEvent.Tags["RequestID"])
 
-		tracingContext, ok := sentryEvent.Contexts["Culture Amp - Tracing"].(map[string]interface{})
+		tracingContext, ok := sentryEvent.Contexts["Culture Amp - Tracing"]
 		require.True(t, ok)
 		assert.Equal(t, "def", tracingContext["CorrelationID"])
 	}
