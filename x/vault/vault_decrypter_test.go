@@ -27,6 +27,26 @@ const (
 	decryptedString = "abc123!?$*&()'-=@~"
 )
 
+func Test_RegressionTests(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("handling nil values for both secret and err", func(t *testing.T) {
+		expectedErr := "tried to decrypt keyReference: employee.1 but return body was empty. This occurs when there is no top level data in the api response from vault."
+		mockClient := MockClient{
+			getSecret: func(batch []interface{}, keyReference string, action string) (*vaultapi.Secret, error) {
+				return nil, nil
+			},
+		}
+		assertThat := assert.New(t)
+
+		v := NewVaultDecrypter(mockClient)
+		decryptedSecret, err := v.Decrypt([]string{"employee.1"}, []string{"encryptedstring1234"}, ctx)
+
+		assertThat.Nil(decryptedSecret)
+		assertThat.ErrorContains(err, expectedErr)
+	})
+}
+
 func TestDecrypt(t *testing.T) {
 	tests := []struct {
 		name            string

@@ -64,6 +64,13 @@ func (v *Decrypter) decryptByKey(keyReference string, encryptedData []string, lo
 		return nil, err
 	}
 
+	if secret == nil {
+		errMsg := fmt.Sprintf("tried to decrypt keyReference: %s but return body was empty. This occurs when there is no top level data in the api response from vault.", keyReference)
+		err = fmt.Errorf(errMsg)
+		logger.Error().Err(err).Msg(errMsg)
+		return nil, err
+	}
+
 	batchResults, ok := secret.Data["batch_results"].([]interface{})
 	if !ok {
 		err = fmt.Errorf("batch results casting error")
