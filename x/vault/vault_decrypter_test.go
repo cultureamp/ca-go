@@ -235,6 +235,15 @@ func TestDecrypt(t *testing.T) {
 			returnErr:   nil,
 			expErr:      base64.CorruptInputError(6),
 		},
+		{
+			name:            "should error when Vault returns an empty response",
+			decryptedSecret: nil,
+			vaultResponse:   nil,
+			keyRefs:         []string{"keyRef1"},
+			shouldRenew:     false,
+			returnErr:       nil,
+			expErr:          fmt.Errorf("tried to decrypt keyReference: keyRef1 but vault returned an empty body"),
+		},
 	}
 
 	encryptedData := []string{"encrypted1"}
