@@ -7,9 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cultureamp/ca-go/x/launchdarkly/flags/evaluationcontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cultureamp/ca-go/x/launchdarkly/flags/evaluationcontext"
 )
 
 const validConfigJSON = `
@@ -46,12 +47,12 @@ func TestClientTestMode(t *testing.T) {
 		td, err := c.TestDataSource()
 		require.NoError(t, err)
 
-		td.Update(td.Flag("test-flag").VariationForAllUsers(true))
+		td.Update(td.Flag("test-flag").VariationForAll(true))
 		res, err := c.QueryBoolWithEvaluationContext("test-flag", evaluationcontext.NewAnonymousUser(""), false)
 		require.NoError(t, err)
 		assert.Equal(t, true, res)
 
-		td.Update(td.Flag("test-flag").VariationForAllUsers(false))
+		td.Update(td.Flag("test-flag").VariationForAll(false))
 		res, err = c.QueryBoolWithEvaluationContext("test-flag", evaluationcontext.NewAnonymousUser(""), true)
 		require.NoError(t, err)
 		assert.Equal(t, false, res)
@@ -66,12 +67,12 @@ func TestClientTestMode(t *testing.T) {
 		td, err := c.TestDataSource()
 		require.NoError(t, err)
 
-		td.Update(td.Flag("test-flag").VariationForAllUsers(true))
+		td.Update(td.Flag("test-flag").VariationForAll(true))
 		res, err := c.QueryBoolWithEvaluationContext("test-flag", evaluationcontext.NewAnonymousUser(""), false)
 		require.NoError(t, err)
 		assert.Equal(t, true, res)
 
-		td.Update(td.Flag("test-flag").VariationForAllUsers(false))
+		td.Update(td.Flag("test-flag").VariationForAll(false))
 		res, err = c.QueryBoolWithEvaluationContext("test-flag", evaluationcontext.NewAnonymousUser(""), true)
 		require.NoError(t, err)
 		assert.Equal(t, false, res)

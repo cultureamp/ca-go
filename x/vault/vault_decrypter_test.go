@@ -31,6 +31,7 @@ func TestDecrypt(t *testing.T) {
 	tests := []struct {
 		name            string
 		decryptedSecret []string
+		vaultResponse   *vaultapi.Secret
 		data            map[string]interface{}
 		keyRefs         []string
 		shouldRenew     bool
@@ -38,120 +39,213 @@ func TestDecrypt(t *testing.T) {
 		expErr          error
 	}{
 		{
-			"should not error when secret is returned as usual",
-			[]string{decryptedString},
-			map[string]interface{}{
-				"batch_results": []interface{}{
-					map[string]interface{}{
-						"plaintext": base64.StdEncoding.EncodeToString([]byte(decryptedString)),
+			name:            "should not error when secret is returned as usual",
+			decryptedSecret: []string{decryptedString},
+			vaultResponse: &vaultapi.Secret{
+				RequestID:     "",
+				LeaseID:       "",
+				LeaseDuration: 0,
+				Renewable:     false,
+				Data: map[string]interface{}{
+					"batch_results": []interface{}{
+						map[string]interface{}{
+							"plaintext": base64.StdEncoding.EncodeToString([]byte(decryptedString)),
+						},
 					},
 				},
+				Warnings: nil,
+				Auth:     nil,
+				WrapInfo: nil,
 			},
-			[]string{"keyRef1"},
-			false,
-			nil,
-			nil,
+			keyRefs:     []string{"keyRef1"},
+			shouldRenew: false,
+			returnErr:   nil,
+			expErr:      nil,
 		},
 		{
-			"should error when no keys are given",
-			nil,
-			nil,
-			[]string{},
-			false,
-			nil,
-			client.ErrVaultMissingKeys,
-		},
-		{
-			"should error when secret is returns wrong number of results",
-			nil,
-			map[string]interface{}{
-				"batch_results": []interface{}{
-					map[string]interface{}{
-						"plaintext": base64.StdEncoding.EncodeToString([]byte(decryptedString)),
-					},
-					map[string]interface{}{
-						"plaintext": base64.StdEncoding.EncodeToString([]byte(decryptedString)),
-					},
-				},
+			name:            "should error when no keys are given",
+			decryptedSecret: nil,
+			vaultResponse: &vaultapi.Secret{
+				RequestID:     "",
+				LeaseID:       "",
+				LeaseDuration: 0,
+				Renewable:     false,
+				Data:          nil,
+				Warnings:      nil,
+				Auth:          nil,
+				WrapInfo:      nil,
 			},
-			[]string{"keyRef1"},
-			false,
-			nil,
-			fmt.Errorf("incorrect number of decrypted values returned"),
+			data:        nil,
+			keyRefs:     []string{},
+			shouldRenew: false,
+			returnErr:   nil,
+			expErr:      client.ErrVaultMissingKeys,
 		},
 		{
-			"should error when getSecret errors",
-			nil,
-			nil,
-			[]string{"keyRef1"},
-			false,
-			fmt.Errorf("secretError"),
-			fmt.Errorf("secretError"),
-		},
-		{
-			"should renew then continue when getSecret returns permission error",
-			[]string{decryptedString},
-			map[string]interface{}{
-				"batch_results": []interface{}{
-					map[string]interface{}{
-						"plaintext": base64.StdEncoding.EncodeToString([]byte(decryptedString)),
+			name:            "should error when secret is returns wrong number of results",
+			decryptedSecret: nil,
+			vaultResponse: &vaultapi.Secret{
+				RequestID:     "",
+				LeaseID:       "",
+				LeaseDuration: 0,
+				Renewable:     false,
+				Data: map[string]interface{}{
+					"batch_results": []interface{}{
+						map[string]interface{}{
+							"plaintext": base64.StdEncoding.EncodeToString([]byte(decryptedString)),
+						},
+						map[string]interface{}{
+							"plaintext": base64.StdEncoding.EncodeToString([]byte(decryptedString)),
+						},
 					},
 				},
+				Warnings: nil,
+				Auth:     nil,
+				WrapInfo: nil,
 			},
-			[]string{"keyRef1"},
-			true,
-			fmt.Errorf(client.VaultPermissionError),
-			nil,
+			keyRefs:     []string{"keyRef1"},
+			shouldRenew: false,
+			returnErr:   nil,
+			expErr:      fmt.Errorf("incorrect number of decrypted values returned"),
 		},
 		{
-			"should error when renewClient returns error",
-			nil,
-			nil,
-			[]string{"keyRef1"},
-			false,
-			fmt.Errorf(client.VaultPermissionError),
-			fmt.Errorf(client.VaultPermissionError),
+			name:            "should error when getSecret errors",
+			decryptedSecret: nil,
+			vaultResponse: &vaultapi.Secret{
+				RequestID:     "",
+				LeaseID:       "",
+				LeaseDuration: 0,
+				Renewable:     false,
+				Data:          nil,
+				Warnings:      nil,
+				Auth:          nil,
+				WrapInfo:      nil,
+			},
+			data:        nil,
+			keyRefs:     []string{"keyRef1"},
+			shouldRenew: false,
+			returnErr:   fmt.Errorf("secretError"),
+			expErr:      fmt.Errorf("secretError"),
 		},
 		{
-			"should error when batch_results is not []interface{}",
-			nil,
-			map[string]interface{}{
-				"batch_results": map[string]interface{}{
-					"plaintext": decryptedString,
+			name:            "should renew then continue when getSecret returns permission error",
+			decryptedSecret: []string{decryptedString},
+			vaultResponse: &vaultapi.Secret{
+				RequestID:     "",
+				LeaseID:       "",
+				LeaseDuration: 0,
+				Renewable:     false,
+				Data: map[string]interface{}{
+					"batch_results": []interface{}{
+						map[string]interface{}{
+							"plaintext": base64.StdEncoding.EncodeToString([]byte(decryptedString)),
+						},
+					},
 				},
+				Warnings: nil,
+				Auth:     nil,
+				WrapInfo: nil,
 			},
-			[]string{"keyRef1"},
-			false,
-			nil,
-			fmt.Errorf("batch results casting error"),
+			keyRefs:     []string{"keyRef1"},
+			shouldRenew: true,
+			returnErr:   fmt.Errorf(client.VaultPermissionError),
+			expErr:      nil,
 		},
 		{
-			"should error when batch_results entries are not map[string]interface{}",
-			nil,
-			map[string]interface{}{
-				"batch_results": []interface{}{"plaintext"},
+			name:            "should error when renewClient returns error",
+			decryptedSecret: nil,
+			vaultResponse: &vaultapi.Secret{
+				RequestID:     "",
+				LeaseID:       "",
+				LeaseDuration: 0,
+				Renewable:     false,
+				Data:          nil,
+				Warnings:      nil,
+				Auth:          nil,
+				WrapInfo:      nil,
 			},
-			[]string{"keyRef1"},
-			false,
-			nil,
-			fmt.Errorf("batch result casting error"),
+			keyRefs:     []string{"keyRef1"},
+			shouldRenew: false,
+			returnErr:   fmt.Errorf(client.VaultPermissionError),
+			expErr:      fmt.Errorf(client.VaultPermissionError),
 		},
 		{
-			"should error when not base64 encoded",
-			nil,
-			map[string]interface{}{
-				"batch_results": []interface{}{
-					map[string]interface{}{
+			name:            "should error when batch_results is not []interface{}",
+			decryptedSecret: nil,
+			vaultResponse: &vaultapi.Secret{
+				RequestID:     "",
+				LeaseID:       "",
+				LeaseDuration: 0,
+				Renewable:     false,
+				Data: map[string]interface{}{
+					"batch_results": map[string]interface{}{
 						"plaintext": decryptedString,
 					},
 				},
+				Warnings: nil,
+				Auth:     nil,
+				WrapInfo: nil,
 			},
-			[]string{"keyRef1"},
-			false,
-			nil,
-			base64.CorruptInputError(6),
+			keyRefs:     []string{"keyRef1"},
+			shouldRenew: false,
+			returnErr:   nil,
+			expErr:      fmt.Errorf("batch results casting error"),
+		},
+		{
+			name:            "should error when batch_results entries are not map[string]interface{}",
+			decryptedSecret: nil,
+			vaultResponse: &vaultapi.Secret{
+				RequestID:     "",
+				LeaseID:       "",
+				LeaseDuration: 0,
+				Renewable:     false,
+				Data: map[string]interface{}{
+					"batch_results": []interface{}{"plaintext"},
+				},
+				Warnings: nil,
+				Auth:     nil,
+				WrapInfo: nil,
+			},
+			keyRefs:     []string{"keyRef1"},
+			shouldRenew: false,
+			returnErr:   nil,
+			expErr:      fmt.Errorf("batch result casting error"),
+		},
+		{
+			name:            "should error when not base64 encoded",
+			decryptedSecret: nil,
+			vaultResponse: &vaultapi.Secret{
+				RequestID:     "",
+				LeaseID:       "",
+				LeaseDuration: 0,
+				Renewable:     false,
+				Data: map[string]interface{}{
+					"batch_results": []interface{}{
+						map[string]interface{}{
+							"plaintext": decryptedString,
+						},
+					},
+				},
+				Warnings: nil,
+				Auth:     nil,
+				WrapInfo: nil,
+			},
+			keyRefs:     []string{"keyRef1"},
+			shouldRenew: false,
+			returnErr:   nil,
+			expErr:      base64.CorruptInputError(6),
+		},
+		{
+			name:            "should error when Vault returns an empty response",
+			decryptedSecret: nil,
+			vaultResponse:   nil,
+			keyRefs:         []string{"keyRef1"},
+			shouldRenew:     false,
+			returnErr:       nil,
+			expErr:          fmt.Errorf("tried to decrypt keyReference: keyRef1 but vault returned an empty body"),
 		},
 	}
+
 	encryptedData := []string{"encrypted1"}
 	ctx := context.Background()
 	for _, tt := range tests {
@@ -166,30 +260,21 @@ func TestDecrypt(t *testing.T) {
 				return nil
 			},
 			getSecret: func(batch []interface{}, keyReference string, action string) (*vaultapi.Secret, error) {
-				secretReturn := vaultapi.Secret{
-					RequestID:     "",
-					LeaseID:       "",
-					LeaseDuration: 0,
-					Renewable:     false,
-					Data:          tt.data,
-					Warnings:      nil,
-					Auth:          nil,
-					WrapInfo:      nil,
-				}
 				if renewed {
 					tt.returnErr = nil
 				}
-				return &secretReturn, tt.returnErr
+				return tt.vaultResponse, tt.returnErr
 			},
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
+			assertThat := assert.New(t)
 			v := NewVaultDecrypter(mockClient)
 			decryptedSecret, err := v.Decrypt(tt.keyRefs, encryptedData, ctx)
-			assert.Equal(t, tt.decryptedSecret, decryptedSecret)
-			assert.Equal(t, tt.shouldRenew, renewed)
-			fmt.Printf("tt err: %v, err: %v\n", tt.expErr, err)
-			assert.Equal(t, tt.expErr, err)
+
+			assertThat.Equal(tt.decryptedSecret, decryptedSecret)
+			assertThat.Equal(tt.shouldRenew, renewed)
+			assertThat.Equal(tt.expErr, err)
 		})
 	}
 }

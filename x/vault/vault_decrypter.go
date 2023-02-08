@@ -3,13 +3,15 @@ package vault
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/cultureamp/ca-go/x/log"
-	"github.com/cultureamp/ca-go/x/vault/client"
 	vaultapi "github.com/hashicorp/vault/api"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+
+	"github.com/cultureamp/ca-go/x/log"
+	"github.com/cultureamp/ca-go/x/vault/client"
 )
 
 type Client interface {
@@ -63,6 +65,16 @@ func (v *Decrypter) decryptByKey(keyReference string, encryptedData []string, lo
 		return nil, err
 	}
 
+	// There are scenarios in which secret will be nil, even if there is no error.
+	// This can happen on the decryption endpoint for a 404 status code and an empty response body
+	// https://github.com/hashicorp/vault/blob/601ad4823cb5b21ede5bf4fc6cbdf638a02feebd/api/logical.go#L241-L249
+	// We need to handle this case otherwise the nil pointer will be dereferenced.
+	if secret == nil {
+		errMsg := fmt.Sprintf("tried to decrypt keyReference: %s but vault returned an empty body", keyReference)
+		logger.Error().Msg(errMsg)
+		return nil, errors.New(errMsg)
+	}
+
 	batchResults, ok := secret.Data["batch_results"].([]interface{})
 	if !ok {
 		err = fmt.Errorf("batch results casting error")
@@ -104,7 +116,6 @@ func (v *Decrypter) decryptWithVault(keyReference string, batch []interface{}, l
 				}
 				continue
 			}
-			logger.Error().Err(err).Msg("Error calling vault decrypt API")
 			return nil, err
 		} else {
 			break
