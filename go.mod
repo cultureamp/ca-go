@@ -13,6 +13,7 @@ require (
 	github.com/hashicorp/vault v1.12.2
 	github.com/hashicorp/vault/api v1.8.2
 	github.com/hashicorp/vault/sdk v0.6.1
+	github.com/heetch/avro v0.4.4
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/launchdarkly/go-server-sdk-dynamodb v1.1.1
 	github.com/rs/zerolog v1.28.0
@@ -56,6 +57,7 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
+	github.com/actgardner/gogen-avro/v10 v10.2.1 // indirect
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1499 // indirect
 	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
@@ -171,6 +173,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/joyent/triton-go v1.7.1-0.20200416154420-6801d15b779f // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/julienschmidt/httprouter v1.3.0 // indirect
 	github.com/keybase/go-crypto v0.0.0-20190403132359-d65b6b94177f // indirect
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/launchdarkly/ccache v1.1.0 // indirect
@@ -214,7 +217,6 @@ require (
 	github.com/rboyer/safeio v0.2.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/renier/xmlrpc v0.0.0-20170708154548-ce4a1a486c03 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sasha-s/go-deadlock v0.2.0 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.4.0 // indirect
@@ -256,13 +258,16 @@ require (
 	google.golang.org/genproto v0.0.0-20220930163606-c98284e70a91 // indirect
 	google.golang.org/grpc v1.50.1 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
+	gopkg.in/errgo.v1 v1.0.0 // indirect
 	gopkg.in/ghodss/yaml.v1 v1.0.0 // indirect
+	gopkg.in/httprequest.v1 v1.2.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/launchdarkly/go-jsonstream.v1 v1.0.1 // indirect
 	gopkg.in/launchdarkly/go-sdk-events.v1 v1.1.1 // indirect
 	gopkg.in/launchdarkly/go-server-sdk-evaluation.v1 v1.5.0 // indirect
 	gopkg.in/resty.v1 v1.12.0 // indirect
+	gopkg.in/retry.v1 v1.0.3 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
