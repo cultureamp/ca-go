@@ -3,6 +3,7 @@ package vault
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -62,6 +63,16 @@ func (v *Decrypter) decryptByKey(keyReference string, encryptedData []string, lo
 	secret, err := v.decryptWithVault(keyReference, batch, logger, ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	// There are scenarios in which secret will be nil, even if there is no error.
+	// This can happen on the decryption endpoint for a 404 status code and an empty response body
+	// https://github.com/hashicorp/vault/blob/601ad4823cb5b21ede5bf4fc6cbdf638a02feebd/api/logical.go#L241-L249
+	// We need to handle this case otherwise the nil pointer will be dereferenced.
+	if secret == nil {
+		errMsg := fmt.Sprintf("tried to decrypt keyReference: %s but vault returned an empty body", keyReference)
+		logger.Error().Msg(errMsg)
+		return nil, errors.New(errMsg)
 	}
 
 	batchResults, ok := secret.Data["batch_results"].([]interface{})

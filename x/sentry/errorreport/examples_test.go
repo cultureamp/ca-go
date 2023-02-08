@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+
 	"github.com/cultureamp/ca-go/x/log"
 	"github.com/cultureamp/ca-go/x/sentry/errorreport"
 )
@@ -71,7 +72,7 @@ func Example_lambda() {
 	handler := errorreport.LambdaMiddleware(Handler)
 
 	// start the lambda function
-	lambda.StartWithContext(ctx, handler)
+	lambda.StartWithOptions(handler, lambda.WithContext(ctx))
 }
 
 // Handler is the lambda handler function with the logic to be executed. In this
