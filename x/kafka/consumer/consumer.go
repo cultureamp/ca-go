@@ -176,7 +176,7 @@ func (c *Consumer) processBatch(ctx context.Context, handler Handler) error {
 	for i := 0; i < c.batchSize; i++ {
 		msg, err := c.reader.FetchMessage(ctx)
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return err
 			}
 			return fmt.Errorf("unable to fetch message: %w", err)

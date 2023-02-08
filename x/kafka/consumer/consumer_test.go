@@ -125,7 +125,7 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 		rand.Seed(time.Now().UnixMilli())
 		msg := kafka.Message{
 			Topic:     "some-topic",
-			Partition: 1, //nolint:gosec
+			Partition: 1,
 			Key:       []byte(fmt.Sprintf("%d", fetchInvocations%5)),
 			Value:     []byte(fmt.Sprintf("%d", fetchInvocations)),
 			Time:      time.Now(),
@@ -155,7 +155,7 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 		if ok {
 			num, ok := latestVal.(int)
 			require.True(t, ok)
-			require.Greater(t, val, num, ok)
+			require.Greater(t, val, num)
 		}
 		msgKeyLatestValue.Store(string(msg.Key), val)
 
