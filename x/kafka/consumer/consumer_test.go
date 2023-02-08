@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -107,6 +109,63 @@ func TestConsumer_Run(t *testing.T) {
 	require.NoError(t, consumer.Run(ctx, handler))
 }
 
+func TestConsumer_Run_withBatching(t *testing.T) {
+	ctx := context.Background()
+	wantTimes := 500
+
+	var fetchInvocations int64 = 0
+
+	reader := NewMockReader(gomock.NewController(t))
+	reader.EXPECT().Close().Return(nil).Times(1)
+	reader.EXPECT().CommitMessages(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	// Mock published messages where the key is 0-5 and the value is a constantly growing number
+	reader.EXPECT().FetchMessage(ctx).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
+		atomic.AddInt64(&fetchInvocations, 1)
+		rand.Seed(time.Now().UnixMilli())
+		msg := kafka.Message{
+			Topic:     "some-topic",
+			Partition: 1, //nolint:gosec
+			Key:       []byte(fmt.Sprintf("%d", fetchInvocations%5)),
+			Value:     []byte(fmt.Sprintf("%d", fetchInvocations)),
+			Time:      time.Now(),
+		}
+		return msg, nil
+	}).AnyTimes()
+
+	consumer := &Consumer{
+		reader:    reader,
+		batchSize: 50,
+		batchKeyFn: func(message kafka.Message) (string, error) {
+			return string(message.Key), nil
+		},
+	}
+
+	var handlerInvocations int64
+	msgKeyLatestValue := new(sync.Map)
+
+	// Handler asserts that each new message handled for a specific key has a value
+	// that was greater than the previous. This proves that order is maintained
+	// for each batch.
+	handler := func(ctx context.Context, msg Message) error {
+		val, err := strconv.Atoi(string(msg.Value))
+		require.NoError(t, err)
+
+		latestVal, ok := msgKeyLatestValue.Load(string(msg.Key))
+		if ok {
+			require.Greater(t, val, latestVal.(int))
+		}
+		msgKeyLatestValue.Store(string(msg.Key), val)
+
+		atomic.AddInt64(&handlerInvocations, 1)
+		if handlerInvocations == int64(wantTimes) {
+			require.NoError(t, consumer.Close())
+		}
+		return nil
+	}
+	require.NoError(t, consumer.Run(ctx, handler))
+}
+
 func TestConsumer_Run_error(t *testing.T) {
 	var wantErr error
 	var gotAttempts int
@@ -125,13 +184,13 @@ func TestConsumer_Run_error(t *testing.T) {
 	}{
 		{
 			name:         "consumer unable to handle message",
-			wantError:    fmt.Errorf("consumer %s unable to handle message: %w", wantConsumerID, wantHandlerErr),
+			wantError:    fmt.Errorf("consumer %s error: unable to handle message: %w", wantConsumerID, wantHandlerErr),
 			shouldNotify: false,
 			numRetries:   0,
 		},
 		{
 			name:         "handler error after backoff retry and notify",
-			wantError:    fmt.Errorf("consumer %s unable to handle message: %w", wantConsumerID, wantHandlerErr),
+			wantError:    fmt.Errorf("consumer %s error: unable to handle message: %w", wantConsumerID, wantHandlerErr),
 			shouldNotify: true,
 			numRetries:   3,
 			setup: func(t *testing.T, consumer *Consumer) {
@@ -167,7 +226,7 @@ func TestConsumer_Run_error(t *testing.T) {
 		},
 		{
 			name:             "consumer context done error",
-			wantError:        fmt.Errorf("consumer %s unable to handle message: context canceled", wantConsumerID),
+			wantError:        fmt.Errorf("consumer %s error: unable to handle message: context canceled", wantConsumerID),
 			contextCancelled: true,
 			shouldNotify:     false,
 			numRetries:       0,
@@ -399,6 +458,7 @@ func TestNonStopExponentialBackOff(t *testing.T) {
 }
 
 func randMsg() kafka.Message {
+	rand.Seed(time.Now().UnixMilli())
 	return kafka.Message{
 		Topic:     "some-topic",
 		Partition: rand.Intn(20-1) + 1, //nolint:gosec

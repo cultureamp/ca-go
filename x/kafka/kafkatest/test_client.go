@@ -3,6 +3,7 @@ package kafkatest
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -89,10 +90,11 @@ func NewTestClient[EventType any](t *testing.T, ctx context.Context, cfg TestCli
 func (c *TestClient[EventType]) PublishEvents(t *testing.T, ctx context.Context, events ...EventType) {
 	var msgs []kafka.Message
 
-	for _, event := range events {
+	for i, event := range events {
 		msg := kafka.Message{
 			Value: c.registry.Encode(t, ctx, event),
 			Time:  time.Now(),
+			Key:   []byte(strconv.Itoa(i)),
 		}
 		msgs = append(msgs, msg)
 	}

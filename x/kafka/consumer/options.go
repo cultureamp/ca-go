@@ -10,8 +10,8 @@ type Option func(consumer *Consumer)
 // WithExplicitCommit enables offset commit only after a message is successfully
 // handled.
 //
-// Do not use this option if the default behaviour of committing offsets on initial
-// read (before handling the message) is required.
+// Do not use this option if the default behaviour of auto committing offsets on
+// initial read (before handling the message) is required.
 func WithExplicitCommit() Option {
 	return func(consumer *Consumer) {
 		consumer.withExplicitCommit = true
@@ -70,6 +70,15 @@ func WithReaderErrorLogger(logger kafka.LoggerFunc) Option {
 func WithDataDogTracing(opts ...kafkatrace.Option) Option {
 	return func(consumer *Consumer) {
 		consumer.withDataDogTracing = true
+	}
+}
+
+func WithMessageBatching(batchSize int, batchKeyFn GetBatchKey) Option {
+	return func(consumer *Consumer) {
+		consumer.batchSize = batchSize
+		if batchKeyFn != nil {
+			consumer.batchKeyFn = batchKeyFn
+		}
 	}
 }
 
