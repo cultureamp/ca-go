@@ -81,28 +81,28 @@ func TestConsumerGroup_Run_integration(t *testing.T) {
 			partitions:    1,
 			numMessages:   1000,
 			consumerCount: 1,
-			opts:          []Option{WithMessageBatching(100, dummyEventGetBatchKeyFn(t, 20))},
+			opts:          []Option{WithMessageBatching(100, newGetOrderingKey(t, 20))},
 		},
 		{
-			name:          "1 consumer (batching), 10 partitions, 100 messages)",
+			name:          "1 consumer (batching), 10 partitions, 1000 messages)",
 			partitions:    10,
 			numMessages:   100,
 			consumerCount: 1,
-			opts:          []Option{WithMessageBatching(100, dummyEventGetBatchKeyFn(t, 20))},
+			opts:          []Option{WithMessageBatching(100, newGetOrderingKey(t, 20))},
 		},
 		{
 			name:          "10 consumers (batching), 10 partitions, 1000 messages",
 			partitions:    10,
 			numMessages:   1000,
 			consumerCount: 10,
-			opts:          []Option{WithMessageBatching(100, dummyEventGetBatchKeyFn(t, 20))},
+			opts:          []Option{WithMessageBatching(100, newGetOrderingKey(t, 20))},
 		},
 		{
 			name:          "10 consumers (batching), 100 partitions, 1000 messages",
 			partitions:    10,
 			numMessages:   1000,
 			consumerCount: 10,
-			opts:          []Option{WithMessageBatching(100, dummyEventGetBatchKeyFn(t, 20))},
+			opts:          []Option{WithMessageBatching(100, newGetOrderingKey(t, 20))},
 		},
 	}
 
@@ -209,7 +209,7 @@ func publishDummyEvents(t *testing.T, ctx context.Context, helper *kafkatest.Tes
 	helper.PublishEvents(t, ctx, events...)
 }
 
-func dummyEventGetBatchKeyFn(t *testing.T, mod int) GetBatchKey {
+func newGetOrderingKey(t *testing.T, mod int) GetOrderingKey {
 	return func(message kafka.Message) (string, error) {
 		i, err := strconv.Atoi(string(message.Key))
 		require.NoError(t, err)

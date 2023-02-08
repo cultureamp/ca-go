@@ -136,7 +136,7 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 	consumer := &Consumer{
 		reader:    reader,
 		batchSize: 50,
-		batchKeyFn: func(message kafka.Message) (string, error) {
+		getOrderingKeyFn: func(message kafka.Message) (string, error) {
 			return string(message.Key), nil
 		},
 	}
@@ -153,7 +153,9 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 
 		latestVal, ok := msgKeyLatestValue.Load(string(msg.Key))
 		if ok {
-			require.Greater(t, val, latestVal.(int))
+			num, ok := latestVal.(int)
+			require.True(t, ok)
+			require.Greater(t, val, num, ok)
 		}
 		msgKeyLatestValue.Store(string(msg.Key), val)
 

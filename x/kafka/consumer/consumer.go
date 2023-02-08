@@ -38,12 +38,12 @@ type Handler func(ctx context.Context, msg Message) error
 // NotifyError is a notify-on-error function used to report consumer handler errors.
 type NotifyError func(ctx context.Context, err error, msg Message)
 
-// GetBatchKey specifies what key to store the Kafka message under when processing
-// in batches. Batch keys are used to spawn new goroutines that are responsible for
-// processing each message stored under that key. Using a batch key is particularly
-// useful for decreasing/increasing concurrency or ensuring specific messages are
-// processed in order.
-type GetBatchKey func(message kafka.Message) (string, error)
+// GetOrderingKey specifies what key to store the Kafka message under when
+// processing in batches. Ordering keys are used to spawn new goroutines that
+// are responsible for processing each message for that key in order. An ordering
+// key is also useful for decreasing/increasing processing concurrency within
+// a batch.
+type GetOrderingKey func(message kafka.Message) (string, error)
 
 // Reader fetches and commits messages from a Kafka topic.
 type Reader interface {
@@ -75,7 +75,7 @@ type Consumer struct {
 	withDataDogTracing bool
 	withExplicitCommit bool
 	batchSize          int
-	batchKeyFn         GetBatchKey
+	getOrderingKeyFn   GetOrderingKey
 	closed             bool
 }
 
@@ -94,8 +94,8 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 			Dialer:                dialer,
 			WatchPartitionChanges: true,
 		},
-		batchSize:  0,
-		batchKeyFn: func(message kafka.Message) (string, error) { return "", nil },
+		batchSize:        0,
+		getOrderingKeyFn: func(message kafka.Message) (string, error) { return "", nil },
 	}
 
 	for _, opt := range opts {
@@ -183,7 +183,7 @@ func (c *Consumer) processBatch(ctx context.Context, handler Handler) error {
 		}
 		commits = append(commits, msg)
 
-		key, err := c.batchKeyFn(msg)
+		key, err := c.getOrderingKeyFn(msg)
 		if err != nil {
 			return fmt.Errorf("unable to apply key function: %w", err)
 		}

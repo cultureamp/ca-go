@@ -2,7 +2,6 @@ package consumer
 
 import (
 	"github.com/segmentio/kafka-go"
-	kafkatrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/segmentio/kafka.go.v0"
 )
 
 type Option func(consumer *Consumer)
@@ -67,17 +66,17 @@ func WithReaderErrorLogger(logger kafka.LoggerFunc) Option {
 // A span is started each time a Kafka message is read and finished when the offset
 // is committed. The consumer span can also be retrieved from within your handler
 // using tracer.SpanFromContext.
-func WithDataDogTracing(opts ...kafkatrace.Option) Option {
+func WithDataDogTracing() Option {
 	return func(consumer *Consumer) {
 		consumer.withDataDogTracing = true
 	}
 }
 
-func WithMessageBatching(batchSize int, batchKeyFn GetBatchKey) Option {
+func WithMessageBatching(batchSize int, getOrderingKeyFn GetOrderingKey) Option {
 	return func(consumer *Consumer) {
 		consumer.batchSize = batchSize
-		if batchKeyFn != nil {
-			consumer.batchKeyFn = batchKeyFn
+		if getOrderingKeyFn != nil {
+			consumer.getOrderingKeyFn = getOrderingKeyFn
 		}
 	}
 }
