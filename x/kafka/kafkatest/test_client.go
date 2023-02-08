@@ -107,7 +107,7 @@ func (c *TestClient[EventType]) PublishMessages(t *testing.T, ctx context.Contex
 
 // ConsumeEvent reads the next message from the topic and commits the offset.
 // The message is decoded into a new declaration of EventType and returned.
-func (c *TestClient[EventType]) ConsumeEvent(t *testing.T, ctx context.Context) EventType {
+func (c *TestClient[EventType]) ConsumeEvent(t *testing.T, ctx context.Context) EventType { // nolint:ireturn
 	msg, err := c.reader.ReadMessage(ctx)
 	require.NoError(t, err)
 	return c.registry.Decode(t, ctx, msg.Value)

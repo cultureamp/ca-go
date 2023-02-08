@@ -58,7 +58,7 @@ func (r *TestRegistry[EventType]) Encode(t *testing.T, ctx context.Context, even
 
 // Decode unmarshals the given message into a new declaration of EventType and
 // returns it.
-func (r *TestRegistry[EventType]) Decode(t *testing.T, ctx context.Context, data []byte) EventType {
+func (r *TestRegistry[EventType]) Decode(t *testing.T, ctx context.Context, data []byte) EventType { // nolint:ireturn
 	var event EventType
 	_, err := r.decoder.Unmarshal(ctx, data, &event)
 	require.NoError(t, err)
