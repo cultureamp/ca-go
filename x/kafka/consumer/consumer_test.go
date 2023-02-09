@@ -18,7 +18,6 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	kafkatrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/segmentio/kafka.go.v0"
 )
 
 func TestNewConsumer(t *testing.T) {
@@ -64,11 +63,14 @@ func TestNewConsumer(t *testing.T) {
 				WithReaderLogger(func(s string, i ...interface{}) { log.Println(s) }),
 				WithReaderErrorLogger(func(s string, i ...interface{}) { log.Println(s) }),
 				WithDataDogTracing(),
+				WithKafkaReader(func() Reader {
+					return &MockReader{}
+				}),
 			)
 			require.NotNil(t, c)
 			assert.Equal(t, c.readerConfig.Dialer, dialer)
 			assert.NotNil(t, c.reader)
-			assert.IsType(t, &kafkatrace.Reader{}, c.reader)
+			assert.Implements(t, (*Reader)(nil), c.reader)
 			assert.NotNil(t, c.backOffConstructor)
 			assert.NotNil(t, c.notifyErr)
 			assert.Equal(t, wantBalancers, c.readerConfig.GroupBalancers)
