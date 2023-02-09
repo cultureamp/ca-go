@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl/scram"
+	"golang.org/x/sync/errgroup"
 	kafkatrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/segmentio/kafka.go.v0"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
@@ -31,11 +32,18 @@ type Message struct {
 	Metadata
 }
 
+// Handler specifies how a consumer should handle a received Kafka message.
+type Handler func(ctx context.Context, msg Message) error
+
 // NotifyError is a notify-on-error function used to report consumer handler errors.
 type NotifyError func(ctx context.Context, err error, msg Message)
 
-// Handler specifies how a consumer should handle a received Kafka message.
-type Handler func(ctx context.Context, msg Message) error
+// GetOrderingKey specifies what key to store the Kafka message under when
+// processing in batches. Ordering keys are used to spawn new goroutines that
+// are responsible for processing each message for that key in order. An ordering
+// key is also useful for decreasing/increasing processing concurrency within
+// a batch.
+type GetOrderingKey func(message kafka.Message) (string, error)
 
 // Reader fetches and commits messages from a Kafka topic.
 type Reader interface {
@@ -66,6 +74,8 @@ type Consumer struct {
 	notifyErr          NotifyError
 	withDataDogTracing bool
 	withExplicitCommit bool
+	batchSize          int
+	getOrderingKeyFn   GetOrderingKey
 	closed             bool
 }
 
@@ -84,6 +94,8 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 			Dialer:                dialer,
 			WatchPartitionChanges: true,
 		},
+		batchSize:        0,
+		getOrderingKeyFn: func(message kafka.Message) (string, error) { return "", nil },
 	}
 
 	for _, opt := range opts {
@@ -103,44 +115,109 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 }
 
 // Run consumes and handles messages from the topic. The method call blocks until
-// the consumer is closed, or an error occurs.
+// the context is canceled, the consumer is closed, or an error occurs.
 func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 	for {
 		if c.closed {
 			return nil
 		}
 
-		var msg kafka.Message
-		var err error
-
-		if c.withExplicitCommit {
-			msg, err = c.reader.FetchMessage(ctx)
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					return nil
-				}
-				return fmt.Errorf("consumer %s unable to fetch message: %w", c.id, err)
+		if c.batchSize > 0 {
+			if err := c.processBatch(ctx, handler); err != nil {
+				return fmt.Errorf("consumer %s batch error: %w", c.id, err)
 			}
 		} else {
-			msg, err = c.reader.ReadMessage(ctx)
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					return nil
-				}
-				return fmt.Errorf("consumer %s unable to read message: %w", c.id, err)
-			}
-		}
-
-		if err = c.handle(ctx, msg, handler); err != nil {
-			return fmt.Errorf("consumer %s unable to handle message: %w", c.id, err)
-		}
-
-		if c.withExplicitCommit {
-			if err = c.reader.CommitMessages(ctx, msg); err != nil {
-				return fmt.Errorf("consumer %s unable to commit message: %w", c.id, err)
+			if err := c.process(ctx, handler); err != nil {
+				return fmt.Errorf("consumer %s error: %w", c.id, err)
 			}
 		}
 	}
+}
+
+func (c *Consumer) process(ctx context.Context, handler Handler) error {
+	var msg kafka.Message
+	var err error
+
+	if c.withExplicitCommit {
+		msg, err = c.reader.FetchMessage(ctx)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return fmt.Errorf("unable to fetch message: %w", err)
+		}
+	} else {
+		msg, err = c.reader.ReadMessage(ctx)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return fmt.Errorf("unable to read message: %w", err)
+		}
+	}
+
+	if err = c.handle(ctx, msg, handler); err != nil {
+		return fmt.Errorf("unable to handle message: %w", err)
+	}
+
+	if c.withExplicitCommit {
+		if err = c.reader.CommitMessages(ctx, msg); err != nil {
+			return fmt.Errorf("unable to commit message: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (c *Consumer) processBatch(ctx context.Context, handler Handler) error {
+	var commits []kafka.Message
+	batchMapping := map[string][]kafka.Message{}
+
+	for i := 0; i < c.batchSize; i++ {
+		msg, err := c.reader.FetchMessage(ctx)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return err
+			}
+			return fmt.Errorf("unable to fetch message: %w", err)
+		}
+		commits = append(commits, msg)
+
+		key, err := c.getOrderingKeyFn(msg)
+		if err != nil {
+			return fmt.Errorf("unable to apply key function: %w", err)
+		}
+
+		if msgs, ok := batchMapping[key]; ok {
+			batchMapping[key] = append(msgs, msg)
+		} else {
+			batchMapping[key] = []kafka.Message{msg}
+		}
+	}
+
+	var errg errgroup.Group
+
+	for _, batch := range batchMapping {
+		closureBatch := batch
+		errg.Go(func() error {
+			for _, msg := range closureBatch {
+				if err := c.handle(ctx, msg, handler); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+	}
+
+	if err := errg.Wait(); err != nil {
+		return fmt.Errorf("unable to process batch: %w", err)
+	}
+
+	if err := c.reader.CommitMessages(ctx, commits...); err != nil {
+		return fmt.Errorf("unable to commit messages: %w", err)
+	}
+
+	return nil
 }
 
 // Close closes the consumer, preventing it from consuming any more messages.
@@ -182,7 +259,6 @@ func (c *Consumer) handle(ctx context.Context, msg kafka.Message, handler Handle
 			if err == nil {
 				return ctx.Err()
 			}
-
 			return fmt.Errorf("%s: %w", ctx.Err().Error(), fmt.Errorf("consumer handler error: %w", ctx.Err()))
 		case _, ok := <-ticker.C:
 			if !ok {
@@ -201,8 +277,7 @@ func (c *Consumer) handle(ctx context.Context, msg kafka.Message, handler Handle
 			},
 		}
 
-		err = handler(ctx, consumerMsg)
-		if err != nil {
+		if err = handler(ctx, consumerMsg); err != nil {
 			if c.notifyErr != nil {
 				c.notifyErr(ctx, err, consumerMsg)
 			}
@@ -243,7 +318,7 @@ func NewGroup(dialer *kafka.Dialer, config GroupConfig, opts ...Option) *Group {
 	}
 
 	return &Group{
-		ID:     fmt.Sprint(config.GroupID, uuid.New().String()[:7]), // semi-random slug
+		ID:     fmt.Sprintf("%s-%s", strings.ToLower(config.GroupID), uuid.New().String()[:7]), // semi-random slug
 		config: config,
 		dialer: dialer,
 		opts:   opts,
@@ -261,14 +336,13 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 
 	for i := 0; i < g.config.Count; i++ {
 		wg.Add(1)
-		consumerID := fmt.Sprintf("%s-%d", g.ID, i)
 
 		// Consumers must be created and run in sequential order so that Kafka can
 		// successfully re-balance the group as each is added. This unfortunately
 		// prevents us from receiving a passed in list of consumers, which is
 		// arguably a cleaner approach.
 		cfg := Config{
-			ID:      consumerID,
+			ID:      fmt.Sprintf("%s-%d", g.ID, i),
 			Brokers: g.config.Brokers,
 			Topic:   g.config.Topic,
 			groupID: g.config.GroupID,
@@ -277,8 +351,8 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 
 		go func() {
 			defer wg.Done()
-			if err := c.Run(ctx, handler); err != nil {
-				errCh <- fmt.Errorf("consumer %s for group %s failed: %w", c.id, g.config.GroupID, err)
+			if err := c.Run(ctx, handler); err != nil && !errors.Is(err, context.Canceled) {
+				errCh <- fmt.Errorf("consumer %s for group %s failed: %w", c.id, g.ID, err)
 			}
 		}()
 		g.consumers = append(g.consumers, c)

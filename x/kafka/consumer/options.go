@@ -2,7 +2,6 @@ package consumer
 
 import (
 	"github.com/segmentio/kafka-go"
-	kafkatrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/segmentio/kafka.go.v0"
 )
 
 type Option func(consumer *Consumer)
@@ -10,8 +9,8 @@ type Option func(consumer *Consumer)
 // WithExplicitCommit enables offset commit only after a message is successfully
 // handled.
 //
-// Do not use this option if the default behaviour of committing offsets on initial
-// read (before handling the message) is required.
+// Do not use this option if the default behaviour of auto committing offsets on
+// initial read (before handling the message) is required.
 func WithExplicitCommit() Option {
 	return func(consumer *Consumer) {
 		consumer.withExplicitCommit = true
@@ -67,9 +66,18 @@ func WithReaderErrorLogger(logger kafka.LoggerFunc) Option {
 // A span is started each time a Kafka message is read and finished when the offset
 // is committed. The consumer span can also be retrieved from within your handler
 // using tracer.SpanFromContext.
-func WithDataDogTracing(opts ...kafkatrace.Option) Option {
+func WithDataDogTracing() Option {
 	return func(consumer *Consumer) {
 		consumer.withDataDogTracing = true
+	}
+}
+
+func WithMessageBatching(batchSize int, getOrderingKeyFn GetOrderingKey) Option {
+	return func(consumer *Consumer) {
+		consumer.batchSize = batchSize
+		if getOrderingKeyFn != nil {
+			consumer.getOrderingKeyFn = getOrderingKeyFn
+		}
 	}
 }
 

@@ -3,6 +3,7 @@ package kafkatest
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -89,10 +90,11 @@ func NewTestClient[EventType any](t *testing.T, ctx context.Context, cfg TestCli
 func (c *TestClient[EventType]) PublishEvents(t *testing.T, ctx context.Context, events ...EventType) {
 	var msgs []kafka.Message
 
-	for _, event := range events {
+	for i, event := range events {
 		msg := kafka.Message{
 			Value: c.registry.Encode(t, ctx, event),
 			Time:  time.Now(),
+			Key:   []byte(strconv.Itoa(i)),
 		}
 		msgs = append(msgs, msg)
 	}
@@ -107,7 +109,7 @@ func (c *TestClient[EventType]) PublishMessages(t *testing.T, ctx context.Contex
 
 // ConsumeEvent reads the next message from the topic and commits the offset.
 // The message is decoded into a new declaration of EventType and returned.
-func (c *TestClient[EventType]) ConsumeEvent(t *testing.T, ctx context.Context) EventType { // nolint:ireturn
+func (c *TestClient[EventType]) ConsumeEvent(t *testing.T, ctx context.Context) EventType {
 	msg, err := c.reader.ReadMessage(ctx)
 	require.NoError(t, err)
 	return c.registry.Decode(t, ctx, msg.Value)
