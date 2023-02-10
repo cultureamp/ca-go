@@ -115,13 +115,12 @@ func TestConsumer_Run(t *testing.T) {
 func TestConsumer_Run_withBatching(t *testing.T) {
 	ctx := context.Background()
 	wantTimes := 500
-
+	batchSize := 50
 	fetchInvocations := new(mutexCounter)
 
 	reader := NewMockReader(gomock.NewController(t))
 	reader.EXPECT().Close().Return(nil).Times(1)
-	reader.EXPECT().CommitMessages(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-
+	reader.EXPECT().CommitMessages(gomock.Any(), gomock.Any()).Return(nil).Times(wantTimes / batchSize)
 	// Mock published messages where the key is 0-5 and the value is a constantly growing number
 	reader.EXPECT().FetchMessage(ctx).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
 		fetchInvocations.Inc()
@@ -135,11 +134,11 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 			Time:      time.Now(),
 		}
 		return msg, nil
-	}).AnyTimes()
+	}).Times(wantTimes)
 
 	consumer := NewConsumer(&kafka.Dialer{}, Config{},
 		WithKafkaReader(func() Reader { return reader }),
-		WithMessageBatching(50, func(message kafka.Message) (string, error) {
+		WithMessageBatching(batchSize, func(message kafka.Message) (string, error) {
 			return string(message.Key), nil
 		}),
 	)
@@ -331,33 +330,26 @@ func TestNewGroup(t *testing.T) {
 // partitions to consumers are mutually exclusive, since that is the responsibility
 // of Kafka itself.
 func TestGroup_Run(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	wantConsumers := 10
 	wantNumMsgs := 100
 
-	// Concurrent safe msg tracker since handler runs from multiple consumer go routines.
-	var msgTracker messageTracker
-
 	reader := NewMockReader(gomock.NewController(t))
 	reader.EXPECT().Close().AnyTimes()
-	reader.EXPECT().ReadMessage(ctx).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
-		msgTracker.Lock()
-		defer msgTracker.Unlock()
-		msg := randMsg()
-		msgTracker.wantMessages = append(msgTracker.wantMessages, msg)
-		return msg, nil
-	}).AnyTimes()
+	reader.EXPECT().ReadMessage(ctx).Return(randMsg(), nil).AnyTimes()
 
 	group := NewGroup(&kafka.Dialer{}, GroupConfig{Count: wantConsumers},
 		WithKafkaReader(func() Reader { return reader }),
 	)
 
+	handlerInvocations := new(mutexCounter)
 	stopCh := make(chan bool)
+
 	handler := func(ctx context.Context, msg Message) error {
-		msgTracker.Lock()
-		defer msgTracker.Unlock()
-		require.Contains(t, msgTracker.wantMessages, msg.Message)
-		if len(msgTracker.wantMessages) == wantNumMsgs {
+		require.NotEmpty(t, msg.Value)
+		handlerInvocations.Inc()
+		if handlerInvocations.Get() == wantNumMsgs {
 			stopCh <- true
 		}
 		return nil
@@ -462,11 +454,6 @@ func randMsg() kafka.Message {
 		Partition: rand.Intn(20-1) + 1, //nolint:gosec
 		Value:     []byte(uuid.New().String()),
 	}
-}
-
-type messageTracker struct {
-	sync.Mutex
-	wantMessages []kafka.Message
 }
 
 type testBackoff struct {

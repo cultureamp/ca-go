@@ -181,7 +181,8 @@ func (c *Consumer) process(ctx context.Context, handler Handler) error {
 
 func (c *Consumer) processBatch(ctx context.Context, handler Handler) error {
 	var commits []kafka.Message
-	batchMapping := map[string][]kafka.Message{}
+	var errg errgroup.Group
+	orderedChans := make(map[string]chan kafka.Message)
 
 	for i := 0; i < c.batchSize; i++ {
 		msg, err := c.reader.FetchMessage(ctx)
@@ -195,28 +196,30 @@ func (c *Consumer) processBatch(ctx context.Context, handler Handler) error {
 
 		key, err := c.getOrderingKeyFn(msg)
 		if err != nil {
-			return fmt.Errorf("unable to apply key function: %w", err)
+			return fmt.Errorf("unable to apply get ordering key function: %w", err)
 		}
 
-		if msgs, ok := batchMapping[key]; ok {
-			batchMapping[key] = append(msgs, msg)
-		} else {
-			batchMapping[key] = []kafka.Message{msg}
+		if orderedChan, ok := orderedChans[key]; ok {
+			orderedChan <- msg
+			continue
 		}
-	}
 
-	var errg errgroup.Group
+		msgCh := make(chan kafka.Message, c.batchSize)
+		msgCh <- msg
+		orderedChans[key] = msgCh
 
-	for _, batch := range batchMapping {
-		closureBatch := batch
 		errg.Go(func() error {
-			for _, msg := range closureBatch {
-				if err := c.handle(ctx, msg, handler); err != nil {
+			for m := range msgCh {
+				if err = c.handle(ctx, m, handler); err != nil {
 					return err
 				}
 			}
 			return nil
 		})
+	}
+
+	for _, msgCh := range orderedChans {
+		close(msgCh)
 	}
 
 	if err := errg.Wait(); err != nil {
