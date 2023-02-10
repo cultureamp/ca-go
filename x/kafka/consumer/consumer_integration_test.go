@@ -58,12 +58,6 @@ func TestConsumerGroup_Run_integration(t *testing.T) {
 			consumerCount: 1,
 		},
 		{
-			name:          "10 consumers, 10 partitions, 50 messages)",
-			partitions:    10,
-			numMessages:   50,
-			consumerCount: 1,
-		},
-		{
 			name:          "10 consumers, 10 partitions, 1000 messages)",
 			partitions:    10,
 			numMessages:   1000,
@@ -128,32 +122,42 @@ func TestConsumerGroup_Run_integration(t *testing.T) {
 			numPublish := tt.numMessages
 			publishDummyEvents(t, ctx, tc, numPublish)
 
-			consumerCtx, consumerCancel := context.WithCancel(ctx)
-
-			var numConsumed int64
+			stopCh := make(chan bool)
+			numConsumed := new(mutexCounter)
 			handler := func(ctx context.Context, msg Message) error {
 				time.Sleep(handlerSleepDuration)
 				assert.NotEmpty(t, msg.Value)
-				atomic.AddInt64(&numConsumed, 1)
-				if numConsumed == int64(numPublish) && numConsumed == tc.TopicMessageCount(t, ctx) {
-					consumerCancel()
+				numConsumed.Inc()
+				i := numConsumed.Get()
+				if i == numPublish && i == int(tc.TopicMessageCount(t, ctx)) {
+					stopCh <- true
 				}
 				return nil
 			}
 
 			start := time.Now()
-			errCh := c.Run(consumerCtx, handler)
-			for err := range errCh {
-				if !errors.Is(err, context.Canceled) {
-					require.NoError(t, err)
+			errCh := c.Run(ctx, handler)
+
+		SelectLoop:
+			for {
+				select {
+				case <-stopCh:
+					c.Stop()
+					break SelectLoop
+				case err, ok := <-errCh:
+					if ok {
+						require.NoError(t, err)
+					}
+					break SelectLoop
 				}
 			}
+
 			duration := time.Now().Sub(start)
 
 			var buf bytes.Buffer
 			buf.WriteString(fmt.Sprintf("\nResults - %s\n", tt.name))
 			buf.WriteString(fmt.Sprintf("- Processing time: %s\n", duration.String()))
-			buf.WriteString(fmt.Sprintf("- Average messages per second: %.1f\n", float64(numConsumed)/duration.Seconds()))
+			buf.WriteString(fmt.Sprintf("- Average messages per second: %.1f\n", float64(numConsumed.Get())/duration.Seconds()))
 			t.Log(buf.String())
 		})
 	}

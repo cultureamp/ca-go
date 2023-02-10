@@ -24,7 +24,6 @@ var (
 
 func main() {
 	parseFlags()
-	ctx, cancel := context.WithCancel(context.Background())
 
 	groupCfg := consumer.GroupConfig{
 		Count:   consumerCount,
@@ -33,10 +32,10 @@ func main() {
 		GroupID: groupID,
 	}
 	consumerGroup := consumer.NewGroup(kafka.DefaultDialer, groupCfg)
-	defer consumerGroup.Close()
+	defer consumerGroup.Stop()
 
 	log.Printf("consumer group %s started for topic %s\n", consumerGroup.ID, topic)
-	errs := consumerGroup.Run(ctx, handle)
+	errs := consumerGroup.Run(context.Background(), handle)
 
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
@@ -45,16 +44,13 @@ func main() {
 		select {
 		case err, ok := <-errs:
 			if !ok {
-				// Channel closed - all consumers stopped
-				return
-			}
-
-			if !errors.Is(err, context.Canceled) {
+				return // channel closed - all consumers stopped
+			} else if !errors.Is(err, context.Canceled) {
 				log.Println(err)
 			}
 		case <-sigterm:
 			signal.Stop(sigterm)
-			cancel()
+			consumerGroup.Stop()
 		}
 	}
 }
