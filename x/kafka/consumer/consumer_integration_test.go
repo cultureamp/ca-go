@@ -123,7 +123,7 @@ func TestConsumerGroup_Run_integration(t *testing.T) {
 			publishDummyEvents(t, ctx, tc, numPublish)
 
 			stopCh := make(chan bool)
-			numConsumed := new(mutexCounter)
+			numConsumed := new(safeCounter)
 			handler := func(ctx context.Context, msg Message) error {
 				time.Sleep(handlerSleepDuration)
 				assert.NotEmpty(t, msg.Value)

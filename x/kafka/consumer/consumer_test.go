@@ -116,7 +116,7 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 	ctx := context.Background()
 	wantTimes := 500
 
-	fetchInvocations := new(mutexCounter)
+	fetchInvocations := new(safeCounter)
 
 	reader := NewMockReader(gomock.NewController(t))
 	reader.EXPECT().Close().Return(nil).Times(1)
@@ -144,7 +144,7 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 		}),
 	)
 
-	handlerInvocations := new(mutexCounter)
+	handlerInvocations := new(safeCounter)
 	msgKeyLatestValue := new(sync.Map)
 
 	// Handler asserts that each new message handled for a specific key has a value
@@ -484,19 +484,19 @@ func (b *testBackoff) NextBackOff() time.Duration {
 	return 0
 }
 
-type mutexCounter struct {
-	sync.Mutex
+type safeCounter struct {
+	sync.RWMutex
 	count int
 }
 
-func (m *mutexCounter) Inc() {
+func (m *safeCounter) Inc() {
 	m.Lock()
 	defer m.Unlock()
 	m.count++
 }
 
-func (m *mutexCounter) Get() int {
-	m.Lock()
-	defer m.Unlock()
+func (m *safeCounter) Get() int {
+	m.RLock()
+	defer m.RUnlock()
 	return m.count
 }
