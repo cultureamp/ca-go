@@ -38,7 +38,7 @@ func (m *MockReader) EXPECT() *MockReaderMockRecorder {
 // Close mocks base method.
 func (m *MockReader) Close() error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Close")
+	ret := m.ctrl.Call(m, "Stop")
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -46,7 +46,7 @@ func (m *MockReader) Close() error {
 // Close indicates an expected call of Close.
 func (mr *MockReaderMockRecorder) Close() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockReader)(nil).Close))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockReader)(nil).Close))
 }
 
 // CommitMessages mocks base method.

@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"strconv"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -96,14 +95,16 @@ func TestConsumer_Run(t *testing.T) {
 		return currMsg, nil
 	}).Times(wantTimes)
 
-	consumer := &Consumer{reader: reader}
+	consumer := NewConsumer(&kafka.Dialer{}, Config{},
+		WithKafkaReader(func() Reader { return reader }),
+	)
 
 	i := 0
 	handler := func(ctx context.Context, msg Message) error {
 		require.Equal(t, currMsg, msg.Message)
 		i++
 		if i == wantTimes {
-			require.NoError(t, consumer.Close())
+			consumer.Stop()
 		}
 		return nil
 	}
@@ -115,7 +116,7 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 	ctx := context.Background()
 	wantTimes := 500
 
-	var fetchInvocations int64 = 0
+	fetchInvocations := new(safeCounter)
 
 	reader := NewMockReader(gomock.NewController(t))
 	reader.EXPECT().Close().Return(nil).Times(1)
@@ -123,27 +124,27 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 
 	// Mock published messages where the key is 0-5 and the value is a constantly growing number
 	reader.EXPECT().FetchMessage(ctx).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
-		atomic.AddInt64(&fetchInvocations, 1)
+		fetchInvocations.Inc()
 		rand.Seed(time.Now().UnixMilli())
+		i := fetchInvocations.Get()
 		msg := kafka.Message{
 			Topic:     "some-topic",
 			Partition: 1,
-			Key:       []byte(fmt.Sprintf("%d", fetchInvocations%5)),
-			Value:     []byte(fmt.Sprintf("%d", fetchInvocations)),
+			Key:       []byte(fmt.Sprintf("%d", i%5)),
+			Value:     []byte(fmt.Sprintf("%d", i)),
 			Time:      time.Now(),
 		}
 		return msg, nil
 	}).AnyTimes()
 
-	consumer := &Consumer{
-		reader:    reader,
-		batchSize: 50,
-		getOrderingKeyFn: func(message kafka.Message) (string, error) {
+	consumer := NewConsumer(&kafka.Dialer{}, Config{},
+		WithKafkaReader(func() Reader { return reader }),
+		WithMessageBatching(50, func(message kafka.Message) (string, error) {
 			return string(message.Key), nil
-		},
-	}
+		}),
+	)
 
-	var handlerInvocations int64
+	handlerInvocations := new(safeCounter)
 	msgKeyLatestValue := new(sync.Map)
 
 	// Handler asserts that each new message handled for a specific key has a value
@@ -161,9 +162,9 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 		}
 		msgKeyLatestValue.Store(string(msg.Key), val)
 
-		atomic.AddInt64(&handlerInvocations, 1)
-		if handlerInvocations == int64(wantTimes) {
-			require.NoError(t, consumer.Close())
+		handlerInvocations.Inc()
+		if handlerInvocations.Get() == wantTimes {
+			consumer.Stop()
 		}
 		return nil
 	}
@@ -254,10 +255,10 @@ func TestConsumer_Run_error(t *testing.T) {
 			reader.EXPECT().Close().Return(nil).AnyTimes()
 			reader.EXPECT().ReadMessage(ctx).Return(randMsg(), nil).AnyTimes()
 
-			consumer := &Consumer{
-				id:     wantConsumerID,
-				reader: reader,
-			}
+			consumer := NewConsumer(&kafka.Dialer{}, Config{ID: wantConsumerID},
+				WithKafkaReader(func() Reader { return reader }),
+			)
+
 			if tt.setup != nil {
 				tt.setup(t, consumer)
 			}
@@ -267,15 +268,13 @@ func TestConsumer_Run_error(t *testing.T) {
 				if wantErr != nil || gotAttempts < tt.numRetries {
 					return wantHandlerErr
 				}
-				consumer.Close()
+				consumer.Stop()
 				return nil
 			}
 
 			gotErr := consumer.Run(ctx, handler)
 			if wantErr != nil {
 				assert.EqualError(t, gotErr, wantErr.Error())
-			} else {
-				assert.NoError(t, consumer.Close())
 			}
 			assert.Equal(t, tt.shouldNotify, didNotify)
 		})
@@ -318,7 +317,7 @@ func TestNewGroup(t *testing.T) {
 
 			g := NewGroup(&kafka.Dialer{}, tt.config, wantOpts...)
 			require.NotNil(t, g)
-			assert.Empty(t, g.consumers)
+			assert.Empty(t, g.stopChs)
 			wantConfig := tt.config
 			wantConfig.Count = tt.wantNumConsumers
 			assert.Equal(t, wantConfig, g.config)
@@ -349,26 +348,29 @@ func TestGroup_Run(t *testing.T) {
 		return msg, nil
 	}).AnyTimes()
 
-	group := &Group{
-		config: GroupConfig{Count: wantConsumers},
-		opts: []Option{WithKafkaReader(func() Reader {
-			return reader
-		})},
-	}
+	group := NewGroup(&kafka.Dialer{}, GroupConfig{Count: wantConsumers},
+		WithKafkaReader(func() Reader { return reader }),
+	)
 
+	stopCh := make(chan bool)
 	handler := func(ctx context.Context, msg Message) error {
 		msgTracker.Lock()
 		defer msgTracker.Unlock()
 		require.Contains(t, msgTracker.wantMessages, msg.Message)
 		if len(msgTracker.wantMessages) == wantNumMsgs {
-			require.NoError(t, group.Close())
+			stopCh <- true
 		}
 		return nil
 	}
 
 	errCh := group.Run(ctx, handler)
-	for err := range errCh {
-		require.NoError(t, err)
+	for {
+		select {
+		case <-stopCh:
+			return
+		case err := <-errCh:
+			require.NoError(t, err)
+		}
 	}
 }
 
@@ -387,7 +389,6 @@ func TestGroup_Run_readerError(t *testing.T) {
 			name: "reader read error",
 			setupReader: func(m *MockReader) {
 				m.EXPECT().ReadMessage(gomock.Any()).Return(kafka.Message{}, wantErr).Times(1)
-				m.EXPECT().Close().Return(nil).Times(1)
 			},
 		},
 		{
@@ -395,7 +396,6 @@ func TestGroup_Run_readerError(t *testing.T) {
 			withExplicitCommit: true,
 			setupReader: func(m *MockReader) {
 				m.EXPECT().FetchMessage(gomock.Any()).Return(kafka.Message{}, wantErr).Times(1)
-				m.EXPECT().Close().Return(nil).Times(1)
 			},
 		},
 		{
@@ -404,7 +404,6 @@ func TestGroup_Run_readerError(t *testing.T) {
 			setupReader: func(m *MockReader) {
 				m.EXPECT().FetchMessage(gomock.Any()).Return(wantMsg, nil).Times(1)
 				m.EXPECT().CommitMessages(gomock.Any(), wantMsg).Return(wantErr).Times(1)
-				m.EXPECT().Close().Return(nil).Times(1)
 			},
 		},
 		{
@@ -412,7 +411,6 @@ func TestGroup_Run_readerError(t *testing.T) {
 			closeErr: true,
 			setupReader: func(m *MockReader) {
 				m.EXPECT().ReadMessage(gomock.Any()).Return(kafka.Message{}, wantErr).Times(1)
-				m.EXPECT().Close().Return(wantErr).Times(1)
 			},
 		},
 	}
@@ -439,12 +437,8 @@ func TestGroup_Run_readerError(t *testing.T) {
 			})
 			for err := range errCh {
 				require.True(t, errors.Is(err, wantErr))
-				err = group.Close()
-				if tt.closeErr {
-					require.Contains(t, err.Error(), wantErr.Error())
-					return
-				}
-				require.NoError(t, err)
+				group.Stop()
+				require.Contains(t, err.Error(), wantErr.Error())
 			}
 		})
 	}
@@ -488,4 +482,21 @@ func (b *testBackoff) NextBackOff() time.Duration {
 		return backoff.Stop
 	}
 	return 0
+}
+
+type safeCounter struct {
+	sync.RWMutex
+	count int
+}
+
+func (m *safeCounter) Inc() {
+	m.Lock()
+	defer m.Unlock()
+	m.count++
+}
+
+func (m *safeCounter) Get() int {
+	m.RLock()
+	defer m.RUnlock()
+	return m.count
 }

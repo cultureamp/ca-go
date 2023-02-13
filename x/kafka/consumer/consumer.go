@@ -76,7 +76,7 @@ type Consumer struct {
 	withExplicitCommit bool
 	batchSize          int
 	getOrderingKeyFn   GetOrderingKey
-	closed             bool
+	stopCh             chan struct{}
 }
 
 // NewConsumer returns a new Consumer configured with the provided dialer and config.
@@ -86,7 +86,8 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 	}
 
 	c := &Consumer{
-		id: config.ID,
+		id:     config.ID,
+		stopCh: make(chan struct{}),
 		readerConfig: kafka.ReaderConfig{
 			Brokers:               config.Brokers,
 			GroupID:               config.groupID,
@@ -118,8 +119,10 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 // the context is canceled, the consumer is closed, or an error occurs.
 func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 	for {
-		if c.closed {
-			return nil
+		select {
+		case <-c.stopCh:
+			return c.close()
+		default:
 		}
 
 		if c.batchSize > 0 {
@@ -132,6 +135,13 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 			}
 		}
 	}
+}
+
+// Stop stops the consumer. It waits for the current message/batch (if any) to
+// finish being handled before closing the reader stream, preventing the consumer
+// from reading any more messages.
+func (c *Consumer) Stop() {
+	close(c.stopCh)
 }
 
 func (c *Consumer) process(ctx context.Context, handler Handler) error {
@@ -220,11 +230,9 @@ func (c *Consumer) processBatch(ctx context.Context, handler Handler) error {
 	return nil
 }
 
-// Close closes the consumer, preventing it from consuming any more messages.
-func (c *Consumer) Close() error {
-	c.closed = true
+func (c *Consumer) close() error {
 	if err := c.reader.Close(); err != nil {
-		return fmt.Errorf("unable to close consumer %s: %w", c.id, err)
+		return fmt.Errorf("unable to close consumer %s reader: %w", c.id, err)
 	}
 	return nil
 }
@@ -304,11 +312,11 @@ type GroupConfig struct {
 // It is worth noting that publishing failed messages to a dead letter queue is
 // not supported and instead would need to be included in your handler implementation.
 type Group struct {
-	ID        string
-	config    GroupConfig
-	consumers []*Consumer
-	opts      []Option
-	dialer    *kafka.Dialer
+	ID      string
+	config  GroupConfig
+	opts    []Option
+	dialer  *kafka.Dialer
+	stopChs []chan struct{}
 }
 
 // NewGroup returns a new Group configured with the provided dialer and config.
@@ -355,7 +363,7 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 				errCh <- fmt.Errorf("consumer %s for group %s failed: %w", c.id, g.ID, err)
 			}
 		}()
-		g.consumers = append(g.consumers, c)
+		g.stopChs = append(g.stopChs, c.stopCh)
 	}
 
 	go func() {
@@ -366,21 +374,13 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 	return errCh
 }
 
-// Close closes the group, preventing it from consuming any more messages.
-func (g *Group) Close() error {
-	var errs []string
-	for _, consumer := range g.consumers {
-		if err := consumer.Close(); err != nil {
-			errs = append(errs, err.Error())
-		}
+// Stop stops the group. It waits for the current message/batch (if any) in each
+// consumer to finish being handled before closing the reader streams, preventing
+// each consumer from reading any more messages.
+func (g *Group) Stop() {
+	for _, stopCh := range g.stopChs {
+		close(stopCh)
 	}
-
-	if len(errs) > 0 {
-		err := fmt.Errorf("error closing consumer group: %s", strings.Join(errs, "; "))
-		return err
-	}
-
-	return nil
 }
 
 // DialerSCRAM512 returns a Kafka dialer configured with SASL authentication
