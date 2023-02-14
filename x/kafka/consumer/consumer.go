@@ -15,9 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl/scram"
-	"golang.org/x/sync/errgroup"
 	kafkatrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/segmentio/kafka.go.v0"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 // Metadata contains relevant handler metadata for received Kafka messages.
@@ -43,7 +41,7 @@ type NotifyError func(ctx context.Context, err error, msg Message)
 // are responsible for processing each message for that key in order. An ordering
 // key is also useful for decreasing/increasing processing concurrency within
 // a batch.
-type GetOrderingKey func(message kafka.Message) (string, error)
+type GetOrderingKey func(ctx context.Context, message kafka.Message) string
 
 // Reader fetches and commits messages from a Kafka topic.
 type Reader interface {
@@ -70,13 +68,11 @@ type Consumer struct {
 	id                 string
 	reader             Reader
 	readerConfig       kafka.ReaderConfig
-	backOffConstructor HandlerRetryBackOffConstructor
-	notifyErr          NotifyError
-	withDataDogTracing bool
 	withExplicitCommit bool
 	batchSize          int
 	getOrderingKeyFn   GetOrderingKey
 	stopCh             chan struct{}
+	handlerExecutor    *handlerExecutor
 }
 
 // NewConsumer returns a new Consumer configured with the provided dialer and config.
@@ -95,8 +91,12 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 			Dialer:                dialer,
 			WatchPartitionChanges: true,
 		},
+		handlerExecutor: &handlerExecutor{
+			ConsumerID: config.ID,
+			GroupID:    config.groupID,
+		},
 		batchSize:        0,
-		getOrderingKeyFn: func(message kafka.Message) (string, error) { return "", nil },
+		getOrderingKeyFn: func(ctx context.Context, message kafka.Message) string { return "" },
 	}
 
 	for _, opt := range opts {
@@ -105,7 +105,7 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 
 	// Set the reader unless one was injected via the WithKafkaReader option.
 	if c.reader == nil {
-		if c.withDataDogTracing {
+		if c.handlerExecutor.DataDogTracingEnabled {
 			c.reader = kafkatrace.NewReader(c.readerConfig)
 		} else {
 			c.reader = kafka.NewReader(c.readerConfig)
@@ -118,6 +118,8 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 // Run consumes and handles messages from the topic. The method call blocks until
 // the context is canceled, the consumer is closed, or an error occurs.
 func (c *Consumer) Run(ctx context.Context, handler Handler) error {
+	bp := newBatchProcessor(c.reader, c.handlerExecutor, c.getOrderingKeyFn, c.batchSize)
+
 	for {
 		select {
 		case <-c.stopCh:
@@ -126,7 +128,7 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 		}
 
 		if c.batchSize > 0 {
-			if err := c.processBatch(ctx, handler); err != nil {
+			if err := bp.process(ctx, handler); err != nil {
 				return fmt.Errorf("consumer %s batch error: %w", c.id, err)
 			}
 		} else {
@@ -166,7 +168,7 @@ func (c *Consumer) process(ctx context.Context, handler Handler) error {
 		}
 	}
 
-	if err = c.handle(ctx, msg, handler); err != nil {
+	if err = c.handlerExecutor.execute(ctx, msg, handler); err != nil {
 		return fmt.Errorf("unable to handle message: %w", err)
 	}
 
@@ -179,124 +181,11 @@ func (c *Consumer) process(ctx context.Context, handler Handler) error {
 	return nil
 }
 
-func (c *Consumer) processBatch(ctx context.Context, handler Handler) error {
-	var commits []kafka.Message
-	var errg errgroup.Group
-	orderedChans := make(map[string]chan kafka.Message)
-
-	for i := 0; i < c.batchSize; i++ {
-		msg, err := c.reader.FetchMessage(ctx)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				return err
-			}
-			return fmt.Errorf("unable to fetch message: %w", err)
-		}
-		commits = append(commits, msg)
-
-		key, err := c.getOrderingKeyFn(msg)
-		if err != nil {
-			return fmt.Errorf("unable to apply get ordering key function: %w", err)
-		}
-
-		if orderedChan, ok := orderedChans[key]; ok {
-			orderedChan <- msg
-			continue
-		}
-
-		msgCh := make(chan kafka.Message, c.batchSize)
-		msgCh <- msg
-		orderedChans[key] = msgCh
-
-		errg.Go(func() error {
-			for m := range msgCh {
-				if err = c.handle(ctx, m, handler); err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-	}
-
-	for _, msgCh := range orderedChans {
-		close(msgCh)
-	}
-
-	if err := errg.Wait(); err != nil {
-		return fmt.Errorf("unable to process batch: %w", err)
-	}
-
-	if err := c.reader.CommitMessages(ctx, commits...); err != nil {
-		return fmt.Errorf("unable to commit messages: %w", err)
-	}
-
-	return nil
-}
-
 func (c *Consumer) close() error {
 	if err := c.reader.Close(); err != nil {
 		return fmt.Errorf("unable to close consumer %s reader: %w", c.id, err)
 	}
 	return nil
-}
-
-func (c *Consumer) handle(ctx context.Context, msg kafka.Message, handler Handler) error {
-	var err error
-	var backOff backoff.BackOff
-
-	if c.backOffConstructor == nil {
-		backOff = &backoff.StopBackOff{}
-	} else {
-		backOff = c.backOffConstructor()
-	}
-
-	attempt := 0
-	ticker := backoff.NewTicker(backOff)
-	defer ticker.Stop()
-
-	if c.withDataDogTracing {
-		spanCtx, err := kafkatrace.ExtractSpanContext(msg)
-		if err != nil {
-			return fmt.Errorf("unable to extract data dog span context from kafka message: %w", err)
-		}
-		span := tracer.StartSpan("consumer.handle", tracer.ChildOf(spanCtx))
-		defer span.Finish()
-		ctx = tracer.ContextWithSpan(ctx, span)
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			if err == nil {
-				return ctx.Err()
-			}
-			return fmt.Errorf("%s: %w", ctx.Err().Error(), fmt.Errorf("consumer handler error: %w", ctx.Err()))
-		case _, ok := <-ticker.C:
-			if !ok {
-				return err
-			}
-		}
-
-		attempt++
-
-		consumerMsg := Message{
-			Message: msg,
-			Metadata: Metadata{
-				GroupID:    c.readerConfig.GroupID,
-				ConsumerID: c.id,
-				Attempt:    attempt,
-			},
-		}
-
-		if err = handler(ctx, consumerMsg); err != nil {
-			if c.notifyErr != nil {
-				c.notifyErr(ctx, err, consumerMsg)
-			}
-			continue
-		}
-
-		return nil
-	}
 }
 
 // GroupConfig is a configuration object used to create a new Group. The default
@@ -362,7 +251,7 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 
 		go func() {
 			defer wg.Done()
-			if err := c.Run(ctx, handler); err != nil && !errors.Is(err, context.Canceled) {
+			if err := c.Run(ctx, handler); err != nil {
 				errCh <- fmt.Errorf("consumer %s for group %s failed: %w", c.id, g.ID, err)
 			}
 		}()
@@ -420,4 +309,21 @@ func NonStopExponentialBackOff() backoff.BackOff { //nolint:ireturn
 	bo.Multiplier = 8
 	bo.MaxElapsedTime = 0
 	return bo
+}
+
+type safeCounter struct {
+	sync.RWMutex
+	v int
+}
+
+func (m *safeCounter) inc() {
+	m.Lock()
+	defer m.Unlock()
+	m.v++
+}
+
+func (m *safeCounter) val() int {
+	m.RLock()
+	defer m.RUnlock()
+	return m.v
 }

@@ -123,12 +123,12 @@ func TestConsumerGroup_Run_integration(t *testing.T) {
 			publishDummyEvents(t, ctx, tc, numPublish)
 
 			stopCh := make(chan bool)
-			numConsumed := new(mutexCounter)
+			numConsumed := new(safeCounter)
 			handler := func(ctx context.Context, msg Message) error {
 				time.Sleep(handlerSleepDuration)
 				assert.NotEmpty(t, msg.Value)
-				numConsumed.Inc()
-				i := numConsumed.Get()
+				numConsumed.inc()
+				i := numConsumed.val()
 				if i == numPublish && i == int(tc.TopicMessageCount(t, ctx)) {
 					stopCh <- true
 				}
@@ -157,7 +157,7 @@ func TestConsumerGroup_Run_integration(t *testing.T) {
 			var buf bytes.Buffer
 			buf.WriteString(fmt.Sprintf("\nResults - %s\n", tt.name))
 			buf.WriteString(fmt.Sprintf("- Processing time: %s\n", duration.String()))
-			buf.WriteString(fmt.Sprintf("- Average messages per second: %.1f\n", float64(numConsumed.Get())/duration.Seconds()))
+			buf.WriteString(fmt.Sprintf("- Average messages per second: %.1f\n", float64(numConsumed.val())/duration.Seconds()))
 			t.Log(buf.String())
 		})
 	}
@@ -214,9 +214,9 @@ func publishDummyEvents(t *testing.T, ctx context.Context, helper *kafkatest.Tes
 }
 
 func newGetOrderingKey(t *testing.T, mod int) GetOrderingKey {
-	return func(message kafka.Message) (string, error) {
+	return func(ctx context.Context, message kafka.Message) string {
 		i, err := strconv.Atoi(string(message.Key))
 		require.NoError(t, err)
-		return strconv.Itoa(i % mod), nil
+		return strconv.Itoa(i % mod)
 	}
 }

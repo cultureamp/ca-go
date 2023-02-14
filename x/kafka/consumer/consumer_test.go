@@ -70,8 +70,8 @@ func TestNewConsumer(t *testing.T) {
 			assert.Equal(t, c.readerConfig.Dialer, dialer)
 			assert.NotNil(t, c.reader)
 			assert.Implements(t, (*Reader)(nil), c.reader)
-			assert.NotNil(t, c.backOffConstructor)
-			assert.NotNil(t, c.notifyErr)
+			assert.NotNil(t, c.handlerExecutor.BackOffConstructor)
+			assert.NotNil(t, c.handlerExecutor.BackOffConstructor)
 			assert.Equal(t, wantBalancers, c.readerConfig.GroupBalancers)
 
 			if tt.wantGenID {
@@ -113,19 +113,13 @@ func TestConsumer_Run(t *testing.T) {
 }
 
 func TestConsumer_Run_withBatching(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 	wantTimes := 500
 	batchSize := 50
-	fetchInvocations := new(mutexCounter)
 
-	reader := NewMockReader(gomock.NewController(t))
-	reader.EXPECT().Close().Return(nil).Times(1)
-	reader.EXPECT().CommitMessages(gomock.Any(), gomock.Any()).Return(nil).Times(wantTimes / batchSize)
-	// Mock published messages where the key is 0-5 and the value is a constantly growing number
-	reader.EXPECT().FetchMessage(ctx).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
-		fetchInvocations.Inc()
+	messages := make(chan kafka.Message, wantTimes)
+	for i := 0; i < wantTimes; i++ {
 		rand.Seed(time.Now().UnixMilli())
-		i := fetchInvocations.Get()
 		msg := kafka.Message{
 			Topic:     "some-topic",
 			Partition: 1,
@@ -133,17 +127,25 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 			Value:     []byte(fmt.Sprintf("%d", i)),
 			Time:      time.Now(),
 		}
-		return msg, nil
+		messages <- msg
+	}
+
+	reader := NewMockReader(gomock.NewController(t))
+	reader.EXPECT().Close().Return(nil).Times(1)
+	reader.EXPECT().CommitMessages(gomock.Any(), gomock.Any()).Return(nil).Times(wantTimes / batchSize)
+	// Mock published messages where the key is 0-5 and the value is a constantly growing number
+	reader.EXPECT().FetchMessage(gomock.Any()).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
+		return <-messages, nil
 	}).Times(wantTimes)
 
 	consumer := NewConsumer(&kafka.Dialer{}, Config{},
 		WithKafkaReader(func() Reader { return reader }),
-		WithMessageBatching(batchSize, func(message kafka.Message) (string, error) {
-			return string(message.Key), nil
+		WithMessageBatching(batchSize, func(ctx context.Context, message kafka.Message) string {
+			return string(message.Key)
 		}),
 	)
 
-	handlerInvocations := new(mutexCounter)
+	handlerInvocations := new(safeCounter)
 	msgKeyLatestValue := new(sync.Map)
 
 	// Handler asserts that each new message handled for a specific key has a value
@@ -161,13 +163,18 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 		}
 		msgKeyLatestValue.Store(string(msg.Key), val)
 
-		handlerInvocations.Inc()
-		if handlerInvocations.Get() == wantTimes {
+		handlerInvocations.inc()
+		if handlerInvocations.val() == wantTimes {
+			cancel()
 			consumer.Stop()
+			close(messages)
 		}
 		return nil
 	}
-	require.NoError(t, consumer.Run(ctx, handler))
+	err := consumer.Run(ctx, handler)
+	if !errors.Is(err, context.Canceled) {
+		require.NoError(t, err)
+	}
 }
 
 func TestConsumer_Run_error(t *testing.T) {
@@ -198,12 +205,12 @@ func TestConsumer_Run_error(t *testing.T) {
 			shouldNotify: true,
 			numRetries:   3,
 			setup: func(t *testing.T, consumer *Consumer) {
-				consumer.backOffConstructor = func() backoff.BackOff {
+				consumer.handlerExecutor.BackOffConstructor = func() backoff.BackOff {
 					return &testBackoff{
 						maxAttempts: 3,
 					}
 				}
-				consumer.notifyErr = func(ctx context.Context, err error, msg Message) {
+				consumer.handlerExecutor.NotifyErr = func(ctx context.Context, err error, msg Message) {
 					assert.Equal(t, gotAttempts, msg.Metadata.Attempt)
 					assert.Equal(t, wantHandlerErr, err)
 					didNotify = true
@@ -216,10 +223,10 @@ func TestConsumer_Run_error(t *testing.T) {
 			wantError:    nil,
 			shouldNotify: true,
 			setup: func(t *testing.T, consumer *Consumer) {
-				consumer.backOffConstructor = func() backoff.BackOff {
+				consumer.handlerExecutor.BackOffConstructor = func() backoff.BackOff {
 					return &testBackoff{}
 				}
-				consumer.notifyErr = func(ctx context.Context, err error, msg Message) {
+				consumer.handlerExecutor.NotifyErr = func(ctx context.Context, err error, msg Message) {
 					assert.Equal(t, gotAttempts, msg.Metadata.Attempt)
 					if err != nil {
 						assert.Equal(t, wantHandlerErr, err)
@@ -343,13 +350,13 @@ func TestGroup_Run(t *testing.T) {
 		WithKafkaReader(func() Reader { return reader }),
 	)
 
-	handlerInvocations := new(mutexCounter)
+	handlerInvocations := new(safeCounter)
 	stopCh := make(chan bool)
 
 	handler := func(ctx context.Context, msg Message) error {
 		require.NotEmpty(t, msg.Value)
-		handlerInvocations.Inc()
-		if handlerInvocations.Get() == wantNumMsgs {
+		handlerInvocations.inc()
+		if handlerInvocations.val() == wantNumMsgs {
 			stopCh <- true
 		}
 		return nil
@@ -469,21 +476,4 @@ func (b *testBackoff) NextBackOff() time.Duration {
 		return backoff.Stop
 	}
 	return 0
-}
-
-type mutexCounter struct {
-	sync.Mutex
-	count int
-}
-
-func (m *mutexCounter) Inc() {
-	m.Lock()
-	defer m.Unlock()
-	m.count++
-}
-
-func (m *mutexCounter) Get() int {
-	m.Lock()
-	defer m.Unlock()
-	return m.count
 }
