@@ -1898,8 +1898,8 @@ gopkg.in/launchdarkly/go-server-sdk-evaluation.v1 v1.4.0/go.mod h1:qzksXz/FZFSge
 gopkg.in/launchdarkly/go-server-sdk-evaluation.v1 v1.5.0 h1:gA0F8n0sJ0K6LOLuyC28+O4garjdaU2T3m5mk1Fki8g=
 gopkg.in/launchdarkly/go-server-sdk-evaluation.v1 v1.5.0/go.mod h1:qzksXz/FZFSgeL5QaJVotUXvZ1wEBFnRvWyPf+DxZqs=
 gopkg.in/launchdarkly/go-server-sdk.v5 v5.5.0/go.mod h1:H5usiz+AjIVg6ROrfV734z2BwYj5DqWqPJVKlkRG4S4=
-gopkg.in/launchdarkly/go-server-sdk.v5 v5.10.0 h1:JcKY5Ymf6/zKt0stqy0eQtpTRc1G6cqkPRXPPSNyeCM=
-gopkg.in/launchdarkly/go-server-sdk.v5 v5.10.0/go.mod h1:4LHUM8XXxur645wMEKwS1qTKukJ9Pt+IGfU8Uaj9dVc=
+gopkg.in/launchdarkly/go-server-sdk.v5 v5.10.1 h1:iHT93pJvDh48tDkXKK1uSI8RLXnPPV4tKl9Oiz2YGy8=
+gopkg.in/launchdarkly/go-server-sdk.v5 v5.10.1/go.mod h1:4LHUM8XXxur645wMEKwS1qTKukJ9Pt+IGfU8Uaj9dVc=
 gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 h1:VpOs+IwYnYBaFnrNAeB8UUWtL3vEUnzSCL1nVjPhqrw=
 gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22/go.mod h1:yeKp02qBN3iKW1OzL3MGk2IdtZzaj7SFntXj72NppTA=
 gopkg.in/resty.v1 v1.12.0 h1:CuXP0Pjfw9rOuY6EP+UvtNvt5DSqHpIxILZKT/quCZI=
