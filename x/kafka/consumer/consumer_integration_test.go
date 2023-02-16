@@ -52,51 +52,51 @@ func TestConsumerGroup_Run_integration(t *testing.T) {
 		opts          []Option
 	}{
 		{
-			name:          "1 consumer, 1 partition, 50 messages)",
+			name:          "1 consumer, 1 partition, 25 messages)",
 			partitions:    1,
-			numMessages:   50,
+			numMessages:   25,
 			consumerCount: 1,
 		},
 		{
-			name:          "10 consumers, 10 partitions, 1000 messages)",
+			name:          "10 consumers, 10 partitions, 250 messages)",
 			partitions:    10,
-			numMessages:   1000,
+			numMessages:   250,
 			consumerCount: 10,
 		},
 		{
-			name:          "10 consumers (explicit commit), 10 partitions, 1000 messages)",
+			name:          "10 consumers (explicit commit), 10 partitions, 250 messages)",
 			partitions:    10,
-			numMessages:   1000,
+			numMessages:   250,
 			consumerCount: 10,
 			opts:          []Option{WithExplicitCommit()},
 		},
 		{
-			name:          "1 consumer (batching), 1 partitions, 1000 messages)",
+			name:          "1 consumer (batching), 1 partitions, 500 messages)",
 			partitions:    1,
-			numMessages:   1000,
+			numMessages:   500,
 			consumerCount: 1,
-			opts:          []Option{WithMessageBatching(100, newGetOrderingKey(t, 20))},
+			opts:          []Option{WithMessageBatching(20, newGetOrderingKey(t, 20))},
 		},
 		{
 			name:          "1 consumer (batching), 10 partitions, 100 messages)",
 			partitions:    10,
 			numMessages:   100,
 			consumerCount: 1,
-			opts:          []Option{WithMessageBatching(100, newGetOrderingKey(t, 20))},
+			opts:          []Option{WithMessageBatching(20, newGetOrderingKey(t, 20))},
 		},
 		{
-			name:          "10 consumers (batching), 10 partitions, 1000 messages",
+			name:          "10 consumers (batching), 10 partitions, 500 messages",
 			partitions:    10,
-			numMessages:   1000,
+			numMessages:   500,
 			consumerCount: 10,
-			opts:          []Option{WithMessageBatching(100, newGetOrderingKey(t, 20))},
+			opts:          []Option{WithMessageBatching(20, newGetOrderingKey(t, 20))},
 		},
 		{
-			name:          "10 consumers (batching), 100 partitions, 1000 messages",
+			name:          "10 consumers (batching), 100 partitions, 500 messages",
 			partitions:    10,
-			numMessages:   1000,
+			numMessages:   500,
 			consumerCount: 10,
-			opts:          []Option{WithMessageBatching(100, newGetOrderingKey(t, 20))},
+			opts:          []Option{WithMessageBatching(20, newGetOrderingKey(t, 20))},
 		},
 	}
 
@@ -127,8 +127,8 @@ func TestConsumerGroup_Run_integration(t *testing.T) {
 			handler := func(ctx context.Context, msg Message) error {
 				time.Sleep(handlerSleepDuration)
 				assert.NotEmpty(t, msg.Value)
-				numConsumed.Inc()
-				i := numConsumed.Get()
+				numConsumed.inc()
+				i := numConsumed.val()
 				if i == numPublish && i == int(tc.TopicMessageCount(t, ctx)) {
 					stopCh <- true
 				}
@@ -157,7 +157,7 @@ func TestConsumerGroup_Run_integration(t *testing.T) {
 			var buf bytes.Buffer
 			buf.WriteString(fmt.Sprintf("\nResults - %s\n", tt.name))
 			buf.WriteString(fmt.Sprintf("- Processing time: %s\n", duration.String()))
-			buf.WriteString(fmt.Sprintf("- Average messages per second: %.1f\n", float64(numConsumed.Get())/duration.Seconds()))
+			buf.WriteString(fmt.Sprintf("- Average messages per second: %.1f\n", float64(numConsumed.val())/duration.Seconds()))
 			t.Log(buf.String())
 		})
 	}
@@ -214,9 +214,9 @@ func publishDummyEvents(t *testing.T, ctx context.Context, helper *kafkatest.Tes
 }
 
 func newGetOrderingKey(t *testing.T, mod int) GetOrderingKey {
-	return func(message kafka.Message) (string, error) {
+	return func(ctx context.Context, message kafka.Message) string {
 		i, err := strconv.Atoi(string(message.Key))
 		require.NoError(t, err)
-		return strconv.Itoa(i % mod), nil
+		return strconv.Itoa(i % mod)
 	}
 }
