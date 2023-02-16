@@ -22,7 +22,7 @@ require (
 	goa.design/goa/v3 v3.10.2
 	gopkg.in/DataDog/dd-trace-go.v1 v1.45.1
 	gopkg.in/launchdarkly/go-sdk-common.v2 v2.5.1
-	gopkg.in/launchdarkly/go-server-sdk.v5 v5.10.0
+	gopkg.in/launchdarkly/go-server-sdk.v5 v5.10.1
 )
 
 require (
