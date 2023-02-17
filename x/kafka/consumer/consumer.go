@@ -119,6 +119,7 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 // the context is canceled, the consumer is closed, or an error occurs.
 func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 	bp := newBatchProcessor(c.reader, c.handlerExecutor, c.getOrderingKeyFn, c.batchSize)
+	defer bp.close()
 
 	for {
 		select {
