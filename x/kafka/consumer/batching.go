@@ -77,7 +77,8 @@ func (b *batchProcessor) startFetching(ctx context.Context) error {
 	defer b.debugLogger.Print("Finished fetching messages for batch", b.debugKeyVals...)
 	defer close(b.fetched)
 
-	for i := 0; i < b.batchSize; i++ {
+	batchSize := b.batchSize - len(b.fetched)
+	for i := 0; i < batchSize; i++ {
 		msg, err := b.reader.FetchMessage(fetchContext)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
@@ -95,6 +96,7 @@ func (b *batchProcessor) startFetching(ctx context.Context) error {
 		b.debugLogger.Print("Fetched message", append([]any{"partition", msg.Partition, "offset", msg.Offset}, b.debugKeyVals...)...)
 		b.fetched <- msg
 	}
+	close(b.fetched)
 	return nil
 }
 
@@ -119,7 +121,7 @@ func (b *batchProcessor) startProcessing(ctx context.Context, handler Handler) e
 	handleErrg, handleCtx := errgroup.WithContext(ctx)
 
 processLoop:
-	for {
+	for i := 0; i < b.batchSize; i++ {
 		msg, ok := b.nextMessage()
 		if !ok {
 			break
@@ -183,7 +185,10 @@ processLoop:
 }
 
 func (b *batchProcessor) reset() {
-	b.fetched = make(chan kafka.Message, b.batchSize)
 	b.processed = make(chan kafka.Message, b.batchSize)
 	b.stop = make(chan struct{})
+}
+
+func (b *batchProcessor) close() {
+	close(b.fetched)
 }

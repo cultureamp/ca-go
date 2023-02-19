@@ -131,6 +131,7 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 	c.debugLogger.Print("Running consumer", c.debugKeyVals...)
 	bp := newBatchProcessor(c.id, c.debugLogger, c.reader, c.handlerExecutor, c.getOrderingKeyFn, c.batchSize)
+	defer bp.close()
 
 	for {
 		select {
