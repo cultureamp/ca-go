@@ -141,11 +141,11 @@ processLoop:
 		orderedChans[key] = msgCh
 
 		handleErrg.Go(func() error {
-			debugKeyVals := append([]any{"partition", msg.Partition, "offset", msg.Offset, "orderingKey", key}, b.debugKeyVals...)
-			b.debugLogger.Print(fmt.Sprintf("Handling messages for ordering key %s", key), debugKeyVals...)
-			defer b.debugLogger.Print(fmt.Sprintf("Finished handling all messages for ordering key %s", key), debugKeyVals...)
+			b.debugLogger.Print(fmt.Sprintf("Handling messages for ordering key %s", key))
+			defer b.debugLogger.Print(fmt.Sprintf("Finished handling all messages for ordering key %s", key))
 
 			for m := range msgCh {
+				debugKeyVals := append([]any{"partition", m.Partition, "offset", m.Offset, "orderingKey", key}, b.debugKeyVals...)
 				b.debugLogger.Print("Executing message handler", debugKeyVals...)
 				if err := b.handlerExecutor.execute(handleCtx, m, handler); err != nil {
 					b.debugLogger.Print("Message handler execution failed", debugKeyVals...)
