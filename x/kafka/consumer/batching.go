@@ -11,7 +11,7 @@ import (
 )
 
 type batchProcessor struct {
-	consumerId       string
+	consumerID       string
 	batchSize        int
 	handlerExecutor  *handlerExecutor
 	reader           Reader
@@ -24,9 +24,9 @@ type batchProcessor struct {
 	debugKeyVals     []any
 }
 
-func newBatchProcessor(consumerId string, debugLogger DebugLogger, reader Reader, handlerExecutor *handlerExecutor, getOrderingKeyFn GetOrderingKey, batchSize int) *batchProcessor {
+func newBatchProcessor(consumerID string, debugLogger DebugLogger, reader Reader, handlerExecutor *handlerExecutor, getOrderingKeyFn GetOrderingKey, batchSize int) *batchProcessor {
 	return &batchProcessor{
-		consumerId:       consumerId,
+		consumerID:       consumerID,
 		batchSize:        batchSize,
 		handlerExecutor:  handlerExecutor,
 		reader:           reader,
@@ -35,7 +35,7 @@ func newBatchProcessor(consumerId string, debugLogger DebugLogger, reader Reader
 		stop:             make(chan struct{}),
 		getOrderingKeyFn: getOrderingKeyFn,
 		debugLogger:      debugLogger,
-		debugKeyVals:     []any{"consumerId", consumerId, "batchSize", batchSize},
+		debugKeyVals:     []any{"consumerId", consumerID, "batchSize", batchSize},
 	}
 }
 
@@ -75,7 +75,6 @@ func (b *batchProcessor) startFetching(ctx context.Context) error {
 
 	b.debugLogger.Print("Fetching messages for batch", b.debugKeyVals...)
 	defer b.debugLogger.Print("Finished fetching messages for batch", b.debugKeyVals...)
-	defer close(b.fetched)
 
 	batchSize := b.batchSize - len(b.fetched)
 	for i := 0; i < batchSize; i++ {
@@ -96,7 +95,6 @@ func (b *batchProcessor) startFetching(ctx context.Context) error {
 		b.debugLogger.Print("Fetched message", append([]any{"partition", msg.Partition, "offset", msg.Offset}, b.debugKeyVals...)...)
 		b.fetched <- msg
 	}
-	close(b.fetched)
 	return nil
 }
 
