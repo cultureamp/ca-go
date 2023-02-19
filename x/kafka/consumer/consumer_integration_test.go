@@ -93,7 +93,7 @@ func TestConsumerGroup_Run_integration(t *testing.T) {
 		},
 		{
 			name:          "10 consumers (batching), 100 partitions, 500 messages",
-			partitions:    10,
+			partitions:    100,
 			numMessages:   500,
 			consumerCount: 10,
 			opts:          []Option{WithMessageBatching(20, newGetOrderingKey(t, 20))},
