@@ -53,10 +53,12 @@ type Reader interface {
 
 // Config is a configuration object used to create a new Consumer.
 type Config struct {
-	ID      string
-	Brokers []string
-	Topic   string
-	groupID string
+	ID          string
+	Brokers     []string
+	Topic       string
+	MaxBytes    int // Default: 1MB
+	DebugLogger DebugLogger
+	groupID     string
 }
 
 // Consumer provides a high level API for consuming and handling messages from
@@ -73,6 +75,8 @@ type Consumer struct {
 	getOrderingKeyFn   GetOrderingKey
 	stopCh             chan struct{}
 	handlerExecutor    *handlerExecutor
+	debugLogger        DebugLogger
+	debugKeyVals       []any
 }
 
 // NewConsumer returns a new Consumer configured with the provided dialer and config.
@@ -90,6 +94,7 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 			Topic:                 config.Topic,
 			Dialer:                dialer,
 			WatchPartitionChanges: true,
+			MaxBytes:              config.MaxBytes,
 		},
 		handlerExecutor: &handlerExecutor{
 			ConsumerID: config.ID,
@@ -97,6 +102,12 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 		},
 		batchSize:        0,
 		getOrderingKeyFn: func(ctx context.Context, message kafka.Message) string { return "" },
+		debugLogger:      config.DebugLogger,
+		debugKeyVals:     []any{"consumerId", config.ID},
+	}
+
+	if c.debugLogger == nil {
+		c.debugLogger = noopDebugLogger{}
 	}
 
 	for _, opt := range opts {
@@ -118,11 +129,13 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 // Run consumes and handles messages from the topic. The method call blocks until
 // the context is canceled, the consumer is closed, or an error occurs.
 func (c *Consumer) Run(ctx context.Context, handler Handler) error {
-	bp := newBatchProcessor(c.reader, c.handlerExecutor, c.getOrderingKeyFn, c.batchSize)
+	c.debugLogger.Print("Running consumer", c.debugKeyVals...)
+	bp := newBatchProcessor(c.id, c.debugLogger, c.reader, c.handlerExecutor, c.getOrderingKeyFn, c.batchSize)
 
 	for {
 		select {
 		case <-c.stopCh:
+			c.debugLogger.Print("Consumer stopped", c.debugKeyVals...)
 			return c.close()
 		default:
 		}
@@ -168,15 +181,20 @@ func (c *Consumer) process(ctx context.Context, handler Handler) error {
 		}
 	}
 
+	debugKeyVals := append([]any{"partition", msg.Partition, "offset", msg.Offset}, c.debugKeyVals...)
+	c.debugLogger.Print("Fetched message", debugKeyVals...)
+
 	if err = c.handlerExecutor.execute(ctx, msg, handler); err != nil {
 		return fmt.Errorf("unable to handle message: %w", err)
 	}
+	c.debugLogger.Print("Message handler execution finished", debugKeyVals...)
 
 	if c.withExplicitCommit {
 		if err = c.reader.CommitMessages(ctx, msg); err != nil {
 			return fmt.Errorf("unable to commit message: %w", err)
 		}
 	}
+	c.debugLogger.Print("Committed message offset", debugKeyVals...)
 
 	return nil
 }
@@ -185,16 +203,19 @@ func (c *Consumer) close() error {
 	if err := c.reader.Close(); err != nil {
 		return fmt.Errorf("unable to close consumer %s reader: %w", c.id, err)
 	}
+	c.debugLogger.Print("Consumer reader closed", c.debugKeyVals...)
 	return nil
 }
 
 // GroupConfig is a configuration object used to create a new Group. The default
 // consumer count in a group is 1 unless specified otherwise.
 type GroupConfig struct {
-	Count   int
-	Brokers []string
-	Topic   string
-	GroupID string
+	Count       int
+	Brokers     []string
+	Topic       string
+	GroupID     string
+	DebugLogger DebugLogger
+	MaxBytes    int // Default: 1MB
 }
 
 // Group groups consumers together to concurrently consume and handle messages
@@ -242,10 +263,12 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 		// prevents us from receiving a passed in list of consumers, which is
 		// arguably a cleaner approach.
 		cfg := Config{
-			ID:      fmt.Sprintf("%s-%d", g.ID, i),
-			Brokers: g.config.Brokers,
-			Topic:   g.config.Topic,
-			groupID: g.config.GroupID,
+			ID:          fmt.Sprintf("%s-%d", g.ID, i),
+			Brokers:     g.config.Brokers,
+			Topic:       g.config.Topic,
+			MaxBytes:    g.config.MaxBytes,
+			groupID:     g.config.GroupID,
+			DebugLogger: g.config.DebugLogger,
 		}
 		c := NewConsumer(g.dialer, cfg, g.opts...)
 

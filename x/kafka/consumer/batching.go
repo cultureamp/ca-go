@@ -11,6 +11,7 @@ import (
 )
 
 type batchProcessor struct {
+	consumerId       string
 	batchSize        int
 	handlerExecutor  *handlerExecutor
 	reader           Reader
@@ -19,10 +20,13 @@ type batchProcessor struct {
 	stop             chan struct{}
 	getOrderingKeyFn GetOrderingKey
 	fetchCancel      func()
+	debugLogger      DebugLogger
+	debugKeyVals     []any
 }
 
-func newBatchProcessor(reader Reader, handlerExecutor *handlerExecutor, getOrderingKeyFn GetOrderingKey, batchSize int) *batchProcessor {
+func newBatchProcessor(consumerId string, debugLogger DebugLogger, reader Reader, handlerExecutor *handlerExecutor, getOrderingKeyFn GetOrderingKey, batchSize int) *batchProcessor {
 	return &batchProcessor{
+		consumerId:       consumerId,
 		batchSize:        batchSize,
 		handlerExecutor:  handlerExecutor,
 		reader:           reader,
@@ -30,6 +34,8 @@ func newBatchProcessor(reader Reader, handlerExecutor *handlerExecutor, getOrder
 		processed:        make(chan kafka.Message, batchSize),
 		stop:             make(chan struct{}),
 		getOrderingKeyFn: getOrderingKeyFn,
+		debugLogger:      debugLogger,
+		debugKeyVals:     []any{"consumerId", consumerId, "batchSize", batchSize},
 	}
 }
 
@@ -48,6 +54,7 @@ func (b *batchProcessor) process(ctx context.Context, handler Handler) error {
 		return err
 	}
 	close(b.processed)
+	b.debugLogger.Print(fmt.Sprintf("Fetching and handling finished for %d messages in batch", len(b.processed)), b.debugKeyVals...)
 
 	var commits []kafka.Message
 
@@ -58,6 +65,7 @@ func (b *batchProcessor) process(ctx context.Context, handler Handler) error {
 	if err := b.reader.CommitMessages(ctx, commits...); err != nil {
 		return fmt.Errorf("unable to commit messages for batch: %w", err)
 	}
+	b.debugLogger.Print(fmt.Sprintf("Committed %d message offsets for batch", len(commits)), b.debugKeyVals...)
 	return nil
 }
 
@@ -65,12 +73,17 @@ func (b *batchProcessor) startFetching(ctx context.Context) error {
 	var fetchContext context.Context
 	fetchContext, b.fetchCancel = context.WithCancel(ctx)
 
+	b.debugLogger.Print("Fetching messages for batch", b.debugKeyVals...)
+	defer b.debugLogger.Print("Finished fetching messages for batch", b.debugKeyVals...)
+	defer close(b.fetched)
+
 	for i := 0; i < b.batchSize; i++ {
 		msg, err := b.reader.FetchMessage(fetchContext)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
 				select {
 				case <-b.stop:
+					b.debugLogger.Print("Fetch message for batch stopped", append([]any{"messagesFetched", i}, b.debugKeyVals...)...)
 					return nil
 				default:
 				}
@@ -79,9 +92,9 @@ func (b *batchProcessor) startFetching(ctx context.Context) error {
 			}
 			return err
 		}
+		b.debugLogger.Print("Fetched message", append([]any{"partition", msg.Partition, "offset", msg.Offset}, b.debugKeyVals...)...)
 		b.fetched <- msg
 	}
-	close(b.fetched)
 	return nil
 }
 
@@ -114,6 +127,10 @@ processLoop:
 
 		messagesReceived++
 		key := b.getOrderingKeyFn(ctx, msg)
+		b.debugLogger.Print("Queuing message for handling",
+			append([]any{"partition", msg.Partition, "offset", msg.Offset, "orderingKey", key}, b.debugKeyVals...)...,
+		)
+
 		if orderedChan, ok := orderedChans[key]; ok {
 			orderedChan <- msg
 			continue
@@ -124,12 +141,19 @@ processLoop:
 		orderedChans[key] = msgCh
 
 		handleErrg.Go(func() error {
+			debugKeyVals := append([]any{"partition", msg.Partition, "offset", msg.Offset, "orderingKey", key}, b.debugKeyVals...)
+			b.debugLogger.Print(fmt.Sprintf("Handling messages for ordering key %s", key), debugKeyVals...)
+			defer b.debugLogger.Print(fmt.Sprintf("Finished handling all messages for ordering key %s", key), debugKeyVals...)
+
 			for m := range msgCh {
+				b.debugLogger.Print("Executing message handler", debugKeyVals...)
 				if err := b.handlerExecutor.execute(handleCtx, m, handler); err != nil {
+					b.debugLogger.Print("Message handler execution failed", debugKeyVals...)
 					return err
 				}
 				b.processed <- m
 				messagesHandled.inc()
+				b.debugLogger.Print("Finished message handler execution", debugKeyVals...)
 			}
 			return nil
 		})
@@ -137,7 +161,11 @@ processLoop:
 		// End batch process early if there are no new messages available to
 		// be fetched. This is to avoid unnecessary lag.
 		for !b.hasNext() {
-			if messagesReceived == messagesHandled.val() {
+			handled := messagesHandled.val()
+			if messagesReceived == handled {
+				b.debugLogger.Print("Stopping batch early: all current messages handled and no new messages to fetch",
+					append([]any{"messagesHandled", handled}, b.debugKeyVals)...,
+				)
 				b.stopFetching()
 				break processLoop
 			}
@@ -148,6 +176,9 @@ processLoop:
 		close(msgCh)
 	}
 	err := handleErrg.Wait()
+	b.debugLogger.Print("Finished handling messages for batch",
+		append([]any{"messagesHandled", messagesHandled.val()}, b.debugKeyVals)...,
+	)
 	return err
 }
 
