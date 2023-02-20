@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 	"golang.org/x/sync/errgroup"
 )
@@ -40,6 +41,7 @@ func newBatchProcessor(consumerID string, debugLogger DebugLogger, reader Reader
 }
 
 func (b *batchProcessor) process(ctx context.Context, handler Handler) error {
+	b.debugKeyVals = append(b.debugKeyVals, "batchId", uuid.New().String())
 	defer b.reset()
 	errg, errgCtx := errgroup.WithContext(ctx)
 	errg.Go(func() error {
@@ -54,7 +56,7 @@ func (b *batchProcessor) process(ctx context.Context, handler Handler) error {
 		return err
 	}
 	close(b.processed)
-	b.debugLogger.Print(fmt.Sprintf("Fetching and handling finished for %d messages in batch", len(b.processed)), b.debugKeyVals...)
+	b.debugLogger.Print(fmt.Sprintf("Finished fetching and handling for %d messages in batch", len(b.processed)), b.debugKeyVals...)
 
 	var commits []kafka.Message
 
@@ -83,7 +85,7 @@ func (b *batchProcessor) startFetching(ctx context.Context) error {
 			if errors.Is(err, context.Canceled) {
 				select {
 				case <-b.stop:
-					b.debugLogger.Print("Fetch message for batch stopped", append([]any{"messagesFetched", i}, b.debugKeyVals...)...)
+					b.debugLogger.Print("Fetch message for batch stopped early", append([]any{"messagesFetched", i}, b.debugKeyVals...)...)
 					return nil
 				default:
 				}
@@ -141,11 +143,11 @@ processLoop:
 		orderedChans[key] = msgCh
 
 		handleErrg.Go(func() error {
-			debugKeyVals := append([]any{"partition", msg.Partition, "offset", msg.Offset, "orderingKey", key}, b.debugKeyVals...)
-			b.debugLogger.Print(fmt.Sprintf("Handling messages for ordering key %s", key), debugKeyVals...)
-			defer b.debugLogger.Print(fmt.Sprintf("Finished handling all messages for ordering key %s", key), debugKeyVals...)
+			b.debugLogger.Print(fmt.Sprintf("Handling messages for ordering key %s", key))
+			defer b.debugLogger.Print(fmt.Sprintf("Finished handling all messages for ordering key %s", key))
 
 			for m := range msgCh {
+				debugKeyVals := append([]any{"partition", m.Partition, "offset", m.Offset, "orderingKey", key}, b.debugKeyVals...)
 				b.debugLogger.Print("Executing message handler", debugKeyVals...)
 				if err := b.handlerExecutor.execute(handleCtx, m, handler); err != nil {
 					b.debugLogger.Print("Message handler execution failed", debugKeyVals...)
@@ -163,8 +165,8 @@ processLoop:
 		for !b.hasNext() {
 			handled := messagesHandled.val()
 			if messagesReceived == handled {
-				b.debugLogger.Print("Stopping batch early: all current messages handled and no new messages to fetch",
-					append([]any{"messagesHandled", handled}, b.debugKeyVals)...,
+				b.debugLogger.Print("Stopping batch early because all current messages are handled and there are no new messages to fetch",
+					append([]any{"messagesHandled", handled}, b.debugKeyVals...)...,
 				)
 				b.stopFetching()
 				break processLoop
@@ -177,7 +179,7 @@ processLoop:
 	}
 	err := handleErrg.Wait()
 	b.debugLogger.Print("Finished handling messages for batch",
-		append([]any{"messagesHandled", messagesHandled.val()}, b.debugKeyVals)...,
+		append([]any{"messagesHandled", messagesHandled.val()}, b.debugKeyVals...)...,
 	)
 	return err
 }
