@@ -334,20 +334,3 @@ func NonStopExponentialBackOff() backoff.BackOff { //nolint:ireturn
 	bo.MaxElapsedTime = 0
 	return bo
 }
-
-type safeCounter struct {
-	sync.RWMutex
-	v int
-}
-
-func (m *safeCounter) inc() {
-	m.Lock()
-	defer m.Unlock()
-	m.v++
-}
-
-func (m *safeCounter) val() int {
-	m.RLock()
-	defer m.RUnlock()
-	return m.v
-}

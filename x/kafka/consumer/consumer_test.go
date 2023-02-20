@@ -477,3 +477,20 @@ func (b *testBackoff) NextBackOff() time.Duration {
 	}
 	return 0
 }
+
+type safeCounter struct {
+	sync.RWMutex
+	v int
+}
+
+func (m *safeCounter) inc() {
+	m.Lock()
+	defer m.Unlock()
+	m.v++
+}
+
+func (m *safeCounter) val() int {
+	m.RLock()
+	defer m.RUnlock()
+	return m.v
+}

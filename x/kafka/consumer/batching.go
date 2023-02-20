@@ -105,10 +105,6 @@ func (b *batchProcessor) nextMessage() (kafka.Message, bool) {
 	return msg, ok
 }
 
-func (b *batchProcessor) hasNext() bool {
-	return len(b.fetched) > 0
-}
-
 func (b *batchProcessor) stopFetching() {
 	b.fetchCancel()
 	close(b.stop)
@@ -116,31 +112,42 @@ func (b *batchProcessor) stopFetching() {
 
 func (b *batchProcessor) startProcessing(ctx context.Context, handler Handler) error {
 	messagesReceived := 0
-	messagesHandled := new(safeCounter)
+	messagesProcessed := 0
+	fetchingDone := false
 	orderedChans := make(map[string]chan kafka.Message)
+	handledMessages := make(chan kafka.Message, b.batchSize)
 	handleErrg, handleCtx := errgroup.WithContext(ctx)
 
 processLoop:
 	for i := 0; i < b.batchSize; i++ {
-		// End batch process early if there are no new messages available to
-		// be fetched. This is to avoid unnecessary lag.
-		for !b.hasNext() {
-			handled := messagesHandled.val()
-			if messagesReceived > 0 && messagesReceived == handled {
-				b.debugLogger.Print("Stopping batch early because all current messages are handled and there are no new messages to fetch",
-					append([]any{"messagesHandled", handled}, b.debugKeyVals...)...,
-				)
-				b.stopFetching()
-				break processLoop
+		var msg kafka.Message
+
+	coordinateLoop:
+		for {
+			select {
+			case fetched, ok := <-b.fetched:
+				if ok {
+					msg = fetched
+					messagesReceived++
+					break coordinateLoop
+				}
+				fetchingDone = true
+			case handled := <-handledMessages:
+				b.processed <- handled
+				messagesProcessed++
+				if len(b.fetched) == 0 && messagesReceived > 0 && messagesReceived == messagesProcessed {
+					// End batch process early if there are no new messages available to
+					// be fetched. This is to avoid unnecessary lag.
+					if !fetchingDone {
+						b.debugLogger.Print("Stopping batch early because all current messages are handled and there are no new messages to fetch", b.debugKeyVals...)
+						b.stopFetching()
+					}
+					close(handledMessages)
+					break processLoop
+				}
 			}
 		}
 
-		msg, ok := b.nextMessage()
-		if !ok {
-			break
-		}
-
-		messagesReceived++
 		key := b.getOrderingKeyFn(ctx, msg)
 		b.debugLogger.Print("Queuing message for handling",
 			append([]any{"partition", msg.Partition, "offset", msg.Offset, "orderingKey", key}, b.debugKeyVals...)...,
@@ -166,8 +173,7 @@ processLoop:
 					b.debugLogger.Print("Message handler execution failed", debugKeyVals...)
 					return err
 				}
-				b.processed <- m
-				messagesHandled.inc()
+				handledMessages <- m
 				b.debugLogger.Print("Finished message handler execution", debugKeyVals...)
 			}
 			return nil
@@ -178,9 +184,7 @@ processLoop:
 		close(msgCh)
 	}
 	err := handleErrg.Wait()
-	b.debugLogger.Print("Finished handling messages for batch",
-		append([]any{"messagesHandled", messagesHandled.val()}, b.debugKeyVals...)...,
-	)
+	b.debugLogger.Print("Finished handling messages for batch", b.debugKeyVals...)
 	return err
 }
 

@@ -162,3 +162,8 @@ func (c *TestClient[EventType]) Writer() *kafka.Writer {
 func (c *TestClient[EventType]) Reader() *kafka.Reader {
 	return c.reader
 }
+
+// Registry returns the internal kafka test registry.
+func (c *TestClient[EventType]) Registry() *TestRegistry[EventType] {
+	return c.registry
+}
