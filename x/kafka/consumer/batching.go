@@ -122,6 +122,19 @@ func (b *batchProcessor) startProcessing(ctx context.Context, handler Handler) e
 
 processLoop:
 	for i := 0; i < b.batchSize; i++ {
+		// End batch process early if there are no new messages available to
+		// be fetched. This is to avoid unnecessary lag.
+		for !b.hasNext() {
+			handled := messagesHandled.val()
+			if messagesReceived > 0 && messagesReceived == handled {
+				b.debugLogger.Print("Stopping batch early because all current messages are handled and there are no new messages to fetch",
+					append([]any{"messagesHandled", handled}, b.debugKeyVals...)...,
+				)
+				b.stopFetching()
+				break processLoop
+			}
+		}
+
 		msg, ok := b.nextMessage()
 		if !ok {
 			break
@@ -159,19 +172,6 @@ processLoop:
 			}
 			return nil
 		})
-
-		// End batch process early if there are no new messages available to
-		// be fetched. This is to avoid unnecessary lag.
-		for !b.hasNext() {
-			handled := messagesHandled.val()
-			if messagesReceived == handled {
-				b.debugLogger.Print("Stopping batch early because all current messages are handled and there are no new messages to fetch",
-					append([]any{"messagesHandled", handled}, b.debugKeyVals...)...,
-				)
-				b.stopFetching()
-				break processLoop
-			}
-		}
 	}
 
 	for _, msgCh := range orderedChans {
