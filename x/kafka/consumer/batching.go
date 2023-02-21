@@ -100,11 +100,6 @@ func (b *batchProcessor) startFetching(ctx context.Context) error {
 	return nil
 }
 
-func (b *batchProcessor) nextMessage() (kafka.Message, bool) {
-	msg, ok := <-b.fetched
-	return msg, ok
-}
-
 func (b *batchProcessor) stopFetching() {
 	b.fetchCancel()
 	close(b.stop)
@@ -125,6 +120,8 @@ processLoop:
 	coordinateLoop:
 		for {
 			select {
+			case <-ctx.Done():
+				return ctx.Err()
 			case fetched, ok := <-b.fetched:
 				if ok {
 					msg = fetched

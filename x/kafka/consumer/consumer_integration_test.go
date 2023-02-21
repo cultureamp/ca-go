@@ -268,8 +268,9 @@ func publishDummyEvents(t *testing.T, ctx context.Context, tc *kafkatest.TestCli
 	var msgs []kafka.Message
 
 	for i := 0; i < numPublish; i++ {
+		msgKey := key
 		if key == "" {
-			key = strconv.Itoa(i)
+			msgKey = strconv.Itoa(i)
 		}
 
 		e := TestEvent{
@@ -280,7 +281,7 @@ func publishDummyEvents(t *testing.T, ctx context.Context, tc *kafkatest.TestCli
 		msg := kafka.Message{
 			Value: tc.Registry().Encode(t, ctx, e),
 			Time:  time.Now(),
-			Key:   []byte(key),
+			Key:   []byte(msgKey),
 		}
 		msgs = append(msgs, msg)
 	}

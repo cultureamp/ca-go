@@ -104,7 +104,7 @@ func TestConsumer_Run(t *testing.T) {
 		require.Equal(t, currMsg, msg.Message)
 		i++
 		if i == wantTimes {
-			consumer.Stop()
+			require.NoError(t, consumer.Stop())
 		}
 		return nil
 	}
@@ -113,12 +113,17 @@ func TestConsumer_Run(t *testing.T) {
 }
 
 func TestConsumer_Run_withBatching(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
 	wantTimes := 500
 	batchSize := 50
 
-	messages := make(chan kafka.Message, wantTimes)
-	for i := 0; i < wantTimes; i++ {
+	fetchInvocations := new(safeCounter)
+	reader := NewMockReader(gomock.NewController(t))
+	reader.EXPECT().Close().Return(nil).Times(1)
+	reader.EXPECT().CommitMessages(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	// Mock published messages where the key is 0-5 and the value is a constantly growing number
+	reader.EXPECT().FetchMessage(gomock.Any()).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
+		fetchInvocations.inc()
+		i := fetchInvocations.val()
 		rand.Seed(time.Now().UnixMilli())
 		msg := kafka.Message{
 			Topic:     "some-topic",
@@ -127,16 +132,8 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 			Value:     []byte(fmt.Sprintf("%d", i)),
 			Time:      time.Now(),
 		}
-		messages <- msg
-	}
-
-	reader := NewMockReader(gomock.NewController(t))
-	reader.EXPECT().Close().Return(nil).Times(1)
-	reader.EXPECT().CommitMessages(gomock.Any(), gomock.Any()).Return(nil).Times(wantTimes / batchSize)
-	// Mock published messages where the key is 0-5 and the value is a constantly growing number
-	reader.EXPECT().FetchMessage(gomock.Any()).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
-		return <-messages, nil
-	}).Times(wantTimes)
+		return msg, nil
+	}).AnyTimes()
 
 	consumer := NewConsumer(&kafka.Dialer{}, Config{},
 		WithKafkaReader(func() Reader { return reader }),
@@ -147,6 +144,7 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 
 	handlerInvocations := new(safeCounter)
 	msgKeyLatestValue := new(sync.Map)
+	ctx, cancel := context.WithCancel(context.Background())
 
 	// Handler asserts that each new message handled for a specific key has a value
 	// that was greater than the previous. This proves that order is maintained
@@ -164,10 +162,10 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 		msgKeyLatestValue.Store(string(msg.Key), val)
 
 		handlerInvocations.inc()
-		if handlerInvocations.val() == wantTimes {
+		val = handlerInvocations.val()
+		if val == wantTimes {
 			cancel()
-			consumer.Stop()
-			close(messages)
+			require.NoError(t, consumer.Stop())
 		}
 		return nil
 	}
@@ -274,7 +272,7 @@ func TestConsumer_Run_error(t *testing.T) {
 				if wantErr != nil || gotAttempts < tt.numRetries {
 					return wantHandlerErr
 				}
-				consumer.Stop()
+				require.NoError(t, consumer.Stop())
 				return nil
 			}
 

@@ -137,7 +137,7 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 		select {
 		case <-c.stopCh:
 			c.debugLogger.Print("Consumer stopped", c.debugKeyVals...)
-			return c.close()
+			return nil
 		default:
 		}
 
@@ -156,8 +156,9 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 // Stop stops the consumer. It waits for the current message/batch (if any) to
 // finish being handled before closing the reader stream, preventing the consumer
 // from reading any more messages.
-func (c *Consumer) Stop() {
+func (c *Consumer) Stop() error {
 	close(c.stopCh)
+	return c.reader.Close()
 }
 
 func (c *Consumer) process(ctx context.Context, handler Handler) error {
