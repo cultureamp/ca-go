@@ -24,7 +24,6 @@ func main() {
 		Topic:   topic,
 	}
 	c := consumer.NewConsumer(kafka.DefaultDialer, cfg)
-	defer c.Stop()
 
 	log.Printf("consumer started for topic %s\n", topic)
 	if err := c.Run(context.Background(), handle); err != nil {
