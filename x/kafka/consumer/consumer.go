@@ -72,6 +72,7 @@ type Consumer struct {
 	readerConfig       kafka.ReaderConfig
 	withExplicitCommit bool
 	batchSize          int
+	fetchDuration      time.Duration
 	getOrderingKeyFn   GetOrderingKey
 	stopCh             chan struct{}
 	handlerExecutor    *handlerExecutor
@@ -130,8 +131,15 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 // the context is canceled, the consumer is closed, or an error occurs.
 func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 	c.debugLogger.Print("Running consumer", c.debugKeyVals...)
-	bp := newBatchProcessor(c.id, c.debugLogger, c.reader, c.handlerExecutor, c.getOrderingKeyFn, c.batchSize)
-	defer bp.close()
+	bp := newBatchProcessor(batchProcessorConfig{
+		consumerID:       c.id,
+		batchSize:        c.batchSize,
+		fetchDuration:    c.fetchDuration,
+		debugLogger:      c.debugLogger,
+		getOrderingKeyFn: c.getOrderingKeyFn,
+		handlerExecutor:  c.handlerExecutor,
+		reader:           c.reader,
+	})
 
 	for {
 		select {

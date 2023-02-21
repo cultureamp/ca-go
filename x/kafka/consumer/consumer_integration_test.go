@@ -30,6 +30,7 @@ const (
 	brokerHostPort         = "localhost:9093"
 	schemaRegistryHostPort = "localhost:8081"
 	timeout                = 60 * time.Second
+	batchFetchDuration     = 5 * time.Second
 )
 
 type TestEvent struct {
@@ -76,28 +77,28 @@ func TestConsumerGroup_Run_integration(t *testing.T) {
 			partitions:    1,
 			numMessages:   500,
 			consumerCount: 1,
-			opts:          []Option{WithMessageBatching(20, newGetOrderingKey(t, 20))},
+			opts:          []Option{WithMessageBatching(20, batchFetchDuration, newGetOrderingKey(t, 20))},
 		},
 		{
 			name:          "1 consumer (batching), 10 partitions, 100 messages)",
 			partitions:    10,
 			numMessages:   100,
 			consumerCount: 1,
-			opts:          []Option{WithMessageBatching(20, newGetOrderingKey(t, 20))},
+			opts:          []Option{WithMessageBatching(20, batchFetchDuration, newGetOrderingKey(t, 20))},
 		},
 		{
 			name:          "10 consumers (batching), 10 partitions, 500 messages",
 			partitions:    10,
 			numMessages:   500,
 			consumerCount: 10,
-			opts:          []Option{WithMessageBatching(20, newGetOrderingKey(t, 20))},
+			opts:          []Option{WithMessageBatching(20, batchFetchDuration, newGetOrderingKey(t, 20))},
 		},
 		{
 			name:          "10 consumers (batching), 100 partitions, 500 messages",
 			partitions:    100,
 			numMessages:   500,
 			consumerCount: 10,
-			opts:          []Option{WithMessageBatching(12, newGetOrderingKey(t, 20))},
+			opts:          []Option{WithMessageBatching(12, batchFetchDuration, newGetOrderingKey(t, 20))},
 		},
 	}
 
@@ -222,7 +223,7 @@ func TestConsumer_Run_integration_incrementalPublishForEarlyBatchTermination(t *
 		}),
 	}
 	batchSize := 7
-	c := NewGroup(kafka.DefaultDialer, cfg, WithMessageBatching(batchSize, func(ctx context.Context, message kafka.Message) string {
+	c := NewGroup(kafka.DefaultDialer, cfg, WithMessageBatching(batchSize, batchFetchDuration, func(ctx context.Context, message kafka.Message) string {
 		return string(message.Key)
 	}))
 

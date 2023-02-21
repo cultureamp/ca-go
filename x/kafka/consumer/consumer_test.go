@@ -137,7 +137,7 @@ func TestConsumer_Run_withBatching(t *testing.T) {
 
 	consumer := NewConsumer(&kafka.Dialer{}, Config{},
 		WithKafkaReader(func() Reader { return reader }),
-		WithMessageBatching(batchSize, func(ctx context.Context, message kafka.Message) string {
+		WithMessageBatching(batchSize, time.Second*10, func(ctx context.Context, message kafka.Message) string {
 			return string(message.Key)
 		}),
 	)
