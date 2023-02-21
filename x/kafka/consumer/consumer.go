@@ -158,7 +158,12 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 // from reading any more messages.
 func (c *Consumer) Stop() error {
 	close(c.stopCh)
-	return c.reader.Close()
+	c.debugLogger.Print("Consumer stopped", c.debugKeyVals...)
+	if err := c.reader.Close(); err != nil {
+		return fmt.Errorf("unable to close consumer %s reader: %w", c.id, err)
+	}
+	c.debugLogger.Print("Consumer reader closed", c.debugKeyVals...)
+	return nil
 }
 
 func (c *Consumer) process(ctx context.Context, handler Handler) error {
@@ -198,14 +203,6 @@ func (c *Consumer) process(ctx context.Context, handler Handler) error {
 	}
 	c.debugLogger.Print("Committed message offset", debugKeyVals...)
 
-	return nil
-}
-
-func (c *Consumer) close() error {
-	if err := c.reader.Close(); err != nil {
-		return fmt.Errorf("unable to close consumer %s reader: %w", c.id, err)
-	}
-	c.debugLogger.Print("Consumer reader closed", c.debugKeyVals...)
 	return nil
 }
 

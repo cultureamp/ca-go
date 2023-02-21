@@ -82,17 +82,17 @@ func (b *batchProcessor) startFetching(ctx context.Context) error {
 	for i := 0; i < batchSize; i++ {
 		msg, err := b.reader.FetchMessage(fetchContext)
 		if err != nil {
-			if errors.Is(err, context.Canceled) {
+			if errors.Is(err, io.EOF) {
+				return nil
+			} else if errors.Is(err, context.Canceled) {
 				select {
 				case <-b.stop:
 					b.debugLogger.Print("Fetch message for batch stopped early", append([]any{"messagesFetched", i}, b.debugKeyVals...)...)
 					return nil
 				default:
 				}
-			} else if !errors.Is(err, io.EOF) {
-				err = fmt.Errorf("unable to fetch message: %w", err)
 			}
-			return err
+			return fmt.Errorf("unable to fetch message: %w", err)
 		}
 		b.debugLogger.Print("Fetched message", append([]any{"partition", msg.Partition, "offset", msg.Offset}, b.debugKeyVals...)...)
 		b.fetched <- msg
