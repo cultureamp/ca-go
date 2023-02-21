@@ -137,7 +137,7 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 		select {
 		case <-c.stopCh:
 			c.debugLogger.Print("Consumer stopped", c.debugKeyVals...)
-			return c.close()
+			return nil
 		default:
 		}
 
@@ -156,8 +156,14 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 // Stop stops the consumer. It waits for the current message/batch (if any) to
 // finish being handled before closing the reader stream, preventing the consumer
 // from reading any more messages.
-func (c *Consumer) Stop() {
+func (c *Consumer) Stop() error {
 	close(c.stopCh)
+	c.debugLogger.Print("Consumer stopped", c.debugKeyVals...)
+	if err := c.reader.Close(); err != nil {
+		return fmt.Errorf("unable to close consumer %s reader: %w", c.id, err)
+	}
+	c.debugLogger.Print("Consumer reader closed", c.debugKeyVals...)
+	return nil
 }
 
 func (c *Consumer) process(ctx context.Context, handler Handler) error {
@@ -197,14 +203,6 @@ func (c *Consumer) process(ctx context.Context, handler Handler) error {
 	}
 	c.debugLogger.Print("Committed message offset", debugKeyVals...)
 
-	return nil
-}
-
-func (c *Consumer) close() error {
-	if err := c.reader.Close(); err != nil {
-		return fmt.Errorf("unable to close consumer %s reader: %w", c.id, err)
-	}
-	c.debugLogger.Print("Consumer reader closed", c.debugKeyVals...)
 	return nil
 }
 
@@ -333,21 +331,4 @@ func NonStopExponentialBackOff() backoff.BackOff { //nolint:ireturn
 	bo.Multiplier = 8
 	bo.MaxElapsedTime = 0
 	return bo
-}
-
-type safeCounter struct {
-	sync.RWMutex
-	v int
-}
-
-func (m *safeCounter) inc() {
-	m.Lock()
-	defer m.Unlock()
-	m.v++
-}
-
-func (m *safeCounter) val() int {
-	m.RLock()
-	defer m.RUnlock()
-	return m.v
 }
