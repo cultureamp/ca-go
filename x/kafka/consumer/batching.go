@@ -29,9 +29,7 @@ type batchProcessor struct {
 	fetchTimeout     time.Duration
 	fetched          chan kafka.Message
 	processed        chan kafka.Message
-	stop             chan struct{}
 	getOrderingKeyFn GetOrderingKey
-	fetchCancel      func()
 	debugLogger      DebugLogger
 	debugKeyVals     []any
 }
