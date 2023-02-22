@@ -1,6 +1,8 @@
 package consumer
 
 import (
+	"time"
+
 	"github.com/segmentio/kafka-go"
 )
 
@@ -72,12 +74,13 @@ func WithDataDogTracing() Option {
 	}
 }
 
-func WithMessageBatching(batchSize int, getOrderingKeyFn GetOrderingKey) Option {
+func WithMessageBatching(batchSize int, fetchDuration time.Duration, getOrderingKeyFn GetOrderingKey) Option {
 	return func(consumer *Consumer) {
 		consumer.batchSize = batchSize
 		if getOrderingKeyFn != nil {
 			consumer.getOrderingKeyFn = getOrderingKeyFn
 		}
+		consumer.fetchDuration = fetchDuration
 	}
 }
 

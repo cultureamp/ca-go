@@ -53,10 +53,15 @@ type Reader interface {
 
 // Config is a configuration object used to create a new Consumer.
 type Config struct {
-	ID          string
-	Brokers     []string
-	Topic       string
-	MaxBytes    int // Default: 1MB
+	ID      string // Default: UUID
+	Brokers []string
+	Topic   string
+
+	MinBytes      int           // Default: 1MB
+	MaxBytes      int           // Default: 10MB
+	MaxWait       time.Duration // Default: 250ms
+	QueueCapacity int           // Default: 100
+
 	DebugLogger DebugLogger
 	groupID     string
 }
@@ -72,6 +77,7 @@ type Consumer struct {
 	readerConfig       kafka.ReaderConfig
 	withExplicitCommit bool
 	batchSize          int
+	fetchDuration      time.Duration
 	getOrderingKeyFn   GetOrderingKey
 	stopCh             chan struct{}
 	handlerExecutor    *handlerExecutor
@@ -83,6 +89,18 @@ type Consumer struct {
 func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer {
 	if config.ID == "" {
 		config.ID = uuid.New().String()
+	}
+	if config.MaxBytes == 0 {
+		config.MaxBytes = 1e6 // 1 MB
+	}
+	if config.MaxBytes == 0 {
+		config.MaxBytes = 10e6 // 10 MB
+	}
+	if config.MaxWait == 0 {
+		config.MaxWait = 250 * time.Millisecond
+	}
+	if config.QueueCapacity == 0 {
+		config.QueueCapacity = 100
 	}
 
 	c := &Consumer{
@@ -130,8 +148,15 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 // the context is canceled, the consumer is closed, or an error occurs.
 func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 	c.debugLogger.Print("Running consumer", c.debugKeyVals...)
-	bp := newBatchProcessor(c.id, c.debugLogger, c.reader, c.handlerExecutor, c.getOrderingKeyFn, c.batchSize)
-	defer bp.close()
+	bp := newBatchProcessor(batchProcessorConfig{
+		consumerID:       c.id,
+		batchSize:        c.batchSize,
+		fetchDuration:    c.fetchDuration,
+		debugLogger:      c.debugLogger,
+		getOrderingKeyFn: c.getOrderingKeyFn,
+		handlerExecutor:  c.handlerExecutor,
+		reader:           c.reader,
+	})
 
 	for {
 		select {
