@@ -234,12 +234,17 @@ func (c *Consumer) process(ctx context.Context, handler Handler) error {
 // GroupConfig is a configuration object used to create a new Group. The default
 // consumer count in a group is 1 unless specified otherwise.
 type GroupConfig struct {
-	Count       int
-	Brokers     []string
-	Topic       string
-	GroupID     string
+	Count   int
+	Brokers []string
+	Topic   string
+	GroupID string
+
+	MinBytes      int           // Default: 1MB
+	MaxBytes      int           // Default: 10MB
+	MaxWait       time.Duration // Default: 250ms
+	QueueCapacity int           // Default: 100
+
 	DebugLogger DebugLogger
-	MaxBytes    int // Default: 1MB
 }
 
 // Group groups consumers together to concurrently consume and handle messages
