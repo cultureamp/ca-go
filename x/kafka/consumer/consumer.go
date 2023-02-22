@@ -292,12 +292,15 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 		// prevents us from receiving a passed in list of consumers, which is
 		// arguably a cleaner approach.
 		cfg := Config{
-			ID:          fmt.Sprintf("%s-%d", g.ID, i),
-			Brokers:     g.config.Brokers,
-			Topic:       g.config.Topic,
-			MaxBytes:    g.config.MaxBytes,
-			groupID:     g.config.GroupID,
-			DebugLogger: g.config.DebugLogger,
+			ID:            fmt.Sprintf("%s-%d", g.ID, i),
+			Brokers:       g.config.Brokers,
+			Topic:         g.config.Topic,
+			MinBytes:      g.config.MinBytes,
+			MaxBytes:      g.config.MaxBytes,
+			MaxWait:       g.config.MaxWait,
+			QueueCapacity: g.config.QueueCapacity,
+			groupID:       g.config.GroupID,
+			DebugLogger:   g.config.DebugLogger,
 		}
 		c := NewConsumer(g.dialer, cfg, g.opts...)
 
