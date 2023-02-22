@@ -30,7 +30,7 @@ const (
 	brokerHostPort         = "localhost:9093"
 	schemaRegistryHostPort = "localhost:8081"
 	timeout                = 60 * time.Second
-	batchFetchDuration     = 5 * time.Second
+	batchFetchDuration     = 2 * time.Second
 )
 
 type TestEvent struct {
