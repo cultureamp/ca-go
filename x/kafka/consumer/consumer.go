@@ -97,7 +97,7 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 		config.MaxBytes = 10e6 // 10 MB
 	}
 	if config.MaxWait == 0 {
-		config.MaxWait = 250 * time.Second
+		config.MaxWait = 250 * time.Millisecond
 	}
 	if config.QueueCapacity == 0 {
 		config.QueueCapacity = 100
