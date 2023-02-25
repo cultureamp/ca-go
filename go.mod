@@ -17,7 +17,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/launchdarkly/go-server-sdk-dynamodb v1.1.1
 	github.com/rs/zerolog v1.29.0
-	github.com/segmentio/kafka-go v0.4.38
+	github.com/segmentio/kafka-go v0.4.39
 	github.com/stretchr/testify v1.8.1
 	goa.design/goa/v3 v3.11.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.47.0
