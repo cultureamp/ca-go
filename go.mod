@@ -19,7 +19,7 @@ require (
 	github.com/rs/zerolog v1.29.0
 	github.com/segmentio/kafka-go v0.4.39
 	github.com/stretchr/testify v1.8.2
-	goa.design/goa/v3 v3.11.0
+	goa.design/goa/v3 v3.11.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.47.0
 	gopkg.in/launchdarkly/go-sdk-common.v2 v2.5.1
 	gopkg.in/launchdarkly/go-server-sdk.v5 v5.10.1
@@ -249,18 +249,18 @@ require (
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
-	golang.org/x/net v0.5.0 // indirect
+	golang.org/x/net v0.6.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.4.0 // indirect
-	golang.org/x/term v0.4.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/term v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.102.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
-	google.golang.org/grpc v1.52.0 // indirect
+	google.golang.org/grpc v1.52.3 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/errgo.v1 v1.0.0 // indirect
 	gopkg.in/ghodss/yaml.v1 v1.0.0 // indirect
