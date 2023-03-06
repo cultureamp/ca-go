@@ -46,14 +46,13 @@ func newBatchProcessor(config batchProcessorConfig) *batchProcessor {
 		fetchTimeout:     config.fetchDuration,
 		getOrderingKeyFn: config.getOrderingKeyFn,
 		debugLogger:      config.debugLogger,
-		debugKeyVals:     []any{"consumerId", config.consumerID, "batchSize", config.consumerID},
 	}
 }
 
 func (b *batchProcessor) process(ctx context.Context, handler Handler) error {
 	b.processed = make(chan kafka.Message, b.batchSize)
 	b.fetched = make(chan kafka.Message, b.batchSize)
-	b.debugKeyVals = append(b.debugKeyVals, "batchId", uuid.New().String())
+	b.debugKeyVals = []any{"consumerId", b.consumerID, "batchSize", b.batchSize, "batchId", uuid.New().String()}
 
 	errg, errgCtx := errgroup.WithContext(ctx)
 
