@@ -3,34 +3,38 @@ module github.com/cultureamp/ca-go
 go 1.18
 
 require (
-	github.com/Shopify/sarama v1.37.2
-	github.com/aws/aws-sdk-go v1.44.175
+	github.com/Shopify/sarama v1.38.1
+	github.com/aws/aws-sdk-go v1.44.219
 	github.com/cenkalti/backoff/v4 v4.2.0
-	github.com/getsentry/sentry-go v0.16.0
+	github.com/getsentry/sentry-go v0.19.0
 	github.com/golang/mock v1.6.0
 	github.com/hashicorp/go-hclog v1.4.0
 	github.com/hashicorp/go-secure-stdlib/awsutil v0.1.6
 	github.com/hashicorp/vault v1.12.2
-	github.com/hashicorp/vault/api v1.8.2
+	github.com/hashicorp/vault/api v1.9.0
 	github.com/hashicorp/vault/sdk v0.6.1
 	github.com/heetch/avro v0.4.4
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/launchdarkly/go-server-sdk-dynamodb v1.1.1
-	github.com/rs/zerolog v1.28.0
-	github.com/segmentio/kafka-go v0.4.38
-	github.com/stretchr/testify v1.8.1
-	goa.design/goa/v3 v3.10.2
-	gopkg.in/DataDog/dd-trace-go.v1 v1.45.1
+	github.com/rs/zerolog v1.29.0
+	github.com/segmentio/kafka-go v0.4.39
+	github.com/stretchr/testify v1.8.2
+	goa.design/goa/v3 v3.11.1
+	gopkg.in/DataDog/dd-trace-go.v1 v1.48.0
 	gopkg.in/launchdarkly/go-sdk-common.v2 v2.5.1
-	gopkg.in/launchdarkly/go-server-sdk.v5 v5.10.0
+	gopkg.in/launchdarkly/go-server-sdk.v5 v5.10.1
 )
 
 require (
-	cloud.google.com/go v0.100.2 // indirect
-	cloud.google.com/go/compute v1.6.1 // indirect
-	cloud.google.com/go/iam v0.3.0 // indirect
-	cloud.google.com/go/kms v1.4.0 // indirect
-	cloud.google.com/go/monitoring v1.2.0 // indirect
+	cloud.google.com/go/compute/metadata v0.2.1 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
+)
+
+require (
+	cloud.google.com/go/compute v1.12.1 // indirect
+	cloud.google.com/go/iam v0.7.0 // indirect
+	cloud.google.com/go/kms v1.6.0 // indirect
+	cloud.google.com/go/monitoring v1.8.0 // indirect
 	github.com/Azure/azure-sdk-for-go v62.0.0+incompatible // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.24 // indirect
@@ -62,7 +66,7 @@ require (
 	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef // indirect
-	github.com/aws/aws-lambda-go v1.36.1
+	github.com/aws/aws-lambda-go v1.38.0
 	github.com/axiomhq/hyperloglog v0.0.0-20220105174342-98591331716a // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
@@ -81,7 +85,7 @@ require (
 	github.com/duosecurity/duo_api_golang v0.0.0-20190308151101-6c680f768e74 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/eapache/go-resiliency v1.3.0 // indirect
-	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
+	github.com/eapache/go-xerial-snappy v0.0.0-20230111030713-bf00bc1b83b6 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
@@ -116,7 +120,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/tink/go v1.6.1 // indirect
 	github.com/google/uuid v1.3.0
-	github.com/googleapis/gax-go/v2 v2.4.0 // indirect
+	github.com/googleapis/gax-go/v2 v2.6.0 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/gophercloud/gophercloud v0.1.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
@@ -175,7 +179,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/julienschmidt/httprouter v1.3.0 // indirect
 	github.com/keybase/go-crypto v0.0.0-20190403132359-d65b6b94177f // indirect
-	github.com/klauspost/compress v1.15.11 // indirect
+	github.com/klauspost/compress v1.15.14 // indirect
 	github.com/launchdarkly/ccache v1.1.0 // indirect
 	github.com/launchdarkly/eventsource v1.7.0 // indirect
 	github.com/launchdarkly/go-semver v1.0.2 // indirect
@@ -244,19 +248,19 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
-	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be // indirect
-	golang.org/x/net v0.1.0 // indirect
-	golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401 // indirect
-	golang.org/x/sync v0.0.0-20220923202941-7f9b1623fab7
-	golang.org/x/sys v0.1.0 // indirect
-	golang.org/x/term v0.1.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/crypto v0.5.0 // indirect
+	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
+	golang.org/x/sync v0.1.0
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/term v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
-	golang.org/x/xerrors v0.0.0-20220517211312-f3a8303e98df // indirect
-	google.golang.org/api v0.83.0 // indirect
+	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
+	google.golang.org/api v0.102.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220930163606-c98284e70a91 // indirect
-	google.golang.org/grpc v1.50.1 // indirect
+	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
+	google.golang.org/grpc v1.52.3 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/errgo.v1 v1.0.0 // indirect
 	gopkg.in/ghodss/yaml.v1 v1.0.0 // indirect
