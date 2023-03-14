@@ -7,38 +7,44 @@
 // details on usage.
 //
 // You configure and initialise errorreport using Init():
-//   err := errorreport.Init(
-//            errorreport.WithDSN(os.Getenv("SENTRY_DSN")),
-//            errorreport.WithRelease(os.Getenv("APP"), os.Getenv("APP_VERSION")),
-//            errorreport.WithEnvironment(os.Getenv("AWS_ENVIRONMENT_NAME")))
-//   if err != nil {
-//     // handle initialisation error
-//   }
+//
+//	err := errorreport.Init(
+//	         errorreport.WithDSN(os.Getenv("SENTRY_DSN")),
+//	         errorreport.WithRelease(os.Getenv("APP"), os.Getenv("APP_VERSION")),
+//	         errorreport.WithEnvironment(os.Getenv("AWS_ENVIRONMENT_NAME")))
+//	if err != nil {
+//	  // handle initialisation error
+//	}
 //
 // Ad-hoc errors can be reported using ReportError():
-//   errorreport.ReportError(ctx, errors.New("We hit a snag!"))
+//
+//	errorreport.ReportError(ctx, errors.New("We hit a snag!"))
 //
 // For application without middleware,
 // Panic can be captured and reported to sentry in main before the program exits in main
-//   defer func() {
-//     if err := recover(); err != nil {
-//       errorreport.GracefullyShutdown(err, timeout)
-//   }()
+//
+//	defer func() {
+//	  if err := recover(); err != nil {
+//	    errorreport.GracefullyShutdown(err, timeout)
+//	}()
 //
 // For application with middleware,
 // HTTP middleware can be used. Passing in nil uses the default panic handler.
 // See the OnRequestPanicHandler type if you wish to supply your own.
-//   mw := middleware.NewHTTPMiddleware(nil)
-//   mw(myHTTPHandler)
+//
+//	mw := middleware.NewHTTPMiddleware(nil)
+//	mw(myHTTPHandler)
 //
 // Goa middleware can be used, allowing errors to be reported automatically from
 // Goa applications:
-//   mw := errorreport.NewGoaMiddleware()
-//   mw(myGoaEndpoint)
+//
+//	mw := errorreport.NewGoaMiddleware()
+//	mw(myGoaEndpoint)
 //
 // This is recommended when using Goa, as it offers reporting of all errors
 // returned from the generated logic types.
 //
 // This package also supports middleware for Lambda functions:
-//   mw := errorreport.NewLambdaMiddleware(errorreport.LambdaErrorOptions{})
+//
+//	mw := errorreport.NewLambdaMiddleware(errorreport.LambdaErrorOptions{})
 package errorreport
