@@ -1,7 +1,7 @@
 // Package consumer provides a high level API for consuming messages from a Kafka
 // topic.
 //
-// Consumer
+// # Consumer
 //
 // A single consumer is the most basic use case when consuming messages from a
 // topic.
@@ -9,17 +9,18 @@
 // c := consumer.NewConsumer(dialer, config)
 // err := c.Run(ctx, handler)
 //
-// Consumer Group
+// # Consumer Group
 //
 // Multiple consumers can be created as Group to consume messages at a higher rate.
 //
 // g := consumer.Group(dialer, config)
 // errCh := g.Run(ctx, handler)
-// for err := range errCh {
-//     if err != nil {
-// 	       panic(err)
-//     }
-// }
+//
+//	for err := range errCh {
+//	    if err != nil {
+//		       panic(err)
+//	    }
+//	}
 //
 // The consumer count and for the group is specified in the config parameter, which
 // determines the number of goroutines to spawn. Each goroutine has their own

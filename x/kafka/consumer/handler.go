@@ -48,7 +48,7 @@ func (h *handlerExecutor) execute(ctx context.Context, msg kafka.Message, handle
 			if err == nil {
 				return ctx.Err()
 			}
-			return fmt.Errorf("%s: %w", ctx.Err().Error(), fmt.Errorf("consumer handler error: %w", ctx.Err()))
+			return fmt.Errorf("consumer handler error: %w", ctx.Err())
 		case _, ok := <-ticker.C:
 			if !ok {
 				return err

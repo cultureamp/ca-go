@@ -114,7 +114,7 @@ func TestClientTestMode(t *testing.T) {
 	})
 
 	t.Run("returns an error when getting the test data source if not configured in test mode", func(t *testing.T) {
-		os.Setenv(configurationEnvVar, validConfigJSON)
+		t.Setenv(configurationEnvVar, validConfigJSON)
 		defer os.Unsetenv(configurationEnvVar)
 
 		client, err := NewClient()
@@ -145,7 +145,7 @@ func assertTestJSONFlags(t *testing.T, c *Client) {
 
 func TestClientLambdaMode(t *testing.T) {
 	t.Run("configures for Lambda (daemon) mode", func(t *testing.T) {
-		os.Setenv(configurationEnvVar, validConfigJSON)
+		t.Setenv(configurationEnvVar, validConfigJSON)
 		defer os.Unsetenv(configurationEnvVar)
 
 		client, err := NewClient(WithLambdaMode(nil))
@@ -158,7 +158,7 @@ func TestClientLambdaMode(t *testing.T) {
 	})
 
 	t.Run("configures for Lambda mode with optional overrides", func(t *testing.T) {
-		os.Setenv(configurationEnvVar, validConfigJSON)
+		t.Setenv(configurationEnvVar, validConfigJSON)
 		defer os.Unsetenv(configurationEnvVar)
 
 		client, err := NewClient(WithLambdaMode(&LambdaModeConfig{
@@ -179,7 +179,7 @@ func TestClientLambdaMode(t *testing.T) {
 
 func TestClientInitialisation(t *testing.T) {
 	t.Run("allows an initialisation wait time to be specified", func(t *testing.T) {
-		os.Setenv(configurationEnvVar, validConfigJSON)
+		t.Setenv(configurationEnvVar, validConfigJSON)
 		defer os.Unsetenv(configurationEnvVar)
 
 		client, err := NewClient(
@@ -189,7 +189,7 @@ func TestClientInitialisation(t *testing.T) {
 	})
 
 	t.Run("configures for Proxy mode", func(t *testing.T) {
-		os.Setenv(configurationEnvVar, validConfigJSON)
+		t.Setenv(configurationEnvVar, validConfigJSON)
 		defer os.Unsetenv(configurationEnvVar)
 		client, err := NewClient()
 		require.NoError(t, err)
@@ -200,7 +200,7 @@ func TestClientInitialisation(t *testing.T) {
 	})
 
 	t.Run("configures for Proxy mode with optional overrides", func(t *testing.T) {
-		os.Setenv(configurationEnvVar, validConfigJSON)
+		t.Setenv(configurationEnvVar, validConfigJSON)
 		defer os.Unsetenv(configurationEnvVar)
 		client, err := NewClient(WithProxyMode(&ProxyModeConfig{
 			RelayProxyURL: "https://foo.bar",
@@ -213,7 +213,7 @@ func TestClientInitialisation(t *testing.T) {
 	})
 
 	t.Run("allows big segments to be disabled", func(t *testing.T) {
-		os.Setenv(configurationEnvVar, validConfigJSON)
+		t.Setenv(configurationEnvVar, validConfigJSON)
 		defer os.Unsetenv(configurationEnvVar)
 
 		client, err := NewClient(

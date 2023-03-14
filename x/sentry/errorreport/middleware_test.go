@@ -1,3 +1,4 @@
+//nolint: bodyclose
 package errorreport_test
 
 import (

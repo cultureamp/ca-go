@@ -21,6 +21,6 @@
 //
 // # If no keys are passed to Encrypt or Decrypt a VaultMissingKeysErr will be thrown
 //
-// The default aws region for generating AWS login data is 'us-east-1'. This is
+// The default aws region for generating AWS login data is 'us-east-1'. This
 // is fixed for all environments.
 package vault

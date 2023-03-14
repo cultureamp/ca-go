@@ -73,6 +73,8 @@ func Example_lambda() {
 
 	// start the lambda function
 	lambda.StartWithOptions(handler, lambda.WithContext(ctx))
+
+	// Output:
 }
 
 // Handler is the lambda handler function with the logic to be executed. In this
@@ -140,6 +142,8 @@ func Example_fargate() {
 			errorreport.GracefullyShutdown(err, time.Second*5)
 		}
 	}()
+
+	// Output:
 }
 
 func handleBusinessLogic(ctx context.Context) {
