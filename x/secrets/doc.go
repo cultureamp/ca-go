@@ -10,5 +10,4 @@
 // then fetch the secret using Get:
 //
 // `secretValue, err = secretClient.Get("/your/secret-name")`
-//
 package secrets

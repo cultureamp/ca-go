@@ -48,7 +48,7 @@ functionality (given its purpose).
 ## Contributing
 
 To work on `ca-go`, you'll need a working Go installation. The project currently
-targets Go 1.18.
+targets Go 1.20.
 
 ### Setting up your environment
 

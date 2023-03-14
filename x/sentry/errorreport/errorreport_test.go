@@ -21,6 +21,8 @@ func ExampleDecorate() {
 
 	// Since this API is designed around "defer", don't use it in a loop.
 	// Instead, create a function and call that function in a loop.
+
+	// Output:
 }
 
 func TestDecorate(t *testing.T) {

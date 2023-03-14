@@ -9,7 +9,7 @@ import (
 
 func TestSingletonInitialisation(t *testing.T) {
 	t.Run("does not error if SDK key supplied as env var", func(t *testing.T) {
-		os.Setenv(configurationEnvVar, validConfigJSON)
+		t.Setenv(configurationEnvVar, validConfigJSON)
 		defer os.Unsetenv(configurationEnvVar)
 		err := Configure(WithTestMode(nil))
 		require.NoError(t, err)

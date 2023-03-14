@@ -1,3 +1,4 @@
+//nolint:testableexamples
 package errorreport_test
 
 import (
