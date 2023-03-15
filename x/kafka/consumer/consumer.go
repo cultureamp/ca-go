@@ -168,11 +168,11 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 
 		if c.batchSize > 0 {
 			if err := bp.process(ctx, handler); err != nil {
-				return fmt.Errorf("consumer %s batch error: %w", c.id, err)
+				return fmt.Errorf("consumer batch error: %w", err)
 			}
 		} else {
 			if err := c.process(ctx, handler); err != nil {
-				return fmt.Errorf("consumer %s error: %w", c.id, err)
+				return fmt.Errorf("consumer error: %w", err)
 			}
 		}
 	}
@@ -185,7 +185,7 @@ func (c *Consumer) Stop() error {
 	close(c.stopCh)
 	c.debugLogger.Print("Consumer stopped", c.debugKeyVals...)
 	if err := c.reader.Close(); err != nil {
-		return fmt.Errorf("unable to close consumer %s reader: %w", c.id, err)
+		return fmt.Errorf("unable to close consumer reader: %w", err)
 	}
 	c.debugLogger.Print("Consumer reader closed", c.debugKeyVals...)
 	return nil
@@ -307,7 +307,7 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 		go func() {
 			defer wg.Done()
 			if err := c.Run(ctx, handler); err != nil {
-				errCh <- fmt.Errorf("consumer %s for group %s failed: %w", c.id, g.ID, err)
+				errCh <- fmt.Errorf("consumer failed: %w", err)
 			}
 		}()
 		g.stopChs = append(g.stopChs, c.stopCh)
