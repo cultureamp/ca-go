@@ -180,7 +180,6 @@ func TestConsumer_Run_error(t *testing.T) {
 	var gotAttempts int
 	var didNotify bool
 
-	wantConsumerID := "123"
 	wantHandlerErr := errors.New("some downstream error")
 
 	tests := []struct {
@@ -193,13 +192,13 @@ func TestConsumer_Run_error(t *testing.T) {
 	}{
 		{
 			name:         "consumer unable to handle message",
-			wantError:    fmt.Errorf("consumer %s error: unable to handle message: %w", wantConsumerID, wantHandlerErr),
+			wantError:    fmt.Errorf("consumer error: unable to handle message: %w", wantHandlerErr),
 			shouldNotify: false,
 			numRetries:   0,
 		},
 		{
 			name:         "handler error after backoff retry and notify",
-			wantError:    fmt.Errorf("consumer %s error: unable to handle message: %w", wantConsumerID, wantHandlerErr),
+			wantError:    fmt.Errorf("consumer error: unable to handle message: %w", wantHandlerErr),
 			shouldNotify: true,
 			numRetries:   3,
 			setup: func(t *testing.T, consumer *Consumer) {
@@ -235,7 +234,7 @@ func TestConsumer_Run_error(t *testing.T) {
 		},
 		{
 			name:             "consumer context done error",
-			wantError:        fmt.Errorf("consumer %s error: unable to handle message: context canceled", wantConsumerID),
+			wantError:        errors.New("consumer error: unable to handle message: context canceled"),
 			contextCancelled: true,
 			shouldNotify:     false,
 			numRetries:       0,
@@ -259,7 +258,7 @@ func TestConsumer_Run_error(t *testing.T) {
 			reader.EXPECT().Close().Return(nil).AnyTimes()
 			reader.EXPECT().ReadMessage(ctx).Return(randMsg(), nil).AnyTimes()
 
-			consumer := NewConsumer(&kafka.Dialer{}, Config{ID: wantConsumerID},
+			consumer := NewConsumer(&kafka.Dialer{}, Config{},
 				WithKafkaReader(func() Reader { return reader }),
 			)
 
