@@ -21,7 +21,7 @@ require (
 	github.com/rs/zerolog v1.29.0
 	github.com/segmentio/kafka-go v0.4.39
 	github.com/stretchr/testify v1.8.2
-	goa.design/goa/v3 v3.11.2
+	goa.design/goa/v3 v3.11.3
 	gopkg.in/DataDog/dd-trace-go.v1 v1.48.0
 )
 
