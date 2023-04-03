@@ -10,7 +10,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/hashicorp/go-hclog v1.5.0
 	github.com/hashicorp/go-secure-stdlib/awsutil v0.1.6
-	github.com/hashicorp/vault v1.13.0
+	github.com/hashicorp/vault v1.13.1
 	github.com/hashicorp/vault/api v1.9.0
 	github.com/hashicorp/vault/sdk v0.8.1
 	github.com/heetch/avro v0.4.4
