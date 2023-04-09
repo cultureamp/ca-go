@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/Shopify/sarama v1.38.1
-	github.com/aws/aws-sdk-go v1.44.235
+	github.com/aws/aws-sdk-go v1.44.239
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/getsentry/sentry-go v0.20.0
 	github.com/golang/mock v1.6.0
