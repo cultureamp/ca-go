@@ -18,7 +18,7 @@ require (
 	github.com/launchdarkly/go-sdk-common/v3 v3.0.1
 	github.com/launchdarkly/go-server-sdk-dynamodb/v3 v3.0.2
 	github.com/launchdarkly/go-server-sdk/v6 v6.1.0
-	github.com/rs/zerolog v1.29.0
+	github.com/rs/zerolog v1.29.1
 	github.com/segmentio/kafka-go v0.4.39
 	github.com/stretchr/testify v1.8.2
 	goa.design/goa/v3 v3.11.3
