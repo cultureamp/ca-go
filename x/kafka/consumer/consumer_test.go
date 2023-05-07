@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -110,69 +109,6 @@ func TestConsumer_Run(t *testing.T) {
 	}
 
 	require.NoError(t, consumer.Run(ctx, handler))
-}
-
-func TestConsumer_Run_withBatching(t *testing.T) {
-	wantTimes := 500
-	batchSize := 50
-
-	fetchInvocations := new(safeCounter)
-	reader := NewMockReader(gomock.NewController(t))
-	reader.EXPECT().Close().Return(nil).Times(1)
-	reader.EXPECT().CommitMessages(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	// Mock published messages where the key is 0-5 and the value is a constantly growing number
-	reader.EXPECT().FetchMessage(gomock.Any()).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
-		fetchInvocations.inc()
-		i := fetchInvocations.val()
-		rand.Seed(time.Now().UnixMilli())
-		msg := kafka.Message{
-			Topic:     "some-topic",
-			Partition: 1,
-			Key:       []byte(fmt.Sprintf("%d", i%5)),
-			Value:     []byte(fmt.Sprintf("%d", i)),
-			Time:      time.Now(),
-		}
-		return msg, nil
-	}).AnyTimes()
-
-	consumer := NewConsumer(&kafka.Dialer{}, Config{},
-		WithKafkaReader(func() Reader { return reader }),
-		WithMessageBatching(batchSize, time.Second, func(ctx context.Context, message kafka.Message) string {
-			return string(message.Key)
-		}),
-	)
-
-	handlerInvocations := new(safeCounter)
-	msgKeyLatestValue := new(sync.Map)
-	ctx, cancel := context.WithCancel(context.Background())
-
-	// Handler asserts that each new message handled for a specific key has a value
-	// that was greater than the previous. This proves that order is maintained
-	// for each batch.
-	handler := func(ctx context.Context, msg Message) error {
-		val, err := strconv.Atoi(string(msg.Value))
-		require.NoError(t, err)
-
-		latestVal, ok := msgKeyLatestValue.Load(string(msg.Key))
-		if ok {
-			num, ok := latestVal.(int)
-			require.True(t, ok)
-			require.Greater(t, val, num)
-		}
-		msgKeyLatestValue.Store(string(msg.Key), val)
-
-		handlerInvocations.inc()
-		val = handlerInvocations.val()
-		if val == wantTimes {
-			cancel()
-			require.NoError(t, consumer.Stop())
-		}
-		return nil
-	}
-	err := consumer.Run(ctx, handler)
-	if !errors.Is(err, context.Canceled) {
-		require.NoError(t, err)
-	}
 }
 
 func TestConsumer_Run_error(t *testing.T) {

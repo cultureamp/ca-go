@@ -36,13 +36,6 @@ type Handler func(ctx context.Context, msg Message) error
 // NotifyError is a notify-on-error function used to report consumer handler errors.
 type NotifyError func(ctx context.Context, err error, msg Message)
 
-// GetOrderingKey specifies what key to store the Kafka message under when
-// processing in batches. Ordering keys are used to spawn new goroutines that
-// are responsible for processing each message for that key in order. An ordering
-// key is also useful for decreasing/increasing processing concurrency within
-// a batch.
-type GetOrderingKey func(ctx context.Context, message kafka.Message) string
-
 // Reader fetches and commits messages from a Kafka topic.
 type Reader interface {
 	ReadMessage(ctx context.Context) (kafka.Message, error)
@@ -76,9 +69,6 @@ type Consumer struct {
 	reader             Reader
 	readerConfig       kafka.ReaderConfig
 	withExplicitCommit bool
-	batchSize          int
-	fetchDuration      time.Duration
-	getOrderingKeyFn   GetOrderingKey
 	stopCh             chan struct{}
 	handlerExecutor    *handlerExecutor
 	debugLogger        DebugLogger
@@ -118,10 +108,8 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 			ConsumerID: config.ID,
 			GroupID:    config.groupID,
 		},
-		batchSize:        0,
-		getOrderingKeyFn: func(ctx context.Context, message kafka.Message) string { return "" },
-		debugLogger:      config.DebugLogger,
-		debugKeyVals:     []any{"consumerId", config.ID},
+		debugLogger:  config.DebugLogger,
+		debugKeyVals: []any{"consumerId", config.ID},
 	}
 
 	if c.debugLogger == nil {
@@ -148,15 +136,6 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 // the context is canceled, the consumer is closed, or an error occurs.
 func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 	c.debugLogger.Print("Running consumer", c.debugKeyVals...)
-	bp := newBatchProcessor(batchProcessorConfig{
-		consumerID:       c.id,
-		batchSize:        c.batchSize,
-		fetchDuration:    c.fetchDuration,
-		debugLogger:      c.debugLogger,
-		getOrderingKeyFn: c.getOrderingKeyFn,
-		handlerExecutor:  c.handlerExecutor,
-		reader:           c.reader,
-	})
 
 	for {
 		select {
@@ -166,19 +145,13 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 		default:
 		}
 
-		if c.batchSize > 0 {
-			if err := bp.process(ctx, handler); err != nil {
-				return fmt.Errorf("consumer batch error: %w", err)
-			}
-		} else {
-			if err := c.process(ctx, handler); err != nil {
-				return fmt.Errorf("consumer error: %w", err)
-			}
+		if err := c.process(ctx, handler); err != nil {
+			return fmt.Errorf("consumer error: %w", err)
 		}
 	}
 }
 
-// Stop stops the consumer. It waits for the current message/batch (if any) to
+// Stop stops the consumer. It waits for the current message (if any) to
 // finish being handled before closing the reader stream, preventing the consumer
 // from reading any more messages.
 func (c *Consumer) Stop() error {
@@ -321,7 +294,7 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 	return errCh
 }
 
-// Stop stops the group. It waits for the current message/batch (if any) in each
+// Stop stops the group. It waits for the current message (if any) in each
 // consumer to finish being handled before closing the reader streams, preventing
 // each consumer from reading any more messages.
 func (g *Group) Stop() {
