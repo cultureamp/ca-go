@@ -1,8 +1,6 @@
 package consumer
 
 import (
-	"time"
-
 	"github.com/segmentio/kafka-go"
 )
 
@@ -71,16 +69,6 @@ func WithReaderErrorLogger(logger kafka.LoggerFunc) Option {
 func WithDataDogTracing() Option {
 	return func(consumer *Consumer) {
 		consumer.handlerExecutor.DataDogTracingEnabled = true
-	}
-}
-
-func WithMessageBatching(batchSize int, fetchDuration time.Duration, getOrderingKeyFn GetOrderingKey) Option {
-	return func(consumer *Consumer) {
-		consumer.batchSize = batchSize
-		if getOrderingKeyFn != nil {
-			consumer.getOrderingKeyFn = getOrderingKeyFn
-		}
-		consumer.fetchDuration = fetchDuration
 	}
 }
 

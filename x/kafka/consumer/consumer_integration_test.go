@@ -23,14 +23,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cultureamp/ca-go/x/kafka/kafkatest"
-	"github.com/cultureamp/ca-go/x/log"
 )
 
 const (
 	brokerHostPort         = "localhost:9093"
 	schemaRegistryHostPort = "localhost:8081"
 	timeout                = 60 * time.Second
-	batchFetchDuration     = 2 * time.Second
 )
 
 type TestEvent struct {
@@ -71,34 +69,6 @@ func TestConsumerGroup_Run_integration(t *testing.T) {
 			numMessages:   250,
 			consumerCount: 10,
 			opts:          []Option{WithExplicitCommit()},
-		},
-		{
-			name:          "1 consumer (batching), 1 partitions, 500 messages)",
-			partitions:    1,
-			numMessages:   500,
-			consumerCount: 1,
-			opts:          []Option{WithMessageBatching(20, batchFetchDuration, newGetOrderingKey(t, 20))},
-		},
-		{
-			name:          "1 consumer (batching), 10 partitions, 100 messages)",
-			partitions:    10,
-			numMessages:   100,
-			consumerCount: 1,
-			opts:          []Option{WithMessageBatching(20, batchFetchDuration, newGetOrderingKey(t, 20))},
-		},
-		{
-			name:          "10 consumers (batching), 10 partitions, 500 messages",
-			partitions:    10,
-			numMessages:   500,
-			consumerCount: 10,
-			opts:          []Option{WithMessageBatching(20, batchFetchDuration, newGetOrderingKey(t, 20))},
-		},
-		{
-			name:          "10 consumers (batching), 100 partitions, 500 messages",
-			partitions:    100,
-			numMessages:   500,
-			consumerCount: 10,
-			opts:          []Option{WithMessageBatching(12, batchFetchDuration, newGetOrderingKey(t, 20))},
 		},
 	}
 
@@ -203,67 +173,6 @@ func TestConsumer_Run_integration(t *testing.T) {
 	}
 }
 
-func TestConsumer_Run_integration_incrementalPublishForEarlyBatchTermination(t *testing.T) {
-	ctx, timeoutCancel := context.WithTimeout(context.Background(), timeout)
-	defer timeoutCancel()
-
-	tc := kafkatest.NewTestClient[TestEvent](t, ctx, kafkatest.TestClientConfig{
-		KafkaBrokerHostPort:    brokerHostPort,
-		SchemaRegistryHostPort: schemaRegistryHostPort,
-		NumTopicPartitions:     1,
-	})
-
-	cfg := GroupConfig{
-		Count:   1,
-		Brokers: []string{brokerHostPort},
-		Topic:   tc.Topic,
-		GroupID: uuid.New().String(),
-		DebugLogger: LoggerFunc(func(msg string, keyvals ...any) {
-			log.NewFromCtx(ctx).Debug().Fields(keyvals).Msg(msg)
-		}),
-	}
-	batchSize := 7
-	c := NewGroup(kafka.DefaultDialer, cfg, WithMessageBatching(batchSize, batchFetchDuration, func(ctx context.Context, message kafka.Message) string {
-		return string(message.Key)
-	}))
-
-	go func() {
-		for i := 0; i < 5; i++ {
-			publishDummyEvents(t, context.Background(), tc, i*3, uuid.New().String())
-		}
-	}()
-
-	wantTotal := 30
-	handled := make(chan kafka.Message, wantTotal)
-
-	handler := func(ctx context.Context, msg Message) error {
-		assert.NotEmpty(t, msg.Value)
-		time.Sleep(time.Millisecond * 50)
-		handled <- msg.Message
-		return nil
-	}
-
-	gotTotal := 0
-	errCh := c.Run(ctx, handler)
-	stopped := false
-
-	for {
-		select {
-		case <-handled:
-			gotTotal++
-			if gotTotal == wantTotal {
-				timeoutCancel()
-				stopped = true
-			}
-		case err, ok := <-errCh:
-			if !ok || errors.Is(err, context.Canceled) && stopped {
-				return
-			}
-			require.NoError(t, err)
-		}
-	}
-}
-
 func publishDummyEvents(t *testing.T, ctx context.Context, tc *kafkatest.TestClient[TestEvent], numPublish int, key string) {
 	rand.Seed(time.Now().UnixNano())
 	var msgs []kafka.Message
@@ -288,12 +197,4 @@ func publishDummyEvents(t *testing.T, ctx context.Context, tc *kafkatest.TestCli
 	}
 
 	tc.PublishMessages(t, ctx, msgs...)
-}
-
-func newGetOrderingKey(t *testing.T, mod int) GetOrderingKey {
-	return func(ctx context.Context, message kafka.Message) string {
-		i, err := strconv.Atoi(string(message.Key))
-		require.NoError(t, err)
-		return strconv.Itoa(i % mod)
-	}
 }
