@@ -17,7 +17,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/launchdarkly/go-server-sdk-dynamodb v1.1.1
 	github.com/rs/zerolog v1.29.1
-	github.com/segmentio/kafka-go v0.4.39
+	github.com/segmentio/kafka-go v0.4.40
 	github.com/stretchr/testify v1.8.3
 	goa.design/goa/v3 v3.11.3
 	gopkg.in/DataDog/dd-trace-go.v1 v1.50.0
@@ -248,8 +248,6 @@ require (
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2
 	github.com/xdg-go/stringprep v1.0.4 // indirect
-	github.com/xdg/scram v1.0.5 // indirect
-	github.com/xdg/stringprep v1.0.3 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.mongodb.org/mongo-driver v1.7.5 // indirect
