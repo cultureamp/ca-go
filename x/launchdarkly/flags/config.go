@@ -8,13 +8,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	lddynamodb "github.com/launchdarkly/go-server-sdk-dynamodb"
-	ld "gopkg.in/launchdarkly/go-server-sdk.v5"
-	"gopkg.in/launchdarkly/go-server-sdk.v5/ldcomponents"
-	"gopkg.in/launchdarkly/go-server-sdk.v5/ldfiledata"
-	"gopkg.in/launchdarkly/go-server-sdk.v5/ldfilewatch"
-	"gopkg.in/launchdarkly/go-server-sdk.v5/testhelpers/ldtestdata"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	lddynamodb "github.com/launchdarkly/go-server-sdk-dynamodb/v3"
+	ld "github.com/launchdarkly/go-server-sdk/v6"
+	"github.com/launchdarkly/go-server-sdk/v6/ldcomponents"
+	"github.com/launchdarkly/go-server-sdk/v6/ldfiledata"
+	"github.com/launchdarkly/go-server-sdk/v6/ldfilewatch"
+	"github.com/launchdarkly/go-server-sdk/v6/testhelpers/ldtestdata"
 )
 
 var errClientNotConfigured = errors.New("client not configured")
@@ -130,7 +131,7 @@ func configFromEnvironment() (configurationJSON, error) {
 }
 
 func configForBigSegments(env configurationJSON) ld.Config {
-	datastoreBuilder := lddynamodb.DataStore(env.Storage.TableName)
+	datastoreBuilder := lddynamodb.BigSegmentStore(env.Storage.TableName)
 
 	return ld.Config{
 		BigSegments: ldcomponents.BigSegments(datastoreBuilder),
@@ -155,7 +156,17 @@ func configForLambdaMode(env configurationJSON, cfg *LambdaModeConfig) ld.Config
 
 	// Set the Dynamo base URL if one was provided explicitly.
 	if cfg != nil && cfg.DynamoBaseURL != "" {
-		datastoreBuilder.ClientConfig(aws.NewConfig().WithEndpoint(cfg.DynamoBaseURL))
+		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+			return aws.Endpoint{
+				URL: cfg.DynamoBaseURL,
+			}, nil
+		})
+
+		defaultcfg, err := config.LoadDefaultConfig(context.Background(), config.WithEndpointResolverWithOptions(customResolver))
+		if err != nil {
+			return ld.Config{}
+		}
+		datastoreBuilder.ClientConfig(defaultcfg)
 	}
 
 	datastore := ldcomponents.PersistentDataStore(
