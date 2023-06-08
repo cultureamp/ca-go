@@ -74,7 +74,7 @@ func NewAnonymousUser(key string) User {
 
 	return User{
 		key: key,
-		ldUser: lduser.NewUserBuilder(key).
+		ldContext: ldcontext.NewBuilder(key).
 			Anonymous(true).
 			Build(),
 	}
@@ -92,12 +92,10 @@ func NewAnonymousUserWithSubdomain(key string, subdomain string) User {
 
 	return User{
 		key: key,
-		ldUser: lduser.NewUserBuilder(key).
-			Anonymous(true).
-			Custom(
-				userAttributeSubdomain,
-				ldvalue.String(subdomain),
-			).
+		ldContext: ldcontext.NewMultiBuilder().
+			// use existing user shape for current implementation
+			Add(ldcontext.NewBuilder(key).SetString(userAttributeSubdomain, subdomain).Anonymous(true).Build()).
+			Add(ldcontext.NewBuilder(key).Anonymous(true).Kind("account").Name(subdomain).Build()).
 			Build(),
 	}
 }
@@ -115,17 +113,23 @@ func NewUser(userID string, opts ...UserOption) User {
 		opt(u)
 	}
 
-	userBuilder := lduser.NewUserBuilder(u.key)
-	userBuilder.Custom(
-		userAttributeAccountID,
-		ldvalue.String(u.accountID))
-	userBuilder.Custom(
+	userBuilder := ldcontext.NewBuilder(u.key)
+	userBuilder.SetString(
 		userAttributeRealUserID,
-		ldvalue.String(u.realUserID))
-	userBuilder.Custom(
+		u.realUserID)
+	userBuilder.SetString(
 		userAttributeUserID,
-		ldvalue.String(u.userID))
-	u.ldUser = userBuilder.Build()
+		u.userID)
+	userBuilder.SetString(
+		userAttributeAccountID,
+		u.accountID)
+	userContext := userBuilder.Build()
+	u.ldContext = userContext
+
+	if u.accountID != "" {
+		accountContext := ldcontext.NewBuilder(u.accountID).Kind("account").Build()
+		u.ldContext = ldcontext.NewMulti(userContext, accountContext)
+	}
 
 	return *u
 }
