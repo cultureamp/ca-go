@@ -5,11 +5,11 @@
 // An evaluation context is simply a bag of attributes keyed by a unique
 // identifier. These values are used in two situations:
 //  1. When creating a flag or segment, the attributes are used to form the
-//     targeting rules. For example, "if the user's accountID is 123, return
-//     false for this flag".
+//     targeting rules. For example, "if the user's key is 123 or account's
+//     subdomain is cultureamp, return false for this flag".
 //  2. When querying for a flag in your service, the SDK uses the attributes
 //     to evaluate the rules for the flag to return the correct value. Using
-//     the same example as above, supplying a User context with an accountID
+//     the same example as above, supplying a User context with an userID
 //     of 123 would cause the flag to evaluate to false.
 //
 // Some evaluation contexts (like the User) have constructor functions which
