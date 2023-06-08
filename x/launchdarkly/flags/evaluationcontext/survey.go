@@ -59,14 +59,23 @@ func NewSurvey(surveyID string, opts ...SurveyOption) Survey {
 		opt(u)
 	}
 
-	userBuilder := lduser.NewUserBuilder(u.key)
-	userBuilder.Custom(
-		surveyAttributeAccountID,
-		ldvalue.String(u.accountID))
-	userBuilder.Custom(
-		surveyAttributeSurveyID,
-		ldvalue.String(u.surveyID))
-	u.ldUser = userBuilder.Build()
+	builder := ldcontext.NewMultiBuilder().
+		Add(ldcontext.NewBuilder(u.key).
+			Kind("survey").
+			SetString(
+				surveyAttributeSurveyID,
+				u.surveyID).
+			Build()).
+		// Existing context so no breaking change
+		Add(ldcontext.NewBuilder(u.key).
+			Kind("user").
+			SetString(surveyAttributeSurveyID, u.surveyID).
+			SetString(surveyAttributeAccountID, u.accountID).
+			Build())
+	if u.accountID != "" {
+		builder.Add(ldcontext.NewWithKind("account", u.accountID))
+	}
 
+	u.ldContext = builder.Build()
 	return *u
 }
