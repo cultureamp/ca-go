@@ -6,8 +6,7 @@ import (
 
 	"github.com/cultureamp/ca-go/x/request"
 	"github.com/google/uuid"
-	"gopkg.in/launchdarkly/go-sdk-common.v2/lduser"
-	"gopkg.in/launchdarkly/go-sdk-common.v2/ldvalue"
+	"github.com/launchdarkly/go-sdk-common/v3/ldcontext"
 )
 
 const (
@@ -25,13 +24,21 @@ type User struct {
 	realUserID string
 	accountID  string
 
-	ldUser lduser.User
+	ldContext ldcontext.Context
+}
+
+// ToLDContext transforms the context implementation into an LDContext object that can
+// be understood by LaunchDarkly when evaluating a flag.
+func (u User) ToLDContext() ldcontext.Context {
+	return u.ldContext
 }
 
 // ToLDUser transforms the context implementation into an LDUser object that can
 // be understood by LaunchDarkly when evaluating a flag.
-func (u User) ToLDUser() lduser.User {
-	return u.ldUser
+//
+// Deprecated: use ToLDContext() instead
+func (u User) ToLDUser() ldcontext.Context {
+	return u.ToLDContext()
 }
 
 // UserOption are functions that can be supplied to configure a new user with
