@@ -1,13 +1,12 @@
 package evaluationcontext
 
 import (
-	"gopkg.in/launchdarkly/go-sdk-common.v2/lduser"
-	"gopkg.in/launchdarkly/go-sdk-common.v2/ldvalue"
+	"github.com/launchdarkly/go-sdk-common/v3/ldcontext"
 )
 
 const (
-	surveyAttributeSurveyID  = "surveyID"
 	surveyAttributeAccountID = "accountID"
+	surveyAttributeSurveyID  = "surveyID"
 )
 
 // Survey is a type of context, representing the identifiers and attributes of
@@ -17,13 +16,21 @@ type Survey struct {
 	surveyID  string
 	accountID string
 
-	ldUser lduser.User
+	ldContext ldcontext.Context
 }
 
-// ToLDUser transforms the context implementation into an LDUser object that can
+// ToLDContext transforms the context implementation into an LDcontext object that can
 // be understood by LaunchDarkly when evaluating a flag.
-func (u Survey) ToLDUser() lduser.User {
-	return u.ldUser
+func (u Survey) ToLDContext() ldcontext.Context {
+	return u.ldContext
+}
+
+// ToLDUser transforms context into LD context object that can be understood by
+// LaunchDarkly when evaluating a flag
+//
+// Deprecated: use ToLDContext() instead
+func (u Survey) ToLDUser() ldcontext.Context {
+	return u.ToLDContext()
 }
 
 // SurveyOption are functions that can be supplied to configure a new survey with

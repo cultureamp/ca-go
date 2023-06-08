@@ -6,21 +6,21 @@ import (
 
 	"github.com/cultureamp/ca-go/x/launchdarkly/flags/evaluationcontext"
 	"github.com/cultureamp/ca-go/x/request"
+	"github.com/launchdarkly/go-sdk-common/v3/ldcontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/launchdarkly/go-sdk-common.v2/ldvalue"
 )
 
 func TestNewUser(t *testing.T) {
 	t.Run("can create an anonymous user", func(t *testing.T) {
 		user := evaluationcontext.NewAnonymousUser("")
-		ldUser := user.ToLDUser()
-		assert.True(t, ldUser.GetAnonymous())
+		ldContext := user.ToLDContext()
+		assert.True(t, ldContext.Anonymous())
 	})
 
 	t.Run("can create an anonymous user with session/request key", func(t *testing.T) {
 		user := evaluationcontext.NewAnonymousUser("my-request-id")
-		assert.Equal(t, "my-request-id", user.ToLDUser().GetKey())
+		assert.Equal(t, "my-request-id", user.ToLDContext().Key())
 	})
 
 	t.Run("can create an anonymous user with subdomain", func(t *testing.T) {
