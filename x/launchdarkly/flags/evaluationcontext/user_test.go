@@ -37,7 +37,7 @@ func TestNewUser(t *testing.T) {
 		}
 		userSubdomain := ldContext.IndividualContextByKind("user").GetValue("subdomain")
 		assert.Equal(t, "cultureamp", userSubdomain.StringValue())
-		value := ldContext.IndividualContextByKind("account").Name()
+		value := ldContext.IndividualContextByKind("account").GetValue("subdomain")
 		assert.Equal(t, "cultureamp", value.StringValue())
 	})
 
@@ -46,7 +46,7 @@ func TestNewUser(t *testing.T) {
 
 		ldContext := user.ToLDContext()
 		assert.Equal(t, "my-request-id", ldContext.IndividualContextByKind("account").Key())
-		value := ldContext.IndividualContextByKind("account").Name()
+		value := ldContext.IndividualContextByKind("account").GetValue("subdomain")
 		assert.Equal(t, "cultureamp", value.StringValue())
 	})
 
