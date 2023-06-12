@@ -117,7 +117,7 @@ func (c *Client) Connect() error {
 // extracted from the context. The supplied fallback value is always reflected in
 // the returned value regardless of whether an error occurs.
 func (c *Client) QueryBool(ctx context.Context, key FlagName, fallbackValue bool) (bool, error) {
-	user, err := evaluationcontext.UserFromContext(ctx)
+	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
 		return fallbackValue, fmt.Errorf("get user from context: %w", err)
 	}
@@ -136,7 +136,7 @@ func (c *Client) QueryBoolWithEvaluationContext(key FlagName, evalContext evalua
 // extracted from the context. The supplied fallback value is always reflected in
 // the returned value regardless of whether an error occurs.
 func (c *Client) QueryString(ctx context.Context, key FlagName, fallbackValue string) (string, error) {
-	user, err := evaluationcontext.UserFromContext(ctx)
+	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
 		return fallbackValue, fmt.Errorf("get user from context: %w", err)
 	}
@@ -155,7 +155,7 @@ func (c *Client) QueryStringWithEvaluationContext(key FlagName, evalContext eval
 // extracted from the context. The supplied fallback value is always reflected in
 // the returned value regardless of whether an error occurs.
 func (c *Client) QueryInt(ctx context.Context, key FlagName, fallbackValue int) (int, error) {
-	user, err := evaluationcontext.UserFromContext(ctx)
+	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
 		return fallbackValue, fmt.Errorf("get user from context: %w", err)
 	}
