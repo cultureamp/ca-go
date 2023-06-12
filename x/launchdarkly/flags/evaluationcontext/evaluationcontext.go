@@ -43,17 +43,17 @@ func (e EvaluationContext) ToLDContext() ldcontext.Context {
 	return e.ldContext
 }
 
-func (c EvaluationContext) ContextMultiBuilder() *ldcontext.MultiBuilder {
+func (e EvaluationContext) ContextMultiBuilder() *ldcontext.MultiBuilder {
 	contextBuilder := ldcontext.NewMultiBuilder()
-	if c.realUserID != "" && c.userID == "" {
-		contextBuilder.Add(ldcontext.NewBuilder(c.realUserID).Kind(contextKindUser).SetString(contextAttributeRealUserID, c.realUserID).Build())
+	if e.realUserID != "" && e.userID == "" {
+		contextBuilder.Add(ldcontext.NewBuilder(e.realUserID).Kind(contextKindUser).SetString(contextAttributeRealUserID, e.realUserID).Build())
 	}
-	if c.accountID != "" {
-		accountContext := ldcontext.NewBuilder(c.accountID).Kind(contextKindAccount).Build()
+	if e.accountID != "" {
+		accountContext := ldcontext.NewBuilder(e.accountID).Kind(contextKindAccount).Build()
 		contextBuilder.Add(accountContext)
 	}
-	if c.surveyID != "" {
-		surveyContext := ldcontext.NewBuilder(c.surveyID).Kind(contextKindSurvey).Build()
+	if e.surveyID != "" {
+		surveyContext := ldcontext.NewBuilder(e.surveyID).Kind(contextKindSurvey).Build()
 		contextBuilder.Add(surveyContext)
 	}
 
@@ -119,34 +119,34 @@ func NewAnonymousContextWithSubdomain(key string, subdomain string) EvaluationCo
 // If no options are provided, an anonymous context with a randomly generated key will be returned. This is to be used
 // for unauthenticated users where no information is available.
 func NewEvaluationContext(opts ...ContextOption) EvaluationContext {
-	c := &EvaluationContext{}
+	e := &EvaluationContext{}
 
 	// if no options provided then context is anonymous
 	if len(opts) == 0 {
 		key := uuid.NewString()
-		c.userID = key
-		c.ldContext = ldcontext.NewBuilder(key).Anonymous(true).Build()
-		return *c
+		e.userID = key
+		e.ldContext = ldcontext.NewBuilder(key).Anonymous(true).Build()
+		return *e
 	}
 
 	// apply the options
 	for _, opt := range opts {
-		opt(c)
+		opt(e)
 	}
 
 	// Separating the user context out of ContextMultiBuilder to avoid duplicated user contexts for legacy
 	// TODO: move this logic back into the function when User/Survey is removed
-	contextBuilder := c.ContextMultiBuilder()
-	if c.userID != "" {
-		userContext := ldcontext.NewBuilder(c.userID).Kind(contextKindUser)
-		if c.realUserID != "" {
-			userContext.SetString(contextAttributeRealUserID, c.realUserID)
+	contextBuilder := e.ContextMultiBuilder()
+	if e.userID != "" {
+		userContext := ldcontext.NewBuilder(e.userID).Kind(contextKindUser)
+		if e.realUserID != "" {
+			userContext.SetString(contextAttributeRealUserID, e.realUserID)
 		}
 		contextBuilder.Add(userContext.Build())
 	}
-	c.ldContext = contextBuilder.Build()
+	e.ldContext = contextBuilder.Build()
 
-	return *c
+	return *e
 }
 
 // EvaluationContextFromContext extracts the effective user aggregate ID, real user aggregate
