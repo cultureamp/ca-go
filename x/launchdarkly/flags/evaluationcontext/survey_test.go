@@ -37,6 +37,7 @@ func assertSurveyAttributes(t *testing.T, survey evaluationcontext.Survey, surve
 	ldAccount := ldContext.IndividualContextByKind("account")
 	ldUser := ldContext.IndividualContextByKind("user")
 	assert.Equal(t, surveyID, ldSurvey.Key())
+	assert.Equal(t, surveyID, ldUser.Key())
 	assert.Equal(t, surveyID, ldUser.GetValue("surveyID").StringValue())
 	assert.Equal(t, accountID, ldUser.GetValue("accountID").StringValue())
 	assert.Equal(t, accountID, ldAccount.Key())

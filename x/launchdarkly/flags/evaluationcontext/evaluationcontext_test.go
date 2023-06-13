@@ -69,6 +69,7 @@ func TestNewAnonymousContextWithSubdomain(t *testing.T) {
 		evalcontext := evaluationcontext.NewAnonymousContextWithSubdomain("my-request-id", "cultureamp")
 
 		ldContext := evalcontext.ToLDContext()
+		assert.True(t, ldContext.Anonymous())
 		assert.Equal(t, "my-request-id", ldContext.Key())
 		value := ldContext.GetValue("subdomain")
 		assert.Equal(t, "cultureamp", value.StringValue())

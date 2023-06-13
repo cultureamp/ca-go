@@ -43,6 +43,9 @@ func (e EvaluationContext) ToLDContext() ldcontext.Context {
 	return e.ldContext
 }
 
+// ContextMultiBuilder will create an LD multi context according to the non-empty string attributes of e and return
+// a MultiBuilder that can be added to and built to assign to ldContext. A "user" kind is only added if e.userID is
+// empty and realUserID is non-empty so that legacy users are still able to be added.
 func (e EvaluationContext) ContextMultiBuilder() *ldcontext.MultiBuilder {
 	contextBuilder := ldcontext.NewMultiBuilder()
 	if e.realUserID != "" && e.userID == "" {

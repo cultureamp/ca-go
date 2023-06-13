@@ -33,7 +33,7 @@ func TestNewUser(t *testing.T) {
 				assert.True(t, individualContext.Anonymous())
 			}
 		} else {
-			ldContext.Anonymous()
+			assert.True(t, ldContext.Anonymous())
 		}
 		userSubdomain := ldContext.IndividualContextByKind("user").GetValue("subdomain")
 		assert.Equal(t, "cultureamp", userSubdomain.StringValue())
