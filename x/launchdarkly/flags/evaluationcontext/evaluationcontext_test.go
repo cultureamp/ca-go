@@ -58,8 +58,6 @@ func TestNewAnonymousContextWithSubdomain(t *testing.T) {
 	t.Run("can create an anonymous context with subdomain", func(t *testing.T) {
 		evalcontext := evaluationcontext.NewAnonymousContextWithSubdomain("", "cultureamp")
 		ldContext := evalcontext.ToLDContext()
-		// loop through multicontexts to check they are anon
-
 		assert.True(t, ldContext.Anonymous())
 		value := ldContext.GetValue("subdomain")
 		assert.Equal(t, "cultureamp", value.StringValue())

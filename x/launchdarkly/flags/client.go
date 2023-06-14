@@ -64,7 +64,7 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 	if ok {
 		config, err := configFromEnvironment()
 		if err != nil {
-			err = fmt.Errorf("configure from environment variable: %w", err)
+			err = fmt.Errorf("could not configure from environment variable: %w", err)
 			c.logger.Err(err)
 			return nil, err
 		}
@@ -80,7 +80,7 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		}
 		c.wrappedConfig = configForTestMode(c.testModeConfig)
 
-		c.logger.Info().Msg("ld client configured for test mode")
+		c.logger.Info().Msg("LaunchDarkly client configured for test mode")
 		// Short-circuit the rest of the configuration.
 		return c, nil
 	}
@@ -89,12 +89,12 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 
 	if parsedConfig.Proxy != nil && c.mode == modeProxy {
 		c.wrappedConfig = configForProxyMode(parsedConfig, c.proxyModeConfig)
-		c.logger.Info().Msg("ld client configured for proxy mode")
+		c.logger.Info().Msg("LaunchDarkly client configured for proxy mode")
 	}
 
 	if parsedConfig.Storage != nil && c.mode == modeLambda {
 		c.wrappedConfig = configForLambdaMode(parsedConfig, c.lambdaModeConfig)
-		c.logger.Info().Msg("ld client configured for lambda mode")
+		c.logger.Info().Msg("LaunchDarkly client configured for lambda mode")
 	}
 
 	// Configure big segments if the storage table name is present
@@ -102,7 +102,7 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		parsedConfig.Storage != nil &&
 		parsedConfig.Storage.TableName != "" {
 		c.wrappedConfig.BigSegments = configForBigSegments(parsedConfig).BigSegments
-		c.logger.Info().Msg("ld client configured for big segments")
+		c.logger.Info().Msg("LaunchDarkly client configured for big segments")
 	}
 
 	return c, nil
@@ -212,7 +212,7 @@ func (c *Client) Shutdown() error {
 // information on using the test data source returned by this method.
 func (c *Client) TestDataSource() (*ldtestdata.TestDataSource, error) {
 	if c.testModeConfig == nil || c.testModeConfig.datasource == nil {
-		err := errors.New("client not initialised with dynamic test data source")
+		err := errors.New("LaunchDarkly client not initialised with dynamic test data source")
 		c.logger.Err(err)
 		return nil, err
 	}
