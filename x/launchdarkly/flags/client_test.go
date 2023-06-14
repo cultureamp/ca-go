@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cultureamp/ca-go/x/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -120,6 +121,22 @@ func TestClientTestMode(t *testing.T) {
 
 		_, err = client.TestDataSource()
 		require.Error(t, err)
+	})
+}
+
+func TestClientLogger(t *testing.T) {
+	t.Run("Client uses provided logger", func(t *testing.T) {
+		logger := log.Logger{}
+		c, err := NewClient(WithLogger(&logger))
+		require.NoError(t, err)
+		require.Equal(t, &logger, c.logger)
+		require.NoError(t, c.Connect())
+	})
+	t.Run("Client creates logger from context when one isn't provided", func(t *testing.T) {
+		c, err := NewClient()
+		require.NoError(t, err)
+		require.NotNil(t, c.logger)
+		require.NoError(t, c.Connect())
 	})
 }
 
