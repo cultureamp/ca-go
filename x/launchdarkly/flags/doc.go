@@ -33,16 +33,16 @@
 //	  // handle invalid configuration
 //	}
 //
-//	err = flags.Connect()
-//	if err != nil {
-//	  // handle errors connecting to LaunchDarkly
-//	}
-//
 // To configure the client as a instance that you manage:
 //
 //	client, err := flags.NewClient()
 //	if err != nil {
 //	  // handle invalid configuration
+//	}
+//
+//	err = client.Connect()
+//	if err != nil {
+//	  // handle errors connecting to LaunchDarkly
 //	}
 //
 // The client will attempt to proxy requests through the LD Relay by default. You
@@ -73,12 +73,12 @@
 //
 // You can also supply your own evaluation context:
 //
-//	user := flags.NewUser(
-//	          "user-id",
+//	evalcontext := flags.NewEvaluationContext(
+//	          flags.WithUserID("user-id"),
 //	          flags.WithUserAccountID("account-id"),
 //	)
 //
-//	val, err := client.QueryBoolWithEvaluationContext("my-flag", user, false)
+//	val, err := client.QueryBoolWithEvaluationContext("my-flag", evalcontext, false)
 //
 // You will not need to manually shut down your SDK in most situations. If you
 // know your application is about to terminate, or if you're testing an app,

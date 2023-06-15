@@ -32,9 +32,13 @@ func TestNewSurvey(t *testing.T) {
 func assertSurveyAttributes(t *testing.T, survey evaluationcontext.Survey, surveyID string, accountID string) {
 	t.Helper()
 
-	ldUser := survey.ToLDUser()
-
-	assert.Equal(t, surveyID, ldUser.GetKey())
-	assert.Equal(t, surveyID, ldUser.GetAttribute("surveyID").StringValue())
-	assert.Equal(t, accountID, ldUser.GetAttribute("accountID").StringValue())
+	ldContext := survey.ToLDContext()
+	ldSurvey := ldContext.IndividualContextByKind("survey")
+	ldAccount := ldContext.IndividualContextByKind("account")
+	ldUser := ldContext.IndividualContextByKind("user")
+	assert.Equal(t, surveyID, ldSurvey.Key())
+	assert.Equal(t, surveyID, ldUser.Key())
+	assert.Equal(t, surveyID, ldUser.GetValue("surveyID").StringValue())
+	assert.Equal(t, accountID, ldUser.GetValue("accountID").StringValue())
+	assert.Equal(t, accountID, ldAccount.Key())
 }

@@ -6,41 +6,48 @@ import (
 
 	"github.com/cultureamp/ca-go/x/launchdarkly/flags/evaluationcontext"
 	"github.com/cultureamp/ca-go/x/request"
+	"github.com/launchdarkly/go-sdk-common/v3/ldcontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/launchdarkly/go-sdk-common.v2/ldvalue"
 )
 
 func TestNewUser(t *testing.T) {
 	t.Run("can create an anonymous user", func(t *testing.T) {
 		user := evaluationcontext.NewAnonymousUser("")
-		ldUser := user.ToLDUser()
-		assert.True(t, ldUser.GetAnonymous())
+		ldContext := user.ToLDContext()
+		assert.True(t, ldContext.Anonymous())
 	})
 
 	t.Run("can create an anonymous user with session/request key", func(t *testing.T) {
 		user := evaluationcontext.NewAnonymousUser("my-request-id")
-		assert.Equal(t, "my-request-id", user.ToLDUser().GetKey())
+		assert.Equal(t, "my-request-id", user.ToLDContext().Key())
 	})
 
 	t.Run("can create an anonymous user with subdomain", func(t *testing.T) {
 		user := evaluationcontext.NewAnonymousUserWithSubdomain("", "cultureamp")
-		ldUser := user.ToLDUser()
-		assert.True(t, ldUser.GetAnonymous())
-
-		value, result := ldUser.GetCustom("subdomain")
-		assert.Equal(t, ldvalue.String("cultureamp"), value)
-		assert.True(t, result)
+		ldContext := user.ToLDContext()
+		// loop through multicontexts to check they are anon
+		if ldContext.IndividualContextCount() > 1 {
+			preallocContexts := make([]ldcontext.Context, 0, 2)
+			for _, individualContext := range ldContext.GetAllIndividualContexts(preallocContexts) {
+				assert.True(t, individualContext.Anonymous())
+			}
+		} else {
+			assert.True(t, ldContext.Anonymous())
+		}
+		userSubdomain := ldContext.IndividualContextByKind("user").GetValue("subdomain")
+		assert.Equal(t, "cultureamp", userSubdomain.StringValue())
+		value := ldContext.IndividualContextByKind("account").GetValue("subdomain")
+		assert.Equal(t, "cultureamp", value.StringValue())
 	})
 
 	t.Run("can create an anonymous user with session/request key and subdomain", func(t *testing.T) {
 		user := evaluationcontext.NewAnonymousUserWithSubdomain("my-request-id", "cultureamp")
-		assert.Equal(t, "my-request-id", user.ToLDUser().GetKey())
 
-		ldUser := user.ToLDUser()
-		value, result := ldUser.GetCustom("subdomain")
-		assert.Equal(t, ldvalue.String("cultureamp"), value)
-		assert.True(t, result)
+		ldContext := user.ToLDContext()
+		assert.Equal(t, "my-request-id", ldContext.IndividualContextByKind("account").Key())
+		value := ldContext.IndividualContextByKind("account").GetValue("subdomain")
+		assert.Equal(t, "cultureamp", value.StringValue())
 	})
 
 	t.Run("can create an identified user", func(t *testing.T) {
@@ -73,10 +80,12 @@ func TestNewUser(t *testing.T) {
 func assertUserAttributes(t *testing.T, user evaluationcontext.User, userID, realUserID, accountID string) {
 	t.Helper()
 
-	ldUser := user.ToLDUser()
-
-	assert.Equal(t, userID, ldUser.GetKey())
-	assert.Equal(t, userID, ldUser.GetAttribute("userID").StringValue())
-	assert.Equal(t, realUserID, ldUser.GetAttribute("realUserID").StringValue())
-	assert.Equal(t, accountID, ldUser.GetAttribute("accountID").StringValue())
+	ldContext := user.ToLDContext()
+	ldUser := ldContext.IndividualContextByKind("user")
+	ldAccount := ldContext.IndividualContextByKind("account")
+	assert.Equal(t, userID, ldUser.Key())
+	assert.Equal(t, userID, ldUser.GetValue("userID").StringValue())
+	assert.Equal(t, realUserID, ldUser.GetValue("realUserID").StringValue())
+	assert.Equal(t, accountID, ldUser.GetValue("accountID").StringValue())
+	assert.Equal(t, accountID, ldAccount.Key())
 }

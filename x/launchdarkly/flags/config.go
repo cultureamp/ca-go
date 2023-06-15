@@ -7,13 +7,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	lddynamodb "github.com/launchdarkly/go-server-sdk-dynamodb"
-	ld "gopkg.in/launchdarkly/go-server-sdk.v5"
-	"gopkg.in/launchdarkly/go-server-sdk.v5/ldcomponents"
-	"gopkg.in/launchdarkly/go-server-sdk.v5/ldfiledata"
-	"gopkg.in/launchdarkly/go-server-sdk.v5/ldfilewatch"
-	"gopkg.in/launchdarkly/go-server-sdk.v5/testhelpers/ldtestdata"
+	"github.com/cultureamp/ca-go/x/log"
+	lddynamodb "github.com/launchdarkly/go-server-sdk-dynamodb/v3"
+	ld "github.com/launchdarkly/go-server-sdk/v6"
+	"github.com/launchdarkly/go-server-sdk/v6/ldcomponents"
+	"github.com/launchdarkly/go-server-sdk/v6/ldfiledata"
+	"github.com/launchdarkly/go-server-sdk/v6/ldfilewatch"
+	"github.com/launchdarkly/go-server-sdk/v6/testhelpers/ldtestdata"
 )
 
 var errClientNotConfigured = errors.New("client not configured")
@@ -45,7 +45,6 @@ type ProxyModeConfig struct {
 // in Lambda mode.
 type LambdaModeConfig struct {
 	DynamoCacheTTL time.Duration
-	DynamoBaseURL  string
 }
 
 // TestModeConfig declares configuration for running the client in test
@@ -59,6 +58,14 @@ type TestModeConfig struct {
 // ConfigOption are functions that can be supplied to Configure and NewClient to
 // configure the flags client.
 type ConfigOption func(c *Client)
+
+// WithLogger configures the client to use a supplied logger (using the ca-go log package),
+// without this configuration, a new logger from background context will be used instead.
+func WithLogger(logger *log.Logger) ConfigOption {
+	return func(c *Client) {
+		c.logger = logger
+	}
+}
 
 // WithInitWait configures the client to wait for the given duration for the
 // LaunchDarkly client to connect.
@@ -129,7 +136,7 @@ func configFromEnvironment() (configurationJSON, error) {
 }
 
 func configForBigSegments(env configurationJSON) ld.Config {
-	datastoreBuilder := lddynamodb.DataStore(env.Storage.TableName)
+	datastoreBuilder := lddynamodb.BigSegmentStore(env.Storage.TableName)
 
 	return ld.Config{
 		BigSegments: ldcomponents.BigSegments(datastoreBuilder),
@@ -151,11 +158,6 @@ func configForProxyMode(env configurationJSON, cfg *ProxyModeConfig) ld.Config {
 
 func configForLambdaMode(env configurationJSON, cfg *LambdaModeConfig) ld.Config {
 	datastoreBuilder := lddynamodb.DataStore(env.Storage.TableName)
-
-	// Set the Dynamo base URL if one was provided explicitly.
-	if cfg != nil && cfg.DynamoBaseURL != "" {
-		datastoreBuilder.ClientConfig(aws.NewConfig().WithEndpoint(cfg.DynamoBaseURL))
-	}
 
 	datastore := ldcomponents.PersistentDataStore(
 		datastoreBuilder,

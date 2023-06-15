@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/cultureamp/ca-go/x/launchdarkly/flags/evaluationcontext"
-	ld "gopkg.in/launchdarkly/go-server-sdk.v5"
-	"gopkg.in/launchdarkly/go-server-sdk.v5/testhelpers/ldtestdata"
+	"github.com/cultureamp/ca-go/x/log"
+	ld "github.com/launchdarkly/go-server-sdk/v6"
+	"github.com/launchdarkly/go-server-sdk/v6/testhelpers/ldtestdata"
 )
 
 // Client is a wrapper around the LaunchDarkly client.
@@ -20,6 +21,7 @@ type Client struct {
 	bigSegmentsEnabled bool
 	wrappedConfig      ld.Config
 	wrappedClient      *ld.LDClient
+	logger             *log.Logger
 
 	testModeConfig *TestModeConfig
 
@@ -52,12 +54,19 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		opt(c)
 	}
 
+	// add a logger if one wasn't added through opts
+	if c.logger == nil {
+		c.logger = log.NewFromCtx(context.Background())
+	}
+
 	parsedConfig := configurationJSON{}
 	_, ok := os.LookupEnv(configurationEnvVar)
 	if ok {
 		config, err := configFromEnvironment()
 		if err != nil {
-			return nil, fmt.Errorf("configure from environment variable: %w", err)
+			err = fmt.Errorf("could not configure from environment variable: %w", err)
+			c.logger.Err(err)
+			return nil, err
 		}
 		parsedConfig = config
 	}
@@ -71,6 +80,7 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		}
 		c.wrappedConfig = configForTestMode(c.testModeConfig)
 
+		c.logger.Info().Msg("LaunchDarkly client configured for test mode")
 		// Short-circuit the rest of the configuration.
 		return c, nil
 	}
@@ -79,10 +89,12 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 
 	if parsedConfig.Proxy != nil && c.mode == modeProxy {
 		c.wrappedConfig = configForProxyMode(parsedConfig, c.proxyModeConfig)
+		c.logger.Info().Msg("LaunchDarkly client configured for proxy mode")
 	}
 
 	if parsedConfig.Storage != nil && c.mode == modeLambda {
 		c.wrappedConfig = configForLambdaMode(parsedConfig, c.lambdaModeConfig)
+		c.logger.Info().Msg("LaunchDarkly client configured for lambda mode")
 	}
 
 	// Configure big segments if the storage table name is present
@@ -90,6 +102,7 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		parsedConfig.Storage != nil &&
 		parsedConfig.Storage.TableName != "" {
 		c.wrappedConfig.BigSegments = configForBigSegments(parsedConfig).BigSegments
+		c.logger.Info().Msg("LaunchDarkly client configured for big segments")
 	}
 
 	return c, nil
@@ -105,7 +118,9 @@ func (c *Client) Connect() error {
 
 	wrappedClient, err := ld.MakeCustomClient(c.sdkKey, c.wrappedConfig, c.initWait)
 	if err != nil {
-		return fmt.Errorf("create LaunchDarkly client: %w", err)
+		err = fmt.Errorf("create LaunchDarkly client: %w", err)
+		c.logger.Err(err)
+		return err
 	}
 
 	c.wrappedClient = wrappedClient
@@ -117,57 +132,63 @@ func (c *Client) Connect() error {
 // extracted from the context. The supplied fallback value is always reflected in
 // the returned value regardless of whether an error occurs.
 func (c *Client) QueryBool(ctx context.Context, key FlagName, fallbackValue bool) (bool, error) {
-	user, err := evaluationcontext.UserFromContext(ctx)
+	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
-		return fallbackValue, fmt.Errorf("get user from context: %w", err)
+		err = fmt.Errorf("get user from context: %w", err)
+		c.logger.Err(err)
+		return fallbackValue, err
 	}
 
-	return c.wrappedClient.BoolVariation(string(key), user.ToLDUser(), fallbackValue)
+	return c.wrappedClient.BoolVariation(string(key), user.ToLDContext(), fallbackValue)
 }
 
 // QueryBoolWithEvaluationContext retrieves the value of a boolean flag. An evaluation context
 // must be supplied manually. The supplied fallback value is always reflected in the
 // returned value regardless of whether an error occurs.
 func (c *Client) QueryBoolWithEvaluationContext(key FlagName, evalContext evaluationcontext.Context, fallbackValue bool) (bool, error) {
-	return c.wrappedClient.BoolVariation(string(key), evalContext.ToLDUser(), fallbackValue)
+	return c.wrappedClient.BoolVariation(string(key), evalContext.ToLDContext(), fallbackValue)
 }
 
 // QueryString retrieves the value of a string flag. User attributes are
 // extracted from the context. The supplied fallback value is always reflected in
 // the returned value regardless of whether an error occurs.
 func (c *Client) QueryString(ctx context.Context, key FlagName, fallbackValue string) (string, error) {
-	user, err := evaluationcontext.UserFromContext(ctx)
+	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
-		return fallbackValue, fmt.Errorf("get user from context: %w", err)
+		err = fmt.Errorf("get user from context: %w", err)
+		c.logger.Err(err)
+		return fallbackValue, err
 	}
 
-	return c.wrappedClient.StringVariation(string(key), user.ToLDUser(), fallbackValue)
+	return c.wrappedClient.StringVariation(string(key), user.ToLDContext(), fallbackValue)
 }
 
 // QueryStringWithEvaluationContext retrieves the value of a string flag. An evaluation context
 // must be supplied manually. The supplied fallback value is always reflected in the
 // returned value regardless of whether an error occurs.
 func (c *Client) QueryStringWithEvaluationContext(key FlagName, evalContext evaluationcontext.Context, fallbackValue string) (string, error) {
-	return c.wrappedClient.StringVariation(string(key), evalContext.ToLDUser(), fallbackValue)
+	return c.wrappedClient.StringVariation(string(key), evalContext.ToLDContext(), fallbackValue)
 }
 
 // QueryInt retrieves the value of an integer flag. User attributes are
 // extracted from the context. The supplied fallback value is always reflected in
 // the returned value regardless of whether an error occurs.
 func (c *Client) QueryInt(ctx context.Context, key FlagName, fallbackValue int) (int, error) {
-	user, err := evaluationcontext.UserFromContext(ctx)
+	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
-		return fallbackValue, fmt.Errorf("get user from context: %w", err)
+		err := fmt.Errorf("get user from context: %w", err)
+		c.logger.Err(err)
+		return fallbackValue, err
 	}
 
-	return c.wrappedClient.IntVariation(string(key), user.ToLDUser(), fallbackValue)
+	return c.wrappedClient.IntVariation(string(key), user.ToLDContext(), fallbackValue)
 }
 
 // QueryIntWithEvaluationContext retrieves the value of an integer flag. An evaluation context
 // must be supplied manually. The supplied fallback value is always reflected in the
 // returned value regardless of whether an error occurs.
 func (c *Client) QueryIntWithEvaluationContext(key FlagName, evalContext evaluationcontext.Context, fallbackValue int) (int, error) {
-	return c.wrappedClient.IntVariation(string(key), evalContext.ToLDUser(), fallbackValue)
+	return c.wrappedClient.IntVariation(string(key), evalContext.ToLDContext(), fallbackValue)
 }
 
 // RawClient returns the wrapped LaunchDarkly client. The return value should be
@@ -191,7 +212,9 @@ func (c *Client) Shutdown() error {
 // information on using the test data source returned by this method.
 func (c *Client) TestDataSource() (*ldtestdata.TestDataSource, error) {
 	if c.testModeConfig == nil || c.testModeConfig.datasource == nil {
-		return nil, errors.New("client not initialised with dynamic test data source")
+		err := errors.New("LaunchDarkly client not initialised with dynamic test data source")
+		c.logger.Err(err)
+		return nil, err
 	}
 
 	return c.testModeConfig.datasource, nil

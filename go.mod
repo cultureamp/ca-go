@@ -15,26 +15,45 @@ require (
 	github.com/hashicorp/vault/sdk v0.8.1
 	github.com/heetch/avro v0.4.4
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/launchdarkly/go-server-sdk-dynamodb v1.1.1
+	github.com/launchdarkly/go-sdk-common/v3 v3.0.1
+	github.com/launchdarkly/go-server-sdk-dynamodb/v3 v3.0.2
+	github.com/launchdarkly/go-server-sdk/v6 v6.1.0
 	github.com/rs/zerolog v1.29.0
 	github.com/segmentio/kafka-go v0.4.39
 	github.com/stretchr/testify v1.8.2
 	goa.design/goa/v3 v3.11.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.48.0
-	gopkg.in/launchdarkly/go-sdk-common.v2 v2.5.1
-	gopkg.in/launchdarkly/go-server-sdk.v5 v5.10.1
 )
 
 require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20220824120805-4b6e5c587895 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.16.14 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.17.5 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.12.18 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.15 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.21 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.15 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.22 // indirect
+	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.16.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.15 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.15 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.11.21 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.16.17 // indirect
+	github.com/aws/smithy-go v1.13.2 // indirect
 	github.com/cloudflare/circl v1.1.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.1 // indirect
 	github.com/hashicorp/eventlogger v0.1.1 // indirect
+	github.com/launchdarkly/go-jsonstream/v3 v3.0.0 // indirect
+	github.com/launchdarkly/go-sdk-events/v2 v2.0.1 // indirect
+	github.com/launchdarkly/go-server-sdk-evaluation/v2 v2.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opentracing/opentracing-go v1.2.1-0.20220228012449-10b1cf09e00b // indirect
+	golang.org/x/exp v0.0.0-20220823124025-807a23277127 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
@@ -275,9 +294,6 @@ require (
 	gopkg.in/httprequest.v1 v1.2.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/launchdarkly/go-jsonstream.v1 v1.0.1 // indirect
-	gopkg.in/launchdarkly/go-sdk-events.v1 v1.1.1 // indirect
-	gopkg.in/launchdarkly/go-server-sdk-evaluation.v1 v1.5.0 // indirect
 	gopkg.in/resty.v1 v1.12.0 // indirect
 	gopkg.in/retry.v1 v1.0.3 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
