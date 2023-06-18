@@ -20,7 +20,7 @@ require (
 	github.com/launchdarkly/go-server-sdk/v6 v6.1.0
 	github.com/rs/zerolog v1.29.1
 	github.com/segmentio/kafka-go v0.4.40
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 	goa.design/goa/v3 v3.11.3
 	gopkg.in/DataDog/dd-trace-go.v1 v1.50.1
 )
