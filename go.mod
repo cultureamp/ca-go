@@ -22,29 +22,29 @@ require (
 	github.com/segmentio/kafka-go v0.4.40
 	github.com/stretchr/testify v1.8.4
 	goa.design/goa/v3 v3.11.3
-	gopkg.in/DataDog/dd-trace-go.v1 v1.50.1
+	gopkg.in/DataDog/dd-trace-go.v1 v1.51.0
 )
 
 require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/DataDog/appsec-internal-go v1.0.0 // indirect
-	github.com/DataDog/go-libddwaf v1.1.0 // indirect
+	github.com/DataDog/go-libddwaf v1.2.0 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20220824120805-4b6e5c587895 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.16.14 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.17.5 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.12.18 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.15 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.21 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.15 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.22 // indirect
-	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.16.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.8 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.15 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.15 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.11.21 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.16.17 // indirect
-	github.com/aws/smithy-go v1.13.2 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.18.0 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.18.21 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.20 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.32 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.26 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.34 // indirect
+	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.19.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.11 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.26 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.26 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.12.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.18.9 // indirect
+	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/cloudflare/circl v1.1.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
@@ -80,7 +80,7 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
-	github.com/DataDog/datadog-agent/pkg/obfuscate v0.43.1 // indirect
+	github.com/DataDog/datadog-agent/pkg/obfuscate v0.45.0-rc.1 // indirect
 	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.45.0-rc.1 // indirect
 	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect
 	github.com/DataDog/datadog-go/v5 v5.1.1 // indirect
