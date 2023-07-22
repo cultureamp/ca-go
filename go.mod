@@ -21,7 +21,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	goa.design/goa/v3 v3.11.3
 	gopkg.in/DataDog/dd-trace-go.v1 v1.52.0
-	gopkg.in/launchdarkly/go-sdk-common.v2 v2.5.1
+	gopkg.in/launchdarkly/go-sdk-common.v3 v3.0.1
 	gopkg.in/launchdarkly/go-server-sdk.v5 v5.10.1
 )
 
