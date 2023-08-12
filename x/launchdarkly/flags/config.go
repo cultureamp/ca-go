@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	lddynamodb "github.com/launchdarkly/go-server-sdk-dynamodb"
+	lddynamodb "github.com/launchdarkly/go-server-sdk-dynamodb/v3"
 	ld "gopkg.in/launchdarkly/go-server-sdk.v5"
 	"gopkg.in/launchdarkly/go-server-sdk.v5/ldcomponents"
 	"gopkg.in/launchdarkly/go-server-sdk.v5/ldfiledata"
