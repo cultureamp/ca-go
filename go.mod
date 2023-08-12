@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/Shopify/sarama v1.38.1
-	github.com/aws/aws-sdk-go v1.44.294
+	github.com/aws/aws-sdk-go v1.44.322
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/getsentry/sentry-go v0.22.0
 	github.com/golang/mock v1.6.0
@@ -279,7 +279,7 @@ require (
 	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
-	golang.org/x/sync v0.3.0
+	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/term v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
