@@ -44,10 +44,16 @@ func (e EvaluationContext) ToLDContext() ldcontext.Context {
 }
 
 // ContextMultiBuilder will create an LD multi context according to the non-empty string attributes of e and return
-// a MultiBuilder that can be added to and built to assign to ldContext. A "user" kind is only added if e.userID is
-// empty and realUserID is non-empty so that legacy users are still able to be added.
+// a MultiBuilder that can be added to and built to assign to ldContext.
 func (e EvaluationContext) ContextMultiBuilder() *ldcontext.MultiBuilder {
 	contextBuilder := ldcontext.NewMultiBuilder()
+	if e.userID != "" {
+		userContext := ldcontext.NewBuilder(e.userID).Kind(contextKindUser)
+		if e.realUserID != "" {
+			userContext.SetString(contextAttributeRealUserID, e.realUserID)
+		}
+		contextBuilder.Add(userContext.Build())
+	}
 	if e.realUserID != "" && e.userID == "" {
 		contextBuilder.Add(ldcontext.NewBuilder(e.realUserID).Kind(contextKindUser).SetString(contextAttributeRealUserID, e.realUserID).Build())
 	}
@@ -137,16 +143,7 @@ func NewEvaluationContext(opts ...ContextOption) EvaluationContext {
 		opt(e)
 	}
 
-	// Separating the user context out of ContextMultiBuilder to avoid duplicated user contexts for legacy
-	// TODO: move this logic back into the function when User/Survey is removed
 	contextBuilder := e.ContextMultiBuilder()
-	if e.userID != "" {
-		userContext := ldcontext.NewBuilder(e.userID).Kind(contextKindUser)
-		if e.realUserID != "" {
-			userContext.SetString(contextAttributeRealUserID, e.realUserID)
-		}
-		contextBuilder.Add(userContext.Build())
-	}
 	e.ldContext = contextBuilder.Build()
 
 	return *e
