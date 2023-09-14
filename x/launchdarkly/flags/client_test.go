@@ -1,7 +1,6 @@
 package flags
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -79,7 +78,7 @@ func TestClientTestMode(t *testing.T) {
 	})
 
 	t.Run("configures for Test mode data sourced from a local JSON file", func(t *testing.T) {
-		jsonFilename, err := ioutil.TempFile("", "test-flags.json")
+		jsonFilename, err := os.CreateTemp("", "test-flags.json")
 		require.NoError(t, err)
 
 		_, err = jsonFilename.Write([]byte(validFlagsJSON))
@@ -100,7 +99,7 @@ func TestClientTestMode(t *testing.T) {
 		flagsFilename := path.Join(testDir, flagsJSONFilename)
 
 		// #nosec G306
-		require.NoError(t, ioutil.WriteFile(flagsFilename, []byte(validFlagsJSON), 0666))
+		require.NoError(t, os.WriteFile(flagsFilename, []byte(validFlagsJSON), 0666))
 		defer func() {
 			require.NoError(t, os.Remove(flagsFilename))
 		}()
