@@ -5,6 +5,7 @@ linters:
   enable-all: true
   disable:
     - asciicheck
+    - depguard
     - dupl
     - errname
     - exhaustruct
