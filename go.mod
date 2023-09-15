@@ -305,9 +305,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
-
-// These are for CVEs in these frameworks (which we don't use) and are bought in by Sentry
-exclude (
-	github.com/kataras/iris/v12 v12.1.8
-	github.com/labstack/echo/v4 v4.1.11
-)
