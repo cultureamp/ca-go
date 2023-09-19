@@ -4,7 +4,7 @@ import (
 	"context"
 	b64 "encoding/base64"
 
-	"github.com/cultureamp/ca-go/x/aws_config"
+	"github.com/cultureamp/ca-go/x/awsconfig"
 
 	awskms "github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/pkg/errors"
@@ -25,15 +25,15 @@ type kmsEncrypt struct {
 	keyID  *string
 }
 
-func NewKMSWithClient(keyID string, client KMSClient) (kmsInt KMSEncrypt) {
+func NewKMSWithClient(keyID string, client KMSClient) KMSEncrypt {
 	return &kmsEncrypt{client, &keyID}
 }
 
-func NewKMS(keyID string) (kmsInt KMSEncrypt) {
+func NewKMS(keyID string) KMSEncrypt {
 	return &kmsEncrypt{nil, &keyID}
 }
 
-func (k *kmsEncrypt) Encrypt(ctx context.Context, plainStr string) (encryptedStr *string, err error) {
+func (k *kmsEncrypt) Encrypt(ctx context.Context, plainStr string) (*string, error) {
 	if k.client == nil {
 		svc, err := k.getNewServiceClient(ctx)
 		if err != nil {
@@ -56,7 +56,7 @@ func (k *kmsEncrypt) Encrypt(ctx context.Context, plainStr string) (encryptedStr
 	return &blobString, nil
 }
 
-func (k *kmsEncrypt) Decrypt(ctx context.Context, encryptedStr string) (decryptedStr *string, err error) {
+func (k *kmsEncrypt) Decrypt(ctx context.Context, encryptedStr string) (*string, error) {
 	if k.client == nil {
 		svc, err := k.getNewServiceClient(ctx)
 		if err != nil {
@@ -84,13 +84,13 @@ func (k *kmsEncrypt) Decrypt(ctx context.Context, encryptedStr string) (decrypte
 	return &decStr, nil
 }
 
-func (k *kmsEncrypt) getNewServiceClient(ctx context.Context) (svc *awskms.Client, err error) {
-	cfg, err := aws_config.GetAwsConfig(ctx)
+func (k *kmsEncrypt) getNewServiceClient(ctx context.Context) (*awskms.Client, error) {
+	cfg, err := awsconfig.GetAwsConfig(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get aws config")
 	}
 
-	svc = awskms.NewFromConfig(cfg)
+	svc := awskms.NewFromConfig(cfg)
 
 	return svc, nil
 }

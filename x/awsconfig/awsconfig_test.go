@@ -1,8 +1,9 @@
-package aws_config
+package awsconfig
 
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"testing"
@@ -11,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func envSetter() (resetEnv func()) {
+func envSetter() func() {
 	envs := os.Environ()
 	originalEnvs := map[string]string{}
 
@@ -35,10 +36,10 @@ func TestGetAwsConfig(t *testing.T) {
 	os.Clearenv()
 	ctx := context.Background()
 	localstackhost := "localstack"
-	os.Setenv("LOCALSTACK_HOST", localstackhost)
-	os.Setenv("HOME", "~")
-	os.Setenv("AWS_ACCESS_KEY_ID", "fake-access-key")
-	os.Setenv("AWS_SECRET_ACCESS_KEY", "fake-secret-access-key")
+	t.Setenv("LOCALSTACK_HOST", localstackhost)
+	t.Setenv("HOME", "~")
+	t.Setenv("AWS_ACCESS_KEY_ID", "fake-access-key")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "fake-secret-access-key")
 
 	t.Run("Should default when env doesn't have local dev", func(t *testing.T) {
 		// arrange
@@ -52,7 +53,7 @@ func TestGetAwsConfig(t *testing.T) {
 
 	t.Run("Should override endpoint when env has local dev", func(t *testing.T) {
 		// arrange
-		os.Setenv("IS_LOCAL_DEV", "true")
+		t.Setenv("IS_LOCAL_DEV", "true")
 		// act
 		config, err := GetAwsConfig(ctx)
 		// assert
@@ -61,12 +62,13 @@ func TestGetAwsConfig(t *testing.T) {
 		assert.NotNil(t, config.EndpointResolverWithOptions)
 		resovledEndpoint, err := config.EndpointResolverWithOptions.ResolveEndpoint("", "")
 		require.NoError(t, err)
-		assert.Equal(t, fmt.Sprintf("http://%s:4566", localstackhost), resovledEndpoint.URL)
+		hostName := net.JoinHostPort(localstackhost, "4566")
+		assert.Equal(t, fmt.Sprintf("http://%s", hostName), resovledEndpoint.URL)
 	})
 
 	t.Run("Should not override endpoint when env has local dev false", func(t *testing.T) {
 		// arrange
-		os.Setenv("IS_LOCAL_DEV", "false")
+		t.Setenv("IS_LOCAL_DEV", "false")
 		// act
 		config, err := GetAwsConfig(ctx)
 		// assert

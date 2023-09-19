@@ -18,12 +18,22 @@ type MockKMSClient struct {
 
 func (_m *MockKMSClient) Encrypt(ctx context.Context, params *kms.EncryptInput, optFns ...func(*kms.Options)) (*kms.EncryptOutput, error) {
 	args := _m.Called(ctx, params, optFns)
-	return args.Get(0).(*kms.EncryptOutput), args.Error(1)
+	output, ok := args.Get(0).(*kms.EncryptOutput)
+	if ok {
+		return output, nil
+	} else {
+		return nil, args.Error(1)
+	}
 }
 
 func (_m *MockKMSClient) Decrypt(ctx context.Context, params *kms.DecryptInput, optFns ...func(*kms.Options)) (*kms.DecryptOutput, error) {
 	args := _m.Called(ctx, params, optFns)
-	return args.Get(0).(*kms.DecryptOutput), args.Error(1)
+	output, ok := args.Get(0).(*kms.DecryptOutput)
+	if ok {
+		return output, nil
+	} else {
+		return nil, args.Error(1)
+	}
 }
 
 const testID = "inputStr"
@@ -66,23 +76,18 @@ func TestEncrypt(t *testing.T) {
 		// arrange
 		mockKmsClient := newKMSClient(t)
 		kms := NewKMSWithClient(testID, mockKmsClient)
-		awsOutput := awskms.EncryptOutput{
-			CiphertextBlob: []byte{},
-		}
 		mockKmsClient.On("Encrypt", ctx, mock.Anything, mock.Anything).
-			Return(&awsOutput, errors.New("error"))
+			Return(nil, errors.New("error"))
 		// act
 		output, err := kms.Encrypt(ctx, strInput)
 		// assert
 		assert.Error(t, err)
 		assert.Nil(t, output)
 	})
-
 }
 
 // Decrypt(ctx context.Context, encryptedStr string) (decryptedStr *string, err error)
 func TestDecrypt(t *testing.T) {
-
 	strInput := "inputStr"
 	ctx := context.Background()
 
@@ -118,11 +123,8 @@ func TestDecrypt(t *testing.T) {
 		// arrange
 		mockKmsClient := newKMSClient(t)
 		kms := NewKMSWithClient(testID, mockKmsClient)
-		awsOutput := awskms.DecryptOutput{
-			Plaintext: []byte{},
-		}
 		mockKmsClient.On("Decrypt", ctx, mock.Anything, mock.Anything).
-			Return(&awsOutput, errors.New("error"))
+			Return(nil, errors.New("error"))
 		// act
 		output, err := kms.Decrypt(ctx, strInput)
 		// assert

@@ -1,8 +1,9 @@
-package aws_config
+package awsconfig
 
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 
@@ -19,11 +20,14 @@ func getIsLocalBool() bool {
 	return value
 }
 
-func GetAwsConfig(ctx context.Context) (cfg aws.Config, err error) {
+func GetAwsConfig(ctx context.Context) (aws.Config, error) {
+	var cfg aws.Config
+	var err error
 	if getIsLocalBool() {
+		hostName := net.JoinHostPort(os.Getenv("LOCALSTACK_HOST"), "4566")
 		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 			return aws.Endpoint{
-				URL:           fmt.Sprintf("http://%s:4566", os.Getenv("LOCALSTACK_HOST")),
+				URL:           fmt.Sprintf("http://%s", hostName),
 				PartitionID:   "aws",
 				SigningRegion: region,
 			}, nil
@@ -34,7 +38,6 @@ func GetAwsConfig(ctx context.Context) (cfg aws.Config, err error) {
 		if err != nil {
 			return cfg, errors.Wrap(err, "failed to load local AWS Configurations")
 		}
-
 	} else {
 		cfg, err = config.LoadDefaultConfig(ctx)
 		if err != nil {
