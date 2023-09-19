@@ -37,6 +37,8 @@ func TestGetAwsConfig(t *testing.T) {
 	localstackhost := "localstack"
 	os.Setenv("LOCALSTACK_HOST", localstackhost)
 	os.Setenv("HOME", "~")
+	os.Setenv("AWS_ACCESS_KEY_ID", "fake-access-key")
+	os.Setenv("AWS_SECRET_ACCESS_KEY", "fake-secret-access-key")
 
 	t.Run("Should default when env doesn't have local dev", func(t *testing.T) {
 		// arrange
