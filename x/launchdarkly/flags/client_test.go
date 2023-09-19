@@ -103,6 +103,7 @@ func TestClientTestMode(t *testing.T) {
 		require.NoError(t, os.WriteFile(flagsFilename, []byte(validFlagsJSON), 0666))
 		defer func() {
 			require.NoError(t, os.Unsetenv(flagsFilename))
+			os.Remove(flagsFilename)
 		}()
 
 		c, err := NewClient()
