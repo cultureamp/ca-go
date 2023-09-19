@@ -162,7 +162,6 @@ func assertTestJSONFlags(t *testing.T, c *Client) {
 func TestClientLambdaMode(t *testing.T) {
 	t.Setenv("AWS_ACCESS_KEY_ID", "fake-access-key")
 	t.Setenv("AWS_SECRET_ACCESS_KEY", "fake-secret-access-key")
-
 	t.Run("configures for Lambda (daemon) mode", func(t *testing.T) {
 		t.Setenv(configurationEnvVar, validConfigJSON)
 
