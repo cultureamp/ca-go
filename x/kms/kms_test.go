@@ -4,12 +4,8 @@ import (
 	"context"
 	b64 "encoding/base64"
 	"errors"
-	"fmt"
-	"net"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	awskms "github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -46,20 +42,6 @@ func TestEncrypt(t *testing.T) {
 	t.Setenv("AWS_SECRET_ACCESS_KEY", "fake-secret-access-key")
 	strInput := "inputStr"
 	ctx := context.Background()
-	hostName := net.JoinHostPort("localstack", "4566")
-	customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-		return aws.Endpoint{
-			URL:           fmt.Sprintf("http://%s", hostName),
-			PartitionID:   "aws",
-			SigningRegion: region,
-		}, nil
-	})
-
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithEndpointResolverWithOptions(customResolver))
-	if err != nil {
-		panic(err)
-	}
 
 	t.Run("Green Path - Should encrypt", func(t *testing.T) {
 		// arrange
@@ -74,7 +56,7 @@ func TestEncrypt(t *testing.T) {
 		mockKmsClient.On("Encrypt", ctx, mock.Anything, mock.Anything).
 			Return(&awsOutput, nil)
 		// act
-		output, err := kms.Encrypt(ctx, cfg, strInput)
+		output, err := kms.Encrypt(ctx, strInput)
 		// assert
 		assert.NoError(t, err)
 		assert.NotNil(t, output)
@@ -85,7 +67,7 @@ func TestEncrypt(t *testing.T) {
 		// arrange
 		kms := NewKMS(testID)
 		// act
-		output, err := kms.Encrypt(ctx, cfg, strInput)
+		output, err := kms.Encrypt(ctx, strInput)
 		// assert
 		assert.Error(t, err)
 		assert.Nil(t, output)
@@ -98,7 +80,7 @@ func TestEncrypt(t *testing.T) {
 		mockKmsClient.On("Encrypt", ctx, mock.Anything, mock.Anything).
 			Return(nil, errors.New("error"))
 		// act
-		output, err := kms.Encrypt(ctx, cfg, strInput)
+		output, err := kms.Encrypt(ctx, strInput)
 		// assert
 		assert.Error(t, err)
 		assert.Nil(t, output)
@@ -110,20 +92,6 @@ func TestDecrypt(t *testing.T) {
 	t.Setenv("AWS_SECRET_ACCESS_KEY", "fake-secret-access-key")
 	strInput := "inputStr"
 	ctx := context.Background()
-	hostName := net.JoinHostPort("localstack", "4566")
-	customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-		return aws.Endpoint{
-			URL:           fmt.Sprintf("http://%s", hostName),
-			PartitionID:   "aws",
-			SigningRegion: region,
-		}, nil
-	})
-
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithEndpointResolverWithOptions(customResolver))
-	if err != nil {
-		panic(err)
-	}
 
 	t.Run("Green Path - Should decrypt", func(t *testing.T) {
 		// arrange
@@ -136,7 +104,7 @@ func TestDecrypt(t *testing.T) {
 		mockKmsClient.On("Decrypt", ctx, mock.Anything, mock.Anything).
 			Return(&awsOutput, nil)
 		// act
-		output, err := kms.Decrypt(ctx, cfg, strInput)
+		output, err := kms.Decrypt(ctx, strInput)
 		// assert
 		assert.NoError(t, err)
 		assert.NotNil(t, output)
@@ -147,7 +115,7 @@ func TestDecrypt(t *testing.T) {
 		// arrange
 		kms := NewKMS(testID)
 		// act
-		output, err := kms.Decrypt(ctx, cfg, strInput)
+		output, err := kms.Decrypt(ctx, strInput)
 		// assert
 		assert.Error(t, err)
 		assert.Nil(t, output)
@@ -160,7 +128,7 @@ func TestDecrypt(t *testing.T) {
 		mockKmsClient.On("Decrypt", ctx, mock.Anything, mock.Anything).
 			Return(nil, errors.New("error"))
 		// act
-		output, err := kms.Decrypt(ctx, cfg, strInput)
+		output, err := kms.Decrypt(ctx, strInput)
 		// assert
 		assert.Error(t, err)
 		assert.Nil(t, output)
