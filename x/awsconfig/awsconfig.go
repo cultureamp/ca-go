@@ -33,7 +33,7 @@ func GetAwsConfig(ctx context.Context) (aws.Config, error) {
 			}, nil
 		})
 
-		cfg, err = config.LoadDefaultConfig(context.Background(),
+		cfg, err = config.LoadDefaultConfig(ctx,
 			config.WithEndpointResolverWithOptions(customResolver))
 		if err != nil {
 			return cfg, errors.Wrap(err, "failed to load local AWS Configurations")

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/service/kms"
 	awskms "github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -16,9 +15,9 @@ type MockKMSClient struct {
 	mock.Mock
 }
 
-func (_m *MockKMSClient) Encrypt(ctx context.Context, params *kms.EncryptInput, optFns ...func(*kms.Options)) (*kms.EncryptOutput, error) {
+func (_m *MockKMSClient) Encrypt(ctx context.Context, params *awskms.EncryptInput, optFns ...func(*awskms.Options)) (*awskms.EncryptOutput, error) {
 	args := _m.Called(ctx, params, optFns)
-	output, ok := args.Get(0).(*kms.EncryptOutput)
+	output, ok := args.Get(0).(*awskms.EncryptOutput)
 	if ok {
 		return output, nil
 	} else {
@@ -26,9 +25,9 @@ func (_m *MockKMSClient) Encrypt(ctx context.Context, params *kms.EncryptInput, 
 	}
 }
 
-func (_m *MockKMSClient) Decrypt(ctx context.Context, params *kms.DecryptInput, optFns ...func(*kms.Options)) (*kms.DecryptOutput, error) {
+func (_m *MockKMSClient) Decrypt(ctx context.Context, params *awskms.DecryptInput, optFns ...func(*awskms.Options)) (*awskms.DecryptOutput, error) {
 	args := _m.Called(ctx, params, optFns)
-	output, ok := args.Get(0).(*kms.DecryptOutput)
+	output, ok := args.Get(0).(*awskms.DecryptOutput)
 	if ok {
 		return output, nil
 	} else {
