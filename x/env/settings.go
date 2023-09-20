@@ -2,9 +2,10 @@ package env
 
 import (
 	"encoding/json"
-	"github.com/cultureamp/ca-go/x/helper"
 	"os"
 	"strings"
+
+	"github.com/cultureamp/ca-go/x/helper"
 )
 
 // Settings that drive behavior.
@@ -98,7 +99,7 @@ func (s Settings) ToRedactedJSON() string {
 // ToString returns Settings as a string (not redacted)
 func (s Settings) ToString() string {
 	data := s.ToJSON()
-	return strings.Replace(data, "\"", "", -1)
+	return strings.ReplaceAll(data, "\"", "")
 }
 
 // ToRedactedString returns Settings as a redacted string

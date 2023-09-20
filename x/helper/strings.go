@@ -4,7 +4,6 @@ import (
 	"strings"
 )
 
-
 // Redact returns a string with some of the string replaced with *
 func Redact(s string) string {
 	const stars = 6
@@ -12,7 +11,7 @@ func Redact(s string) string {
 
 	l := len(s)
 	var b strings.Builder
-	b.Grow(l+stars)
+	b.Grow(l + stars)
 
 	// no matter how long the string, show at least 6 "*"
 	for i := 0; i < stars; i++ {
@@ -34,4 +33,3 @@ func Redact(s string) string {
 	b.WriteString(s[r:])
 	return b.String()
 }
-

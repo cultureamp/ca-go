@@ -14,10 +14,10 @@ func Test_Settings_New(t *testing.T) {
 
 func Test_Settings_Defaults(t *testing.T) {
 	defer os.Unsetenv(AppNameEnv)
-	os.Setenv(AppNameEnv, "ca-go-unit-tests")
+	t.Setenv(AppNameEnv, "ca-go-unit-tests")
 
 	defer os.Unsetenv(AppFarmEnv)
-	os.Setenv(AppFarmEnv, "local")
+	t.Setenv(AppFarmEnv, "local")
 
 	settings := NewSettings()
 
@@ -28,12 +28,12 @@ func Test_Settings_Defaults(t *testing.T) {
 func Test_Settings_IsProduction(t *testing.T) {
 	defer os.Unsetenv(AppEnv)
 
-	os.Setenv(AppEnv, "production")
+	t.Setenv(AppEnv, "production")
 	settings := NewSettings()
 	isProd := settings.IsProduction()
 	assert.True(t, isProd)
 
-	os.Setenv(AppEnv, "dev")
+	t.Setenv(AppEnv, "dev")
 	settings = NewSettings()
 	isProd = settings.IsProduction()
 	assert.False(t, isProd)
@@ -42,21 +42,21 @@ func Test_Settings_IsProduction(t *testing.T) {
 func Test_Settings_Env_IsAws_IsLocal(t *testing.T) {
 	defer os.Unsetenv(AppFarmEnv)
 
-	os.Setenv(AppFarmEnv, "local")
+	t.Setenv(AppFarmEnv, "local")
 	settings := NewSettings()
 	assert.NotNil(t, settings)
 	assert.Equal(t, "local", settings.Farm)
 	assert.True(t, settings.IsRunningLocal())
 	assert.False(t, settings.IsRunningInAWS())
 
-	os.Setenv(AppFarmEnv, "falcon")
+	t.Setenv(AppFarmEnv, "falcon")
 	settings = NewSettings()
 	assert.NotNil(t, settings)
 	assert.Equal(t, "falcon", settings.Farm)
 	assert.False(t, settings.IsRunningLocal())
 	assert.True(t, settings.IsRunningInAWS())
 
-	os.Setenv(AppFarmEnv, "production")
+	t.Setenv(AppFarmEnv, "production")
 	settings = NewSettings()
 	assert.NotNil(t, settings)
 	assert.Equal(t, "production", settings.Farm)
@@ -70,10 +70,10 @@ func Test_Settings_JSON(t *testing.T) {
 	defer os.Unsetenv(DatadogAPIEnvVar)
 	defer os.Unsetenv(SentryDsnEnv)
 
-	os.Setenv(AppFarmEnv, "farm")
-	os.Setenv(AppEnv, "development")
-	os.Setenv(DatadogAPIEnvVar, "1234567890")
-	os.Setenv(SentryDsnEnv, "1234567890")
+	t.Setenv(AppFarmEnv, "farm")
+	t.Setenv(AppEnv, "development")
+	t.Setenv(DatadogAPIEnvVar, "1234567890")
+	t.Setenv(SentryDsnEnv, "1234567890")
 
 	settings := NewSettings()
 	json := settings.ToJSON()
@@ -86,10 +86,10 @@ func Test_Settings_Redacted_JSON(t *testing.T) {
 	defer os.Unsetenv(DatadogAPIEnvVar)
 	defer os.Unsetenv(SentryDsnEnv)
 
-	os.Setenv(AppFarmEnv, "farm")
-	os.Setenv(AppEnv, "development")
-	os.Setenv(DatadogAPIEnvVar, "1234567890")
-	os.Setenv(SentryDsnEnv, "1234567890")
+	t.Setenv(AppFarmEnv, "farm")
+	t.Setenv(AppEnv, "development")
+	t.Setenv(DatadogAPIEnvVar, "1234567890")
+	t.Setenv(SentryDsnEnv, "1234567890")
 
 	settings := NewSettings()
 	json := settings.ToRedactedJSON()
@@ -102,10 +102,10 @@ func Test_Settings_Redacted_String(t *testing.T) {
 	defer os.Unsetenv(DatadogAPIEnvVar)
 	defer os.Unsetenv(SentryDsnEnv)
 
-	os.Setenv(AppFarmEnv, "farm")
-	os.Setenv(AppEnv, "development")
-	os.Setenv(DatadogAPIEnvVar, "1234567890")
-	os.Setenv(SentryDsnEnv, "1234567890")
+	t.Setenv(AppFarmEnv, "farm")
+	t.Setenv(AppEnv, "development")
+	t.Setenv(DatadogAPIEnvVar, "1234567890")
+	t.Setenv(SentryDsnEnv, "1234567890")
 
 	settings := NewSettings()
 	s := settings.ToRedactedString()

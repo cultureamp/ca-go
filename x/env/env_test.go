@@ -8,7 +8,7 @@ import (
 )
 
 func Test_GetEnvString(t *testing.T) {
-	os.Setenv("TEST_STRING", "string")
+	t.Setenv("TEST_STRING", "string")
 	defer os.Unsetenv("TEST_STRING")
 
 	val := GetString("should_not_exist_env_var", "fallback")
@@ -19,7 +19,7 @@ func Test_GetEnvString(t *testing.T) {
 }
 
 func Test_GetEnvInt(t *testing.T) {
-	os.Setenv("TEST_INT", "123")
+	t.Setenv("TEST_INT", "123")
 	defer os.Unsetenv("TEST_INT")
 
 	val := GetInt("should_not_exist_env_var", 42)
@@ -30,7 +30,7 @@ func Test_GetEnvInt(t *testing.T) {
 }
 
 func Test_GetEnvBool(t *testing.T) {
-	os.Setenv("TEST_BOOL", "true")
+	t.Setenv("TEST_BOOL", "true")
 	defer os.Unsetenv("TEST_BOOL")
 
 	val := GetBool("should_not_exist_env_var", false)
