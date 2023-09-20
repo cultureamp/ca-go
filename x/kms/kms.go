@@ -4,8 +4,7 @@ import (
 	"context"
 	b64 "encoding/base64"
 
-	"github.com/cultureamp/ca-go/x/awsconfig"
-
+	"github.com/aws/aws-sdk-go-v2/aws"
 	awskms "github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/pkg/errors"
 )
@@ -16,8 +15,8 @@ type KMSClient interface {
 }
 
 type KMSEncrypt interface {
-	Encrypt(ctx context.Context, plainStr string) (encryptedStr *string, err error)
-	Decrypt(ctx context.Context, encryptedStr string) (decryptedStr *string, err error)
+	Encrypt(ctx context.Context, cfg aws.Config, plainStr string) (encryptedStr *string, err error)
+	Decrypt(ctx context.Context, cfg aws.Config, encryptedStr string) (decryptedStr *string, err error)
 }
 
 type kmsEncrypt struct {
@@ -33,9 +32,9 @@ func NewKMS(keyID string) KMSEncrypt {
 	return &kmsEncrypt{nil, &keyID}
 }
 
-func (k *kmsEncrypt) Encrypt(ctx context.Context, plainStr string) (*string, error) {
+func (k *kmsEncrypt) Encrypt(ctx context.Context, cfg aws.Config, plainStr string) (*string, error) {
 	if k.client == nil {
-		svc, err := k.getNewServiceClient(ctx)
+		svc, err := k.getNewServiceClient(cfg)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to get kms client")
 		}
@@ -56,9 +55,9 @@ func (k *kmsEncrypt) Encrypt(ctx context.Context, plainStr string) (*string, err
 	return &blobString, nil
 }
 
-func (k *kmsEncrypt) Decrypt(ctx context.Context, encryptedStr string) (*string, error) {
+func (k *kmsEncrypt) Decrypt(ctx context.Context, cfg aws.Config, encryptedStr string) (*string, error) {
 	if k.client == nil {
-		svc, err := k.getNewServiceClient(ctx)
+		svc, err := k.getNewServiceClient(cfg)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to get kms client")
 		}
@@ -84,12 +83,7 @@ func (k *kmsEncrypt) Decrypt(ctx context.Context, encryptedStr string) (*string,
 	return &decStr, nil
 }
 
-func (k *kmsEncrypt) getNewServiceClient(ctx context.Context) (*awskms.Client, error) {
-	cfg, err := awsconfig.GetAwsConfig(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to get aws config")
-	}
-
+func (k *kmsEncrypt) getNewServiceClient(cfg aws.Config) (*awskms.Client, error) {
 	svc := awskms.NewFromConfig(cfg)
 
 	return svc, nil
