@@ -43,6 +43,7 @@ jobs:
         with:
           version: v1.52.2
           args: "-v --verbose --timeout=5m"
+          skip-pkg-cache: true
 
   go-test:
     runs-on: ubuntu-latest
