@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type encryption struct {
+type Encryption struct {
 	encryptor Encryptor
 }
 
@@ -16,10 +16,10 @@ type Encryptor interface {
 }
 
 func NewEncryption(encryptor Encryptor) Encryptor {
-	return &encryption{encryptor}
+	return &Encryption{encryptor}
 }
 
-func (a *encryption) Decrypt(ctx context.Context, encriptedStr string) (*string, error) {
+func (a *Encryption) Decrypt(ctx context.Context, encriptedStr string) (*string, error) {
 	deryptedStr, err := a.encryptor.Decrypt(ctx, encriptedStr)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decrypt the string")
@@ -28,7 +28,7 @@ func (a *encryption) Decrypt(ctx context.Context, encriptedStr string) (*string,
 	return deryptedStr, nil
 }
 
-func (a *encryption) Encrypt(ctx context.Context, plainStr string) (*string, error) {
+func (a *Encryption) Encrypt(ctx context.Context, plainStr string) (*string, error) {
 	encryptedString, err := a.encryptor.Encrypt(ctx, plainStr)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to encrypt data")
