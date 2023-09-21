@@ -38,8 +38,6 @@ func (_m *MockKMSClient) Decrypt(ctx context.Context, params *awskms.DecryptInpu
 const testID = "inputStr"
 
 func TestEncrypt(t *testing.T) {
-	t.Setenv("AWS_ACCESS_KEY_ID", "fake-access-key")
-	t.Setenv("AWS_SECRET_ACCESS_KEY", "fake-secret-access-key")
 	strInput := "inputStr"
 	ctx := context.Background()
 
@@ -88,8 +86,6 @@ func TestEncrypt(t *testing.T) {
 }
 
 func TestDecrypt(t *testing.T) {
-	t.Setenv("AWS_ACCESS_KEY_ID", "fake-access-key")
-	t.Setenv("AWS_SECRET_ACCESS_KEY", "fake-secret-access-key")
 	strInput := "inputStr"
 	ctx := context.Background()
 

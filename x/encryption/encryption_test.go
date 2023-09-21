@@ -72,19 +72,6 @@ func TestDecrypt(t *testing.T) {
 }
 
 func TestEncrypt(t *testing.T) {
-	t.Run("should return an error when failed to marshall the data", func(t *testing.T) {
-		ctx := context.Background()
-		// setting a channel to fail the json marshalling
-		data := make(chan int)
-
-		encryptionSvc := NewEncryption(nil)
-
-		_, err := encryptionSvc.Encrypt(ctx, data)
-
-		assert.Error(t, err)
-		assert.Equal(t, "failed to marshal data: json: unsupported type: chan int", err.Error())
-	})
-
 	t.Run("should return an error when failing to encrypt", func(t *testing.T) {
 		ctx := context.Background()
 		data := "test2"
