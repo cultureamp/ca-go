@@ -74,7 +74,7 @@ func TestDecrypt(t *testing.T) {
 func TestEncrypt(t *testing.T) {
 	t.Run("should return an error when failed to marshall the data", func(t *testing.T) {
 		ctx := context.Background()
-		//setting a channel to fail the json marshalling
+		// setting a channel to fail the json marshalling
 		data := make(chan int)
 
 		encryptionSvc := NewEncryption(nil)

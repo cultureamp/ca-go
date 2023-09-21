@@ -18,7 +18,7 @@ type encryption struct {
 	encryptor kms.KMSEncrypt
 }
 
-func NewEncryption(encryptor kms.KMSEncrypt) (encsrv Encryption) {
+func NewEncryption(encryptor kms.KMSEncrypt) Encryption {
 	return &encryption{encryptor}
 }
 
