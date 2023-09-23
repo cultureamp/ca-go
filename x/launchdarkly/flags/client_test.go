@@ -103,6 +103,7 @@ func TestClientTestMode(t *testing.T) {
 		require.NoError(t, os.WriteFile(flagsFilename, []byte(validFlagsJSON), 0666))
 		defer func() {
 			require.NoError(t, os.Unsetenv(flagsFilename))
+			os.Remove(flagsFilename)
 		}()
 
 		c, err := NewClient()
@@ -159,6 +160,9 @@ func assertTestJSONFlags(t *testing.T, c *Client) {
 }
 
 func TestClientLambdaMode(t *testing.T) {
+	t.Setenv("AWS_ACCESS_KEY_ID", "fake-access-key")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "fake-secret-access-key")
+
 	t.Run("configures for Lambda (daemon) mode", func(t *testing.T) {
 		t.Setenv(configurationEnvVar, validConfigJSON)
 
