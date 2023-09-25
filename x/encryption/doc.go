@@ -1,5 +1,6 @@
 // package encryption provides interface Encryptor for other packages i.e. "kms" which could implement
-// thier own functions for encryption and decryption
+// their own encryption and decryption. Also, it could be used in the consumer of this package for the
+// returnning type.
 //
 // ```
 //
