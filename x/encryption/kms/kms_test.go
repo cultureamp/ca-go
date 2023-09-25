@@ -44,7 +44,7 @@ func TestEncrypt(t *testing.T) {
 	t.Run("Green Path - Should encrypt", func(t *testing.T) {
 		// arrange
 		mockKmsClient := newKMSClient(t)
-		kms := NewKMSWithClient(testID, mockKmsClient)
+		kms, _ := NewKMSWithClient(testID, mockKmsClient)
 		expectedOutput := "SGVsbG8sIHBsYXlncm91bmQ="
 		blob, err := b64.StdEncoding.DecodeString(expectedOutput)
 		assert.NoError(t, err)
@@ -63,18 +63,17 @@ func TestEncrypt(t *testing.T) {
 
 	t.Run("When unable to use AWS client should error", func(t *testing.T) {
 		// arrange
-		kms := NewKMS(testID)
-		// act
-		output, err := kms.Encrypt(ctx, strInput)
+		kms, err := NewKMSWithClient(testID, nil)
+
 		// assert
 		assert.Error(t, err)
-		assert.Nil(t, output)
+		assert.Nil(t, kms)
 	})
 
 	t.Run("When unable to encrypt should error", func(t *testing.T) {
 		// arrange
 		mockKmsClient := newKMSClient(t)
-		kms := NewKMSWithClient(testID, mockKmsClient)
+		kms, _ := NewKMSWithClient(testID, mockKmsClient)
 		mockKmsClient.On("Encrypt", ctx, mock.Anything, mock.Anything).
 			Return(nil, errors.New("error"))
 		// act
@@ -92,7 +91,7 @@ func TestDecrypt(t *testing.T) {
 	t.Run("Green Path - Should decrypt", func(t *testing.T) {
 		// arrange
 		mockKmsClient := newKMSClient(t)
-		kms := NewKMSWithClient(testID, mockKmsClient)
+		kms, _ := NewKMSWithClient(testID, mockKmsClient)
 		expectedOutput := "Decrypted"
 		awsOutput := awskms.DecryptOutput{
 			Plaintext: []byte(expectedOutput),
@@ -109,18 +108,17 @@ func TestDecrypt(t *testing.T) {
 
 	t.Run("When unable to use AWS client should error", func(t *testing.T) {
 		// arrange
-		kms := NewKMS(testID)
-		// act
-		output, err := kms.Decrypt(ctx, strInput)
+		kms, err := NewKMSWithClient(testID, nil)
+
 		// assert
 		assert.Error(t, err)
-		assert.Nil(t, output)
+		assert.Nil(t, kms)
 	})
 
 	t.Run("When unable to decrypt should error", func(t *testing.T) {
 		// arrange
 		mockKmsClient := newKMSClient(t)
-		kms := NewKMSWithClient(testID, mockKmsClient)
+		kms, _ := NewKMSWithClient(testID, mockKmsClient)
 		mockKmsClient.On("Decrypt", ctx, mock.Anything, mock.Anything).
 			Return(nil, errors.New("error"))
 		// act

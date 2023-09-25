@@ -19,19 +19,14 @@ type kmsEncrypt struct {
 	keyID  *string
 }
 
-func NewKMSWithClient(keyID string, client KMSClient) encryption.Encryptor {
-	return &kmsEncrypt{client, &keyID}
-}
-
-func NewKMS(keyID string) encryption.Encryptor {
-	return &kmsEncrypt{nil, &keyID}
+func NewKMSWithClient(keyID string, client KMSClient) (encryption.Encryptor, error) {
+	if client == nil {
+		return nil, errors.New("failed to get kms client")
+	}
+	return &kmsEncrypt{client, &keyID}, nil
 }
 
 func (k *kmsEncrypt) Encrypt(ctx context.Context, plainStr string) (*string, error) {
-	if k.client == nil {
-		return nil, errors.New("failed to get kms client")
-	}
-
 	input := &awskms.EncryptInput{
 		KeyId:     k.keyID,
 		Plaintext: []byte(plainStr),
@@ -47,10 +42,6 @@ func (k *kmsEncrypt) Encrypt(ctx context.Context, plainStr string) (*string, err
 }
 
 func (k *kmsEncrypt) Decrypt(ctx context.Context, encryptedStr string) (*string, error) {
-	if k.client == nil {
-		return nil, errors.New("failed to get kms client")
-	}
-
 	blob, err := b64.StdEncoding.DecodeString(encryptedStr)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decode")
