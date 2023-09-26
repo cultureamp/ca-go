@@ -12,18 +12,9 @@
 // client := awskms.NewFromConfig(cfg)
 // ```
 //
-// then create an encryptor return interface encryptor.Encryptor:
+// then create an encryptor
 //
-// ```
-//
-//	type Encryptor interface {
-//		Encrypt(ctx context.Context, plainStr string) (encryptedStr *string, err error)
-//		Decrypt(ctx context.Context, encryptedStr string) (decryptedStr *string, err error)
-//	}
-//
-// ````
-//
-// `encrytor := kms.NewEncryptor(settings.DataKMSKeyID, client)`
+// `encryptor := kms.NewEncryptor(settings.DataKMSKeyID, client)`
 //
 // then you can encrypt your data by
 //
