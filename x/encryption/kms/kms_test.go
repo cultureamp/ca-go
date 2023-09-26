@@ -44,7 +44,7 @@ func TestEncrypt(t *testing.T) {
 	t.Run("Green Path - Should encrypt", func(t *testing.T) {
 		// arrange
 		mockKmsClient := newKMSClient(t)
-		kms, _ := NewKMSWithClient(testID, mockKmsClient)
+		kms, _ := NewEncryptor(testID, mockKmsClient)
 		expectedOutput := "SGVsbG8sIHBsYXlncm91bmQ="
 		blob, err := b64.StdEncoding.DecodeString(expectedOutput)
 		assert.NoError(t, err)
@@ -63,7 +63,7 @@ func TestEncrypt(t *testing.T) {
 
 	t.Run("When unable to use AWS client should error", func(t *testing.T) {
 		// arrange
-		kms, err := NewKMSWithClient(testID, nil)
+		kms, err := NewEncryptor(testID, nil)
 
 		// assert
 		assert.Error(t, err)
@@ -73,7 +73,7 @@ func TestEncrypt(t *testing.T) {
 	t.Run("When unable to encrypt should error", func(t *testing.T) {
 		// arrange
 		mockKmsClient := newKMSClient(t)
-		kms, _ := NewKMSWithClient(testID, mockKmsClient)
+		kms, _ := NewEncryptor(testID, mockKmsClient)
 		mockKmsClient.On("Encrypt", ctx, mock.Anything, mock.Anything).
 			Return(nil, errors.New("error"))
 		// act
@@ -91,7 +91,7 @@ func TestDecrypt(t *testing.T) {
 	t.Run("Green Path - Should decrypt", func(t *testing.T) {
 		// arrange
 		mockKmsClient := newKMSClient(t)
-		kms, _ := NewKMSWithClient(testID, mockKmsClient)
+		kms, _ := NewEncryptor(testID, mockKmsClient)
 		expectedOutput := "Decrypted"
 		awsOutput := awskms.DecryptOutput{
 			Plaintext: []byte(expectedOutput),
@@ -108,7 +108,7 @@ func TestDecrypt(t *testing.T) {
 
 	t.Run("When unable to use AWS client should error", func(t *testing.T) {
 		// arrange
-		kms, err := NewKMSWithClient(testID, nil)
+		kms, err := NewEncryptor(testID, nil)
 
 		// assert
 		assert.Error(t, err)
@@ -118,7 +118,7 @@ func TestDecrypt(t *testing.T) {
 	t.Run("When unable to decrypt should error", func(t *testing.T) {
 		// arrange
 		mockKmsClient := newKMSClient(t)
-		kms, _ := NewKMSWithClient(testID, mockKmsClient)
+		kms, _ := NewEncryptor(testID, mockKmsClient)
 		mockKmsClient.On("Decrypt", ctx, mock.Anything, mock.Anything).
 			Return(nil, errors.New("error"))
 		// act

@@ -23,7 +23,7 @@
 //
 // ````
 //
-// `encrytor := kms.NewKMSWithClient(settings.DataKMSKeyID, client)`
+// `encrytor := kms.NewEncryptor(settings.DataKMSKeyID, client)`
 //
 // then you can encrypt your data by
 //
