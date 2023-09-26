@@ -16,47 +16,47 @@ type KMSClient interface {
 
 type Encryptor struct {
 	client KMSClient
-	keyID  *string
+	keyID  string
 }
 
 func NewEncryptor(keyID string, client KMSClient) (encryption.Encryptor, error) {
 	if client == nil {
 		return nil, errors.New("failed to get kms client")
 	}
-	return &Encryptor{client, &keyID}, nil
+	return &Encryptor{client, keyID}, nil
 }
 
-func (k *Encryptor) Encrypt(ctx context.Context, plainStr string) (*string, error) {
+func (e *Encryptor) Encrypt(ctx context.Context, plainStr string) (string, error) {
 	input := &awskms.EncryptInput{
-		KeyId:     k.keyID,
+		KeyId:     &e.keyID,
 		Plaintext: []byte(plainStr),
 	}
 
-	result, err := k.client.Encrypt(ctx, input)
+	result, err := e.client.Encrypt(ctx, input)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to encrypt with kms")
+		return "", errors.Wrap(err, "failed to encrypt with kms")
 	}
 
 	blobString := b64.StdEncoding.EncodeToString(result.CiphertextBlob)
-	return &blobString, nil
+	return blobString, nil
 }
 
-func (k *Encryptor) Decrypt(ctx context.Context, encryptedStr string) (*string, error) {
+func (e *Encryptor) Decrypt(ctx context.Context, encryptedStr string) (string, error) {
 	blob, err := b64.StdEncoding.DecodeString(encryptedStr)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to decode")
+		return "", errors.Wrap(err, "failed to decode")
 	}
 
 	input := &awskms.DecryptInput{
 		CiphertextBlob: blob,
 	}
 
-	result, err := k.client.Decrypt(ctx, input)
+	result, err := e.client.Decrypt(ctx, input)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to decrypt with kms")
+		return "", errors.Wrap(err, "failed to decrypt with kms")
 	}
 
 	decStr := string(result.Plaintext)
 
-	return &decStr, nil
+	return decStr, nil
 }

@@ -14,13 +14,13 @@
 //
 // then create an encryptor
 //
-// `encryptor := kms.NewEncryptor(settings.DataKMSKeyID, client)`
+// `encryptor := kms.NewEncryptor(settings.KMSKeyID, client)`
 //
 // then you can encrypt your data by
 //
-// `encryptor.Encrypt(ctx, metadata.MergeAccountToken)`
+// `encryptor.Encrypt(ctx, metadata.Token)`
 //
 // then you can decrypt your data by
 //
-// `encryptor.Decrypt(ctx, metadataItem.MergeAccountToken)`
+// `encryptor.Decrypt(ctx, metadataItem.Token)`
 package kms

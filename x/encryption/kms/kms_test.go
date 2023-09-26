@@ -58,7 +58,7 @@ func TestEncrypt(t *testing.T) {
 		// assert
 		assert.NoError(t, err)
 		assert.NotNil(t, output)
-		assert.Equal(t, expectedOutput, *output)
+		assert.Equal(t, expectedOutput, output)
 	})
 
 	t.Run("When unable to use AWS client should error", func(t *testing.T) {
@@ -80,7 +80,7 @@ func TestEncrypt(t *testing.T) {
 		output, err := kms.Encrypt(ctx, strInput)
 		// assert
 		assert.Error(t, err)
-		assert.Nil(t, output)
+		assert.Equal(t, "", output)
 	})
 }
 
@@ -103,7 +103,7 @@ func TestDecrypt(t *testing.T) {
 		// assert
 		assert.NoError(t, err)
 		assert.NotNil(t, output)
-		assert.Equal(t, expectedOutput, *output)
+		assert.Equal(t, expectedOutput, output)
 	})
 
 	t.Run("When unable to use AWS client should error", func(t *testing.T) {
@@ -125,7 +125,7 @@ func TestDecrypt(t *testing.T) {
 		output, err := kms.Decrypt(ctx, strInput)
 		// assert
 		assert.Error(t, err)
-		assert.Nil(t, output)
+		assert.Equal(t, "", output)
 	})
 }
 
