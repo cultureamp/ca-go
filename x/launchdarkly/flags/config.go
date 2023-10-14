@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/cultureamp/ca-go/x/log"
-	lddynamodb "github.com/launchdarkly/go-server-sdk-dynamodb/v3"
+	lddynamodb "github.com/launchdarkly/go-server-sdk-dynamodb/v4"
 	ld "github.com/launchdarkly/go-server-sdk/v6"
 	"github.com/launchdarkly/go-server-sdk/v6/ldcomponents"
 	"github.com/launchdarkly/go-server-sdk/v6/ldfiledata"
