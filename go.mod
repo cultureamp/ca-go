@@ -3,7 +3,7 @@ module github.com/cultureamp/ca-go
 go 1.21
 
 require (
-	github.com/Shopify/sarama v1.38.1
+	github.com/Shopify/sarama v1.41.2
 	github.com/aws/aws-lambda-go v1.41.0
 	github.com/aws/aws-sdk-go v1.45.25
 	github.com/aws/aws-sdk-go-v2/service/kms v1.24.7
