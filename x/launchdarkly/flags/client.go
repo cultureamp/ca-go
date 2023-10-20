@@ -9,8 +9,8 @@ import (
 
 	"github.com/cultureamp/ca-go/x/launchdarkly/flags/evaluationcontext"
 	"github.com/cultureamp/ca-go/x/log"
-	ld "github.com/launchdarkly/go-server-sdk/v6"
-	"github.com/launchdarkly/go-server-sdk/v6/testhelpers/ldtestdata"
+	ld "github.com/launchdarkly/go-server-sdk/v7"
+	"github.com/launchdarkly/go-server-sdk/v7/testhelpers/ldtestdata"
 )
 
 // Client is a wrapper around the LaunchDarkly client.
