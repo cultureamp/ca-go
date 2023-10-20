@@ -27,6 +27,7 @@ linters:
     - prealloc
     - revive
     - tagliatelle
+    - tagalign
     - testpackage
     - unparam
     - varnamelen

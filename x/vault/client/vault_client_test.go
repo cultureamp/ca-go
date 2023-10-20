@@ -97,7 +97,9 @@ func TestNewVaultClient(t *testing.T) {
 		ctx := context.Background()
 
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewVaultClient(&tt.settings, ctx)
+			settings := tt.settings
+
+			_, err := NewVaultClient(&settings, ctx)
 			assert.Equal(t, tt.expErr, err)
 		})
 	}

@@ -82,7 +82,7 @@ func TestClientTestMode(t *testing.T) {
 		jsonFilename, err := os.CreateTemp("", "test-flags.json")
 		require.NoError(t, err)
 
-		_, err = jsonFilename.Write([]byte(validFlagsJSON))
+		_, err = jsonFilename.WriteString(validFlagsJSON)
 		require.NoError(t, err)
 
 		c, err := NewClient(WithTestMode(&TestModeConfig{FlagFilename: jsonFilename.Name()}))
@@ -99,8 +99,7 @@ func TestClientTestMode(t *testing.T) {
 
 		flagsFilename := path.Join(testDir, flagsJSONFilename)
 
-		// #nosec G306
-		require.NoError(t, os.WriteFile(flagsFilename, []byte(validFlagsJSON), 0666))
+		require.NoError(t, os.WriteFile(flagsFilename, []byte(validFlagsJSON), 0666)) //nolint:gosec
 		defer func() {
 			require.NoError(t, os.Unsetenv(flagsFilename))
 			os.Remove(flagsFilename)
