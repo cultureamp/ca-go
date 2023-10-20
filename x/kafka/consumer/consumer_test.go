@@ -388,7 +388,6 @@ func TestNonStopExponentialBackOff(t *testing.T) {
 }
 
 func randMsg() kafka.Message {
-	rand.Seed(time.Now().UnixMilli())
 	return kafka.Message{
 		Topic:     "some-topic",
 		Partition: rand.Intn(20-1) + 1, //nolint:gosec
