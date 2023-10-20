@@ -65,7 +65,7 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		config, err := configFromEnvironment()
 		if err != nil {
 			err = fmt.Errorf("could not configure from environment variable: %w", err)
-			c.logger.Err(err)
+			c.logger.Err(err).Send()
 			return nil, err
 		}
 		parsedConfig = config
@@ -119,7 +119,7 @@ func (c *Client) Connect() error {
 	wrappedClient, err := ld.MakeCustomClient(c.sdkKey, c.wrappedConfig, c.initWait)
 	if err != nil {
 		err = fmt.Errorf("create LaunchDarkly client: %w", err)
-		c.logger.Err(err)
+		c.logger.Err(err).Send()
 		return err
 	}
 
@@ -135,7 +135,7 @@ func (c *Client) QueryBool(ctx context.Context, key FlagName, fallbackValue bool
 	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
 		err = fmt.Errorf("get user from context: %w", err)
-		c.logger.Err(err)
+		c.logger.Err(err).Send()
 		return fallbackValue, err
 	}
 
@@ -156,7 +156,7 @@ func (c *Client) QueryString(ctx context.Context, key FlagName, fallbackValue st
 	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
 		err = fmt.Errorf("get user from context: %w", err)
-		c.logger.Err(err)
+		c.logger.Err(err).Send()
 		return fallbackValue, err
 	}
 
@@ -177,7 +177,7 @@ func (c *Client) QueryInt(ctx context.Context, key FlagName, fallbackValue int) 
 	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
 		err := fmt.Errorf("get user from context: %w", err)
-		c.logger.Err(err)
+		c.logger.Err(err).Send()
 		return fallbackValue, err
 	}
 
@@ -213,7 +213,7 @@ func (c *Client) Shutdown() error {
 func (c *Client) TestDataSource() (*ldtestdata.TestDataSource, error) {
 	if c.testModeConfig == nil || c.testModeConfig.datasource == nil {
 		err := errors.New("LaunchDarkly client not initialised with dynamic test data source")
-		c.logger.Err(err)
+		c.logger.Err(err).Send()
 		return nil, err
 	}
 
