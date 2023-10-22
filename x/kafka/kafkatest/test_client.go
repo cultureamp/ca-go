@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -62,7 +61,7 @@ func NewTestClient[EventType any](t *testing.T, ctx context.Context, cfg TestCli
 			Addr:   kafka.TCP(cfg.KafkaBrokerHostPort),
 			Topics: []string{topicConfig.Topic},
 		})
-		assert.NoError(t, deleteErr, "error deleting topic %s", topicConfig.Topic)
+		require.NoError(t, deleteErr, "error deleting topic %s", topicConfig.Topic)
 	})
 
 	subject := fmt.Sprintf("testsubject-%s", uuid.New().String())

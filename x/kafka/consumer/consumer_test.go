@@ -213,7 +213,7 @@ func TestConsumer_Run_error(t *testing.T) {
 
 			gotErr := consumer.Run(ctx, handler)
 			if wantErr != nil {
-				assert.EqualError(t, gotErr, wantErr.Error())
+				require.EqualError(t, gotErr, wantErr.Error())
 			}
 			assert.Equal(t, tt.shouldNotify, didNotify)
 		})
@@ -368,7 +368,7 @@ func TestGroup_Run_readerError(t *testing.T) {
 				return nil
 			})
 			for err := range errCh {
-				require.True(t, errors.Is(err, wantErr))
+				require.ErrorIs(t, err, wantErr)
 				group.Stop()
 				require.Contains(t, err.Error(), wantErr.Error())
 			}
