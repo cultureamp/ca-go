@@ -213,7 +213,7 @@ func TestConsumer_Run_error(t *testing.T) {
 
 			gotErr := consumer.Run(ctx, handler)
 			if wantErr != nil {
-				assert.EqualError(t, gotErr, wantErr.Error())
+				require.EqualError(t, gotErr, wantErr.Error())
 			}
 			assert.Equal(t, tt.shouldNotify, didNotify)
 		})
@@ -368,7 +368,7 @@ func TestGroup_Run_readerError(t *testing.T) {
 				return nil
 			})
 			for err := range errCh {
-				require.True(t, errors.Is(err, wantErr))
+				require.ErrorIs(t, err, wantErr)
 				group.Stop()
 				require.Contains(t, err.Error(), wantErr.Error())
 			}
@@ -388,7 +388,6 @@ func TestNonStopExponentialBackOff(t *testing.T) {
 }
 
 func randMsg() kafka.Message {
-	rand.Seed(time.Now().UnixMilli())
 	return kafka.Message{
 		Topic:     "some-topic",
 		Partition: rand.Intn(20-1) + 1, //nolint:gosec

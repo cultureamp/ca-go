@@ -9,7 +9,7 @@ import (
 )
 
 type SecretClient interface {
-	Get(string) (string, error)
+	Get(secretName string) (string, error)
 }
 
 type AWSSecrets struct {

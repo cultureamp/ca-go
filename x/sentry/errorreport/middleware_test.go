@@ -78,7 +78,7 @@ func TestHTTPMiddleware(t *testing.T) {
 		assert.False(t, panicHandlerCalled)
 		assert.True(t, innerHandlerCalled)
 
-		assert.Len(t, mockSentryTransport.Events(), 0)
+		assert.Empty(t, mockSentryTransport.Events())
 	})
 
 	t.Run("unsuccessful request", func(t *testing.T) {
@@ -157,11 +157,11 @@ func TestGoaEndpointMiddleware(t *testing.T) {
 
 		sut := mw(endpoint)
 		res, err := sut(ctx, nil)
-		assert.NoError(t, err)
-		assert.Equal(t, res, "foobar")
+		require.NoError(t, err)
+		assert.Equal(t, "foobar", res)
 
 		assert.True(t, endpointCalled)
-		assert.Len(t, mockSentryTransport.Events(), 0)
+		assert.Empty(t, mockSentryTransport.Events())
 	})
 
 	t.Run("unsuccessful request", func(t *testing.T) {
@@ -178,7 +178,7 @@ func TestGoaEndpointMiddleware(t *testing.T) {
 
 		sut := mw(endpoint)
 		_, err := sut(ctx, nil)
-		assert.Error(t, err)
+		require.Error(t, err)
 
 		assert.True(t, endpointCalled)
 		sentryContextAssertion(t, mockSentryTransport)

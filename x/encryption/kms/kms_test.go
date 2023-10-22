@@ -9,6 +9,7 @@ import (
 	awskms "github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type MockKMSClient struct {
@@ -47,7 +48,7 @@ func TestEncrypt(t *testing.T) {
 		kms, _ := NewEncryptor(testID, mockKmsClient)
 		expectedOutput := "SGVsbG8sIHBsYXlncm91bmQ="
 		blob, err := b64.StdEncoding.DecodeString(expectedOutput)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		awsOutput := awskms.EncryptOutput{
 			CiphertextBlob: blob,
 		}
@@ -56,7 +57,7 @@ func TestEncrypt(t *testing.T) {
 		// act
 		output, err := kms.Encrypt(ctx, strInput)
 		// assert
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, output)
 		assert.Equal(t, expectedOutput, output)
 	})
@@ -66,7 +67,7 @@ func TestEncrypt(t *testing.T) {
 		kms, err := NewEncryptor(testID, nil)
 
 		// assert
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Nil(t, kms)
 	})
 
@@ -79,7 +80,7 @@ func TestEncrypt(t *testing.T) {
 		// act
 		output, err := kms.Encrypt(ctx, strInput)
 		// assert
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Equal(t, "", output)
 	})
 }
@@ -101,7 +102,7 @@ func TestDecrypt(t *testing.T) {
 		// act
 		output, err := kms.Decrypt(ctx, strInput)
 		// assert
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, output)
 		assert.Equal(t, expectedOutput, output)
 	})
@@ -111,7 +112,7 @@ func TestDecrypt(t *testing.T) {
 		kms, err := NewEncryptor(testID, nil)
 
 		// assert
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Nil(t, kms)
 	})
 
@@ -124,14 +125,14 @@ func TestDecrypt(t *testing.T) {
 		// act
 		output, err := kms.Decrypt(ctx, strInput)
 		// assert
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Equal(t, "", output)
 	})
 }
 
 func newKMSClient(t interface {
 	mock.TestingT
-	Cleanup(func())
+	Cleanup(cleanupFunc func())
 }) *MockKMSClient {
 	mock := &MockKMSClient{}
 	mock.Mock.Test(t)

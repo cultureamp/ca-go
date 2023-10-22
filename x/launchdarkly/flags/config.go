@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/cultureamp/ca-go/x/log"
-	lddynamodb "github.com/launchdarkly/go-server-sdk-dynamodb/v3"
-	ld "github.com/launchdarkly/go-server-sdk/v6"
-	"github.com/launchdarkly/go-server-sdk/v6/ldcomponents"
-	"github.com/launchdarkly/go-server-sdk/v6/ldfiledata"
-	"github.com/launchdarkly/go-server-sdk/v6/ldfilewatch"
-	"github.com/launchdarkly/go-server-sdk/v6/testhelpers/ldtestdata"
+	lddynamodb "github.com/launchdarkly/go-server-sdk-dynamodb/v4"
+	ld "github.com/launchdarkly/go-server-sdk/v7"
+	"github.com/launchdarkly/go-server-sdk/v7/ldcomponents"
+	"github.com/launchdarkly/go-server-sdk/v7/ldfiledata"
+	"github.com/launchdarkly/go-server-sdk/v7/ldfilewatch"
+	"github.com/launchdarkly/go-server-sdk/v7/testhelpers/ldtestdata"
 )
 
 var errClientNotConfigured = errors.New("client not configured")

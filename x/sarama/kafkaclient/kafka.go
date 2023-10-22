@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
 // EnableDebugLog provides more details on how sarama connecting to brokers

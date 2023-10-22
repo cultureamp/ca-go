@@ -11,7 +11,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
 	"strconv"
 	"sync/atomic"
 	"testing"
@@ -174,7 +173,6 @@ func TestConsumer_Run_integration(t *testing.T) {
 }
 
 func publishDummyEvents(t *testing.T, ctx context.Context, tc *kafkatest.TestClient[TestEvent], numPublish int, key string) {
-	rand.Seed(time.Now().UnixNano())
 	var msgs []kafka.Message
 
 	for i := 0; i < numPublish; i++ {

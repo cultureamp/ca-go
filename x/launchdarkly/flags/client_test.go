@@ -50,12 +50,12 @@ func TestClientTestMode(t *testing.T) {
 		td.Update(td.Flag("test-flag").VariationForAll(true))
 		res, err := c.QueryBoolWithEvaluationContext("test-flag", evaluationcontext.NewEvaluationContext(), false)
 		require.NoError(t, err)
-		assert.Equal(t, true, res)
+		assert.True(t, res)
 
 		td.Update(td.Flag("test-flag").VariationForAll(false))
 		res, err = c.QueryBoolWithEvaluationContext("test-flag", evaluationcontext.NewEvaluationContext(), true)
 		require.NoError(t, err)
-		assert.Equal(t, false, res)
+		assert.False(t, res)
 	})
 
 	t.Run("configures for Test mode with data set at runtime", func(t *testing.T) {
@@ -70,19 +70,19 @@ func TestClientTestMode(t *testing.T) {
 		td.Update(td.Flag("test-flag").VariationForAll(true))
 		res, err := c.QueryBoolWithEvaluationContext("test-flag", evaluationcontext.NewEvaluationContext(), false)
 		require.NoError(t, err)
-		assert.Equal(t, true, res)
+		assert.True(t, res)
 
 		td.Update(td.Flag("test-flag").VariationForAll(false))
 		res, err = c.QueryBoolWithEvaluationContext("test-flag", evaluationcontext.NewEvaluationContext(), true)
 		require.NoError(t, err)
-		assert.Equal(t, false, res)
+		assert.False(t, res)
 	})
 
 	t.Run("configures for Test mode data sourced from a local JSON file", func(t *testing.T) {
 		jsonFilename, err := os.CreateTemp("", "test-flags.json")
 		require.NoError(t, err)
 
-		_, err = jsonFilename.Write([]byte(validFlagsJSON))
+		_, err = jsonFilename.WriteString(validFlagsJSON)
 		require.NoError(t, err)
 
 		c, err := NewClient(WithTestMode(&TestModeConfig{FlagFilename: jsonFilename.Name()}))
@@ -99,8 +99,7 @@ func TestClientTestMode(t *testing.T) {
 
 		flagsFilename := path.Join(testDir, flagsJSONFilename)
 
-		// #nosec G306
-		require.NoError(t, os.WriteFile(flagsFilename, []byte(validFlagsJSON), 0666))
+		require.NoError(t, os.WriteFile(flagsFilename, []byte(validFlagsJSON), 0666)) //nolint:gosec
 		defer func() {
 			require.NoError(t, os.Unsetenv(flagsFilename))
 			os.Remove(flagsFilename)
@@ -152,7 +151,7 @@ func assertTestJSONFlags(t *testing.T, c *Client) {
 
 	res2, err := c.QueryBoolWithEvaluationContext("my-boolean-flag-key", evalContext, false)
 	require.NoError(t, err)
-	assert.Equal(t, true, res2)
+	assert.True(t, res2)
 
 	res3, err := c.QueryIntWithEvaluationContext("my-integer-flag-key", evalContext, 1)
 	require.NoError(t, err)
@@ -199,7 +198,7 @@ func TestClientInitialisation(t *testing.T) {
 		client, err := NewClient(
 			WithInitWait(2 * time.Second))
 		require.NoError(t, err)
-		assert.Equal(t, client.initWait, 2*time.Second)
+		assert.Equal(t, 2*time.Second, client.initWait)
 	})
 
 	t.Run("configures for Proxy mode", func(t *testing.T) {
@@ -230,6 +229,6 @@ func TestClientInitialisation(t *testing.T) {
 		client, err := NewClient(
 			WithBigSegmentsDisabled())
 		require.NoError(t, err)
-		assert.Equal(t, client.bigSegmentsEnabled, false)
+		assert.False(t, client.bigSegmentsEnabled)
 	})
 }
