@@ -5,9 +5,8 @@ import (
 	"fmt"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/segmentio/kafka-go"
-	kafkatrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/segmentio/kafka.go.v0"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+	// "github.com/segmentio/kafka-go"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 type handlerExecutor struct {
@@ -33,13 +32,13 @@ func (h *handlerExecutor) execute(ctx context.Context, msg kafka.Message, handle
 	defer ticker.Stop()
 
 	if h.DataDogTracingEnabled {
-		spanCtx, err := kafkatrace.ExtractSpanContext(msg)
+		// spanCtx, err := kafkatrace.ExtractSpanContext(msg)
 		if err != nil {
 			return fmt.Errorf("unable to extract data dog span context from kafka message: %w", err)
 		}
-		span := tracer.StartSpan("consumer.handle", tracer.ChildOf(spanCtx))
-		defer span.Finish()
-		ctx = tracer.ContextWithSpan(ctx, span)
+		// span := tracer.StartSpan("consumer.handle", tracer.ChildOf(spanCtx))
+		// defer span.Finish()
+		// ctx = tracer.ContextWithSpan(ctx, span)
 	}
 
 	for {

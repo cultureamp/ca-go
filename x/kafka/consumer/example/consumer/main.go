@@ -6,8 +6,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/segmentio/kafka-go"
-
 	"github.com/cultureamp/ca-go/x/kafka/consumer"
 )
 
@@ -23,7 +21,7 @@ func main() {
 		Brokers: strings.Split(brokers, ","),
 		Topic:   topic,
 	}
-	c := consumer.NewConsumer(kafka.DefaultDialer, cfg)
+	c := consumer.NewConsumer(cfg)
 
 	log.Printf("consumer started for topic %s\n", topic)
 	if err := c.Run(context.Background(), handle); err != nil {
@@ -33,7 +31,7 @@ func main() {
 
 func handle(ctx context.Context, msg consumer.Message) error {
 	log.Printf("message at consumer: %s topic:%v partition:%v offset:%v	%s = %s\n",
-		msg.Metadata.ConsumerID, msg.Topic, msg.Partition, msg.Offset, string(msg.Key), string(msg.Value),
+		msg.Metadata.ConsumerID, msg.TopicPartition.Topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset, string(msg.Key), string(msg.Value),
 	)
 	return nil
 }

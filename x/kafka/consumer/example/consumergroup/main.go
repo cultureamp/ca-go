@@ -10,8 +10,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/segmentio/kafka-go"
-
 	"github.com/cultureamp/ca-go/x/kafka/consumer"
 )
 
@@ -31,7 +29,7 @@ func main() {
 		Topic:   topic,
 		GroupID: groupID,
 	}
-	consumerGroup := consumer.NewGroup(kafka.DefaultDialer, groupCfg)
+	consumerGroup := consumer.NewGroup(groupCfg)
 	defer consumerGroup.Stop()
 
 	log.Printf("consumer group %s started for topic %s\n", consumerGroup.ID, topic)
@@ -57,7 +55,7 @@ func main() {
 
 func handle(ctx context.Context, msg consumer.Message) error {
 	log.Printf("message at consumer: %s topic:%v partition:%v offset:%v	%s = %s\n",
-		msg.Metadata.ConsumerID, msg.Topic, msg.Partition, msg.Offset, string(msg.Key), string(msg.Value),
+		msg.Metadata.ConsumerID, msg.TopicPartition.Topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset, string(msg.Key), string(msg.Value),
 	)
 	return nil
 }

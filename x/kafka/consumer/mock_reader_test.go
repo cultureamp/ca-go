@@ -5,11 +5,11 @@
 package consumer
 
 import (
-	context "context"
 	reflect "reflect"
+	time "time"
 
+	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	gomock "github.com/golang/mock/gomock"
-	kafka "github.com/segmentio/kafka-go"
 )
 
 // MockReader is a mock of Reader interface.
@@ -38,7 +38,7 @@ func (m *MockReader) EXPECT() *MockReaderMockRecorder {
 // Close mocks base method.
 func (m *MockReader) Close() error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Stop")
+	ret := m.ctrl.Call(m, "Close")
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -46,48 +46,29 @@ func (m *MockReader) Close() error {
 // Close indicates an expected call of Close.
 func (mr *MockReaderMockRecorder) Close() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockReader)(nil).Close))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockReader)(nil).Close))
 }
 
-// CommitMessages mocks base method.
-func (m *MockReader) CommitMessages(arg0 context.Context, arg1 ...kafka.Message) error {
+// CommitMessage mocks base method.
+func (m *MockReader) CommitMessage(arg0 *kafka.Message) ([]kafka.TopicPartition, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{arg0}
-	for _, a := range arg1 {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "CommitMessages", varargs...)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CommitMessages indicates an expected call of CommitMessages.
-func (mr *MockReaderMockRecorder) CommitMessages(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{arg0}, arg1...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitMessages", reflect.TypeOf((*MockReader)(nil).CommitMessages), varargs...)
-}
-
-// FetchMessage mocks base method.
-func (m *MockReader) FetchMessage(arg0 context.Context) (kafka.Message, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchMessage", arg0)
-	ret0, _ := ret[0].(kafka.Message)
+	ret := m.ctrl.Call(m, "CommitMessage", arg0)
+	ret0, _ := ret[0].([]kafka.TopicPartition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// FetchMessage indicates an expected call of FetchMessage.
-func (mr *MockReaderMockRecorder) FetchMessage(arg0 interface{}) *gomock.Call {
+// CommitMessage indicates an expected call of CommitMessage.
+func (mr *MockReaderMockRecorder) CommitMessage(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchMessage", reflect.TypeOf((*MockReader)(nil).FetchMessage), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitMessage", reflect.TypeOf((*MockReader)(nil).CommitMessage), arg0)
 }
 
 // ReadMessage mocks base method.
-func (m *MockReader) ReadMessage(arg0 context.Context) (kafka.Message, error) {
+func (m *MockReader) ReadMessage(arg0 time.Duration) (*kafka.Message, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReadMessage", arg0)
-	ret0, _ := ret[0].(kafka.Message)
+	ret0, _ := ret[0].(*kafka.Message)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

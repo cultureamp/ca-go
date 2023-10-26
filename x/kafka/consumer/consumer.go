@@ -3,7 +3,6 @@ package consumer
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -12,10 +11,10 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/google/uuid"
-	"github.com/segmentio/kafka-go"
-	"github.com/segmentio/kafka-go/sasl/scram"
-	kafkatrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/segmentio/kafka.go.v0"
+	// "github.com/segmentio/kafka-go"
+	// "github.com/segmentio/kafka-go/sasl/scram"
 )
 
 // Metadata contains relevant handler metadata for received Kafka messages.
@@ -38,9 +37,8 @@ type NotifyError func(ctx context.Context, err error, msg Message)
 
 // Reader fetches and commits messages from a Kafka topic.
 type Reader interface {
-	ReadMessage(ctx context.Context) (kafka.Message, error)
-	FetchMessage(ctx context.Context) (kafka.Message, error)
-	CommitMessages(ctx context.Context, msgs ...kafka.Message) error
+	ReadMessage(timeout time.Duration) (*kafka.Message, error)
+	CommitMessage(m *kafka.Message) ([]kafka.TopicPartition, error)
 	Close() error
 }
 
@@ -67,7 +65,7 @@ type Config struct {
 type Consumer struct {
 	id                 string
 	reader             Reader
-	readerConfig       kafka.ReaderConfig
+	readerConfig       Config
 	withExplicitCommit bool
 	stopCh             chan struct{}
 	handlerExecutor    *handlerExecutor
@@ -76,7 +74,7 @@ type Consumer struct {
 }
 
 // NewConsumer returns a new Consumer configured with the provided dialer and config.
-func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer {
+func NewConsumer(config Config, opts ...Option) *Consumer {
 	if config.ID == "" {
 		config.ID = uuid.New().String()
 	}
@@ -96,14 +94,15 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 	c := &Consumer{
 		id:     config.ID,
 		stopCh: make(chan struct{}),
-		readerConfig: kafka.ReaderConfig{
-			Brokers:               config.Brokers,
-			GroupID:               config.groupID,
-			Topic:                 config.Topic,
-			Dialer:                dialer,
-			WatchPartitionChanges: true,
-			MaxBytes:              config.MaxBytes,
+		readerConfig: Config{
+			Brokers: config.Brokers,
+			groupID: config.groupID,
+			Topic:   config.Topic,
+			// Dialer:                dialer,
+			//WatchPartitionChanges: true,
+			MaxBytes: config.MaxBytes,
 		},
+		// readerConfig: nil,
 		handlerExecutor: &handlerExecutor{
 			ConsumerID: config.ID,
 			GroupID:    config.groupID,
@@ -120,12 +119,22 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 		opt(c)
 	}
 
+	consumer, _ := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": "host1:9092,host2:9092",
+		"group.id":          "foo",
+		"auto.offset.reset": "smallest"})
 	// Set the reader unless one was injected via the WithKafkaReader option.
 	if c.reader == nil {
 		if c.handlerExecutor.DataDogTracingEnabled {
-			c.reader = kafkatrace.NewReader(c.readerConfig)
+			c.reader = consumer
 		} else {
-			c.reader = kafka.NewReader(c.readerConfig)
+			c.reader = consumer
+			// c.reader = kafka.NewConsumer(&kafka.ConfigMap{
+			// 	"bootstrap.servers": "host1:9092,host2:9092",
+			// 	"group.id":          "foo",
+			// 	"auto.offset.reset": "smallest",
+			// })
+			// c.reader = kafka.NewReader(c.readerConfig)
 		}
 	}
 
@@ -165,11 +174,12 @@ func (c *Consumer) Stop() error {
 }
 
 func (c *Consumer) process(ctx context.Context, handler Handler) error {
-	var msg kafka.Message
+	var msg *kafka.Message
 	var err error
-
+	//var event kafka.Event
 	if c.withExplicitCommit {
-		msg, err = c.reader.FetchMessage(ctx)
+		msg, err = c.reader.ReadMessage(1000)
+		// needs switch case here to handle
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil
@@ -177,7 +187,7 @@ func (c *Consumer) process(ctx context.Context, handler Handler) error {
 			return fmt.Errorf("unable to fetch message: %w", err)
 		}
 	} else {
-		msg, err = c.reader.ReadMessage(ctx)
+		msg, err = c.reader.ReadMessage(1000)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil
@@ -186,16 +196,16 @@ func (c *Consumer) process(ctx context.Context, handler Handler) error {
 		}
 	}
 
-	debugKeyVals := append([]any{"partition", msg.Partition, "offset", msg.Offset}, c.debugKeyVals...)
+	debugKeyVals := append([]any{"partition", msg.TopicPartition.Partition, "offset", msg.TopicPartition.Offset}, c.debugKeyVals...)
 	c.debugLogger.Print("Fetched message", debugKeyVals...)
 
-	if err = c.handlerExecutor.execute(ctx, msg, handler); err != nil {
+	if err = c.handlerExecutor.execute(ctx, *msg, handler); err != nil {
 		return fmt.Errorf("unable to handle message: %w", err)
 	}
 	c.debugLogger.Print("Message handler execution finished", debugKeyVals...)
 
 	if c.withExplicitCommit {
-		if err = c.reader.CommitMessages(ctx, msg); err != nil {
+		if _, err = c.reader.CommitMessage(msg); err != nil {
 			return fmt.Errorf("unable to commit message: %w", err)
 		}
 	}
@@ -227,15 +237,15 @@ type GroupConfig struct {
 // It is worth noting that publishing failed messages to a dead letter queue is
 // not supported and instead would need to be included in your handler implementation.
 type Group struct {
-	ID      string
-	config  GroupConfig
-	opts    []Option
-	dialer  *kafka.Dialer
+	ID     string
+	config GroupConfig
+	opts   []Option
+	// dialer  *kafka.Dialer
 	stopChs []chan struct{}
 }
 
 // NewGroup returns a new Group configured with the provided dialer and config.
-func NewGroup(dialer *kafka.Dialer, config GroupConfig, opts ...Option) *Group {
+func NewGroup(config GroupConfig, opts ...Option) *Group {
 	if config.Count <= 0 {
 		config.Count = 1
 	}
@@ -243,8 +253,8 @@ func NewGroup(dialer *kafka.Dialer, config GroupConfig, opts ...Option) *Group {
 	return &Group{
 		ID:     fmt.Sprintf("%s-%s", strings.ToLower(config.GroupID), uuid.New().String()[:7]), // semi-random slug
 		config: config,
-		dialer: dialer,
-		opts:   opts,
+		// dialer: dialer,
+		opts: opts,
 	}
 }
 
@@ -275,7 +285,7 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 			groupID:       g.config.GroupID,
 			DebugLogger:   g.config.DebugLogger,
 		}
-		c := NewConsumer(g.dialer, cfg, g.opts...)
+		c := NewConsumer(cfg, g.opts...)
 
 		go func() {
 			defer wg.Done()
@@ -305,19 +315,19 @@ func (g *Group) Stop() {
 
 // DialerSCRAM512 returns a Kafka dialer configured with SASL authentication
 // to securely transmit the provided credentials to Kafka using SCRAM-SHA-512.
-func DialerSCRAM512(username string, password string) (*kafka.Dialer, error) {
-	mechanism, err := scram.Mechanism(scram.SHA512, username, password)
-	if err != nil {
-		return nil, err
-	}
+// func DialerSCRAM512(username string, password string) (*kafka.Dialer, error) {
+// 	mechanism, err := scram.Mechanism(scram.SHA512, username, password)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return &kafka.Dialer{
-		Timeout:       10 * time.Second,
-		DualStack:     true,
-		SASLMechanism: mechanism,
-		TLS:           &tls.Config{MinVersion: tls.VersionTLS12},
-	}, nil
-}
+// 	return &kafka.Dialer{
+// 		Timeout:       10 * time.Second,
+// 		DualStack:     true,
+// 		SASLMechanism: mechanism,
+// 		TLS:           &tls.Config{MinVersion: tls.VersionTLS12},
+// 	}, nil
+// }
 
 type HandlerRetryBackOffConstructor func() backoff.BackOff
 

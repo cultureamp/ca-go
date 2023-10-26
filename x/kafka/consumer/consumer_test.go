@@ -4,16 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/segmentio/kafka-go"
+
+	// "github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,30 +49,30 @@ func TestNewConsumer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			wantBackOff := NonStopExponentialBackOff
 			wantNotify := func(ctx context.Context, err error, msg Message) {}
-			wantBalancers := []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}}
+			// wantBalancers := []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}}
 
-			dialer, err := DialerSCRAM512("username", "password")
-			require.NoError(t, err)
+			// dialer, err := DialerSCRAM512("username", "password")
+			// require.NoError(t, err)
 
-			c := NewConsumer(dialer, tt.config,
+			c := NewConsumer(tt.config,
 				WithExplicitCommit(),
-				WithGroupBalancers(wantBalancers...),
+				//WithGroupBalancers(wantBalancers...),
 				WithHandlerBackOffRetry(wantBackOff),
 				WithNotifyError(wantNotify),
-				WithReaderLogger(func(s string, i ...interface{}) { log.Println(s) }),
-				WithReaderErrorLogger(func(s string, i ...interface{}) { log.Println(s) }),
+				// WithReaderLogger(func(s string, i ...interface{}) { log.Println(s) }),
+				// WithReaderErrorLogger(func(s string, i ...interface{}) { log.Println(s) }),
 				WithDataDogTracing(),
 				WithKafkaReader(func() Reader {
 					return &MockReader{}
 				}),
 			)
 			require.NotNil(t, c)
-			assert.Equal(t, c.readerConfig.Dialer, dialer)
+			// assert.Equal(t, c.readerConfig.Dialer, dialer)
 			assert.NotNil(t, c.reader)
 			assert.Implements(t, (*Reader)(nil), c.reader)
 			assert.NotNil(t, c.handlerExecutor.BackOffConstructor)
 			assert.NotNil(t, c.handlerExecutor.BackOffConstructor)
-			assert.Equal(t, wantBalancers, c.readerConfig.GroupBalancers)
+			// assert.Equal(t, wantBalancers, c.readerConfig.GroupBalancers)
 
 			if tt.wantGenID {
 				assert.NotEmpty(t, c.id)
@@ -88,13 +89,13 @@ func TestConsumer_Run(t *testing.T) {
 	wantTimes := 50
 
 	reader := NewMockReader(gomock.NewController(t))
-	reader.EXPECT().Close().Return(nil).Times(1)
-	reader.EXPECT().ReadMessage(ctx).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
+	reader.EXPECT().Close().Return(nil).Times(1000)
+	reader.EXPECT().ReadMessage(1000).DoAndReturn(func(_ context.Context) (kafka.Message, error) {
 		currMsg = randMsg()
 		return currMsg, nil
 	}).Times(wantTimes)
 
-	consumer := NewConsumer(&kafka.Dialer{}, Config{},
+	consumer := NewConsumer(Config{},
 		WithKafkaReader(func() Reader { return reader }),
 	)
 
@@ -194,7 +195,7 @@ func TestConsumer_Run_error(t *testing.T) {
 			reader.EXPECT().Close().Return(nil).AnyTimes()
 			reader.EXPECT().ReadMessage(ctx).Return(randMsg(), nil).AnyTimes()
 
-			consumer := NewConsumer(&kafka.Dialer{}, Config{},
+			consumer := NewConsumer(Config{},
 				WithKafkaReader(func() Reader { return reader }),
 			)
 
@@ -254,7 +255,7 @@ func TestNewGroup(t *testing.T) {
 			wantNotify := func(ctx context.Context, err error, msg Message) {}
 			wantOpts := []Option{WithHandlerBackOffRetry(wantBackOff), WithNotifyError(wantNotify)}
 
-			g := NewGroup(&kafka.Dialer{}, tt.config, wantOpts...)
+			g := NewGroup(tt.config, wantOpts...)
 			require.NotNil(t, g)
 			assert.Empty(t, g.stopChs)
 			wantConfig := tt.config
@@ -279,7 +280,7 @@ func TestGroup_Run(t *testing.T) {
 	reader.EXPECT().Close().AnyTimes()
 	reader.EXPECT().ReadMessage(ctx).Return(randMsg(), nil).AnyTimes()
 
-	group := NewGroup(&kafka.Dialer{}, GroupConfig{Count: wantConsumers},
+	group := NewGroup(GroupConfig{Count: wantConsumers},
 		WithKafkaReader(func() Reader { return reader }),
 	)
 
@@ -327,15 +328,15 @@ func TestGroup_Run_readerError(t *testing.T) {
 			name:               "reader fetch error",
 			withExplicitCommit: true,
 			setupReader: func(m *MockReader) {
-				m.EXPECT().FetchMessage(gomock.Any()).Return(kafka.Message{}, wantErr).Times(1)
+				m.EXPECT().ReadMessage(gomock.Any()).Return(kafka.Message{}, wantErr).Times(1)
 			},
 		},
 		{
 			name:               "reader commit error",
 			withExplicitCommit: true,
 			setupReader: func(m *MockReader) {
-				m.EXPECT().FetchMessage(gomock.Any()).Return(wantMsg, nil).Times(1)
-				m.EXPECT().CommitMessages(gomock.Any(), wantMsg).Return(wantErr).Times(1)
+				m.EXPECT().ReadMessage(gomock.Any()).Return(wantMsg, nil).Times(1)
+				m.EXPECT().CommitMessage(wantMsg).Return(wantErr).Times(1)
 			},
 		},
 		{
@@ -388,10 +389,14 @@ func TestNonStopExponentialBackOff(t *testing.T) {
 }
 
 func randMsg() kafka.Message {
+	rand.Seed(time.Now().UnixMilli())
+	topic := "some-topic"
 	return kafka.Message{
-		Topic:     "some-topic",
-		Partition: rand.Intn(20-1) + 1, //nolint:gosec
-		Value:     []byte(uuid.New().String()),
+		TopicPartition: kafka.TopicPartition{
+			Topic:     &topic,
+			Partition: int32(rand.Intn(16-1) + 1), //nolint:gosec
+		},
+		Value: []byte(uuid.New().String()),
 	}
 }
 

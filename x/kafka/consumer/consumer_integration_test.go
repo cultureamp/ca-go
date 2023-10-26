@@ -16,8 +16,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/google/uuid"
-	"github.com/segmentio/kafka-go"
+
+	SK "github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -88,7 +90,7 @@ func TestConsumerGroup_Run_integration(t *testing.T) {
 				Topic:   tc.Topic,
 				GroupID: uuid.New().String(),
 			}
-			c := NewGroup(kafka.DefaultDialer, cfg, tt.opts...)
+			c := NewGroup(cfg, tt.opts...)
 
 			numPublish := tt.numMessages
 			publishDummyEvents(t, ctx, tc, numPublish, "")
@@ -148,7 +150,7 @@ func TestConsumer_Run_integration(t *testing.T) {
 		Brokers: []string{brokerHostPort},
 		Topic:   helper.Topic,
 	}
-	c := NewConsumer(kafka.DefaultDialer, cfg)
+	c := NewConsumer(cfg)
 
 	numPublish := 100
 	publishDummyEvents(t, ctx, helper, numPublish, "")
@@ -174,6 +176,7 @@ func TestConsumer_Run_integration(t *testing.T) {
 
 func publishDummyEvents(t *testing.T, ctx context.Context, tc *kafkatest.TestClient[TestEvent], numPublish int, key string) {
 	var msgs []kafka.Message
+	var msg2s []SK.Message
 
 	for i := 0; i < numPublish; i++ {
 		msgKey := key
@@ -187,12 +190,19 @@ func publishDummyEvents(t *testing.T, ctx context.Context, tc *kafkatest.TestCli
 		}
 
 		msg := kafka.Message{
+			Value:     tc.Registry().Encode(t, ctx, e),
+			Timestamp: time.Now(),
+			Key:       []byte(msgKey),
+		}
+		msgs = append(msgs, msg)
+
+		msg2 := SK.Message{
 			Value: tc.Registry().Encode(t, ctx, e),
 			Time:  time.Now(),
 			Key:   []byte(msgKey),
 		}
-		msgs = append(msgs, msg)
+		msg2s = append(msg2s, msg2)
 	}
 
-	tc.PublishMessages(t, ctx, msgs...)
+	tc.PublishMessages(t, ctx, msg2s...)
 }

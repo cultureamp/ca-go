@@ -6,6 +6,10 @@ mod:
 test:
 	go test -race -cover ./...
 
+.PHONY: generate
+generat:
+	go generate
+
 .PHONY: test-ci
 test-ci:
 	mkdir artifacts

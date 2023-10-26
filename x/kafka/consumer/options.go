@@ -1,8 +1,6 @@
 package consumer
 
-import (
-	"github.com/segmentio/kafka-go"
-)
+//"github.com/segmentio/kafka-go"
 
 type Option func(consumer *Consumer)
 
@@ -17,18 +15,18 @@ func WithExplicitCommit() Option {
 	}
 }
 
-// WithGroupBalancers adds a priority-ordered list of client-side consumer group
-// balancing strategies that will be offered to the coordinator. The first strategy
-// that all group members support will be chosen by the leader.
-//
-// Default: [Range, RoundRobin]
-//
-// Only used by consumer group.
-func WithGroupBalancers(groupBalancers ...kafka.GroupBalancer) Option {
-	return func(consumer *Consumer) {
-		consumer.readerConfig.GroupBalancers = groupBalancers
-	}
-}
+// // WithGroupBalancers adds a priority-ordered list of client-side consumer group
+// // balancing strategies that will be offered to the coordinator. The first strategy
+// // that all group members support will be chosen by the leader.
+// //
+// // Default: [Range, RoundRobin]
+// //
+// // Only used by consumer group.
+// func WithGroupBalancers(groupBalancers ...kafka.GroupBalancer) Option {
+// 	return func(consumer *Consumer) {
+// 		consumer.readerConfig.GroupBalancers = groupBalancers
+// 	}
+// }
 
 // WithHandlerBackOffRetry adds a back off retry policy on the consumer handler.
 func WithHandlerBackOffRetry(backOffConstructor HandlerRetryBackOffConstructor) Option {
@@ -45,21 +43,21 @@ func WithNotifyError(notify NotifyError) Option {
 	}
 }
 
-// WithReaderLogger specifies a logger used to report internal consumer reader
-// changes.
-func WithReaderLogger(logger kafka.LoggerFunc) Option {
-	return func(consumer *Consumer) {
-		consumer.readerConfig.Logger = logger
-	}
-}
+// // WithReaderLogger specifies a logger used to report internal consumer reader
+// // changes.
+// func WithReaderLogger(logger kafka.LoggerFunc) Option {
+// 	return func(consumer *Consumer) {
+// 		consumer.readerConfig.Logger = logger
+// 	}
+// }
 
-// WithReaderErrorLogger specifies a logger used to report internal consumer
-// reader errors.
-func WithReaderErrorLogger(logger kafka.LoggerFunc) Option {
-	return func(consumer *Consumer) {
-		consumer.readerConfig.ErrorLogger = logger
-	}
-}
+// // WithReaderErrorLogger specifies a logger used to report internal consumer
+// // reader errors.
+// func WithReaderErrorLogger(logger kafka.LoggerFunc) Option {
+// 	return func(consumer *Consumer) {
+// 		consumer.readerConfig.ErrorLogger = logger
+// 	}
+// }
 
 // WithDataDogTracing adds Data Dog tracing to the consumer.
 //

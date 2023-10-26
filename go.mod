@@ -8,7 +8,8 @@ require (
 	github.com/aws/aws-sdk-go v1.45.25
 	github.com/aws/aws-sdk-go-v2/service/kms v1.24.7
 	github.com/cenkalti/backoff/v4 v4.2.1
-	github.com/getsentry/sentry-go v0.25.0
+	github.com/confluentinc/confluent-kafka-go/v2 v2.2.0
+	github.com/getsentry/sentry-go v0.24.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.1
 	github.com/hashicorp/go-hclog v1.5.0

@@ -7,7 +7,9 @@ import (
 	"testing"
 	"time"
 
+	//"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/google/uuid"
+
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/require"
 )
