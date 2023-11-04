@@ -10,7 +10,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/getsentry/sentry-go v0.25.0
 	github.com/golang/mock v1.6.0
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.4.0
 	github.com/hashicorp/go-hclog v1.5.0
 	github.com/hashicorp/go-secure-stdlib/awsutil v0.2.3
 	github.com/hashicorp/vault v1.15.1
