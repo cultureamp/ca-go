@@ -13,7 +13,7 @@ require (
 	github.com/google/uuid v1.4.0
 	github.com/hashicorp/go-hclog v1.5.0
 	github.com/hashicorp/go-secure-stdlib/awsutil v0.2.3
-	github.com/hashicorp/vault v1.15.1
+	github.com/hashicorp/vault v1.15.2
 	github.com/hashicorp/vault/api v1.10.0
 	github.com/hashicorp/vault/sdk v0.10.2
 	github.com/heetch/avro v0.4.4
@@ -62,7 +62,6 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230626094100-7e9e0395ebec // indirect
 	github.com/actgardner/gogen-avro/v10 v10.2.1 // indirect
 	github.com/aliyun/alibaba-cloud-sdk-go v1.62.521 // indirect
