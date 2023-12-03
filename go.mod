@@ -23,7 +23,7 @@ require (
 	github.com/launchdarkly/go-server-sdk/v7 v7.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.31.0
-	github.com/segmentio/kafka-go v0.4.45
+	github.com/segmentio/kafka-go v0.4.46
 	github.com/stretchr/testify v1.8.4
 	github.com/xdg-go/scram v1.1.2
 	goa.design/goa/v3 v3.14.0
