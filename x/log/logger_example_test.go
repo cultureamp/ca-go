@@ -30,5 +30,5 @@ func Example() {
 		Msg("initialise handler")
 
 	// Output:
-	//{"level":"debug","app":"test-app","app_version":"1.0.0","aws_region":"us-east-1","aws_account_id":"","farm":"test-farm","request_id":"id1","correlation_id":"id2","test-str":"str","test-number":1,"event":"initialise_handler","message":"initialise handler"}
+	// {"level":"debug","app":"test-app","app_version":"1.0.0","aws_region":"us-east-1","aws_account_id":"","farm":"test-farm","request_id":"id1","correlation_id":"id2","test-str":"str","test-number":1,"event":"initialise_handler","message":"initialise handler"}
 }
