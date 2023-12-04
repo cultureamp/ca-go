@@ -41,11 +41,11 @@ func newDefaultLogger(config EnvConfig) *Logger {
 
 	logger.UpdateContext(func(c zerolog.Context) zerolog.Context {
 		return c.
-			Str("AppName", config.AppName).
-			Str("AppVersion", config.AppVersion).
-			Str("AwsRegion", config.AwsRegion).
-			Str("AwsAccountId", config.AwsAccountID).
-			Str("Farm", config.Farm)
+			Str("app", config.AppName).
+			Str("app_version", config.AppVersion).
+			Str("aws_region", config.AwsRegion).
+			Str("aws_account_id", config.AwsAccountID).
+			Str("farm", config.Farm)
 	})
 
 	return logger
@@ -63,8 +63,8 @@ func NewFromCtx(ctx context.Context) *Logger {
 	if ok {
 		logger.UpdateContext(func(c zerolog.Context) zerolog.Context {
 			return c.
-				Str("RequestID", reqIds.RequestID).
-				Str("CorrelationID", reqIds.CorrelationID)
+				Str("request_id", reqIds.RequestID).
+				Str("correlation_id", reqIds.CorrelationID)
 		})
 	}
 
@@ -74,9 +74,9 @@ func NewFromCtx(ctx context.Context) *Logger {
 	if ok {
 		logger.UpdateContext(func(c zerolog.Context) zerolog.Context {
 			return c.
-				Str("UserID", userIds.UserID).
-				Str("RealUserID", userIds.RealUserID).
-				Str("CustomerAccountID", userIds.CustomerAccountID)
+				Str("user_id", userIds.UserID).
+				Str("real_user_id", userIds.RealUserID).
+				Str("account_id", userIds.CustomerAccountID)
 		})
 	}
 
