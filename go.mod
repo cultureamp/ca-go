@@ -11,7 +11,7 @@ require (
 	github.com/getsentry/sentry-go v0.25.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.5.0
-	github.com/hashicorp/go-hclog v1.5.0
+	github.com/hashicorp/go-hclog v1.6.2
 	github.com/hashicorp/go-secure-stdlib/awsutil v0.2.3
 	github.com/hashicorp/vault v1.15.3
 	github.com/hashicorp/vault/api v1.10.0
