@@ -27,7 +27,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/xdg-go/scram v1.1.2
 	goa.design/goa/v3 v3.14.1
-	gopkg.in/DataDog/dd-trace-go.v1 v1.58.0
+	gopkg.in/DataDog/dd-trace-go.v1 v1.58.1
 )
 
 require (
