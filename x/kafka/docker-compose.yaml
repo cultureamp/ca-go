@@ -36,7 +36,7 @@ services:
       timeout: 10s
       retries: 10
   schemaregistry:
-    image: confluentinc/cp-schema-registry:7.5.2
+    image: confluentinc/cp-schema-registry:7.5.3
     restart: always
     depends_on:
       - zookeeper
