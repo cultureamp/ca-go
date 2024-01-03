@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/cultureamp/ca-go/log"
 )
 
-func TestBasicExample(t *testing.T) {
+func TestBasicExamples(t *testing.T) {
 	ctx := context.Background()
 
 	log.Debug(ctx, "hander_added").
@@ -52,6 +53,24 @@ func TestBasicExample(t *testing.T) {
 	// {"severity":"error","app":"test-app","app_version":"1.0.0","aws_region":"us-east-1","aws_account_id":"","farm":"test-farm","error":"exception","event":"event_details","test-str":"str","test-number":1,"time":"2024-01-03T15:57:02+11:00","details":"detailed message"}
 }
 
+func TestGlamplifyLogFieldExamples(t *testing.T) {
+	ctx := context.Background()
+
+	type fields map[string]interface{}
+
+	now := time.Now()
+	f := &fields{
+		"key1":  "string value",
+		"key2":  1,
+		"now":   now.Format(time.RFC3339),
+		"later": time.Now(),
+	}
+
+	log.Info(ctx, "log_fields").
+		Interface("properties", f).
+		Msg("detailed information explain")
+}
+
 func TestRequestExample(t *testing.T) {
 	ctx := context.Background()
 
@@ -72,7 +91,7 @@ func TestRequestExample(t *testing.T) {
 	// {"severity":"info","app":"ca-go","app_version":"1.0.1","aws_region":"local","aws_account_id":"012345678901","farm":"local","product":"library","event":"info_event","trace_id":"trace_123_id","request_id":"request_456_id","correlation_id":"correlation_789_id","os":"darwin","test-str":"str","test-number":1,"time":"2024-01-03T19:46:45+11:00","details":"logging should contain request headers"}
 }
 
-func TestAuthPyaloadExample(t *testing.T) {
+func TestAuthPayloadExample(t *testing.T) {
 	ctx := context.Background()
 
 	// create a jwt payload

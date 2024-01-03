@@ -91,10 +91,10 @@ func (l *Logger) debug(ctx context.Context, event string) *zerolog.Event {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func Info(ctx context.Context, event string) *zerolog.Event {
-	return defaultLogger.Info(ctx, event)
+	return defaultLogger.info(ctx, event)
 }
 
-func (l *Logger) Info(ctx context.Context, event string) *zerolog.Event {
+func (l *Logger) info(ctx context.Context, event string) *zerolog.Event {
 	lg := l.impl.Info().Str("event", toSnakeCase(event))
 	lg = l.addRequestIDs(ctx, lg)
 	lg = l.addAuthenticatedUserIDs(ctx, lg)
@@ -106,10 +106,10 @@ func (l *Logger) Info(ctx context.Context, event string) *zerolog.Event {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func Warn(ctx context.Context, event string) *zerolog.Event {
-	return defaultLogger.Warn(ctx, event)
+	return defaultLogger.warn(ctx, event)
 }
 
-func (l *Logger) Warn(ctx context.Context, event string) *zerolog.Event {
+func (l *Logger) warn(ctx context.Context, event string) *zerolog.Event {
 	lg := l.impl.Warn().Str("event", toSnakeCase(event))
 	lg = l.addRequestIDs(ctx, lg)
 	lg = l.addAuthenticatedUserIDs(ctx, lg)
@@ -121,10 +121,10 @@ func (l *Logger) Warn(ctx context.Context, event string) *zerolog.Event {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func Error(ctx context.Context, event string, err error) *zerolog.Event {
-	return defaultLogger.Error(ctx, event, err)
+	return defaultLogger.error(ctx, event, err)
 }
 
-func (l *Logger) Error(ctx context.Context, event string, err error) *zerolog.Event {
+func (l *Logger) error(ctx context.Context, event string, err error) *zerolog.Event {
 	lg := l.impl.Error().Err(err).Str("event", toSnakeCase(event))
 	lg = l.addRequestIDs(ctx, lg)
 	lg = l.addAuthenticatedUserIDs(ctx, lg)
@@ -137,10 +137,10 @@ func (l *Logger) Error(ctx context.Context, event string, err error) *zerolog.Ev
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func Fatal(ctx context.Context, event string, err error) *zerolog.Event {
-	return defaultLogger.Fatal(ctx, event, err)
+	return defaultLogger.fatal(ctx, event, err)
 }
 
-func (l *Logger) Fatal(ctx context.Context, event string, err error) *zerolog.Event {
+func (l *Logger) fatal(ctx context.Context, event string, err error) *zerolog.Event {
 	lg := l.impl.Fatal().Err(err).Str("event", toSnakeCase(event))
 	lg = l.addRequestIDs(ctx, lg)
 	lg = l.addAuthenticatedUserIDs(ctx, lg)
@@ -153,10 +153,10 @@ func (l *Logger) Fatal(ctx context.Context, event string, err error) *zerolog.Ev
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func Panic(ctx context.Context, event string, err error) *zerolog.Event {
-	return defaultLogger.Panic(ctx, event, err)
+	return defaultLogger.panic(ctx, event, err)
 }
 
-func (l *Logger) Panic(ctx context.Context, event string, err error) *zerolog.Event {
+func (l *Logger) panic(ctx context.Context, event string, err error) *zerolog.Event {
 	lg := l.impl.Panic().Err(err).Str("event", toSnakeCase(event))
 	lg = l.addRequestIDs(ctx, lg)
 	lg = l.addAuthenticatedUserIDs(ctx, lg)

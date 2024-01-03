@@ -9,7 +9,6 @@ import (
 
 func TestNewLoggerConfigWithNoEnv(t *testing.T) {
 	unsetEnvironmentVariables()
-	defer unsetEnvironmentVariables()
 
 	config := newLoggerConfig()
 	assert.NotNil(t, config)
@@ -22,7 +21,7 @@ func TestNewLoggerConfigWithNoEnv(t *testing.T) {
 }
 
 func TestNewLoggerConfigWithEnv(t *testing.T) {
-	defer unsetEnvironmentVariables()
+	unsetEnvironmentVariables()
 
 	t.Setenv("APP", "test-app")
 	t.Setenv("APP_VERSION", "1.0.0")
