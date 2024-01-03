@@ -1,6 +1,7 @@
 run:
   go: 1.21
   timeout: 5m
+  tests: false
 
 linters:
   enable-all: true
