@@ -15,7 +15,7 @@ func Example() {
 		Farm:       "test-farm",
 	})
 
-	logger.Debug(ctx, "event_details").
+	logger.Debug(ctx, "Event Details").
 		Str("test-str", "str").
 		Int("test-number", 1).
 		Msg("initialise handler")
@@ -28,7 +28,7 @@ func Example() {
 	})
 
 	err := errors.New("exception")
-	logger.Error(ctx, "event_details", err).
+	logger.Error(ctx, "Event Details", err).
 		Str("test-str", "str").
 		Int("test-number", 1).
 		Msg("initialise handler")

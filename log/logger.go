@@ -3,8 +3,10 @@ package log
 import (
 	"context"
 	"os"
+	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/rs/zerolog"
 )
@@ -60,6 +62,31 @@ func setGlobalLogger(config EnvConfig) {
 	}
 }
 
+// ToSnakeCase returns a new string in the format word_word
+func toSnakeCase(s string) string {
+	var sb strings.Builder
+
+	in := []rune(strings.TrimSpace(s))
+	for i, r := range in {
+		if unicode.IsUpper(r) {
+			if i > 0 && unicode.IsLower(in[i-1]) {
+				sb.WriteRune('_')
+			}
+			sb.WriteRune(unicode.ToLower(r))
+		} else {
+			if unicode.IsSpace(r) {
+				if !unicode.IsSpace(in[i-1]) {
+					sb.WriteRune('_')
+				}
+			} else {
+				sb.WriteRune(r)
+			}
+		}
+	}
+
+	return sb.String()
+}
+
 // SetupFormatter decides the output formatter based on the environment where the app is running on.
 // It uses text formatter with color if you run the app locally,
 // while using json formatter if it's running on the cloud.
@@ -72,21 +99,21 @@ func (l *Logger) setupFormatter(farm string) {
 }
 
 func (l *Logger) Debug(ctx context.Context, event string) *zerolog.Event {
-	return l.impl.Debug().Str("event", ToSnakeCase(event))
+	return l.impl.Debug().Str("event", toSnakeCase(event))
 }
 
 func (l *Logger) Info(ctx context.Context, event string) *zerolog.Event {
-	return l.impl.Info().Str("event", ToSnakeCase(event))
+	return l.impl.Info().Str("event", toSnakeCase(event))
 }
 
 func (l *Logger) Warn(ctx context.Context, event string) *zerolog.Event {
-	return l.impl.Warn().Str("event", ToSnakeCase(event))
+	return l.impl.Warn().Str("event", toSnakeCase(event))
 }
 
 func (l *Logger) Error(ctx context.Context, event string, err error) *zerolog.Event {
-	return l.impl.Error().Err(err).Str("event", ToSnakeCase(event))
+	return l.impl.Error().Err(err).Str("event", toSnakeCase(event))
 }
 
 func (l *Logger) Fatal(ctx context.Context, event string, err error) *zerolog.Event {
-	return l.impl.Fatal().Err(err).Str("event", ToSnakeCase(event))
+	return l.impl.Fatal().Err(err).Str("event", toSnakeCase(event))
 }
