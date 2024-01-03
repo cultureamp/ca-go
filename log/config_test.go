@@ -24,12 +24,12 @@ func TestNewLoggerConfigWithNoEnv(t *testing.T) {
 func TestNewLoggerConfigWithEnv(t *testing.T) {
 	defer unsetEnvironmentVariables()
 
-	os.Setenv("APP", "test-app")
-	os.Setenv("APP_VERSION", "1.0.0")
-	os.Setenv("AWS_REGION", "us-west")
-	os.Setenv("LOG_LEVEL", "DEBUG")
-	os.Setenv("AWS_ACCOUNT_ID", "abc123")
-	os.Setenv("FARM", "production")
+	t.Setenv("APP", "test-app")
+	t.Setenv("APP_VERSION", "1.0.0")
+	t.Setenv("AWS_REGION", "us-west")
+	t.Setenv("LOG_LEVEL", "DEBUG")
+	t.Setenv("AWS_ACCOUNT_ID", "abc123")
+	t.Setenv("FARM", "production")
 
 	config := newLoggerConfig()
 	assert.NotNil(t, config)

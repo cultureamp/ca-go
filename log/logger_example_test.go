@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -55,7 +56,7 @@ func TestRequestExample(t *testing.T) {
 	ctx := context.Background()
 
 	// create a dummy request
-	req := httptest.NewRequest("GET", "http://example.com/foo", nil)
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/foo", nil)
 	req.Header.Add(log.TraceHeader, "trace_123_id")
 	req.Header.Add(log.RequestHeader, "request_456_id")
 	req.Header.Add(log.CorrelationHeader, "correlation_789_id")
