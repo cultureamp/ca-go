@@ -4,12 +4,12 @@ import (
 	"context"
 )
 
-type contextAuthUserIDKey string
+type contextAuthPayloadKey string
 
-const authUserIDsKey = contextAuthUserIDKey("auth_user_ids")
+const authPayloadKey = contextAuthPayloadKey("auth_payload")
 
-// AuthUserIDs contains the account, user and realuser ids usually obtains from an authenticated JWT.
-type AuthUserIDs struct {
+// AuthPayload contains the account, user and realuser ids usually obtains from an authenticated JWT.
+type AuthPayload struct {
 	// CustomerAccountID is the ID of the currently logged in user's parent
 	// account/organization, sometimes known as the "account_aggregate_id".
 	CustomerAccountID string
@@ -21,16 +21,16 @@ type AuthUserIDs struct {
 	RealUserID string
 }
 
-// ContextWithAuthUserIDs returns a new context with the given AuthUserIDs
+// ContextWithAuthPayload returns a new context with the given AuthUserIDs
 // embedded as a value.
-func ContextWithAuthUserIDs(ctx context.Context, ids AuthUserIDs) context.Context {
-	return context.WithValue(ctx, authUserIDsKey, ids)
+func ContextWithAuthPayload(ctx context.Context, ids AuthPayload) context.Context {
+	return context.WithValue(ctx, authPayloadKey, ids)
 }
 
-// AuthUserIDsFromContext attempts to retrieve a AuthUserIDs struct from the given
+// AuthPayloadFromContext attempts to retrieve a AuthUserIDs struct from the given
 // context, returning a AuthUserIDs struct along with a boolean signalling
 // whether the retrieval was successful.
-func AuthUserIDsFromContext(ctx context.Context) (AuthUserIDs, bool) {
-	ids, ok := ctx.Value(authUserIDsKey).(AuthUserIDs)
+func AuthPayloadFromContext(ctx context.Context) (AuthPayload, bool) {
+	ids, ok := ctx.Value(authPayloadKey).(AuthPayload)
 	return ids, ok
 }

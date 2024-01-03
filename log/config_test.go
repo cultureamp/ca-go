@@ -1,78 +1,51 @@
 package log
 
 import (
-	"context"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEnvConfigFromContext(t *testing.T) {
-	tests := []struct {
-		name        string
-		env         *EnvConfig
-		expectedCfg EnvConfig
-	}{
-		{
-			name: "should overwrite default env config values if provided in context",
-			env: &EnvConfig{
-				AppName:    "test-app",
-				AppVersion: "1.0.0",
-				AwsRegion:  "us-east-1",
-				Farm:       "test-farm",
-				LogLevel:   "INFO",
-			},
-			expectedCfg: EnvConfig{
-				AppName:    "test-app",
-				AppVersion: "1.0.0",
-				AwsRegion:  "us-east-1",
-				Farm:       "test-farm",
-				LogLevel:   "INFO",
-			},
-		},
-		{
-			name: "should have default env config values if not provided in context",
-			expectedCfg: EnvConfig{
-				AppName:      "",
-				AppVersion:   "0.0.0",
-				AwsRegion:    "",
-				AwsAccountID: "",
-				Farm:         "local",
-				LogLevel:     "INFO",
-			},
-		},
-	}
+func TestNewLoggerConfigWithNoEnv(t *testing.T) {
+	unsetEnvironmentVariables()
+	defer unsetEnvironmentVariables()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
-			if tt.env != nil {
-				ctx = context.WithValue(context.Background(), envConfigKey, *tt.env)
-			}
-			cfg := EnvConfigFromContext(ctx)
-			assert.Equal(t, tt.expectedCfg, cfg)
-		})
-	}
+	config := newLoggerConfig()
+	assert.NotNil(t, config)
+	assert.Equal(t, "", config.AppName)
+	assert.Equal(t, "1.0.0", config.AppVersion)
+	assert.Equal(t, "", config.AwsRegion)
+	assert.Equal(t, "INFO", config.LogLevel)
+	assert.Equal(t, "local", config.AwsAccountID)
+	assert.Equal(t, "local", config.Farm)
 }
 
-func TestContextWithEnvConfig(t *testing.T) {
-	tests := []struct {
-		name string
-		cfg  EnvConfig
-	}{
-		{
-			name: "should have env config values in context",
-			cfg: EnvConfig{
-				AppName: "test-app",
-				Farm:    "test-farm",
-			},
-		},
-	}
+func TestNewLoggerConfigWithEnv(t *testing.T) {
+	defer unsetEnvironmentVariables()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx := ContextWithEnvConfig(context.Background(), tt.cfg)
-			assert.Equal(t, tt.cfg, ctx.Value(envConfigKey))
-		})
-	}
+	os.Setenv("APP", "test-app")
+	os.Setenv("APP_VERSION", "1.0.0")
+	os.Setenv("AWS_REGION", "us-west")
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	os.Setenv("AWS_ACCOUNT_ID", "abc123")
+	os.Setenv("FARM", "production")
+
+	config := newLoggerConfig()
+	assert.NotNil(t, config)
+	assert.Equal(t, "test-app", config.AppName)
+	assert.Equal(t, "1.0.0", config.AppVersion)
+	assert.Equal(t, "us-west", config.AwsRegion)
+	assert.Equal(t, "DEBUG", config.LogLevel)
+	assert.Equal(t, "abc123", config.AwsAccountID)
+	assert.Equal(t, "production", config.Farm)
+}
+
+func unsetEnvironmentVariables() {
+	os.Unsetenv("APP")
+	os.Unsetenv("APP_VERSION")
+	os.Unsetenv("AWS_REGION")
+	os.Unsetenv("LOG_LEVEL")
+	os.Unsetenv("AWS_ACCOUNT_ID")
+	os.Unsetenv("FARM")
 }

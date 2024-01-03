@@ -1,37 +1,52 @@
 package log
 
 import (
-	"context"
-
-	"github.com/kelseyhightower/envconfig"
+	"os"
 )
 
-type contextValueKey string
-
-const envConfigKey = contextValueKey("env")
-
-// EnvConfig must have fields listed in https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3114598406/Logging+Standard
-type EnvConfig struct {
-	AppName      string `envconfig:"APP"`                      // The name of the application the log was generated from
-	AppVersion   string `default:"0.0.0" split_words:"true"`   // The version of the application
-	AwsRegion    string `split_words:"true"`                   // the AWS region this code is running in
-	AwsAccountID string `split_words:"true"`                   // the AWS account ID this code is running in
-	Farm         string `default:"local" envconfig:"FARM"`     // The name of the farm or where the code is running
-	LogLevel     string `default:"INFO" envconfig:"LOG_LEVEL"` // The logging level
+// LoggerConfig must have fields listed in https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3114598406/Logging+Standard
+type LoggerConfig struct {
+	LogLevel     string // The logging level
+	AppName      string // The name of the application the log was generated from
+	AppVersion   string // The version of the application
+	AwsRegion    string // the AWS region this code is running in
+	AwsAccountID string // the AWS account ID this code is running in
+	Product      string // performance, engagmentment, etc.
+	Farm         string // The name of the farm or where the code is running
 }
 
-// EnvConfigFromContext returns the EnvConfig value embedded in the given context. Return a default EnvConfig if not exists
-func EnvConfigFromContext(ctx context.Context) EnvConfig {
-	var config EnvConfig
-	config, ok := ctx.Value(envConfigKey).(EnvConfig)
+func newLoggerConfig() *LoggerConfig {
+	appName := os.Getenv("APP")
+	awsRegion := os.Getenv("AWS_REGION")
+	product := os.Getenv("PRODUCT")
+
+	logLevel, ok := os.LookupEnv("LOG_LEVEL")
 	if !ok {
-		envconfig.MustProcess("", &config)
+		logLevel = "INFO"
 	}
-	return config
-}
 
-// ContextWithEnvConfig returns a new context with the given EnvConfig embedded as a value.
-func ContextWithEnvConfig(ctx context.Context, envConfig EnvConfig) context.Context {
-	ctx = context.WithValue(ctx, envConfigKey, envConfig)
-	return ctx
+	awsAccountID, ok := os.LookupEnv("AWS_ACCOUNT_ID")
+	if !ok {
+		awsAccountID = "local"
+	}
+
+	farm, ok := os.LookupEnv("FARM")
+	if !ok {
+		farm = "local"
+	}
+
+	appVersion, ok := os.LookupEnv("APP_VERSION")
+	if !ok {
+		appVersion = "1.0.0"
+	}
+
+	return &LoggerConfig{
+		LogLevel:     logLevel,
+		AppName:      appName,
+		AppVersion:   appVersion,
+		AwsRegion:    awsRegion,
+		AwsAccountID: awsAccountID,
+		Product:      product,
+		Farm:         farm,
+	}
 }
