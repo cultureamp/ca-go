@@ -15,18 +15,16 @@ type Logger struct {
 	impl zerolog.Logger
 }
 
-var defaultLogger *Logger
+var defaultLogger *Logger = getInstance()
 
-func init() {
+func getInstance() *Logger {
 	setGlobalLogger()
-
 	config := newLoggerConfig()
-
-	defaultLogger = newDefaultLogger(config)
+	return newDefaultLogger(config)
 }
 
 func newDefaultLogger(config *LoggerConfig) *Logger {
-	lvl := zerolog.InfoLevel
+	var lvl zerolog.Level
 	switch config.LogLevel {
 	case "DEBUG":
 		lvl = zerolog.DebugLevel

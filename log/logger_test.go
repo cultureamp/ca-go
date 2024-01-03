@@ -49,7 +49,7 @@ func TestNewLoggerLevels(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			os.Setenv("LOG_LEVEL", tC.logLevel)
+			t.Setenv("LOG_LEVEL", tC.logLevel)
 
 			config := newLoggerConfig()
 			assert.NotNil(t, config)

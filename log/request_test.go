@@ -2,6 +2,7 @@ package log
 
 import (
 	"context"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -25,7 +26,7 @@ func TestRequestIsValid(t *testing.T) {
 	ctx := context.Background()
 
 	// create a dummy request
-	req := httptest.NewRequest("GET", "http://example.com/foo", nil)
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/foo", nil)
 	req.Header.Add(TraceHeader, "trace_123_id")
 	req.Header.Add(RequestHeader, "request_456_id")
 	req.Header.Add(CorrelationHeader, "correlation_789_id")
