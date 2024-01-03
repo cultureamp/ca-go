@@ -18,7 +18,7 @@ func Example() {
 	logger.Debug(ctx, "Event Details").
 		Str("test-str", "str").
 		Int("test-number", 1).
-		Msg("initialise handler")
+		Msg("detailed message")
 
 	logger = GetInstance(EnvConfig{
 		AppName:    "test-app",
@@ -31,8 +31,8 @@ func Example() {
 	logger.Error(ctx, "Event Details", err).
 		Str("test-str", "str").
 		Int("test-number", 1).
-		Msg("initialise handler")
+		Msg("detailed message")
 
 	// Output:
-	// {"level":"error","app":"test-app","app_version":"1.0.0","aws_region":"us-east-1","aws_account_id":"","farm":"test-farm","error":"exception","event":"event_details","test-str":"str","test-number":1,"message":"initialise handler"}
+	// {"severity":"error","app":"test-app","app_version":"1.0.0","aws_region":"us-east-1","aws_account_id":"","farm":"test-farm","error":"exception","event":"event_details","test-str":"str","test-number":1,"details":"detailed message"}
 }

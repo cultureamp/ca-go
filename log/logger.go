@@ -49,6 +49,9 @@ func newDefaultLogger(config EnvConfig) *Logger {
 
 func setGlobalLogger(config EnvConfig) {
 	zerolog.TimeFieldFormat = time.RFC3339
+	zerolog.MessageFieldName = "details"
+	zerolog.LevelFieldName = "severity"
+	zerolog.DurationFieldInteger = true
 
 	// Default level for this example is info, unless debug flag is present
 	switch config.LogLevel {
