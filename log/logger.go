@@ -58,7 +58,6 @@ func setGlobalLogger(config EnvConfig) {
 		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 	default:
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-
 	}
 }
 
@@ -99,21 +98,52 @@ func (l *Logger) setupFormatter(farm string) {
 }
 
 func (l *Logger) Debug(ctx context.Context, event string) *zerolog.Event {
-	return l.impl.Debug().Str("event", toSnakeCase(event))
+	lg := l.impl.Debug().Str("event", toSnakeCase(event))
+	lg = l.addRequestIDs(ctx, lg)
+	lg = l.addAuthenticatedUserIDs(ctx, lg)
+	return lg
 }
 
 func (l *Logger) Info(ctx context.Context, event string) *zerolog.Event {
-	return l.impl.Info().Str("event", toSnakeCase(event))
+	lg := l.impl.Info().Str("event", toSnakeCase(event))
+	lg = l.addRequestIDs(ctx, lg)
+	lg = l.addAuthenticatedUserIDs(ctx, lg)
+	return lg
 }
 
 func (l *Logger) Warn(ctx context.Context, event string) *zerolog.Event {
-	return l.impl.Warn().Str("event", toSnakeCase(event))
+	lg := l.impl.Warn().Str("event", toSnakeCase(event))
+	lg = l.addRequestIDs(ctx, lg)
+	lg = l.addAuthenticatedUserIDs(ctx, lg)
+	return lg
 }
 
 func (l *Logger) Error(ctx context.Context, event string, err error) *zerolog.Event {
-	return l.impl.Error().Err(err).Str("event", toSnakeCase(event))
+	lg := l.impl.Error().Err(err).Str("event", toSnakeCase(event))
+	lg = l.addRequestIDs(ctx, lg)
+	lg = l.addAuthenticatedUserIDs(ctx, lg)
+	return lg
 }
 
 func (l *Logger) Fatal(ctx context.Context, event string, err error) *zerolog.Event {
-	return l.impl.Fatal().Err(err).Str("event", toSnakeCase(event))
+	lg := l.impl.Fatal().Err(err).Str("event", toSnakeCase(event))
+	lg = l.addRequestIDs(ctx, lg)
+	lg = l.addAuthenticatedUserIDs(ctx, lg)
+	return lg
+}
+
+func (l *Logger) addRequestIDs(ctx context.Context, lg *zerolog.Event) *zerolog.Event {
+	ids, ok := RequestIDsFromContext(ctx)
+	if ok {
+		lg = lg.Str("trace_id", ids.TraceID).Str("request_id", ids.RequestID).Str("correlation_id", ids.CorrelationID)
+	}
+	return lg
+}
+
+func (l *Logger) addAuthenticatedUserIDs(ctx context.Context, lg *zerolog.Event) *zerolog.Event {
+	ids, ok := AuthUserIDsFromContext(ctx)
+	if ok {
+		lg = lg.Str("account_id", ids.CustomerAccountID).Str("user_id", ids.UserID).Str("real_user_id", ids.RealUserID)
+	}
+	return lg
 }
