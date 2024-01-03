@@ -8,6 +8,7 @@ type contextAuthUserIDKey string
 
 const authUserIDsKey = contextAuthUserIDKey("auth_user_ids")
 
+// AuthUserIDs contains the account, user and realuser ids usually obtains from an authenticated JWT.
 type AuthUserIDs struct {
 	// CustomerAccountID is the ID of the currently logged in user's parent
 	// account/organization, sometimes known as the "account_aggregate_id".
@@ -20,13 +21,13 @@ type AuthUserIDs struct {
 	RealUserID string
 }
 
-// ContextWithAuthUserIDs returns a new context with the given RequestIDs
+// ContextWithAuthUserIDs returns a new context with the given AuthUserIDs
 // embedded as a value.
 func ContextWithAuthUserIDs(ctx context.Context, ids AuthUserIDs) context.Context {
 	return context.WithValue(ctx, authUserIDsKey, ids)
 }
 
-// AuthUserIDsFromContext attempts to retrieve a RequestIDs struct from the given
+// AuthUserIDsFromContext attempts to retrieve a AuthUserIDs struct from the given
 // context, returning a AuthUserIDs struct along with a boolean signalling
 // whether the retrieval was successful.
 func AuthUserIDsFromContext(ctx context.Context) (AuthUserIDs, bool) {

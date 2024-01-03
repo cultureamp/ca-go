@@ -15,6 +15,7 @@ type contextRequestIDKey string
 
 const requestIDsKey = contextRequestIDKey("request_ids")
 
+// RequestIDs contains the request header values for X-Amzn-Trace-Id, X-Request-ID and X-Correlation-ID.
 type RequestIDs struct {
 	TraceID       string
 	RequestID     string

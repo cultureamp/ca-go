@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// Logger that implements the CA Logging standard.
 type Logger struct {
 	impl zerolog.Logger
 }
@@ -20,6 +21,7 @@ var (
 	dlOnce        sync.Once
 )
 
+// GetInstance returns a singleton logger.
 func GetInstance(config EnvConfig) *Logger {
 	dlOnce.Do(func() {
 		setGlobalLogger(config)
@@ -86,9 +88,8 @@ func toSnakeCase(s string) string {
 	return sb.String()
 }
 
-// SetupFormatter decides the output formatter based on the environment where the app is running on.
-// It uses text formatter with color if you run the app locally,
-// while using json formatter if it's running on the cloud.
+// setupFormatter decides the output formatter based on the environment where the app is running on.
+// It uses text formatter with color if you run the app locally, while using json formatter if it's running on the cloud.
 func (l *Logger) setupFormatter(farm string) {
 	if farm == "local" {
 		l.impl = l.impl.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339})

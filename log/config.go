@@ -10,7 +10,7 @@ type contextValueKey string
 
 const envConfigKey = contextValueKey("env")
 
-// EnvConfig must have fields listed in https://cultureamp.atlassian.net/wiki/spaces/TV/pages/959939199/Logging
+// EnvConfig must have fields listed in https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3114598406/Logging+Standard
 type EnvConfig struct {
 	AppName      string `envconfig:"APP"`                      // The name of the application the log was generated from
 	AppVersion   string `default:"0.0.0" split_words:"true"`   // The version of the application
