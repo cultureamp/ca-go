@@ -1,6 +1,7 @@
 run:
   go: 1.21
   timeout: 5m
+  tests: false
 
 linters:
   enable-all: true
@@ -64,3 +65,10 @@ linters-settings:
 
   cyclop:
     max-complexity: 15 # the default of 10 was unnecessarily strict
+
+issues:
+  exclude-rules:
+    # we need to reference a deprecated field in order to trace possible usage
+    - path: logger.go
+      linters:
+        - zerologlint
