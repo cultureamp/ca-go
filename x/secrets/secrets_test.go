@@ -6,12 +6,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewAWSSecretsClient(t *testing.T) {
 	client, err := NewAWSSecretsClient("us-west-2")
 
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, client)
 	assert.NotNil(t, client.Client)
 }
@@ -40,7 +41,7 @@ func TestAWSSecretsGet(t *testing.T) {
 
 	secretString, err := secretManager.Get("my-secret-name")
 
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "my-super-secret-value", secretString)
 	assert.Equal(t, "my-secret-name", actualRequestedSecretName)
 }
@@ -58,6 +59,6 @@ func TestAWSSecretsGetEmptySecret(t *testing.T) {
 
 	secretString, err := secretManager.Get("my-secret-name")
 
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, "", secretString)
 }

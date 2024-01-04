@@ -7,6 +7,7 @@ import (
 
 	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewVaultClient(t *testing.T) {
@@ -97,7 +98,9 @@ func TestNewVaultClient(t *testing.T) {
 		ctx := context.Background()
 
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewVaultClient(&tt.settings, ctx)
+			settings := tt.settings
+
+			_, err := NewVaultClient(&settings, ctx)
 			assert.Equal(t, tt.expErr, err)
 		})
 	}
@@ -107,7 +110,7 @@ func TestNewTestingClient(t *testing.T) {
 	t.Run("no error when setting up test client", func(t2 *testing.T) {
 		_, closer, err := NewTestingClient(t)
 		defer closer()
-		assert.NoError(t2, err)
+		require.NoError(t2, err)
 	})
 }
 

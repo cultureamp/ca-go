@@ -7,7 +7,6 @@ import (
 
 	"github.com/heetch/avro"
 	"github.com/heetch/avro/avroregistry"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,7 +37,7 @@ func NewTestRegistry[EventType any](t *testing.T, ctx context.Context, hostPort 
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		deleteErr := r.DeleteSubject(context.Background(), subject)
-		assert.NoError(t, deleteErr, "error deleting subject")
+		require.NoError(t, deleteErr, "error deleting subject")
 	})
 
 	return &TestRegistry[EventType]{
