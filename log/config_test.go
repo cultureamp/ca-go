@@ -18,6 +18,7 @@ func TestNewLoggerConfigWithNoEnv(t *testing.T) {
 	assert.Equal(t, "INFO", config.LogLevel)
 	assert.Equal(t, "local", config.AwsAccountID)
 	assert.Equal(t, "local", config.Farm)
+	assert.Equal(t, "", config.Product)
 }
 
 func TestNewLoggerConfigWithEnv(t *testing.T) {
@@ -29,6 +30,7 @@ func TestNewLoggerConfigWithEnv(t *testing.T) {
 	t.Setenv("LOG_LEVEL", "DEBUG")
 	t.Setenv("AWS_ACCOUNT_ID", "abc123")
 	t.Setenv("FARM", "production")
+	t.Setenv("PRODUCT", "performance")
 
 	config := newLoggerConfig()
 	assert.NotNil(t, config)
@@ -38,6 +40,7 @@ func TestNewLoggerConfigWithEnv(t *testing.T) {
 	assert.Equal(t, "DEBUG", config.LogLevel)
 	assert.Equal(t, "abc123", config.AwsAccountID)
 	assert.Equal(t, "production", config.Farm)
+	assert.Equal(t, "performance", config.Product)
 }
 
 func unsetEnvironmentVariables() {
@@ -47,4 +50,5 @@ func unsetEnvironmentVariables() {
 	os.Unsetenv("LOG_LEVEL")
 	os.Unsetenv("AWS_ACCOUNT_ID")
 	os.Unsetenv("FARM")
+	os.Unsetenv("PRODUCT")
 }
