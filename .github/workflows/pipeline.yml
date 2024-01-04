@@ -26,6 +26,7 @@ jobs:
         run: make ensure-deps
 
   go-lint:
+    needs: [go-ensure-deps]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -49,6 +50,7 @@ jobs:
           skip-pkg-cache: true
 
   go-test:
+    needs: [go-ensure-deps]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
