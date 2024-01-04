@@ -8,7 +8,7 @@ test:
 
 .PHONY: test-ci
 test-ci:
-	mkdir artifacts
+	mkdir -p artifacts
 	go test -race ./... -covermode=atomic -coverprofile=artifacts/count.out
 	go tool cover -func=artifacts/count.out | tee artifacts/coverage.out
 

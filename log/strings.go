@@ -5,7 +5,7 @@ import (
 	"unicode"
 )
 
-// toSnakeCase returns a new string in the format word_word
+// toSnakeCase returns a new string in the format word_word.
 func toSnakeCase(s string) string {
 	var sb strings.Builder
 

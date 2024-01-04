@@ -8,6 +8,12 @@ import (
 )
 
 func TestEnvConfigFromContext(t *testing.T) {
+	t.Setenv("APP", "")
+	t.Setenv("APP_VERSION", "0.0.0")
+	t.Setenv("AWS_REGION", "")
+	t.Setenv("AWS_ACCOUNT_ID", "")
+	t.Setenv("FARM", "local")
+
 	tests := []struct {
 		name        string
 		env         *EnvConfig

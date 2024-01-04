@@ -22,7 +22,7 @@ type RequestIDs struct {
 	CorrelationID string
 }
 
-// ContextWithRequestIDs returns a new context with the given a http.Request
+// ContextWithRequestIDs returns a new context with the given a http.Request.
 func ContextWithRequest(ctx context.Context, req *http.Request) context.Context {
 	ids := getRequestIDs(req)
 	return ContextWithRequestIDs(ctx, ids)

@@ -86,7 +86,7 @@ func WithTransport(transport sentry.Transport) Option {
 }
 
 // WithServerlessTransport configures Sentry with the correct transport
-// for serverless applications
+// for serverless applications.
 func WithServerlessTransport() Option {
 	return WithTransport(sentry.NewHTTPSyncTransport())
 }

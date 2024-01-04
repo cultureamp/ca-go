@@ -8,7 +8,7 @@ import (
 	"github.com/IBM/sarama"
 )
 
-// EnableDebugLog provides more details on how sarama connecting to brokers
+// EnableDebugLog provides more details on how sarama connecting to brokers.
 func EnableDebugLog() {
 	sarama.Logger = log.New(os.Stdout, "[sarama] ", log.LstdFlags)
 }
@@ -47,7 +47,7 @@ func DefaultProducerConfiguration(clientID string, username string, password str
 }
 
 // NonSSLProducerConfiguration creates a Sarama configuration with the default settings without SSL config
-// appropriate for use to test connection with local Kafka
+// appropriate for use to test connection with local Kafka.
 func NonSSLProducerConfiguration(clientID string) *sarama.Config {
 	conf := sarama.NewConfig()
 

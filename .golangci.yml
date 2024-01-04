@@ -2,55 +2,139 @@ run:
   go: 1.21
   timeout: 5m
   tests: false
+  skip-dirs:
+    - kafkatest
 
 linters:
-  enable-all: true
-  disable:
+  disable-all: true
+  enable:
+    - asasalint
     - asciicheck
+    - bidichk
+    - bodyclose
+    #    - containedctx
+    #    - contextcheck
+    #    - cyclop
+    - decorder
+    #    - depguard
+    - dogsled
     - dupl
+    - dupword
+    - durationcheck
+    - errcheck
+    - errchkjson
     - errname
-    - exhaustruct
-    - forbidigo
+    - errorlint
+    - execinquery
+    #    - exhaustive
+    #    - exhaustruct
+    - exportloopref
+    #    - forbidigo
+    - forcetypeassert
     - funlen
-    - gochecknoglobals
+    - gci
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    #    - gochecknoglobals
+    - gochecknoinits
     - gocognit
     - goconst
+    - gocritic
+    - gocyclo
     - godot
-    - godox
-    - goerr113
-    - gofumpt
-    - gomnd
-    - lll
+    #    - godox
+    #    - goerr113
+    - gofmt
+    #    - gofumpt
+    - goheader
+    #    - goimports
+    #    - gomnd
+    #    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - gosmopolitan
+    - govet
+    - grouper
+    - importas
+    - ineffassign
+    - interfacebloat
+    #    - ireturn
+    #    - lll
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
+    - misspell
+    - musttag
+    #    - nakedret
     - nestif
-    - nilnil
-    - nlreturn
+    - nilerr
+    #    - nilnil
+    #    - nlreturn
+    - noctx
+    - nolintlint
+    #    - nonamedreturns
+    - nosprintfhostport
     - paralleltest
     - prealloc
-    - revive
-    - tagliatelle
+    - predeclared
+    - promlinter
+    - reassign
+    #    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    #    - staticcheck
+    #    - stylecheck
     - tagalign
+    - tagliatelle
+    - tenv
+    - testableexamples
     - testpackage
-    - unparam
-    - varnamelen
-    - wrapcheck
-    - wsl
     - thelper
-    - gci
-    # deprecated linters
-    - depguard
-    - deadcode
-    - exhaustivestruct
-    - golint
-    - ifshort
-    - interfacer
-    - maligned
-    - nosnakecase
-    - scopelint
-    - structcheck
-    - ireturn
-    - varcheck
+    - tparallel
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    #    - varnamelen
+    - wastedassign
+    - whitespace
+    #    - wrapcheck
+    #    - wsl
+    - zerologlint
 
 linters-settings:
+  funlen:
+    lines: 120
+    statements: 50
+
+  gci:
+    # Section configuration to compare against.
+    # Section names are case-insensitive and may contain parameters in ().
+    # The default order of sections is `standard > default > custom > blank > dot`,
+    # If `custom-order` is `true`, it follows the order of `sections` option.
+    # Default: ["standard", "default"]
+    sections:
+      - standard # Standard section: captures all standard packages.
+      - default # Default section: contains all imports that could not be matched to another section type.
+      - prefix(gopkg.in) # Custom section: groups all imports with the specified Prefix.
+      - prefix(github.com)
+      - prefix(goa.design)
+    #  - blank                          # Blank section: contains all blank imports. This section is not present unless explicitly enabled.
+    #  - dot                            # Dot section: contains all dot imports. This section is not present unless explicitly enabled.
+
+    # Skip generated files.
+    # Default: true
+    #skip-generated: false
+
+    # Enable custom order of sections.
+    # If `true`, make the section order the same as the order of `sections`.
+    # Default: false
+    #custom-order: true
+
   gosec:
     # all rules enabled
     # see also: https://securego.io/docs/rules/rule-intro.html
@@ -68,7 +152,40 @@ linters-settings:
 
 issues:
   exclude-rules:
+
+    # too hard to refactor
+    - path: x/log/helper.go
+      linters:
+        - nestif
+
+    # []string hard to initialize prealloc with default value
+    - path: x/vault/vault_decrypter.go
+      linters:
+        - prealloc
+
+    # []string hard to initialize prealloc with default value
+    - path: x/vault/vault_encrypter.go
+      linters:
+        - prealloc
+
+    # too hard to refactor
+    - path: x/kafka/consumer/consumer.go
+      linters:
+        - nestif
+
     # we need to reference a deprecated field in order to trace possible usage
-    - path: logger.go
+    - path: log/logger.go
       linters:
         - zerologlint
+
+    - path: log/helper.go
+      linters:
+        - nestif
+
+    - path: log/strings.go
+      linters:
+        - nestif
+
+    - path: env/settings.go
+      linters:
+        - tagliatelle
