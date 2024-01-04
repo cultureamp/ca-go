@@ -10,67 +10,61 @@ env:
   GO_VERSION: 1.21
 
 jobs:
-  go-ensure-deps:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Go
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
 
-      - name: Check Go Modules
-        run: make ensure-deps
+      - name: Tidy dependencies
+        run: go mod tidy
 
-  go-lint:
-    needs: [go-ensure-deps]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          check-latest: true
-          cache-dependency-path: ./go.sum
+      - name: Install dependencies
+        run: go get .
 
       - name: Build
         run: GOARCH=amd64 GOOS=linux go build ./...
 
-      - name: Lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: "latest"
-          args: "-v --verbose --timeout=5m"
-          skip-pkg-cache: true
-
-  go-test:
-    needs: [go-ensure-deps]
+  lint:
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Go
+      - name: Setup GO
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
-          cache-dependency-path: ./go.sum
+          cache-dependency-path: ./src/go.sum
 
-      - uses: actions/cache@v3
+      - name: GOLangCI-Lint
+        uses: golangci/golangci-lint-action@v3
         with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          version: "latest"
+          args: --verbose --timeout=5m
+          skip-pkg-cache: true
+
+  test:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup GO
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+          cache-dependency-path: ./src/go.sum
 
       - name: Test code
         run: |
