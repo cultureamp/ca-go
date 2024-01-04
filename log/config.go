@@ -16,7 +16,11 @@ type LoggerConfig struct {
 }
 
 func newLoggerConfig() *LoggerConfig {
-	appName := os.Getenv("APP")
+	appName, ok := os.LookupEnv("APP")
+	if !ok {
+		appName = os.Getenv("APP_NAME")
+	}
+
 	awsRegion := os.Getenv("AWS_REGION")
 	product := os.Getenv("PRODUCT")
 
