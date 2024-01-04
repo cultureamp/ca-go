@@ -7,7 +7,7 @@ on:
   pull_request:
 
 env:
-  GO_VERSION: "1.21"
+  GO_VERSION: 1.21
 
 jobs:
   go-ensure-deps:
@@ -20,6 +20,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: false
 
       - name: Check Go Modules
         run: make ensure-deps
@@ -34,14 +35,16 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+          cache-dependency-path: ./go.sum
 
       - name: Build
-        run: go build ./...
+        run: GOARCH=amd64 GOOS=linux go build ./...
 
       - name: Lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.55.2
+          version: "latest"
           args: "-v --verbose --timeout=5m"
           skip-pkg-cache: true
 
@@ -55,6 +58,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+          cache-dependency-path: ./go.sum
 
       - uses: actions/cache@v3
         with:
