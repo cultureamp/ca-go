@@ -172,3 +172,8 @@ issues:
     - path: consumer.go
       linters:
         - nestif
+
+    # we need to reference a deprecated field in order to trace possible usage
+    - path: logger.go
+      linters:
+        - zerologlint
