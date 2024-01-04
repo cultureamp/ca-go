@@ -80,11 +80,9 @@ func Debug(ctx context.Context, event string) *zerolog.Event {
 }
 
 func (l *Logger) debug(ctx context.Context, event string) *zerolog.Event {
-	lg := l.impl.Debug().Str("event", toSnakeCase(event))
-	lg = l.addRequestIDs(ctx, lg)
-	lg = l.addAuthenticatedUserIDs(ctx, lg)
-	lg = l.addSystem(ctx, lg)
-	return lg
+	le := l.impl.Debug().Str("event", toSnakeCase(event))
+	le = l.autoAddFields(ctx, le)
+	return le
 }
 
 // Info starts a new message with info level.
@@ -95,11 +93,9 @@ func Info(ctx context.Context, event string) *zerolog.Event {
 }
 
 func (l *Logger) info(ctx context.Context, event string) *zerolog.Event {
-	lg := l.impl.Info().Str("event", toSnakeCase(event))
-	lg = l.addRequestIDs(ctx, lg)
-	lg = l.addAuthenticatedUserIDs(ctx, lg)
-	lg = l.addSystem(ctx, lg)
-	return lg
+	le := l.impl.Info().Str("event", toSnakeCase(event))
+	le = l.autoAddFields(ctx, le)
+	return le
 }
 
 // Warn starts a new message with warn level.
@@ -110,11 +106,9 @@ func Warn(ctx context.Context, event string) *zerolog.Event {
 }
 
 func (l *Logger) warn(ctx context.Context, event string) *zerolog.Event {
-	lg := l.impl.Warn().Str("event", toSnakeCase(event))
-	lg = l.addRequestIDs(ctx, lg)
-	lg = l.addAuthenticatedUserIDs(ctx, lg)
-	lg = l.addSystem(ctx, lg)
-	return lg
+	le := l.impl.Warn().Str("event", toSnakeCase(event))
+	le = l.autoAddFields(ctx, le)
+	return le
 }
 
 // Error starts a new message with error level.
@@ -125,11 +119,9 @@ func Error(ctx context.Context, event string, err error) *zerolog.Event {
 }
 
 func (l *Logger) error(ctx context.Context, event string, err error) *zerolog.Event {
-	lg := l.impl.Error().Err(err).Str("event", toSnakeCase(event))
-	lg = l.addRequestIDs(ctx, lg)
-	lg = l.addAuthenticatedUserIDs(ctx, lg)
-	lg = l.addSystem(ctx, lg)
-	return lg
+	le := l.impl.Error().Err(err).Str("event", toSnakeCase(event))
+	le = l.autoAddFields(ctx, le)
+	return le
 }
 
 // Fatal starts a new message with fatal level. The os.Exit(1) function
@@ -141,11 +133,9 @@ func Fatal(ctx context.Context, event string, err error) *zerolog.Event {
 }
 
 func (l *Logger) fatal(ctx context.Context, event string, err error) *zerolog.Event {
-	lg := l.impl.Fatal().Err(err).Str("event", toSnakeCase(event))
-	lg = l.addRequestIDs(ctx, lg)
-	lg = l.addAuthenticatedUserIDs(ctx, lg)
-	lg = l.addSystem(ctx, lg)
-	return lg
+	le := l.impl.Fatal().Err(err).Str("event", toSnakeCase(event))
+	le = l.autoAddFields(ctx, le)
+	return le
 }
 
 // Panic starts a new message with panic level. The panic() function
@@ -157,41 +147,46 @@ func Panic(ctx context.Context, event string, err error) *zerolog.Event {
 }
 
 func (l *Logger) panic(ctx context.Context, event string, err error) *zerolog.Event {
-	lg := l.impl.Panic().Err(err).Str("event", toSnakeCase(event))
-	lg = l.addRequestIDs(ctx, lg)
-	lg = l.addAuthenticatedUserIDs(ctx, lg)
-	lg = l.addSystem(ctx, lg)
-	return lg
+	le := l.impl.Panic().Err(err).Str("event", toSnakeCase(event))
+	le = l.autoAddFields(ctx, le)
+	return le
 }
 
-func (l *Logger) addRequestIDs(ctx context.Context, lg *zerolog.Event) *zerolog.Event {
+func (l *Logger) autoAddFields(ctx context.Context, le *zerolog.Event) *zerolog.Event {
+	le = l.addRequestIDs(ctx, le)
+	le = l.addAuthenticatedUserIDs(ctx, le)
+	le = l.addSystem(le)
+	return le
+}
+
+func (l *Logger) addRequestIDs(ctx context.Context, le *zerolog.Event) *zerolog.Event {
 	ids, ok := RequestIDsFromContext(ctx)
 	if ok {
-		lg = lg.Str("trace_id", ids.TraceID).Str("request_id", ids.RequestID).Str("correlation_id", ids.CorrelationID)
+		le = le.Str("trace_id", ids.TraceID).Str("request_id", ids.RequestID).Str("correlation_id", ids.CorrelationID)
 	}
-	return lg
+	return le
 }
 
-func (l *Logger) addAuthenticatedUserIDs(ctx context.Context, lg *zerolog.Event) *zerolog.Event {
+func (l *Logger) addAuthenticatedUserIDs(ctx context.Context, le *zerolog.Event) *zerolog.Event {
 	ids, ok := AuthPayloadFromContext(ctx)
 	if ok {
-		lg = lg.Str("account_id", ids.CustomerAccountID).Str("user_id", ids.UserID).Str("real_user_id", ids.RealUserID)
+		le = le.Str("account_id", ids.CustomerAccountID).Str("user_id", ids.UserID).Str("real_user_id", ids.RealUserID)
 	}
-	return lg
+	return le
 }
 
-func (l *Logger) addSystem(ctx context.Context, lg *zerolog.Event) *zerolog.Event {
+func (l *Logger) addSystem(le *zerolog.Event) *zerolog.Event {
 	host, err := os.Hostname()
 	if err == nil {
-		lg = lg.Str("host", host)
+		le = le.Str("host", host)
 	}
 
-	lg = lg.Str("os", runtime.GOOS)
+	le = le.Str("os", runtime.GOOS)
 
 	_, file, line, ok := runtime.Caller(3)
 	if ok {
-		lg = lg.Str("loc", file+":"+strconv.Itoa(line))
+		le = le.Str("loc", file+":"+strconv.Itoa(line))
 	}
 
-	return lg
+	return le
 }

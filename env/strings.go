@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-// redact returns a string with some of the string replaced with *
+// redact returns a string with some of the string replaced with *.
 func redact(s string) string {
 	const stars = 6
 	const literals = 4

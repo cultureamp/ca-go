@@ -7,8 +7,7 @@ import (
 )
 
 // Settings that drive behavior.
-// Consumers of this library should inherit this by embedding this struct
-// in their own Settings
+// Consumers of this library should inherit this by embedding this struct in their own Settings.
 type Settings struct {
 	// Common environment variable values used by at least 80% of apps
 	App           string `json:"app"`
@@ -44,7 +43,7 @@ func NewSettings() *Settings {
 	return settings
 }
 
-// RedactedSettings returns redacted Settings
+// RedactedSettings returns redacted Settings.
 func (s Settings) RedactedSettings() *Settings {
 	return &Settings{
 		App:           s.App,
@@ -62,22 +61,22 @@ func (s Settings) RedactedSettings() *Settings {
 	}
 }
 
-// IsProduction returns true if "APP_ENV" == "local"
+// IsProduction returns true if "APP_ENV" == "local".
 func (s Settings) IsProduction() bool {
 	return s.AppEnv == "production"
 }
 
-// IsRunningInAWS returns true if "FARM" != "local"
+// IsRunningInAWS returns true if "FARM" != "local".
 func (s Settings) IsRunningInAWS() bool {
 	return !s.IsRunningLocal()
 }
 
-// IsRunningLocal returns true if FARM" == "local"
+// IsRunningLocal returns true if FARM" == "local".
 func (s Settings) IsRunningLocal() bool {
 	return s.Farm == "local"
 }
 
-// ToJSON returns Settings as a JSON string
+// ToJSON returns Settings as a JSON string.
 func (s Settings) ToJSON() string {
 	b, err := json.Marshal(s)
 	if err != nil {
@@ -88,19 +87,19 @@ func (s Settings) ToJSON() string {
 	return string(b)
 }
 
-// ToRedactedJSON returns Settings as a redacted JSON string
+// ToRedactedJSON returns Settings as a redacted JSON string.
 func (s Settings) ToRedactedJSON() string {
 	rs := s.RedactedSettings()
 	return rs.ToJSON()
 }
 
-// ToString returns Settings as a string (not redacted)
+// ToString returns Settings as a string (not redacted).
 func (s Settings) ToString() string {
 	data := s.ToJSON()
 	return strings.ReplaceAll(data, "\"", "")
 }
 
-// ToRedactedString returns Settings as a redacted string
+// ToRedactedString returns Settings as a redacted string.
 func (s Settings) ToRedactedString() string {
 	rs := s.RedactedSettings()
 	return rs.ToString()

@@ -154,26 +154,38 @@ issues:
   exclude-rules:
 
     # too hard to refactor
-    - path: helper.go
+    - path: x/log/helper.go
       linters:
         - nestif
 
     # []string hard to initialize prealloc with default value
-    - path: vault_decrypter.go
+    - path: x/vault/vault_decrypter.go
       linters:
         - prealloc
 
     # []string hard to initialize prealloc with default value
-    - path: vault_encrypter.go
+    - path: x/vault/vault_encrypter.go
       linters:
         - prealloc
 
     # too hard to refactor
-    - path: consumer.go
+    - path: x/kafka/consumer/consumer.go
       linters:
         - nestif
 
     # we need to reference a deprecated field in order to trace possible usage
-    - path: logger.go
+    - path: log/logger.go
       linters:
         - zerologlint
+
+    - path: log/helper.go
+      linters:
+        - nestif
+
+    - path: log/strings.go
+      linters:
+        - nestif
+
+    - path: env/settings.go
+      linters:
+        - tagliatelle
