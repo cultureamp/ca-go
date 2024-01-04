@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"os"
 	"strings"
-
-	"github.com/cultureamp/ca-go/x/helper"
 )
 
 // Settings that drive behavior.
@@ -58,8 +56,8 @@ func (s Settings) RedactedSettings() *Settings {
 		AwsRegion:     s.AwsRegion,
 		AwsAccountID:  s.AwsAccountID,
 		XrayLogging:   s.XrayLogging,
-		DDApiKey:      helper.Redact(s.DDApiKey),
-		SentryDSN:     helper.Redact(s.SentryDSN),
+		DDApiKey:      redact(s.DDApiKey),
+		SentryDSN:     redact(s.SentryDSN),
 		SentryFlushMs: s.SentryFlushMs,
 	}
 }
