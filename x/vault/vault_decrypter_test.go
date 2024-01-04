@@ -19,6 +19,7 @@ type MockClient struct {
 func (m MockClient) RenewClient(ctx context.Context) error {
 	return m.renewClient(ctx)
 }
+
 func (m MockClient) GetSecret(batch []interface{}, keyReference string, action string) (*vaultapi.Secret, error) {
 	return m.getSecret(batch, keyReference, action)
 }

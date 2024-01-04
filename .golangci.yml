@@ -1,6 +1,9 @@
 run:
   go: 1.21
   timeout: 5m
+  tests: false
+  skip-dirs:
+    - kafkatest
 
 linters:
   disable-all: true
@@ -147,5 +150,25 @@ linters-settings:
   cyclop:
     max-complexity: 15 # the default of 10 was unnecessarily strict
 
-  issues:
-    exclude-rules:
+issues:
+  exclude-rules:
+
+    # too hard to refactor
+    - path: helper.go
+      linters:
+        - nestif
+
+    # []string hard to initialize prealloc with default value
+    - path: vault_decrypter.go
+      linters:
+        - prealloc
+
+    # []string hard to initialize prealloc with default value
+    - path: vault_encrypter.go
+      linters:
+        - prealloc
+
+    # too hard to refactor
+    - path: consumer.go
+      linters:
+        - nestif

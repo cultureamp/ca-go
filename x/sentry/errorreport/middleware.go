@@ -8,6 +8,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
+
 	goa "goa.design/goa/v3/pkg"
 )
 
@@ -17,7 +18,7 @@ type OnRequestPanicHandler func(context.Context, http.ResponseWriter, error)
 
 // defaultRequestPanicHandler writes a JSON:API style error response with a
 // 500 status code.
-func defaultRequestPanicHandler(ctx context.Context, w http.ResponseWriter, err error) {
+func defaultRequestPanicHandler(_ context.Context, w http.ResponseWriter, _ error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusInternalServerError)
 	_, _ = w.Write([]byte(`{"errors":[{"status":"500","title":"Internal Server Error"}]}`))

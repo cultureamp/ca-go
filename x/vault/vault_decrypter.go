@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"strings"
 
-	vaultapi "github.com/hashicorp/vault/api"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
-
 	"github.com/cultureamp/ca-go/x/log"
 	"github.com/cultureamp/ca-go/x/vault/client"
+	vaultapi "github.com/hashicorp/vault/api"
+
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 type Client interface {

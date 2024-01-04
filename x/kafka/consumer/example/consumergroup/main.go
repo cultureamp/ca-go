@@ -10,9 +10,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/segmentio/kafka-go"
-
 	"github.com/cultureamp/ca-go/x/kafka/consumer"
+	"github.com/segmentio/kafka-go"
 )
 
 var (

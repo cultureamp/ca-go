@@ -9,6 +9,7 @@ import (
 	"github.com/cultureamp/ca-go/x/log"
 	"github.com/cultureamp/ca-go/x/vault/client"
 	vaultapi "github.com/hashicorp/vault/api"
+
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
@@ -25,9 +26,11 @@ func (v Encrypter) Encrypt(keyReferences []string, protectedData []string, ctx c
 	span, _ := tracer.StartSpanFromContext(ctx, "vault-encrypter")
 	defer span.Finish(tracer.WithError(err))
 	logger := log.NewFromCtx(ctx)
+
 	if len(keyReferences) < 1 {
 		return nil, client.ErrVaultMissingKeys
 	}
+
 	result := protectedData
 	for _, keyReference := range keyReferences {
 		encryptedByKeyReference, err := v.encrypt(keyReference, result, logger, ctx)
@@ -36,6 +39,7 @@ func (v Encrypter) Encrypt(keyReferences []string, protectedData []string, ctx c
 		}
 		result = encryptedByKeyReference
 	}
+
 	if len(result) != len(protectedData) {
 		err := fmt.Errorf("encryption secret qty err")
 		logger.Error().Err(err).Msg("incorrect number of encrypted values returned")
@@ -58,6 +62,7 @@ func (v Encrypter) encrypt(keyReference string, protectedData []string, logger *
 		logger.Error().Err(err).Msg("error encrypting with Vault")
 		return nil, err
 	}
+
 	batchResults, ok := secret.Data["batch_results"].([]interface{})
 	if !ok {
 		errStr := "batch results of encryption secret could not be cast to []interface{}"
@@ -65,6 +70,7 @@ func (v Encrypter) encrypt(keyReference string, protectedData []string, logger *
 		logger.Error().Err(err).Msg("batchResult casting error")
 		return nil, err
 	}
+
 	var result []string
 	for _, r := range batchResults {
 		rmap, ok := r.(map[string]interface{})
@@ -83,6 +89,7 @@ func (v Encrypter) encryptWithVault(keyReference string, batch []interface{}, lo
 	maxRetries := 5
 	var secret *vaultapi.Secret
 	var err error
+
 	for i := 0; i < maxRetries; i++ {
 		secret, err = v.vaultClient.GetSecret(batch, keyReference, client.EncryptionAction)
 		if err != nil {
