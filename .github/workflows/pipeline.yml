@@ -10,7 +10,7 @@ env:
   GO_VERSION: 1.21
 
 jobs:
-  build:
+  go-lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -25,14 +25,15 @@ jobs:
       - name: Tidy dependencies
         run: go mod tidy
 
-      - name: Install dependencies
-        run: go get ./...
+      - name: GOLangCI-Lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: "latest"
+          args: --verbose --timeout=5m
+          skip-pkg-cache: true
 
-      - name: Build
-        run: GOARCH=amd64 GOOS=linux go build ./...
-
-  lint:
-    needs: [build]
+  go-build:
+    needs: [go-lint]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -45,15 +46,14 @@ jobs:
           check-latest: true
           cache-dependency-path: ./go.sum
 
-      - name: GOLangCI-Lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: "latest"
-          args: --verbose --timeout=5m
-          skip-pkg-cache: true
+      - name: Install dependencies
+        run: go get ./...
 
-  test:
-    needs: [build]
+      - name: Build
+        run: GOARCH=amd64 GOOS=linux go build ./...
+
+  go-test:
+    needs: [go-build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
