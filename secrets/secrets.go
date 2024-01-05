@@ -23,10 +23,10 @@ var defaultAWSSecrets = getInstance()
 func getInstance() *awsSecrets {
 	// Should this take dependency on 'env' package and call env.AwsRegion()?
 	region := os.Getenv("AWS_REGION")
-	return newAWSSecrets(region)
+	return NewAWSSecrets(region)
 }
 
-func newAWSSecrets(region string) *awsSecrets {
+func NewAWSSecrets(region string) *awsSecrets {
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String(region),
 	}))

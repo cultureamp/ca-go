@@ -11,7 +11,7 @@ import (
 )
 
 func TestNewAWSSecretsClient(t *testing.T) {
-	client := newAWSSecrets("us-west-2")
+	client := NewAWSSecrets("us-west-2")
 	assert.NotNil(t, client)
 }
 
@@ -22,7 +22,7 @@ func TestGetSecretSuccess(t *testing.T) {
 	mockedAwsClient := new(mockedSMClient)
 	mockedAwsClient.On("GetSecretValue", mock.Anything).Return(expectedOutput, nil)
 
-	secrets := newAWSSecrets("us-west-2")
+	secrets := NewAWSSecrets("us-west-2")
 	secrets.client = mockedAwsClient
 
 	result, err := secrets.Get("my-secret")
@@ -37,7 +37,7 @@ func TestGetSecretOnError(t *testing.T) {
 	mockedAwsClient := new(mockedSMClient)
 	mockedAwsClient.On("GetSecretValue", mock.Anything).Return(expectedOutput, errors.New("test-error"))
 
-	secrets := newAWSSecrets("us-west-2")
+	secrets := NewAWSSecrets("us-west-2")
 	secrets.client = mockedAwsClient
 
 	result, err := secrets.Get("my-secret")
@@ -52,7 +52,7 @@ func TestGetSecretOnEmpty(t *testing.T) {
 	mockedAwsClient := new(mockedSMClient)
 	mockedAwsClient.On("GetSecretValue", mock.Anything).Return(expectedOutput, nil)
 
-	secrets := newAWSSecrets("us-west-2")
+	secrets := NewAWSSecrets("us-west-2")
 	secrets.client = mockedAwsClient
 
 	result, err := secrets.Get("my-secret")
