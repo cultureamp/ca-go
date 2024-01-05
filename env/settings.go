@@ -134,7 +134,7 @@ func AwsAccountID() string {
 	return defaultSettings.AwsAccountID
 }
 
-// IsXrayTracingEnabled returns "true" if the "XRAY_LOGGING" enviroment variable is turned on.
+// IsXrayTracingEnabled returns "true" if the "XRAY_LOGGING" environment variable is turned on.
 func IsXrayTracingEnabled() bool {
 	return defaultSettings.XrayLogging
 }

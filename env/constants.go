@@ -18,7 +18,7 @@ const (
 
 	// *** Log Environment Variables ***.
 	LogLevelEnv = "LOG_LEVEL"
-	
+
 	// *** AuthZ Environment Variables ***.
 	AuthzClientTimeoutEnv = "AUTHZ_CLIENT_TIMEOUT_IN_MS"
 	AuthzCacheDurationEnv = "AUTHZ_CACHE_DURATION_IN_SEC"
