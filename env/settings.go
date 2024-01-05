@@ -221,7 +221,7 @@ func (s *Settings) isProduction() bool {
 	return s.AppEnv == "production"
 }
 
-// IsRunningInAWS returns true if "APP_ENV" == "production".
+// IsRunningInAWS returns true if "APP_ENV" != "local".
 func IsRunningInAWS() bool {
 	return defaultSettings.isRunningInAWS()
 }
