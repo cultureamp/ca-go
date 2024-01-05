@@ -1,106 +1,240 @@
 package env
 
 import (
-	"encoding/json"
 	"os"
-	"strings"
 )
 
 // Settings that drive behavior.
 // Consumers of this library should inherit this by embedding this struct in their own Settings.
 type Settings struct {
 	// Common environment variable values used by at least 80% of apps
-	App           string `json:"app"`
-	AppVersion    string `json:"app_version"`
-	AppEnv        string `json:"app_env"`
-	Farm          string `json:"farm"`
-	Product       string `json:"product"`
-	AwsProfile    string `json:"aws_profile"`
-	AwsRegion     string `json:"aws_region"`
-	AwsAccountID  string `json:"aws_account_id"`
-	XrayLogging   bool   `json:"xray_logging"`
-	DDApiKey      string `json:"dd_api_key"`
-	SentryDSN     string `json:"sentry_dsn"`
-	SentryFlushMs int    `json:"sentry_flush_ms"`
+	App        string
+	AppVersion string
+	AppEnv     string
+	Farm       string
+	Product    string
+	// Aws
+	AwsProfile   string
+	AwsRegion    string
+	AwsAccountID string
+	XrayLogging  bool
+	// Logging
+	LogLevel string
+	// AuthZ
+	AuthzClientTimeoutInMs  int
+	AuthzCacheDurationInSec int
+	AuthzDialerTimeoutInMs  int
+	AuthzTLSTimeoutInMs     int
+	// Cache
+	CacheDurationInSec int
+	// Datadog
+	DatadogApiKey      string
+	DatadogLogEndpoint string
+	DatadogEnv         string
+	DatadogService     string
+	DatadogVersion     string
+	DatadogAgentHost   string
+	DatadogStatsDPort  int
+	DatadogTimeoutInMs int
+	DatadogSite        string
+	DatadogLogLevel    string
+	// Sentry - soon to be deprecated
+	SentryDSN       string
+	SentryFlushInMs int
 }
 
-func NewSettings() *Settings {
+var defaultSettings *Settings = getInstance()
+
+func getInstance() *Settings {
+	return newSettings()
+}
+
+func newSettings() *Settings {
 	settings := &Settings{}
 
-	settings.App = GetString(AppNameEnv, "authz-api")
+	// Global
+	settings.App = os.Getenv(AppNameEnv)
 	settings.AppVersion = GetString(AppVerEnv, "1.0.0")
-	settings.AppEnv = GetString(AppEnv, "development")
-	settings.Farm = GetString(AppFarmEnv, "production")
+	settings.AppEnv = GetString(AppEnvironmentEnv, "development")
+	settings.Farm = GetString(AppFarmEnv, "local")
 	settings.Product = os.Getenv(ProductEnv)
+	// AWS
 	settings.AwsProfile = GetString(AwsProfileEnv, "default")
-	settings.AwsRegion = GetString(AwsRegionEnv, "us-west-2")
+	settings.AwsRegion = os.Getenv(AwsRegionEnv)
 	settings.AwsAccountID = os.Getenv(AwsAccountIDEnv)
 	settings.XrayLogging = GetBool(AwsXrayEnv, true)
-	settings.DDApiKey = os.Getenv(DatadogAPIEnvVar)
+	// Logging
+	settings.LogLevel = GetString(LogLevelEnv, "INFO")
+	// AuthZ
+	settings.AuthzClientTimeoutInMs = GetInt(AuthzClientTimeoutEnv, 1000)
+	settings.AuthzCacheDurationInSec = GetInt(AuthzCacheDurationEnv, 0)
+	settings.AuthzDialerTimeoutInMs = GetInt(AuthzDialerTimeoutEnv, 100)
+	settings.AuthzTLSTimeoutInMs = GetInt(AuthzTLSTimeoutEnv, 500)
+	// Cache
+	settings.CacheDurationInSec = GetInt(CacheDurationEnv, 0)
+	// Datadog
+	settings.DatadogApiKey = os.Getenv(DatadogAPIEnv)
+	settings.DatadogLogEndpoint = os.Getenv(DatadogLogEndpointEnv)
+	settings.DatadogEnv = GetString(DatadogEnvironmentEnv, settings.AppEnv)
+	settings.DatadogService = GetString(DatadogServiceEnv, settings.App)
+	settings.DatadogVersion = GetString(DatadogVersionEnv, settings.AppVersion)
+	settings.DatadogAgentHost = os.Getenv(DatadogAgentHostEnv)
+	settings.DatadogStatsDPort = GetInt(DatadogStatsdPortEnv, 8125)
+	settings.DatadogTimeoutInMs = GetInt(DatadogTimeoutEnv, 500)
+	settings.DatadogSite = os.Getenv(DatadogSiteEnv)
+	settings.DatadogLogLevel = GetString(DatadogLogLevelEnv, settings.LogLevel)
+	// Sentry - soon to be deprecated
 	settings.SentryDSN = os.Getenv(SentryDsnEnv)
-	settings.SentryFlushMs = GetInt(SentryFlushTimeoutInMsEnv, 50)
+	settings.SentryFlushInMs = GetInt(SentryFlushTimeoutInMsEnv, 100)
 
 	return settings
 }
 
-// RedactedSettings returns redacted Settings.
-func (s Settings) RedactedSettings() *Settings {
-	return &Settings{
-		App:           s.App,
-		AppVersion:    s.AppVersion,
-		AppEnv:        s.AppEnv,
-		Farm:          s.Farm,
-		Product:       s.Product,
-		AwsProfile:    s.AwsProfile,
-		AwsRegion:     s.AwsRegion,
-		AwsAccountID:  s.AwsAccountID,
-		XrayLogging:   s.XrayLogging,
-		DDApiKey:      redact(s.DDApiKey),
-		SentryDSN:     redact(s.SentryDSN),
-		SentryFlushMs: s.SentryFlushMs,
-	}
+// AppName returns the application name from the "APP" environment variable.
+func AppName() string {
+	return defaultSettings.App
 }
 
-// IsProduction returns true if "APP_ENV" == "local".
-func (s Settings) IsProduction() bool {
+// AppVersion returns the application version from the "APP_VER" environment variable.
+// Default: "1.0.0".
+func AppVersion() string {
+	return defaultSettings.AppVersion
+}
+
+// AppEnv returns the application environment from the "APP_ENV" environment variable.
+// Examples: "development", "production".
+func AppEnv() string {
+	return defaultSettings.AppEnv
+}
+
+// Farm returns the farm running the application from the "FARM" environment variable.
+// Examples: "local", "dolly", "production".
+func Farm() string {
+	return defaultSettings.Farm
+}
+
+// ProductSuite returns the product suite this application belongs to from the "PRODUCT" environment variable.
+// Examples: "engagement", "performance".
+func ProductSuite() string {
+	return defaultSettings.Product
+}
+
+// AwsProfile returns the AWS profile from the "AWS_PROFILE" environment variable.
+func AwsProfile() string {
+	return defaultSettings.AwsProfile
+}
+
+// AwsRegion returns the AWS region from the "AWS_REGION" environment variable.
+func AwsRegion() string {
+	return defaultSettings.AwsRegion
+}
+
+// AwsAccountID returns the AWS region from the "AWS_ACCOUNT_ID" environment variable.
+func AwsAccountID() string {
+	return defaultSettings.AwsAccountID
+}
+
+// IsXrayTracingEnabled returns "true" if the "XRAY_LOGGING" environment variable is turned on.
+func IsXrayTracingEnabled() bool {
+	return defaultSettings.XrayLogging
+}
+
+// LogLevel returns the "LOG_LEVEL" environment variable.
+// Examles: "DEBUG, "INFO", "WARN", "ERROR".
+func LogLevel() string {
+	return defaultSettings.LogLevel
+}
+
+// DatadogApiKey returns the "DD_API_KEY" environment variable.
+func DatadogApiKey() string {
+	return defaultSettings.DatadogApiKey
+}
+
+// DatadogLogEndpoint returns the "DD_LOG_ENDPOINT" environment variable.
+func DatadogLogEndpoint() string {
+	return defaultSettings.DatadogLogEndpoint
+}
+
+// DatadogEnv returns the "DD_ENV" environment variable.
+// Default: AppEnv().
+func DatadogEnv() string {
+	return defaultSettings.DatadogEnv
+}
+
+// DatadogService returns the "DD_SERVICE" environment variable.
+// Default: App().
+func DatadogService() string {
+	return defaultSettings.DatadogService
+}
+
+// DatadogVersion returns the "DD_VERSION" environment variable.
+// Default: AppVersion().
+func DatadogVersion() string {
+	return defaultSettings.DatadogVersion
+}
+
+// DatadogAgentHost returns the "DD_AGENT_HOST" environment variable.
+func DatadogAgentHost() string {
+	return defaultSettings.DatadogAgentHost
+}
+
+// DatadogStatsDPort returns the "DD_DOGSTATSD_PORT" environment variable.
+// Default: 8125.
+func DatadogStatsDPort() int {
+	return defaultSettings.DatadogStatsDPort
+}
+
+// DatadogTimeoutInMs returns the "DD_TIMEOUT" environment variable.
+// Default: 500.
+func DatadogTimeoutInMs() int {
+	return defaultSettings.DatadogTimeoutInMs
+}
+
+// DatadogSite returns the "DD_SITE" environment variable.
+func DatadogSite() string {
+	return defaultSettings.DatadogSite
+}
+
+// DatadogLogLevel returns the "DD_LOG_LEVEL" environment variable.
+// Default: LogLevel().
+func DatadogLogLevel() string {
+	return defaultSettings.DatadogLogLevel
+}
+
+// SentryDSN returns the "SENTRY_DSN" environment variable.
+func SentryDSN() string {
+	return defaultSettings.SentryDSN
+}
+
+// SentryFlushTimeoutInMs returns the "SENTRY_FLUSH_TIMEOUT_IN_MS" environment variable.
+// Default: 100.
+func SentryFlushTimeoutInMs() int {
+	return defaultSettings.SentryFlushInMs
+}
+
+// IsProduction returns true if "APP_ENV" == "production".
+func IsProduction() bool {
+	return defaultSettings.isProduction()
+}
+
+func (s *Settings) isProduction() bool {
 	return s.AppEnv == "production"
 }
 
-// IsRunningInAWS returns true if "FARM" != "local".
-func (s Settings) IsRunningInAWS() bool {
-	return !s.IsRunningLocal()
+// IsRunningInAWS returns true if "APP_ENV" != "local".
+func IsRunningInAWS() bool {
+	return defaultSettings.isRunningInAWS()
+}
+
+func (s *Settings) isRunningInAWS() bool {
+	return !s.isRunningLocal()
 }
 
 // IsRunningLocal returns true if FARM" == "local".
-func (s Settings) IsRunningLocal() bool {
+func IsRunningLocal() bool {
+	return defaultSettings.Farm == "local"
+}
+
+func (s *Settings) isRunningLocal() bool {
 	return s.Farm == "local"
-}
-
-// ToJSON returns Settings as a JSON string.
-func (s Settings) ToJSON() string {
-	b, err := json.Marshal(s)
-	if err != nil {
-		// https://stackoverflow.com/questions/33903552/what-input-will-cause-golangs-json-marshal-to-return-an-error#:~:text=From%20the%20docs%3A,result%20in%20an%20infinite%20recursion.
-		// should not happen with a valid Settings
-		panic(err)
-	}
-	return string(b)
-}
-
-// ToRedactedJSON returns Settings as a redacted JSON string.
-func (s Settings) ToRedactedJSON() string {
-	rs := s.RedactedSettings()
-	return rs.ToJSON()
-}
-
-// ToString returns Settings as a string (not redacted).
-func (s Settings) ToString() string {
-	data := s.ToJSON()
-	return strings.ReplaceAll(data, "\"", "")
-}
-
-// ToRedactedString returns Settings as a redacted string.
-func (s Settings) ToRedactedString() string {
-	rs := s.RedactedSettings()
-	return rs.ToString()
 }
