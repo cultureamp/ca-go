@@ -2,11 +2,13 @@ package env
 
 const (
 
-	// *** AuthZ Environment Variables ***.
-	AuthzClientTimeoutEnv = "AUTHZ_CLIENT_TIMEOUT_IN_MS"
-	AuthzCacheDurationEnv = "AUTHZ_CACHE_DURATION_IN_SEC"
-	AuthzDialerTimeoutEnv = "AUTHZ_DIALER_TIMEOUT_IN_MS"
-	AuthzTLSTimeoutEnv    = "AUTHZ_TLS_TIMEOUT_IN_MS"
+	// *** Global Environment Variables ***.
+	AppNameEnv        = "APP"
+	AppVerEnv         = "APP_VERSION"
+	AppEnvironmentEnv = "APP_ENV"
+	AppFarmEnv        = "FARM"
+	AppFarmLegacyEnv  = "APP_ENV"
+	ProductEnv        = "PRODUCT"
 
 	// *** AWS Environment Variables ***.
 	AwsProfileEnv   = "AWS_PROFILE"
@@ -14,35 +16,31 @@ const (
 	AwsAccountIDEnv = "AWS_ACCOUNT_ID"
 	AwsXrayEnv      = "XRAY_LOGGING"
 
+	// *** Log Environment Variables ***.
+	LogLevelEnv = "LOG_LEVEL"
+	
+	// *** AuthZ Environment Variables ***.
+	AuthzClientTimeoutEnv = "AUTHZ_CLIENT_TIMEOUT_IN_MS"
+	AuthzCacheDurationEnv = "AUTHZ_CACHE_DURATION_IN_SEC"
+	AuthzDialerTimeoutEnv = "AUTHZ_DIALER_TIMEOUT_IN_MS"
+	AuthzTLSTimeoutEnv    = "AUTHZ_TLS_TIMEOUT_IN_MS"
+
 	// *** Cache Environment Variables ***.
 	CacheDurationEnv = "CACHE_DURATION_IN_SEC"
 
 	// *** Datadog Environment Variables ***.
-	DatadogAPIEnvVar   = "DD_API_KEY"
-	DatadogLogEndpoint = "DD_LOG_ENDPOINT"
-	DatadogEnv         = "DD_ENV"
-	DatadogService     = "DD_SERVICE"
-	DatadogVersion     = "DD_VERSION"
-	DatadogAgentHost   = "DD_AGENT_HOST"
-	DatadogStatsdPort  = "DD_DOGSTATSD_PORT"
-	DatadogTimeout     = "DD_TIMEOUT"
-	DatadogSite        = "DD_SITE"
-	DatadogLogLevel    = "DD_LOG_LEVEL"
-
-	// *** Log Environment Variables ***.
-	LogLevel      = "LOG_LEVEL"
-	LogOmitEmpty  = "LOG_OMITEMPTY"
-	LogUseColours = "LOG_COLOURS"
+	DatadogAPIEnv         = "DD_API_KEY"
+	DatadogLogEndpointEnv = "DD_LOG_ENDPOINT"
+	DatadogEnvironmentEnv = "DD_ENV"
+	DatadogServiceEnv     = "DD_SERVICE"
+	DatadogVersionEnv     = "DD_VERSION"
+	DatadogAgentHostEnv   = "DD_AGENT_HOST"
+	DatadogStatsdPortEnv  = "DD_DOGSTATSD_PORT"
+	DatadogTimeoutEnv     = "DD_TIMEOUT"
+	DatadogSiteEnv        = "DD_SITE"
+	DatadogLogLevelEnv    = "DD_LOG_LEVEL"
 
 	// *** Sentry Environment Variables ***.
 	SentryDsnEnv              = "SENTRY_DSN"
 	SentryFlushTimeoutInMsEnv = "SENTRY_FLUSH_TIMEOUT_IN_MS"
-
-	// *** Global Environment Variables ***.
-	AppNameEnv       = "APP"
-	AppVerEnv        = "APP_VERSION"
-	AppEnv           = "APP_ENV"
-	AppFarmEnv       = "FARM"
-	AppFarmLegacyEnv = "APP_ENV"
-	ProductEnv       = "PRODUCT"
 )
