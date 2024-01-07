@@ -14,25 +14,26 @@ type smClient interface {
 	GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error)
 }
 
-type awsSecrets struct {
+// AWSSecrets supports the GetSecretValue method.
+type AWSSecrets struct {
 	client smClient
 }
 
 var defaultAWSSecrets = getInstance()
 
-func getInstance() *awsSecrets {
+func getInstance() *AWSSecrets {
 	// Should this take dependency on 'env' package and call env.AwsRegion()?
 	region := os.Getenv("AWS_REGION")
 	return NewAWSSecrets(region)
 }
 
-func NewAWSSecrets(region string) *awsSecrets {
+func NewAWSSecrets(region string) *AWSSecrets {
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String(region),
 	}))
 
 	client := secretsmanager.New(sess)
-	return &awsSecrets{
+	return &AWSSecrets{
 		client: client,
 	}
 }
@@ -42,7 +43,7 @@ func Get(secretName string) (string, error) {
 	return defaultAWSSecrets.Get(secretName)
 }
 
-func (s *awsSecrets) Get(secretName string) (string, error) {
+func (s *AWSSecrets) Get(secretName string) (string, error) {
 	input := &secretsmanager.GetSecretValueInput{
 		SecretId: aws.String(secretName),
 	}
