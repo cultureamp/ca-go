@@ -24,7 +24,7 @@ func TestEncrypt(t *testing.T) {
 	t.Run("Green Path - Should encrypt", func(t *testing.T) {
 		// arrange
 		mockKmsClient := &mockKMSClient{}
-		crypto := NewCryptography(testRegion, testKeyID)
+		crypto := NewKMSCryptography(testRegion, testKeyID)
 		crypto.client = mockKmsClient
 
 		expectedOutput := "SGVsbG8sIHBsYXlncm91bmQ="
@@ -50,7 +50,7 @@ func TestEncrypt(t *testing.T) {
 	t.Run("When unable to encrypt should error", func(t *testing.T) {
 		// arrange
 		mockKmsClient := &mockKMSClient{}
-		crypto := NewCryptography(testRegion, testKeyID)
+		crypto := NewKMSCryptography(testRegion, testKeyID)
 		crypto.client = mockKmsClient
 
 		mockKmsClient.On("Encrypt", ctx, mock.Anything, mock.Anything).
@@ -73,7 +73,7 @@ func TestDecrypt(t *testing.T) {
 	t.Run("Green Path - Should decrypt", func(t *testing.T) {
 		// arrange
 		mockKmsClient := &mockKMSClient{}
-		crypto := NewCryptography(testRegion, testKeyID)
+		crypto := NewKMSCryptography(testRegion, testKeyID)
 		crypto.client = mockKmsClient
 
 		expectedOutput := "Decrypted"
@@ -96,7 +96,7 @@ func TestDecrypt(t *testing.T) {
 	t.Run("When unable to decrypt should error", func(t *testing.T) {
 		// arrange
 		mockKmsClient := &mockKMSClient{}
-		crypto := NewCryptography(testRegion, testKeyID)
+		crypto := NewKMSCryptography(testRegion, testKeyID)
 		crypto.client = mockKmsClient
 
 		mockKmsClient.On("Decrypt", ctx, mock.Anything, mock.Anything).
@@ -114,7 +114,7 @@ func TestDecrypt(t *testing.T) {
 	t.Run("When non-base64 input should error", func(t *testing.T) {
 		// arrange
 		mockKmsClient := &mockKMSClient{}
-		crypto := NewCryptography(testRegion, testKeyID)
+		crypto := NewKMSCryptography(testRegion, testKeyID)
 		crypto.client = mockKmsClient
 
 		// act

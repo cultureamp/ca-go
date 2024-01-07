@@ -2,7 +2,7 @@
 
 The `cryptography` package provides access to kms Encrpyt and Decrpyt. The design of this package is to provide a simple system that can be used in a variety of situations without requiring high cognitive load.
 
-The package creates a default cryptography that uses the `AWS_REGION` and `KMS_KEY_ID` environment variables. However, if you need to Encrpyt or Decrypt for another region or multiple KeyIDs then you can create a `NewCryptography("region", "keyID")` and manage the class yourself.
+The package creates a default cryptography that uses the `AWS_REGION` and `KMS_KEY_ID` environment variables. However, if you need to Encrpyt or Decrypt for another region or multiple KeyIDs then you can create a `NewKMSCryptography("region", "keyID")` and manage the class yourself.
 
 ## Environment Variables
 
@@ -37,7 +37,7 @@ func BasicExamples() {
 	fmt.Printf("The decrypted string is '%s' (err='%v')\n", decrypted, err)
 
 	// or if you need cryptogprahy for another region or keyID then use
-	crypto := cryptography.NewCryptography("region", "keyID")
+	crypto := cryptography.NewKMSCryptography("region", "keyID")
 	encrypted, err = crypto.Encrypt(ctx, "plain-string")
 	fmt.Printf("The encrypted string is '%s' (err='%v')\n", encrypted, err)
 

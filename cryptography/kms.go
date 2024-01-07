@@ -15,24 +15,25 @@ type kmsClient interface {
 	Decrypt(ctx context.Context, params *kms.DecryptInput, optFns ...func(*kms.Options)) (*kms.DecryptOutput, error)
 }
 
-type cryptography struct {
+// KMSCryptography supports basic Encrypt & Decrypt methods.
+type KMSCryptography struct {
 	client kmsClient
 	keyID  string
 }
 
-var defaultKMSCrypto *cryptography = getInstance()
+var defaultKMSCrypto *KMSCryptography = getInstance()
 
-func getInstance() *cryptography {
+func getInstance() *KMSCryptography {
 	// Should this take dependency on 'env' package and call env.AwsRegion()?
 	region := os.Getenv("AWS_REGION")
 	keyID := os.Getenv("KMS_KEY_ID")
-	return NewCryptography(region, keyID)
+	return NewKMSCryptography(region, keyID)
 }
 
-// NewCryptography creates a new kms cryptography for the specific "region" and "keyid".
-func NewCryptography(region string, keyID string) *cryptography {
+// NewKMSCryptography creates a new kms cryptography for the specific "region" and "keyid".
+func NewKMSCryptography(region string, keyID string) *KMSCryptography {
 	client := kms.New(kms.Options{Region: region})
-	return &cryptography{client, keyID}
+	return &KMSCryptography{client, keyID}
 }
 
 // Encrypt uses the default AWS_REGION and KMS_KEY_ID to kms encrypt "plainStr".
@@ -41,7 +42,7 @@ func Encrypt(ctx context.Context, plainStr string) (string, error) {
 }
 
 // Encrypt will encrypt the "plainStr" using the region and keyID of the cryptography.
-func (c *cryptography) Encrypt(ctx context.Context, plainStr string) (string, error) {
+func (c *KMSCryptography) Encrypt(ctx context.Context, plainStr string) (string, error) {
 	input := &kms.EncryptInput{
 		KeyId:     &c.keyID,
 		Plaintext: []byte(plainStr),
@@ -62,7 +63,7 @@ func Decrypt(ctx context.Context, encryptedStr string) (string, error) {
 }
 
 // Decrypt will decrypt the "encryptedStr" using the region and keyID of the cryptography.
-func (c *cryptography) Decrypt(ctx context.Context, encryptedStr string) (string, error) {
+func (c *KMSCryptography) Decrypt(ctx context.Context, encryptedStr string) (string, error) {
 	blob, err := b64.StdEncoding.DecodeString(encryptedStr)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to decode")

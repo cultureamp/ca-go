@@ -18,7 +18,7 @@ func BasicExamples() {
 	fmt.Printf("The decrypted string is '%s' (err='%v')\n", decrypted, err)
 
 	// or if you need cryptogprahy for another region or keyID then use
-	crypto := cryptography.NewCryptography("region", "keyID")
+	crypto := cryptography.NewKMSCryptography("region", "keyID")
 	encrypted, err = crypto.Encrypt(ctx, "plain-string")
 	fmt.Printf("The encrypted string is '%s' (err='%v')\n", encrypted, err)
 
