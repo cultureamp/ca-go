@@ -20,6 +20,7 @@ on `pkg.go.dev` for more details on individual packages.
 
 These packages are stable and there use is actively encouraged.
 
+- `cryptography`: easy access to kms Encrypt/Decrpyt. See [cryptography](cryptography/CRYPTOGRAPHY.md) for futher details.
 - `env`: easy access to common environment settings. See [env](env/ENV.md) for futher details.
 - `log`: easy and simple logging that confirms to the logging engineer standard. See [logger](log/LOGGER.md) for further details.
 - `ref`: simple methods to create pointers from literals
