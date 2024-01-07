@@ -11,7 +11,7 @@ env:
   GOTOOLCHAIN: go1.21.5
 
 jobs:
-  go-lint-sec:
+  go-install:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -26,20 +26,47 @@ jobs:
       - name: Tidy dependencies
         run: go mod tidy
 
-      - name: GOlint
+  go-lint:
+    needs: [go-install]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
+      - name: GoLint
         uses: golangci/golangci-lint-action@v3
         with:
           version: "latest"
           args: --verbose --timeout=5m
           skip-pkg-cache: true
 
-      - name: Gosec
+  go-sec:
+    needs: [go-lint]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+          cache-dependency-path: ./go.sum
+
+      - name: GoSec
         uses: securego/gosec@master
         with:
           args: ./...
 
   go-build:
-    needs: [go-lint-sec]
+    needs: [go-sec]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
