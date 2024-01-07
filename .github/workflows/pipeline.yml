@@ -8,6 +8,7 @@ on:
 
 env:
   GO_VERSION: 1.21
+  GOTOOLCHAIN: go1.21.5
 
 jobs:
   go-lint-sec:
