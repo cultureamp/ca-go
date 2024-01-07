@@ -68,7 +68,7 @@ jobs:
           args: ./...
 
   go-build:
-    needs: [go-lint]
+    needs: [go-setup]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -87,7 +87,7 @@ jobs:
         run: GOARCH=amd64 GOOS=linux go build ./...
 
   go-test:
-    needs: [go-build, go-sec]
+    needs: [go-lint, go-build, go-sec]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
