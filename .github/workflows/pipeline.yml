@@ -10,7 +10,7 @@ env:
   GO_VERSION: 1.21
 
 jobs:
-  go-lint:
+  go-lint-sec:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -25,15 +25,20 @@ jobs:
       - name: Tidy dependencies
         run: go mod tidy
 
-      - name: GOLangCI-Lint
+      - name: GOlint
         uses: golangci/golangci-lint-action@v3
         with:
           version: "latest"
           args: --verbose --timeout=5m
           skip-pkg-cache: true
 
+      - name: Gosec
+        uses: securego/gosec@master
+        with:
+          args: ./...
+
   go-build:
-    needs: [go-lint]
+    needs: [go-lint-sec]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
