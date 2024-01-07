@@ -11,7 +11,7 @@ env:
   GOTOOLCHAIN: go1.21.5
 
 jobs:
-  go-install:
+  go-setup:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -27,7 +27,7 @@ jobs:
         run: go mod tidy
 
   go-lint:
-    needs: [go-install]
+    needs: [go-setup]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -46,8 +46,10 @@ jobs:
           args: --verbose --timeout=5m
           skip-pkg-cache: true
 
+  # this takes a long time to run, so we continue with go-build, go-test etc. in parallel
+  # should we exclude /x/... to speed up this steps?
   go-sec:
-    needs: [go-lint]
+    needs: [go-setup]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -66,7 +68,7 @@ jobs:
           args: ./...
 
   go-build:
-    needs: [go-sec]
+    needs: [go-lint]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
