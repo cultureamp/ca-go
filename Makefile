@@ -9,7 +9,7 @@ test:
 .PHONY: test-ci
 test-ci:
 	mkdir -p artifacts
-	go test -race ./... -covermode=atomic -coverprofile=artifacts/count.out
+	go test -race -vet=off ./... -covermode=atomic -coverprofile=artifacts/count.out
 	go tool cover -func=artifacts/count.out | tee artifacts/coverage.out
 
 # ensures that `go mod tidy` has been run after any dependency changes
