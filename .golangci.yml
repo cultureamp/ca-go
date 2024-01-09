@@ -52,7 +52,7 @@ linters:
     #    - gomoddirectives
     - gomodguard
     - goprintffuncname
-    - gosec
+    #    - gosec # disable as we run gosec as an explicit step
     - gosimple
     - gosmopolitan
     - govet
