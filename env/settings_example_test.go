@@ -10,7 +10,6 @@ import (
 func TestSettingsExample(t *testing.T) {
 	// call env methods to retrieve environment values
 
-	// get the application name
 	appName := env.AppName()
 	assert.Equal(t, "", appName)
 
