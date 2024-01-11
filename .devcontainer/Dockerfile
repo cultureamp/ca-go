@@ -4,6 +4,6 @@ RUN apt update && apt install -y
 
 # Language autocomplete features.
 RUN go install golang.org/x/tools/gopls@latest
-RUN go get golang.org/x/tools/cmd/goimports
+RUN go install golang.org/x/tools/cmd/goimports@latest
 
 CMD /usr/bin/bash
