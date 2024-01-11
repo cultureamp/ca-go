@@ -4,6 +4,7 @@ import (
 	"os"
 )
 
+// DefaultAWSSecrets is a public *AWSSecretsManager used for package level methods.
 var DefaultAWSSecrets = getInstance()
 
 func getInstance() *AWSSecretsManager {
