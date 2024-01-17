@@ -9,7 +9,7 @@ type LegacyLogger struct {
 }
 
 // Deprecated: NewLegacyLogger is deprecated but included here for easy migration from glamplify.
-func NewLegacyLogger(config *LoggerConfig) *LegacyLogger {
+func NewLegacyLogger(config *Config) *LegacyLogger {
 	impl := NewLogger(config)
 	return &LegacyLogger{impl: impl}
 }

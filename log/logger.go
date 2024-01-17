@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -13,7 +14,7 @@ type Logger struct {
 	impl zerolog.Logger
 }
 
-func NewLogger(config *LoggerConfig) *Logger {
+func NewLogger(config *Config) *Logger {
 	var lvl zerolog.Level
 	switch config.LogLevel {
 	case "DEBUG":
@@ -36,8 +37,22 @@ func NewLogger(config *LoggerConfig) *Logger {
 		writer = io.Discard
 	}
 
+	if config.isLocal() {
+		writer = zerolog.ConsoleWriter{
+			Out:        writer,
+			TimeFormat: time.RFC3339,
+			FormatMessage: func(i interface{}) string {
+				if i == nil {
+					return ""
+				}
+				return fmt.Sprintf("event=\"%s\"", i)
+			},
+		}
+	}
+
 	impl := zerolog.
 		New(writer).
+		Level(lvl).
 		With().
 		Str("app", config.AppName).
 		Str("app_version", config.AppVersion).
@@ -46,8 +61,7 @@ func NewLogger(config *LoggerConfig) *Logger {
 		Str("farm", config.Farm).
 		Str("product", config.Product).
 		Timestamp().
-		Logger().
-		Level(lvl)
+		Logger()
 
 	return &Logger{impl: impl}
 }

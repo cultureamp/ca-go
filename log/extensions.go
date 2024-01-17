@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 )
 
@@ -73,11 +74,14 @@ func (lf *Property) WithSystemTracing() *Property {
 	if ok {
 		file = filepath.Base(path)
 	}
+	buildInfo, _ := debug.ReadBuildInfo()
 
 	return lf.doc("system", SubDoc().
 		Str("os", runtime.GOOS).
 		Int("num_cpu", runtime.NumCPU()).
 		Str("host", host).
+		Int("pid", os.Getpid()).
+		Str("go_version", buildInfo.GoVersion).
 		Str("loc", file+":"+strconv.Itoa(line)),
 	)
 }

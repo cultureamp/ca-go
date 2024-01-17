@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// LoggerConfig contains logging configuration values.
-type LoggerConfig struct {
+// Config contains logging configuration values.
+type Config struct {
 	LogLevel string // The logging level
 	Quiet    bool   // Are we running inside tests and we should be quiet?
 
@@ -22,7 +22,7 @@ type LoggerConfig struct {
 
 // NewLoggerConfig creates a new configuration based on environment variables
 // which can easily be reset before passing to NewLogger().
-func NewLoggerConfig() *LoggerConfig {
+func NewLoggerConfig() *Config {
 	appName, ok := os.LookupEnv("APP")
 	if !ok || appName == "" {
 		appName = os.Getenv("APP_NAME")
@@ -62,7 +62,7 @@ func NewLoggerConfig() *LoggerConfig {
 		quiet = isTestMode()
 	}
 
-	return &LoggerConfig{
+	return &Config{
 		LogLevel:     logLevel,
 		AppName:      appName,
 		AppVersion:   appVersion,
@@ -72,6 +72,14 @@ func NewLoggerConfig() *LoggerConfig {
 		Farm:         farm,
 		Quiet:        quiet,
 	}
+}
+
+func (c *Config) isProduction() bool {
+	return c.Farm == "production"
+}
+
+func (c *Config) isLocal() bool {
+	return c.Farm == "local"
 }
 
 func isTestMode() bool {
