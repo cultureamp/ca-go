@@ -11,28 +11,28 @@ func getInstance() *Logger {
 // Debug starts a new message with debug level.
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
-func Debug(event string) *LoggerField {
+func Debug(event string) *Property {
 	return defaultLogger.Debug(event)
 }
 
 // Info starts a new message with info level.
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
-func Info(event string) *LoggerField {
+func Info(event string) *Property {
 	return defaultLogger.Info(event)
 }
 
 // Warn starts a new message with warn level.
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
-func Warn(event string) *LoggerField {
+func Warn(event string) *Property {
 	return defaultLogger.Warn(event)
 }
 
 // Error starts a new message with error level.
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
-func Error(event string, err error) *LoggerField {
+func Error(event string, err error) *Property {
 	return defaultLogger.Error(event, err)
 }
 
@@ -40,7 +40,7 @@ func Error(event string, err error) *LoggerField {
 // is called by the Msg method, which terminates the program immediately.
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
-func Fatal(event string, err error) *LoggerField {
+func Fatal(event string, err error) *Property {
 	return defaultLogger.Fatal(event, err)
 }
 
@@ -48,6 +48,6 @@ func Fatal(event string, err error) *LoggerField {
 // is called by the Msg method, which stops the ordinary flow of a goroutine.
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
-func Panic(event string, err error) *LoggerField {
+func Panic(event string, err error) *Property {
 	return defaultLogger.Panic(event, err)
 }

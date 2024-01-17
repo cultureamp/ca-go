@@ -34,7 +34,7 @@ type AuthPayload struct {
 
 // WithRequestTracing added a "tracing" subdocument to the log that
 // include important trace, request and correlation headers.
-func (lf *LoggerField) WithRequestTracing(req *http.Request) *LoggerField {
+func (lf *Property) WithRequestTracing(req *http.Request) *Property {
 	if req == nil {
 		return lf
 	}
@@ -50,7 +50,9 @@ func (lf *LoggerField) WithRequestTracing(req *http.Request) *LoggerField {
 	)
 }
 
-func (lf *LoggerField) WithAuthenticatedUserTracing(auth *AuthPayload) *LoggerField {
+// WithAuthenticatedUserTracing added a "authentication" subdocument to the log that
+// include important account, user and realuser fields.
+func (lf *Property) WithAuthenticatedUserTracing(auth *AuthPayload) *Property {
 	if auth == nil {
 		return lf
 	}
@@ -62,7 +64,9 @@ func (lf *LoggerField) WithAuthenticatedUserTracing(auth *AuthPayload) *LoggerFi
 	)
 }
 
-func (lf *LoggerField) WithSystemTracing() *LoggerField {
+// WithSystemTracing added a "system" subdocument to the log that
+// include important host, runtime, cpu and loc fields.
+func (lf *Property) WithSystemTracing() *Property {
 	host, _ := os.Hostname()
 	_, path, line, ok := runtime.Caller(1)
 	file := "unknown"

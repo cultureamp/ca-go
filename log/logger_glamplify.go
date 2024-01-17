@@ -1,9 +1,9 @@
 package log
 
-// Deprecated: Fields can be used to replace legacy glamplify log.Fields in logging statements.
+// Deprecated: Fields is a drop in replacement for glamplify log.Fields in logging statements.
 type Fields map[string]interface{}
 
-// Deprecated: LegacyLogger is deprecated but included here for easy migration from glamplify.
+// Deprecated: LegacyLogger supports the legacy glamplify logging interface.
 type LegacyLogger struct {
 	impl *Logger
 }

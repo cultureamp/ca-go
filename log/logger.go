@@ -62,35 +62,35 @@ func setGlobalLogger() {
 // Debug starts a new message with debug level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *Logger) Debug(event string) *LoggerField {
+func (l *Logger) Debug(event string) *Property {
 	le := l.impl.Debug().Str("event", toSnakeCase(event))
-	return &LoggerField{le}
+	return &Property{le}
 }
 
 // Info starts a new message with info level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *Logger) Info(event string) *LoggerField {
+func (l *Logger) Info(event string) *Property {
 	le := l.impl.Info().Str("event", toSnakeCase(event))
-	return &LoggerField{le}
+	return &Property{le}
 }
 
 // Warn starts a new message with warn level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *Logger) Warn(event string) *LoggerField {
+func (l *Logger) Warn(event string) *Property {
 	le := l.impl.Warn().Str("event", toSnakeCase(event))
-	return &LoggerField{le}
+	return &Property{le}
 }
 
 // Error starts a new message with error level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *Logger) Error(event string, err error) *LoggerField {
+func (l *Logger) Error(event string, err error) *Property {
 	le := l.impl.Error().
 		Err(err).
 		Str("event", toSnakeCase(event))
-	fields := &LoggerField{le}
+	fields := &Property{le}
 	return fields.withFullStack()
 }
 
@@ -98,16 +98,16 @@ func (l *Logger) Error(event string, err error) *LoggerField {
 // is called by the Msg method, which terminates the program immediately.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *Logger) Fatal(event string, err error) *LoggerField {
+func (l *Logger) Fatal(event string, err error) *Property {
 	le := l.impl.Fatal().Err(err).Str("event", toSnakeCase(event))
-	return &LoggerField{le}
+	return &Property{le}
 }
 
 // Panic starts a new message with panic level. The panic() function
 // is called by the Msg method, which stops the ordinary flow of a goroutine.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *Logger) Panic(event string, err error) *LoggerField {
+func (l *Logger) Panic(event string, err error) *Property {
 	le := l.impl.Panic().Err(err).Str("event", toSnakeCase(event))
-	return &LoggerField{le}
+	return &Property{le}
 }
