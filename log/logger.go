@@ -37,7 +37,7 @@ func NewLogger(config *Config) *Logger {
 		writer = io.Discard
 	}
 
-	if config.isLocal() {
+	if config.isLocal() && config.ConsoleWriter {
 		writer = zerolog.ConsoleWriter{
 			Out:        writer,
 			TimeFormat: time.RFC3339,
