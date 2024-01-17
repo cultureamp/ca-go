@@ -56,9 +56,9 @@ func (lf *LoggerField) Properties(props *LoggerField) *LoggerField {
 	return lf
 }
 
-// Deprecated: LegacyFields to support glamplify interface
+// Deprecated: LegacyFields to support glamplify interface.
 func (lf *LoggerField) LegacyFields(key string, f Fields) *LoggerField {
-	if f != nil && len(f) > 0 {
+	if len(f) > 0 {
 		lf.impl = lf.impl.Interface(key, f)
 	}
 	return lf
