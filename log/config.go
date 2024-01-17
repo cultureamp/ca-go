@@ -7,11 +7,19 @@ import (
 	"strings"
 )
 
+const (
+	AppVerDefault       = "1.0.0"
+	AwsAccountIDDefault = "development"
+	AppFarmDefault      = "local"
+	LogLevelDefault     = "INFO"
+)
+
 // Config contains logging configuration values.
 type Config struct {
 	// Mandatory fields listed in https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3114598406/Logging+Standard
-	AppName      string // The name of the application the log was generated from
-	AppVersion   string // The version of the application
+	AppName    string // The name of the application the log was generated from
+	AppVersion string // The version of the application
+
 	AwsRegion    string // the AWS region this code is running in
 	AwsAccountID string // the AWS account ID this code is running in
 	Product      string // performance, engagmentment, etc.
@@ -25,36 +33,39 @@ type Config struct {
 // NewLoggerConfig creates a new configuration based on environment variables
 // which can easily be reset before passing to NewLogger().
 func NewLoggerConfig() *Config {
-	appName, ok := os.LookupEnv("APP")
-	if !ok || appName == "" {
-		appName = os.Getenv("APP_NAME")
+	appName := os.Getenv(AppNameEnv)
+	if appName == "" {
+		appName = os.Getenv(AppNameLeagcyEnv)
 	}
 
-	awsRegion := os.Getenv("AWS_REGION")
-	product := os.Getenv("PRODUCT")
-
-	awsAccountID, ok := os.LookupEnv("AWS_ACCOUNT_ID")
-	if !ok || awsAccountID == "" {
-		awsAccountID = "local"
+	appVersion := os.Getenv(AppVerEnv)
+	if appVersion == "" {
+		appVersion = AppVerDefault
 	}
 
-	farm, ok := os.LookupEnv("FARM")
-	if !ok || farm == "" {
-		farm = "local"
+	awsRegion := os.Getenv(AwsRegionEnv)
+	product := os.Getenv(ProductEnv)
+
+	awsAccountID := os.Getenv(AwsAccountIDEnv)
+	if awsAccountID == "" {
+		awsAccountID = AwsAccountIDDefault
 	}
 
-	appVersion, ok := os.LookupEnv("APP_VERSION")
-	if !ok || appVersion == "" {
-		appVersion = "1.0.0"
+	farm := os.Getenv(AppFarmEnv)
+	if farm == "" {
+		farm = os.Getenv(AppFarmLegacyEnv)
+		if farm == "" {
+			farm = AppFarmDefault
+		}
 	}
 
-	logLevel, ok := os.LookupEnv("LOG_LEVEL")
-	if !ok || logLevel == "" {
-		logLevel = "INFO"
+	logLevel := os.Getenv(LogLevelEnv)
+	if logLevel == "" {
+		logLevel = LogLevelDefault
 	}
 
-	quiet := getEnvBool("QUIET_MODEL", isTestMode())
-	consoleWriter := getEnvBool("CONSOLE_WRITER", false)
+	quiet := getEnvBool(LogQuietModeEnv, isTestMode())
+	consoleWriter := getEnvBool(LogConsoleWriterEnv, false)
 
 	return &Config{
 		LogLevel:      logLevel,
@@ -69,12 +80,8 @@ func NewLoggerConfig() *Config {
 	}
 }
 
-func (c *Config) isProduction() bool {
-	return c.Farm == "production"
-}
-
 func (c *Config) isLocal() bool {
-	return c.Farm == "local"
+	return c.Farm == AppFarmDefault && c.AwsAccountID == AwsAccountIDDefault
 }
 
 func isTestMode() bool {
