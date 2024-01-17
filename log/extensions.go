@@ -33,7 +33,7 @@ type AuthPayload struct {
 }
 
 // WithRequestTracing added a "tracing" subdocument to the log that
-// include important trace, request and correlation headers
+// include important trace, request and correlation headers.
 func (lf *LoggerField) WithRequestTracing(req *http.Request) *LoggerField {
 	if req == nil {
 		return lf
