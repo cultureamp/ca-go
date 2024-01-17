@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLoggerLevels(t *testing.T) {
+func TestLegacyLoggerLevels(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		logLevel      string
@@ -52,16 +52,16 @@ func TestLoggerLevels(t *testing.T) {
 
 			config.LogLevel = tC.logLevel
 			config.Quiet = true
-			logger := NewLogger(config)
+			logger := NewLegacyLogger(config)
 			assert.NotNil(t, logger)
 
-			level := logger.impl.GetLevel()
+			level := logger.impl.impl.GetLevel()
 			assert.Equal(t, tC.expectedLevel, level, tC.desc)
 		})
 	}
 }
 
-func TestLoggerMethods(t *testing.T) {
+func TestLegacyLoggerMethods(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		logLevel      string
@@ -105,25 +105,25 @@ func TestLoggerMethods(t *testing.T) {
 
 			config.LogLevel = tC.logLevel
 			config.Quiet = false
-			logger := NewLogger(config)
+			logger := NewLegacyLogger(config)
 			assert.NotNil(t, logger)
 
 			switch tC.logLevel {
 			case "DEBUG":
-				logger.Debug("debug_event").Send()
+				logger.Debug("debug_event")
 			case "INFO":
-				logger.Info("info_event").Send()
+				logger.Info("info_event")
 			case "WARN":
-				logger.Warn("warn_event").Send()
+				logger.Warn("warn_event")
 			case "ERROR":
-				logger.Error("error_event", errors.New("test error")).Send()
+				logger.Error("error_event", errors.New("test error"))
 			}
 		})
 	}
 
 	// Output:
-	// {"severity":"debug","app":"","app_version":"1.0.0","aws_region":"","aws_account_id":"local","farm":"local","product":"","event":"debug_event","time":"2024-01-17T16:03:30+11:00"}
-	// {"severity":"info","app":"","app_version":"1.0.0","aws_region":"","aws_account_id":"local","farm":"local","product":"","event":"info_event","time":"2024-01-17T16:03:30+11:00"}
-	// {"severity":"warn","app":"","app_version":"1.0.0","aws_region":"","aws_account_id":"local","farm":"local","product":"","event":"warn_event","time":"2024-01-17T16:03:30+11:00"}
-	// {"severity":"error","app":"","app_version":"1.0.0","aws_region":"","aws_account_id":"local","farm":"local","product":"","error":"test error","event":"error_event","time":"2024-01-17T16:03:30+11:00"}
+	// {"severity":"debug","app":"","app_version":"1.0.0","aws_region":"","aws_account_id":"local","farm":"local","product":"","event":"debug_event","time":"2024-01-17T16:10:54+11:00"}
+	// {"severity":"info","app":"","app_version":"1.0.0","aws_region":"","aws_account_id":"local","farm":"local","product":"","event":"info_event","time":"2024-01-17T16:10:54+11:00"}
+	// {"severity":"warn","app":"","app_version":"1.0.0","aws_region":"","aws_account_id":"local","farm":"local","product":"","event":"warn_event","time":"2024-01-17T16:10:54+11:00"}
+	// {"severity":"error","app":"","app_version":"1.0.0","aws_region":"","aws_account_id":"local","farm":"local","product":"","error":"test error","event":"error_event","time":"2024-01-17T16:10:54+11:00"}
 }
