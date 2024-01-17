@@ -19,6 +19,7 @@ const (
 	ErrorUUID = "00000000-0000-0000-0000-000000000000"
 )
 
+// AuthPayload contains the customer account_id, user_id and realuser_id uuids.
 type AuthPayload struct {
 	// CustomerAccountID is the ID of the currently logged in user's parent
 	// account/organization, sometimes known as the "account_aggregate_id".
@@ -31,7 +32,8 @@ type AuthPayload struct {
 	RealUserID string
 }
 
-// WithRequestTracing.
+// WithRequestTracing added a "tracing" subdocument to the log that
+// include important trace, request and correlation headers
 func (lf *LoggerField) WithRequestTracing(req *http.Request) *LoggerField {
 	if req == nil {
 		return lf

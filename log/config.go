@@ -79,7 +79,6 @@ func isTestMode() bool {
 	argZero := os.Args[0]
 
 	if strings.HasSuffix(argZero, ".test") ||
-
 		strings.Contains(argZero, "/_test/") ||
 		flag.Lookup("test.v") != nil {
 		return true
