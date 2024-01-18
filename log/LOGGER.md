@@ -4,7 +4,7 @@ The `log` package implements the [Logging Standard](https://cultureamp.atlassian
 
 There are no new loggers to create or pass around, instead there is a singleton logger created in the package that you can call directly.
 
-The `log` package wraps [zerolog](https://github.com/rs/zerolog) and therefore requires that you end all logging statements with a `Msg("_your_message_here")` to actually emit the log.
+The `log` package wraps [zerolog](https://github.com/rs/zerolog) and therefore requires that you end all logging statements with a `Details("_your_message_here")` to actually emit the log.
 
 ## Environment Variables
 
@@ -15,97 +15,128 @@ You MUST set these:
 
 You can OPTIONALLY set these:
 - LOG_LEVEL = One of DEBUG, INFO, WARN, ERROR, defaults to "INFO"
-- AWS_ACCOUNT_ID = The AWS account Id this code is running in, defaults to  "local"
+- AWS_ACCOUNT_ID = The AWS account Id this code is running in, defaults to  "development"
 - FARM = The name of the farm or where the code is running, defaults to "local" (eg. "production", "dolly") 
 - APP_VERSION = The version of the application, defaults to "1.0.0"
 
+## Use in Unit Tests
 
-## Examples
+By default the logger will not emit any output when running inside a test. You can override this behaviour by setting the `QUIET_MODE` environment variable to "false".
+
+When running localling you can also set the `CONSOLE_WRITER` to "true" to change from json to key-value colour coded output. Note: Never run with the `CONSOLE_WRITER` set to "true" in production.
+
+## Managing Loggers Yourself
+
+While we recommend using the package level methods for their ease of use, you may desire to create and manage loggers yourself, which you can do by calling:
+
 ```
-package cago
+config := NewLoggerConfig()
+// optionally override default properties on the config
+return NewLogger(config)
+```
+
+## Log Examples
+```
+package cagoexample
 
 import (
-	"context"
-
 	"github.com/cultureamp/ca-go/log"
-	"github.com/cultureamp/ca-go/jwt"
 )
 
-
 func basic_example() {
-	ctx := context.Background()
+	var ipv4 net.IP
 
-	log.Debug(ctx, "something_just_happened")
+	then := time.Now()
+	u := uuid.New()
+	duration := time.Since(then)
 
-    log.Info(ctx, "something_else_happened").
-		Str("resource", "resource_id").
-        
-		Int("test-number", 2).
-		Msg("detailed information go here")
+	props := SubDoc().
+		Str("str", "value").
+		Int("int", 1).
+		Bool("bool", true).
+		Duration("dur", duration).
+		IPAddr("ipaddr", ipv4).
+		UUID("uuid", u)
 
-    log.Error(ctx, "user_added", err).
-		Str("resource", "resource_id").
-		Int("test-number", 4).
-		Dict("properties", log.Properties().
-			Str("bar", "baz").
-			Int("n", 1),
-		).Msg("further details can be added here")
-}
+	Debug("debug_with_all_field_types").
+		WithRequestTracing(nil).
+		Properties(props).
+		Details("logging should contain all types")
 
-func glamplify_example(t *testing.T) {
-	ctx := context.Background()
+	Debug("debug_with_all_field_types").
+		WithRequestTracing(nil).
+		Properties(props).
+		Detailsf("logging should contain all types: %s", "ok")
 
-	type fields map[string]interface{}
-
-	now := time.Now()
-	f := &fields{
-		"key1":  "string value",
-		"key2":  1,
-		"now":   now.Format(time.RFC3339),
-		"later": time.Now(),
-	}
-
-	log.Info(ctx, "log_fields").
-		Interface("properties", f).
-		Msg("detailed information explain")
+	Debug("debug_with_all_field_types").
+		WithRequestTracing(nil).
+		Properties(props).
+		Send()
 }
 
 func http_request_example(t *testing.T) {
-	ctx := context.Background()
-
 	// create a dummy request and add it to the context
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/foo", nil)
 	req.Header.Add(log.TraceHeader, "trace_123_id")
 	req.Header.Add(log.RequestHeader, "request_456_id")
 	req.Header.Add(log.CorrelationHeader, "correlation_789_id")
 
-	ctx = log.ContextWithRequest(ctx, req)
-
-    // later when you log with that context, the http request headers 
-    // will automatically be added to the log (as per the standard)
-	log.Info(ctx, "info_event").
-		Str("resource", "resource_id").
-		Int("test-number", 1).
-		Msg("logging should contain request headers")
+	Debug("debug_with_request_and_system_tracing").
+		WithRequestTracing(req).
+		Properties(log.SubDoc().
+			Str("resource", "resource_id").
+			Int("test-number", 1),
+		).Details("logging should contain both")
 }
 
 func jwtauth_payload_example(t *testing.T) {
-	ctx := context.Background()
-
-	// copy to the jwt auth payload and add it to the context
-	auth := log.AuthPayload{
+	// create a jwt payload
+	auth := &log.AuthPayload{
 		CustomerAccountID: "account_123_id",
 		RealUserID:        "real_456_id",
 		UserID:            "user_789_id",
 	}
-	ctx = log.ContextWithAuthPayload(ctx, auth)
 
-    // later when you log with that context, the account, user and 
-    // real_user ids will automatically be added to the log
-    // (as per the standard)
-	log.Info(ctx, "info_event").
-		Str("resource", "resource_id").
-		Int("test-number", 1).
-		Msg("logging should contain auth payload")
+	log.Info("info_with_auth_and_system_tracing").
+		WithAuthenticatedUserTracing(auth).
+		WithSystemTracing().
+		Properties(log.SubDoc().
+			Str("resource", "resource_id").
+			Int("test-number", 1),
+		).Details("logging should contain both")
+}
+```
+
+## Legacy Glamplify Loggers
+
+Included are both package and NewLegacyLogger methods that support the glamplfy `log.Fields{}` interface. Feel free to use this when migrating an existing project off `glamplify` to `ca-go`, but these are NOT recommended for use for new projects.
+
+
+## Legacy Glamplify Examples
+```
+package cagoexample
+
+import (
+	"github.com/cultureamp/ca-go/log"
+)
+
+func glamplify_example() {
+	now := time.Now()
+	f := log.Fields{
+		"key1":    "string value",
+		"key2":    1,
+		"now":     now.Format(time.RFC3339),
+		"later":   time.Now(),
+		"details": "detailed message",
+	}
+	log.LogDebug("log_fields", f)
+	log.LogInfo("log_fields", f)
+	log.LogWarn("log_fields", f)
+	log.LogError("log_fields", errors.New("test error"), f)
+
+	// log.LogFatal calls os.exit() so this is hard to demonstrate!
+
+	defer recoverFromPanic()
+	log.LogPanic("panic_error", errors.New("test error"), f)
 }
 ```
