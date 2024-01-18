@@ -20,6 +20,7 @@ func (l *LegacyLogger) Debug(event string, fields ...Fields) {
 	props = props.Merge(fields...)
 
 	l.impl.Debug(event).
+		WithSystemTracing().
 		LegacyFields("properties", props).
 		Send()
 }
@@ -30,6 +31,7 @@ func (l *LegacyLogger) Info(event string, fields ...Fields) {
 	props = props.Merge(fields...)
 
 	l.impl.Info(event).
+		WithSystemTracing().
 		LegacyFields("properties", props).
 		Send()
 }
@@ -40,6 +42,7 @@ func (l *LegacyLogger) Warn(event string, fields ...Fields) {
 	props = props.Merge(fields...)
 
 	l.impl.Warn(event).
+		WithSystemTracing().
 		LegacyFields("properties", props).
 		Send()
 }
@@ -50,6 +53,7 @@ func (l *LegacyLogger) Error(event string, err error, fields ...Fields) {
 	props = props.Merge(fields...)
 
 	l.impl.Error(event, err).
+		WithSystemTracing().
 		LegacyFields("properties", props).
 		Send()
 }
@@ -61,6 +65,7 @@ func (l *LegacyLogger) Fatal(event string, err error, fields ...Fields) {
 	props = props.Merge(fields...)
 
 	l.impl.Fatal(event, err).
+		WithSystemTracing().
 		LegacyFields("properties", props).
 		Send()
 }
@@ -72,6 +77,7 @@ func (l *LegacyLogger) Panic(event string, err error, fields ...Fields) {
 	props = props.Merge(fields...)
 
 	l.impl.Panic(event, err).
+		WithSystemTracing().
 		LegacyFields("properties", props).
 		Send()
 }
