@@ -1,6 +1,7 @@
 package log_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -10,7 +11,9 @@ import (
 )
 
 func TestCommonGlamplifyExamples(t *testing.T) {
+	ctx := context.Background()
 	now := time.Now()
+
 	f := log.Fields{
 		"key1":    "string value",
 		"key2":    1,
@@ -18,15 +21,15 @@ func TestCommonGlamplifyExamples(t *testing.T) {
 		"later":   time.Now(),
 		"details": "detailed message",
 	}
-	log.LogDebug("log_fields", f)
-	log.LogInfo("log_fields", f)
-	log.LogWarn("log_fields", f)
-	log.LogError("log_fields", errors.New("test error"), f)
+	log.LogDebug(ctx, "log_fields", f)
+	log.LogInfo(ctx, "log_fields", f)
+	log.LogWarn(ctx, "log_fields", f)
+	log.LogError(ctx, "log_fields", errors.New("test error"), f)
 
 	// log.LogFatal calls os.exit() so this is hard to test!
 
 	defer recoverFromPanic()
-	log.LogPanic("panic_error", errors.New("test error"), f)
+	log.LogPanic(ctx, "panic_error", errors.New("test error"), f)
 }
 
 func recoverFromLogPanic() {

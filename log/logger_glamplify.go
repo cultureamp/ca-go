@@ -1,7 +1,6 @@
 package log
 
-// Deprecated: Fields is a drop in replacement for glamplify log.Fields in logging statements.
-type Fields map[string]interface{}
+import "context"
 
 // Deprecated: LegacyLogger supports the legacy glamplify logging interface.
 type LegacyLogger struct {
@@ -15,7 +14,7 @@ func NewLegacyLogger(config *Config) *LegacyLogger {
 }
 
 // Deprecated: Debug emits a new log message with debug level.
-func (l *LegacyLogger) Debug(event string, fields ...Fields) {
+func (l *LegacyLogger) Debug(_ context.Context, event string, fields ...Fields) {
 	props := Fields{}
 	props = props.Merge(fields...)
 
@@ -26,7 +25,7 @@ func (l *LegacyLogger) Debug(event string, fields ...Fields) {
 }
 
 // Deprecated: Info emits a new log message with info level.
-func (l *LegacyLogger) Info(event string, fields ...Fields) {
+func (l *LegacyLogger) Info(_ context.Context, event string, fields ...Fields) {
 	props := Fields{}
 	props = props.Merge(fields...)
 
@@ -37,7 +36,7 @@ func (l *LegacyLogger) Info(event string, fields ...Fields) {
 }
 
 // Deprecated: Warn emits a new log message with warn level.
-func (l *LegacyLogger) Warn(event string, fields ...Fields) {
+func (l *LegacyLogger) Warn(_ context.Context, event string, fields ...Fields) {
 	props := Fields{}
 	props = props.Merge(fields...)
 
@@ -48,7 +47,7 @@ func (l *LegacyLogger) Warn(event string, fields ...Fields) {
 }
 
 // Deprecated: Error emits a new log message with error level.
-func (l *LegacyLogger) Error(event string, err error, fields ...Fields) {
+func (l *LegacyLogger) Error(_ context.Context, event string, err error, fields ...Fields) {
 	props := Fields{}
 	props = props.Merge(fields...)
 
@@ -60,7 +59,7 @@ func (l *LegacyLogger) Error(event string, err error, fields ...Fields) {
 
 // Deprecated: Fatal emits a new log message with fatal level.
 // The os.Exit(1) function is called immediately afterwards which terminates the program.
-func (l *LegacyLogger) Fatal(event string, err error, fields ...Fields) {
+func (l *LegacyLogger) Fatal(_ context.Context, event string, err error, fields ...Fields) {
 	props := Fields{}
 	props = props.Merge(fields...)
 
@@ -72,7 +71,7 @@ func (l *LegacyLogger) Fatal(event string, err error, fields ...Fields) {
 
 // Deprecated: Panic emits a new log message with panic level.
 // The panic() function is called immediately afterwards, which stops the ordinary flow of a goroutine.
-func (l *LegacyLogger) Panic(event string, err error, fields ...Fields) {
+func (l *LegacyLogger) Panic(_ context.Context, event string, err error, fields ...Fields) {
 	props := Fields{}
 	props = props.Merge(fields...)
 
@@ -82,19 +81,3 @@ func (l *LegacyLogger) Panic(event string, err error, fields ...Fields) {
 		Send()
 }
 
-// Deprecated: Merge combines multiple legacy log.Fields together.
-func (fields Fields) Merge(other ...Fields) Fields {
-	merged := Fields{}
-
-	for k, v := range fields {
-		merged[k] = v
-	}
-
-	for _, f := range other {
-		for k, v := range f {
-			merged[k] = v
-		}
-	}
-
-	return merged
-}

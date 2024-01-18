@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -62,6 +63,8 @@ func TestLegacyLoggerLevels(t *testing.T) {
 }
 
 func TestLegacyLoggerMethods(t *testing.T) {
+	ctx := context.Background()
+
 	testCases := []struct {
 		desc          string
 		logLevel      string
@@ -110,13 +113,13 @@ func TestLegacyLoggerMethods(t *testing.T) {
 
 			switch tC.logLevel {
 			case "DEBUG":
-				logger.Debug("debug_event")
+				logger.Debug(ctx, "debug_event")
 			case "INFO":
-				logger.Info("info_event")
+				logger.Info(ctx, "info_event")
 			case "WARN":
-				logger.Warn("warn_event")
+				logger.Warn(ctx, "warn_event")
 			case "ERROR":
-				logger.Error("error_event", errors.New("test error"))
+				logger.Error(ctx, "error_event", errors.New("test error"))
 			}
 		})
 	}
