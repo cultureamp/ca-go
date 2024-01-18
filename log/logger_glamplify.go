@@ -80,4 +80,3 @@ func (l *LegacyLogger) Panic(_ context.Context, event string, err error, fields 
 		LegacyFields("properties", props).
 		Send()
 }
-
