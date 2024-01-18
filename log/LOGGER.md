@@ -59,22 +59,22 @@ func basic_example() {
 		UUID("uuid", u)
 
 	Debug("debug_with_all_field_types").
-		WithRequestTracing(nil).
+		WithSystemTracing().
 		Properties(props).
 		Details("logging should contain all types")
 
 	Debug("debug_with_all_field_types").
-		WithRequestTracing(nil).
+		WithSystemTracing().
 		Properties(props).
 		Detailsf("logging should contain all types: %s", "ok")
 
 	Debug("debug_with_all_field_types").
-		WithRequestTracing(nil).
+		WithSystemTracing().
 		Properties(props).
 		Send()
 }
 
-func http_request_example(t *testing.T) {
+func http_request_example() {
 	// create a dummy request and add it to the context
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/foo", nil)
 	req.Header.Add(log.TraceHeader, "trace_123_id")
@@ -82,6 +82,7 @@ func http_request_example(t *testing.T) {
 	req.Header.Add(log.CorrelationHeader, "correlation_789_id")
 
 	Debug("debug_with_request_and_system_tracing").
+		WithSystemTracing().
 		WithRequestTracing(req).
 		Properties(log.SubDoc().
 			Str("resource", "resource_id").
@@ -89,7 +90,7 @@ func http_request_example(t *testing.T) {
 		).Details("logging should contain both")
 }
 
-func jwtauth_payload_example(t *testing.T) {
+func jwtauth_payload_example() {
 	// create a jwt payload
 	auth := &log.AuthPayload{
 		CustomerAccountID: "account_123_id",
@@ -98,8 +99,8 @@ func jwtauth_payload_example(t *testing.T) {
 	}
 
 	log.Info("info_with_auth_and_system_tracing").
-		WithAuthenticatedUserTracing(auth).
 		WithSystemTracing().
+		WithAuthenticatedUserTracing(auth).
 		Properties(log.SubDoc().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
@@ -121,6 +122,8 @@ import (
 )
 
 func glamplify_example() {
+	ctx := context.Background()
+
 	now := time.Now()
 	f := log.Fields{
 		"key1":    "string value",
@@ -129,14 +132,69 @@ func glamplify_example() {
 		"later":   time.Now(),
 		"details": "detailed message",
 	}
-	log.LogDebug("log_fields", f)
-	log.LogInfo("log_fields", f)
-	log.LogWarn("log_fields", f)
-	log.LogError("log_fields", errors.New("test error"), f)
+	log.GlamplifyDebug(ctx, "log_fields", f)
+	log.GlamplifyInfo(ctx, "log_fields", f)
+	log.GlamplifyWarn(ctx, "log_fields", f)
+	log.GlamplifyError(ctx, "log_fields", errors.New("test error"), f)
 
-	// log.LogFatal calls os.exit() so this is hard to demonstrate!
+	// log.GlamplifyFatal calls os.exit() so this is hard to demonstrate!
 
 	defer recoverFromPanic()
-	log.LogPanic("panic_error", errors.New("test error"), f)
+	log.GlamplifyPanic(ctx, "panic_error", errors.New("test error"), f)
+}
+
+func http_request_example() {
+	ctx := context.Background()
+
+	f := log.Fields{
+		"key1":    "string value",
+		"key2":    1,
+		"now":     now.Format(time.RFC3339),
+		"later":   time.Now(),
+		"details": "detailed message",
+	}
+
+	// create a dummy request and add it to the context
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/foo", nil)
+	req.Header.Add(log.TraceHeader, "trace_123_id")
+	req.Header.Add(log.RequestHeader, "request_456_id")
+	req.Header.Add(log.CorrelationHeader, "correlation_789_id")
+
+	// Note: Glamplify logger automatically adds WithSystemTracing() to log.Fields{}
+	log.GlamplifyDebug(ctx, "log_fields", f.WithRequestTracing(req))
+}
+
+func jwtauth_payload_example() {
+	ctx := context.Background()
+
+	f := log.Fields{
+		"key1":    "string value",
+		"key2":    1,
+		"now":     now.Format(time.RFC3339),
+		"later":   time.Now(),
+		"details": "detailed message",
+	}
+
+	// create a jwt payload
+	auth := &log.AuthPayload{
+		CustomerAccountID: "account_123_id",
+		RealUserID:        "real_456_id",
+		UserID:            "user_789_id",
+	}
+
+	// Note: Glamplify logger automatically adds WithSystemTracing() to log.Fields{}
+	log.GlamplifyInfo(ctx, "log_fields", f.WithAuthenticatedUserTracing(req))
+}
+
+func recoverFromLogPanic() {
+	if saved := recover(); saved != nil {
+		// convert to an error if it's not one already
+		err, ok := saved.(error)
+		if !ok {
+			err = errors.New(fmt.Sprint(saved))
+		}
+
+		log.GlamplifyError("recovered_from_panic", err).Send()
+	}
 }
 ```

@@ -21,15 +21,15 @@ func TestCommonGlamplifyExamples(t *testing.T) {
 		"later":   time.Now(),
 		"details": "detailed message",
 	}
-	log.LogDebug(ctx, "log_fields", f)
-	log.LogInfo(ctx, "log_fields", f)
-	log.LogWarn(ctx, "log_fields", f)
-	log.LogError(ctx, "log_fields", errors.New("test error"), f)
+	log.GlamplifyDebug(ctx, "log_fields", f)
+	log.GlamplifyInfo(ctx, "log_fields", f)
+	log.GlamplifyWarn(ctx, "log_fields", f)
+	log.GlamplifyError(ctx, "log_fields", errors.New("test error"), f)
 
 	// log.LogFatal calls os.exit() so this is hard to test!
 
 	defer recoverFromPanic()
-	log.LogPanic(ctx, "panic_error", errors.New("test error"), f)
+	log.GlamplifyPanic(ctx, "panic_error", errors.New("test error"), f)
 }
 
 func recoverFromLogPanic() {
