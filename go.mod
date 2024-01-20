@@ -27,7 +27,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/xdg-go/scram v1.1.2
 	goa.design/goa/v3 v3.14.1
-	gopkg.in/DataDog/dd-trace-go.v1 v1.58.1
+	gopkg.in/DataDog/dd-trace-go.v1 v1.59.0
 )
 
 require (
@@ -49,12 +49,12 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
-	github.com/DataDog/appsec-internal-go v1.0.2 // indirect
+	github.com/DataDog/appsec-internal-go v1.4.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/obfuscate v0.48.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.48.1 // indirect
 	github.com/DataDog/datadog-go v3.2.0+incompatible // indirect
 	github.com/DataDog/datadog-go/v5 v5.3.0 // indirect
-	github.com/DataDog/go-libddwaf/v2 v2.1.0 // indirect
+	github.com/DataDog/go-libddwaf/v2 v2.2.3 // indirect
 	github.com/DataDog/go-tuf v1.0.2-0.5.2 // indirect
 	github.com/DataDog/sketches-go v1.4.2 // indirect
 	github.com/Jeffail/gabs v1.1.1 // indirect
@@ -287,7 +287,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go4.org/intern v0.0.0-20230525184215-6c62f75575cb // indirect
-	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
+	go4.org/unsafe/assume-no-moving-gc v0.0.0-20231121144256-b99613f794b6 // indirect
 	golang.org/x/crypto v0.16.0 // indirect
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 // indirect
 	golang.org/x/mod v0.14.0 // indirect
