@@ -14,7 +14,7 @@ type SecretClient interface {
 
 type AWSSecrets struct {
 	Client interface {
-		GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error)
+		Get(input *secretsmanager.GetInput) (*secretsmanager.GetOutput, error)
 	}
 }
 
@@ -30,11 +30,11 @@ func NewAWSSecretsClient(region string) (*AWSSecrets, error) {
 }
 
 func (s *AWSSecrets) Get(secretName string) (string, error) {
-	input := &secretsmanager.GetSecretValueInput{
+	input := &secretsmanager.GetInput{
 		SecretId: aws.String(secretName),
 	}
 
-	result, err := s.Client.GetSecretValue(input)
+	result, err := s.Client.Get(input)
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve %s: %w", secretName, err)
 	}

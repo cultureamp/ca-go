@@ -18,10 +18,10 @@ func TestNewAWSSecretsClient(t *testing.T) {
 }
 
 type MockClient struct {
-	get func(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error)
+	get func(input *secretsmanager.GetInput) (*secretsmanager.GetOutput, error)
 }
 
-func (m MockClient) GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error) {
+func (m MockClient) Get(input *secretsmanager.GetInput) (*secretsmanager.GetOutput, error) {
 	return m.get(input)
 }
 
@@ -29,10 +29,10 @@ func TestAWSSecretsGet(t *testing.T) {
 	var actualRequestedSecretName string
 	secretManager := AWSSecrets{
 		Client: MockClient{
-			get: func(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error) {
+			get: func(input *secretsmanager.GetInput) (*secretsmanager.GetOutput, error) {
 				actualRequestedSecretName = *input.SecretId
 
-				return &secretsmanager.GetSecretValueOutput{
+				return &secretsmanager.GetOutput{
 					SecretString: aws.String("my-super-secret-value"),
 				}, nil
 			},
@@ -49,8 +49,8 @@ func TestAWSSecretsGet(t *testing.T) {
 func TestAWSSecretsGetEmptySecret(t *testing.T) {
 	secretManager := AWSSecrets{
 		Client: MockClient{
-			get: func(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error) {
-				return &secretsmanager.GetSecretValueOutput{
+			get: func(input *secretsmanager.GetInput) (*secretsmanager.GetOutput, error) {
+				return &secretsmanager.GetOutput{
 					SecretString: nil,
 				}, nil
 			},

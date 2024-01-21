@@ -16,11 +16,11 @@ func TestNewAWSSecretsClient(t *testing.T) {
 }
 
 func TestGetSecretSuccess(t *testing.T) {
-	expectedOutput := &secretsmanager.GetSecretValueOutput{
+	expectedOutput := &secretsmanager.GetOutput{
 		SecretString: aws.String("my-super-secret-value"),
 	}
 	mockedAwsClient := new(mockedSMClient)
-	mockedAwsClient.On("GetSecretValue", mock.Anything).Return(expectedOutput, nil)
+	mockedAwsClient.On("Get", mock.Anything).Return(expectedOutput, nil)
 
 	secrets := NewAWSSecrets("us-west-2")
 	secrets.client = mockedAwsClient
@@ -31,11 +31,11 @@ func TestGetSecretSuccess(t *testing.T) {
 }
 
 func TestGetSecretOnError(t *testing.T) {
-	expectedOutput := &secretsmanager.GetSecretValueOutput{
+	expectedOutput := &secretsmanager.GetOutput{
 		SecretString: aws.String("my-super-secret-value"),
 	}
 	mockedAwsClient := new(mockedSMClient)
-	mockedAwsClient.On("GetSecretValue", mock.Anything).Return(expectedOutput, errors.New("test-error"))
+	mockedAwsClient.On("Get", mock.Anything).Return(expectedOutput, errors.New("test-error"))
 
 	secrets := NewAWSSecrets("us-west-2")
 	secrets.client = mockedAwsClient
@@ -46,11 +46,11 @@ func TestGetSecretOnError(t *testing.T) {
 }
 
 func TestGetSecretOnEmpty(t *testing.T) {
-	expectedOutput := &secretsmanager.GetSecretValueOutput{
+	expectedOutput := &secretsmanager.GetOutput{
 		SecretString: nil,
 	}
 	mockedAwsClient := new(mockedSMClient)
-	mockedAwsClient.On("GetSecretValue", mock.Anything).Return(expectedOutput, nil)
+	mockedAwsClient.On("Get", mock.Anything).Return(expectedOutput, nil)
 
 	secrets := NewAWSSecrets("us-west-2")
 	secrets.client = mockedAwsClient
@@ -64,9 +64,9 @@ type mockedSMClient struct {
 	mock.Mock
 }
 
-func (m *mockedSMClient) GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error) {
+func (m *mockedSMClient) Get(input *secretsmanager.GetInput) (*secretsmanager.GetOutput, error) {
 	args := m.Called(input)
-	argZero, _ := args.Get(0).(*secretsmanager.GetSecretValueOutput)
+	argZero, _ := args.Get(0).(*secretsmanager.GetOutput)
 	argOne, _ := args.Get(1).(error)
 	return argZero, argOne
 }
