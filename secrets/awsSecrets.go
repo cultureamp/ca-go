@@ -7,22 +7,22 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
-// AWSSecrets supports the Get method.
-type AWSSecrets struct {
+// awsSecrets supports the Get method.
+type awsSecrets struct {
 	smClient *secretsmanager.Client
 }
 
-func NewAWSSecrets(region string) *AWSSecrets {
+func NewAWSSecrets(region string) Secrets {
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
 	if err != nil {
 		//todo
 	}
 	smc := secretsmanager.NewFromConfig(cfg)
 
-	return &AWSSecrets{smClient: smc}
+	return &awsSecrets{smClient: smc}
 }
 
-func (s *AWSSecrets) Get(secretName string) (string, error) {
+func (s *awsSecrets) Get(secretName string) (string, error) {
 	input := &secretsmanager.GetSecretValueInput{
 		SecretId: aws.String(secretName),
 	}
