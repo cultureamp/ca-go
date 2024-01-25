@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-xray-sdk-go/xraylog"
-	"github.com/cultureamp/glamplify/log"
+	"github.com/cultureamp/ca-go/log"
 )
 
 type xrayLogger struct {
