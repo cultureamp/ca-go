@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/cultureamp/glamplify/cache"
-	"github.com/cultureamp/glamplify/env"
+	"github.com/cultureamp/ca-go/env"
 )
 
 // SecretsManagerConfig configures how the secrets manager should work

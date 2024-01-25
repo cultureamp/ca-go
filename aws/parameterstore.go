@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/cultureamp/glamplify/cache"
-	"github.com/cultureamp/glamplify/env"
+	"github.com/cultureamp/ca-go/env"
 )
 
 // ParameterStoreConfig configures how the parameter store should work

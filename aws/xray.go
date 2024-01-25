@@ -2,7 +2,7 @@ package aws
 
 import (
 	"context"
-	"github.com/cultureamp/glamplify/env"
+	"github.com/cultureamp/ca-go/env"
 	"net/http"
 
 	"github.com/aws/aws-xray-sdk-go/awsplugins/ec2"
