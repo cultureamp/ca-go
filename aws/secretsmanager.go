@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
-	"github.com/cultureamp/glamplify/cache"
+	"github.com/cultureamp/ca-go/aws/cache"
 	"github.com/cultureamp/ca-go/env"
 )
 
