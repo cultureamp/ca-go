@@ -9,17 +9,17 @@ import (
 )
 
 func Test_New_TraceLogger(t *testing.T) {
-	log := newXrayLogger()
-	assert.NotNil(t, log)
+	xl := newXrayLogger()
+	assert.NotNil(t, xl)
 }
 
 func Test_TraceLogger_RealWorld_Log(t *testing.T) {
 	t.Setenv(log.LogQuietModeEnv, "false")
 	t.Setenv(log.LogLevelEnv, "DEBUG")
 
-	log := newXrayLogger()
-	log.Log(xraylog.LogLevelDebug, newPrintArgs("debug"))
-	log.Log(xraylog.LogLevelInfo, newPrintArgs("info"))
-	log.Log(xraylog.LogLevelWarn, newPrintArgs("warn"))
-	log.Log(xraylog.LogLevelError, newPrintArgs("error"))
+	xl := newXrayLogger()
+	xl.Log(xraylog.LogLevelDebug, newPrintArgs("debug"))
+	xl.Log(xraylog.LogLevelInfo, newPrintArgs("info"))
+	xl.Log(xraylog.LogLevelWarn, newPrintArgs("warn"))
+	xl.Log(xraylog.LogLevelError, newPrintArgs("error"))
 }

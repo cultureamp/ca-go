@@ -9,14 +9,14 @@ import (
 )
 
 type xrayLogger struct {
-	log *log.Logger
+	logger *log.Logger
 }
 
 func newXrayLogger() *xrayLogger {
 	config := log.NewLoggerConfig()
-	logger := log.NewLogger(config)
+	newLogger := log.NewLogger(config)
 	return &xrayLogger{
-		log: logger,
+		logger: newLogger,
 	}
 }
 
@@ -25,15 +25,15 @@ func (xl xrayLogger) Log(level xraylog.LogLevel, msg fmt.Stringer) {
 
 	switch level {
 	case xraylog.LogLevelDebug:
-		log.Debug("xray_diagnostic").Properties(props).Send()
+		xl.logger.Debug("xray_diagnostic").Properties(props).WithSystemTracing().Send()
 	case xraylog.LogLevelInfo:
-		log.Info("xray_diagnostic").Properties(props).Send()
+		xl.logger.Info("xray_diagnostic").Properties(props).WithSystemTracing().Send()
 	case xraylog.LogLevelWarn:
-		log.Warn("xray_diagnostic").Properties(props).Send()
+		xl.logger.Warn("xray_diagnostic").Properties(props).WithSystemTracing().Send()
 	case xraylog.LogLevelError:
-		log.Error("xray_diagnostic", errors.New("xray_diagnostic")).Properties(props).Send()
+		xl.logger.Error("xray_diagnostic", errors.New("xray_diagnostic")).Properties(props).WithSystemTracing().Send()
 	default:
-		log.Debug("xray_diagnostic").Properties(props).Send()
+		xl.logger.Debug("xray_diagnostic").Properties(props).WithSystemTracing().Send()
 	}
 }
 
