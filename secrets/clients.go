@@ -1,6 +1,8 @@
 package secrets
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
@@ -19,16 +21,22 @@ func newSecretManagerClient(region string) *secretsmanager.SecretsManager {
 	return secretsmanager.New(sess)
 }
 
-type testClient struct{}
+type testRunnerClient struct{}
 
-func newTestClient() *testClient {
-	return &testClient{}
+func newTestRunnerClient() *testRunnerClient {
+	return &testRunnerClient{}
 }
 
-func (c *testClient) GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error) {
-	retVal := &secretsmanager.GetSecretValueOutput{
-		SecretString: input.SecretId,
-	}
+func (c *testRunnerClient) GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error) {
+	arn := "arn:aws:secretmanager:eu-west-2:abc123:secret/id"
+	now := time.Now()
 
+	retVal := &secretsmanager.GetSecretValueOutput{
+		ARN:          &arn,
+		CreatedDate:  &now,
+		Name:         input.SecretId,
+		SecretString: input.SecretId, // just echo back the key as the secret when running in a test
+		VersionId:    input.VersionId,
+	}
 	return retVal, nil
 }

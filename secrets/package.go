@@ -13,7 +13,7 @@ func getInstance() *AWSSecretsManager {
 	var client AWSSecretsManagerClient
 
 	if isTestMode() {
-		client = newTestClient()
+		client = newTestRunnerClient()
 	} else {
 		// Should this take dependency on 'env' package and call env.AwsRegion()?
 		region := os.Getenv("AWS_REGION")
