@@ -8,7 +8,7 @@ on:
 
 env:
   GO_VERSION: 1.21
-  GOTOOLCHAIN: go1.21.5
+  GOTOOLCHAIN: go1.21.6
 
 jobs:
   go-setup:
