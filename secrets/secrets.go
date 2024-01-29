@@ -13,7 +13,7 @@ type AWSSecretsManager struct {
 }
 
 func NewAWSSecretsManager(region string) *AWSSecretsManager {
-	client := NewSecretManagerClient(region)
+	client := newSecretManagerClient(region)
 	return NewAWSSecretsManagerWithClient(client)
 }
 

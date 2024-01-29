@@ -11,10 +11,26 @@ type AWSSecretsManagerClient interface {
 	GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error)
 }
 
-func NewSecretManagerClient(region string) AWSSecretsManagerClient {
+func newSecretManagerClient(region string) *secretsmanager.SecretsManager {
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String(region),
 	}))
 
 	return secretsmanager.New(sess)
+}
+
+type testClient struct {
+
+}
+
+func newTestClient() *testClient {
+	return &testClient{}
+}
+
+func (c *testClient) GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error) {
+	retVal := &secretsmanager.GetSecretValueOutput{
+		SecretString: input.SecretId,
+	}
+
+	return retVal, nil
 }
