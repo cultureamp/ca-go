@@ -19,9 +19,7 @@ func newSecretManagerClient(region string) *secretsmanager.SecretsManager {
 	return secretsmanager.New(sess)
 }
 
-type testClient struct {
-
-}
+type testClient struct{}
 
 func newTestClient() *testClient {
 	return &testClient{}
