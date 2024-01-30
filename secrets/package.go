@@ -10,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
-// DefaultAWSSecrets is a public *AWSSecretsManager used for package level methods.
-var DefaultAWSSecrets = getInstance()
+// DefaultAWSSecretsManager is a public *AWSSecretsManager used for package level methods.
+var DefaultAWSSecretsManager = getInstance()
 
 func getInstance() *AWSSecretsManager {
 	var client AWSSecretsManagerClient
@@ -33,7 +33,7 @@ func getInstance() *AWSSecretsManager {
 
 // Get retrives the secret from AWS SecretsManager.
 func Get(ctx context.Context, secretKey string) (string, error) {
-	return DefaultAWSSecrets.Get(ctx, secretKey)
+	return DefaultAWSSecretsManager.Get(ctx, secretKey)
 }
 
 func isTestMode() bool {

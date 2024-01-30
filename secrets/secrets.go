@@ -13,9 +13,7 @@ type AWSSecretsManager struct {
 }
 
 // NewAWSSecretsManager creates a new AWS Secret Manager for a given region.
-func NewAWSSecretsManager(region string) (*AWSSecretsManager, error) {
-	// Should this be passed in?
-	ctx := context.Background()
+func NewAWSSecretsManager(ctx context.Context, region string) (*AWSSecretsManager, error) {
 	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
 	if err != nil {
 		return nil, err

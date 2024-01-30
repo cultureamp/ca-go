@@ -10,7 +10,8 @@ import (
 )
 
 func TestNewAWSSecretsClient(t *testing.T) {
-	secrets, err := NewAWSSecretsManager("us-west-2")
+	ctx := context.Background()
+	secrets, err := NewAWSSecretsManager(ctx, "us-west-2")
 	assert.Nil(t, err)
 	assert.NotNil(t, secrets)
 }

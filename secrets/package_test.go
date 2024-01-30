@@ -28,9 +28,9 @@ func TestMockPackageLevelMethods(t *testing.T) {
 	mockedClient.On("GetSecretValue", mock.Anything, mock.Anything).Return(expectedOutput, nil)
 
 	// 2. override the package level DefaultAWSSecrets.Client with your mock
-	oldClient := DefaultAWSSecrets.Client
-	defer func() { DefaultAWSSecrets.Client = oldClient }()
-	DefaultAWSSecrets.Client = mockedClient
+	oldClient := DefaultAWSSecretsManager.Client
+	defer func() { DefaultAWSSecretsManager.Client = oldClient }()
+	DefaultAWSSecretsManager.Client = mockedClient
 
 	// 3. call the package methods which will call you mock
 	result, err := Get(ctx, "my-secret")
