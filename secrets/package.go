@@ -1,9 +1,13 @@
 package secrets
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"os"
 	"strings"
+
+	"github.com/aws/aws-sdk-go-v2/config"
 )
 
 // DefaultAWSSecrets is a public *AWSSecretsManager used for package level methods.
@@ -15,16 +19,21 @@ func getInstance() *AWSSecretsManager {
 	if isTestMode() {
 		client = newTestRunnerClient()
 	} else {
-		// Should this take dependency on 'env' package and call env.AwsRegion()?
 		region := os.Getenv("AWS_REGION")
-		client = newSecretManagerClient(region)
+		cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
+		if err != nil {
+			err := fmt.Errorf("error loading aws sdk config, err='%w'\n", err)
+			panic(err)
+		}
+
+		client = newSecretManagerClient(cfg)
 	}
 	return NewAWSSecretsManagerWithClient(client)
 }
 
 // Get retrives the secret from AWS SecretsManager.
-func Get(secretName string) (string, error) {
-	return DefaultAWSSecrets.Get(secretName)
+func Get(ctx context.Context, secretKey string) (string, error) {
+	return DefaultAWSSecrets.Get(ctx, secretKey)
 }
 
 func isTestMode() bool {

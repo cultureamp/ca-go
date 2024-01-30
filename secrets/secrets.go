@@ -1,10 +1,12 @@
 package secrets
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/config"
+	//"github.com/aws/aws-sdk-go/aws"
+	//"github.com/aws/aws-sdk-go/service/secretsmanager"
 )
 
 // AWSSecretsManager supports wraps the AWSSecretsManagerClient interface.
@@ -13,9 +15,13 @@ type AWSSecretsManager struct {
 }
 
 // NewAWSSecretsManager creates a new AWS Secret Manager for a given region.
-func NewAWSSecretsManager(region string) *AWSSecretsManager {
-	client := newSecretManagerClient(region)
-	return NewAWSSecretsManagerWithClient(client)
+func NewAWSSecretsManager(ctx context.Context, region string) (*AWSSecretsManager, error) {
+	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
+	if err != nil {
+		return nil, err
+	}
+	client := newSecretManagerClient(cfg)
+	return NewAWSSecretsManagerWithClient(client), nil
 }
 
 // NewAWSSecretsManagerWithClient creates a new AWS Secret Manager with a custom client
@@ -27,17 +33,13 @@ func NewAWSSecretsManagerWithClient(client AWSSecretsManagerClient) *AWSSecretsM
 }
 
 // Get retrives the secret from AWS SecretsManager.
-func (s *AWSSecretsManager) Get(secretName string) (string, error) {
-	input := &secretsmanager.GetSecretValueInput{
-		SecretId: aws.String(secretName),
-	}
-
-	result, err := s.Client.GetSecretValue(input)
+func (s *AWSSecretsManager) Get(ctx context.Context, secretKey string) (string, error) {
+	secret, err := s.Client.GetSecretValue(ctx, secretKey)
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve '%s': %w", secretName, err)
+		return "", fmt.Errorf("failed to retrieve '%s': %w", secretKey, err)
 	}
-	if result == nil || result.SecretString == nil {
-		return "", fmt.Errorf("retrieved secret '%s' is empty", secretName)
+	if secret == "" {
+		return "", fmt.Errorf("retrieved secret '%s' is empty", secretKey)
 	}
-	return *result.SecretString, nil
+	return secret, nil
 }

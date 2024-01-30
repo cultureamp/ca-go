@@ -1,24 +1,41 @@
 package secrets
 
 import (
-	"time"
+	"context"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
 // AWSSecretsManagerClient can be mocked by clients for testing purposes.
 type AWSSecretsManagerClient interface {
-	GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error)
+	GetSecretValue(ctx context.Context, secretKey string) (string, error)
 }
 
-func newSecretManagerClient(region string) *secretsmanager.SecretsManager {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String(region),
-	}))
+type awsSecretsManagerClient struct {
+	smClient *secretsmanager.Client
+}
 
-	return secretsmanager.New(sess)
+func newSecretManagerClient(cfg aws.Config) *awsSecretsManagerClient {
+	//	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
+	//	if err != nil {
+	//		fmt.Printf("error loading aws sdk config, err='%v'\n", err)
+	//	}
+	smc := secretsmanager.NewFromConfig(cfg)
+	return &awsSecretsManagerClient{smClient: smc}
+}
+
+func (c *awsSecretsManagerClient) GetSecretValue(ctx context.Context, secretKey string) (string, error) {
+	input := &secretsmanager.GetSecretValueInput{
+		SecretId: aws.String(secretKey),
+	}
+
+	result, err := c.smClient.GetSecretValue(ctx, input)
+	if err != nil {
+		return "", err
+	}
+
+	return *result.SecretString, nil
 }
 
 type testRunnerClient struct{}
@@ -27,16 +44,6 @@ func newTestRunnerClient() *testRunnerClient {
 	return &testRunnerClient{}
 }
 
-func (c *testRunnerClient) GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error) {
-	arn := "arn:aws:secretmanager:eu-west-2:abc123:secret/id"
-	now := time.Now()
-
-	retVal := &secretsmanager.GetSecretValueOutput{
-		ARN:          &arn,
-		CreatedDate:  &now,
-		Name:         input.SecretId,
-		SecretString: input.SecretId, // just echo back the key as the secret when running in a test
-		VersionId:    input.VersionId,
-	}
-	return retVal, nil
+func (c *testRunnerClient) GetSecretValue(_ context.Context, key string) (string, error) {
+	return key, nil
 }
