@@ -16,12 +16,8 @@ type awsSecretsManagerClient struct {
 	smClient *secretsmanager.Client
 }
 
-func newSecretManagerClient(cfg aws.Config) *awsSecretsManagerClient {
-	//	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
-	//	if err != nil {
-	//		fmt.Printf("error loading aws sdk config, err='%v'\n", err)
-	//	}
-	smc := secretsmanager.NewFromConfig(cfg)
+func newSecretManagerClient(config aws.Config) *awsSecretsManagerClient {
+	smc := secretsmanager.NewFromConfig(config)
 	return &awsSecretsManagerClient{smClient: smc}
 }
 
