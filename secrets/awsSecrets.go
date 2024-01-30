@@ -2,29 +2,32 @@ package secrets
 
 import (
 	"context"
+	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
-// awsSecrets supports the Get method.
 type awsSecrets struct {
 	smClient *secretsmanager.Client
 }
 
+// NewAWSSecrets returns an instance of the Secrets interface using
+// AWS secret manager client configured using the given region
 func NewAWSSecrets(region string) Secrets {
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
 	if err != nil {
-		//todo
+		fmt.Printf("error loading aws sdk config, err='%v'\n", err)
 	}
 	smc := secretsmanager.NewFromConfig(cfg)
 
 	return &awsSecrets{smClient: smc}
 }
 
-func (s *awsSecrets) Get(secretName string) (string, error) {
+// Get returns the secret for the given id or the error encountered when trying to retrieve it
+func (s *awsSecrets) Get(secretID string) (string, error) {
 	input := &secretsmanager.GetSecretValueInput{
-		SecretId: aws.String(secretName),
+		SecretId: aws.String(secretID),
 	}
 
 	result, err := s.smClient.GetSecretValue(context.Background(), input)
@@ -32,6 +35,5 @@ func (s *awsSecrets) Get(secretName string) (string, error) {
 		return "", err
 	}
 
-	// Assuming the secret is a string
 	return *result.SecretString, nil
 }
