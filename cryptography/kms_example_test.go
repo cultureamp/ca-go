@@ -14,7 +14,7 @@ func BasicExamples() {
 	// Replace the following example key ARN with any valid key identfier
 	keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
 
-	// this will automatically the environment variables "AWS_REGION" and KMS_KEY_ID
+	// this will automatically use the environment variable "AWS_REGION"
 	encrypted, err := cryptography.Encrypt(ctx, keyId, "plain-string")
 	fmt.Printf("The encrypted string is '%s' (err='%v')\n", encrypted, err)
 	// encrypted will be base64 string and look something like this:
@@ -23,7 +23,7 @@ func BasicExamples() {
 	decrypted, err := cryptography.Decrypt(ctx, keyId, encrypted)
 	fmt.Printf("The decrypted string is '%s' (err='%v')\n", decrypted, err)
 
-	// or if you need cryptogprahy for another region or keyID then use
+	// or if you need cryptography for another region or keyID then use
 	crypto := cryptography.NewKMSCryptography("region")
 	encrypted, err = crypto.Encrypt(ctx, keyId, "plain-string")
 	fmt.Printf("The encrypted string is '%s' (err='%v')\n", encrypted, err)
