@@ -5,8 +5,6 @@ import (
 	"flag"
 	"os"
 	"strings"
-
-	"github.com/aws/aws-sdk-go-v2/service/kms"
 )
 
 var DefaultKMSCryptogrphy *KMSCryptography = getInstance()
@@ -18,10 +16,10 @@ func getInstance() *KMSCryptography {
 		client = newTestRunnerClient()
 	} else {
 		region := os.Getenv("AWS_REGION")
-		client = kms.New(kms.Options{Region: region})
+		keyID := os.Getenv("KMS_KEY_ID")
+		client = newAWSKMSClient(region, keyID)
 	}
-	keyID := os.Getenv("KMS_KEY_ID")
-	return NewKMSCryptographyWithClient(client, keyID)
+	return NewKMSCryptographyWithClient(client)
 }
 
 // Encrypt uses the default AWS_REGION and KMS_KEY_ID to kms encrypt "plainStr".
