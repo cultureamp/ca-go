@@ -21,6 +21,7 @@ func newSecretManagerClient(config aws.Config) *awsSecretsManagerClient {
 	return &awsSecretsManagerClient{smClient: smc}
 }
 
+// Get retrieves the secret from AWS SecretsManager.
 func (c *awsSecretsManagerClient) GetSecretValue(ctx context.Context, secretKey string) (string, error) {
 	input := &secretsmanager.GetSecretValueInput{
 		SecretId: aws.String(secretKey),
@@ -40,6 +41,7 @@ func newTestRunnerClient() *testRunnerClient {
 	return &testRunnerClient{}
 }
 
+// Get on the test runner returns the key as the secret.
 func (c *testRunnerClient) GetSecretValue(_ context.Context, key string) (string, error) {
 	return key, nil
 }

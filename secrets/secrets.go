@@ -30,7 +30,7 @@ func NewAWSSecretsManagerWithClient(client AWSSecretsManagerClient) *AWSSecretsM
 	}
 }
 
-// Get retrives the secret from AWS SecretsManager.
+// Get retrieves the secret from AWS SecretsManager.
 func (s *AWSSecretsManager) Get(ctx context.Context, secretKey string) (string, error) {
 	secret, err := s.Client.GetSecretValue(ctx, secretKey)
 	if err != nil {
