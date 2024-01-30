@@ -18,6 +18,7 @@ const (
 func TestEncrypt(t *testing.T) {
 	strInput := "inputStr"
 	ctx := context.Background()
+	keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
 
 	t.Run("Green Path - Should encrypt", func(t *testing.T) {
 		// arrange
@@ -28,7 +29,7 @@ func TestEncrypt(t *testing.T) {
 		mockKmsClient.On("Encrypt", ctx, mock.Anything, mock.Anything).Return(expectedOutput, nil)
 
 		// act
-		output, err := crypto.Encrypt(ctx, strInput)
+		output, err := crypto.Encrypt(ctx, keyId, strInput)
 
 		// assert
 		require.NoError(t, err)
@@ -46,7 +47,7 @@ func TestEncrypt(t *testing.T) {
 		mockKmsClient.On("Encrypt", ctx, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 
 		// act
-		output, err := crypto.Encrypt(ctx, strInput)
+		output, err := crypto.Encrypt(ctx, keyId, strInput)
 
 		// assert
 		require.Error(t, err)
@@ -58,6 +59,7 @@ func TestEncrypt(t *testing.T) {
 func TestDecrypt(t *testing.T) {
 	strInput := "inputStr"
 	ctx := context.Background()
+	keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
 
 	t.Run("Green Path - Should decrypt", func(t *testing.T) {
 		// arrange
@@ -68,7 +70,7 @@ func TestDecrypt(t *testing.T) {
 		mockKmsClient.On("Decrypt", ctx, mock.Anything, mock.Anything).Return(expectedOutput, nil)
 
 		// act
-		output, err := crypto.Decrypt(ctx, strInput)
+		output, err := crypto.Decrypt(ctx, keyId, strInput)
 
 		// assert
 		require.NoError(t, err)
@@ -86,7 +88,7 @@ func TestDecrypt(t *testing.T) {
 		mockKmsClient.On("Decrypt", ctx, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 
 		// act
-		output, err := crypto.Decrypt(ctx, strInput)
+		output, err := crypto.Decrypt(ctx, keyId, strInput)
 
 		// assert
 		require.Error(t, err)
@@ -99,14 +101,14 @@ type mockKMSClient struct {
 	mock.Mock
 }
 
-func (_m *mockKMSClient) Encrypt(ctx context.Context, plainStr string) (string, error) {
-	args := _m.Called(ctx, plainStr)
+func (_m *mockKMSClient) Encrypt(ctx context.Context, keyId string, plainStr string) (string, error) {
+	args := _m.Called(ctx, keyId, plainStr)
 	output, _ := args.Get(0).(string)
 	return output, args.Error(1)
 }
 
-func (_m *mockKMSClient) Decrypt(ctx context.Context, encryptedStr string) (string, error) {
-	args := _m.Called(ctx, encryptedStr)
+func (_m *mockKMSClient) Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error) {
+	args := _m.Called(ctx, keyId, encryptedStr)
 	output, _ := args.Get(0).(string)
 	return output, args.Error(1)
 }

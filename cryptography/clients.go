@@ -10,26 +10,24 @@ import (
 
 // KMSClient used for mock testing.
 type KMSClient interface {
-	Encrypt(ctx context.Context, plainStr string) (string, error)
-	Decrypt(ctx context.Context, encryptedStr string) (string, error)
+	Encrypt(ctx context.Context, keyId string, plainStr string) (string, error)
+	Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error)
 }
 
 type awsKMSClient struct {
 	kmsClient *kms.Client
-	kmsKeyId  string
 }
 
-func newAWSKMSClient(region string, keyId string) *awsKMSClient {
+func newAWSKMSClient(region string) *awsKMSClient {
 	client := kms.New(kms.Options{Region: region})
 	return &awsKMSClient{
 		kmsClient: client,
-		kmsKeyId:  keyId,
 	}
 }
 
-func (c *awsKMSClient) Encrypt(ctx context.Context, plainStr string) (string, error) {
+func (c *awsKMSClient) Encrypt(ctx context.Context, keyId string, plainStr string) (string, error) {
 	input := &kms.EncryptInput{
-		KeyId:     &c.kmsKeyId,
+		KeyId:     &keyId,
 		Plaintext: []byte(plainStr),
 	}
 
@@ -42,13 +40,14 @@ func (c *awsKMSClient) Encrypt(ctx context.Context, plainStr string) (string, er
 	return blobString, nil
 }
 
-func (c *awsKMSClient) Decrypt(ctx context.Context, encryptedStr string) (string, error) {
+func (c *awsKMSClient) Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error) {
 	blob, err := b64.StdEncoding.DecodeString(encryptedStr)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to decode")
 	}
 
 	input := &kms.DecryptInput{
+		KeyId:          &keyId,
 		CiphertextBlob: blob,
 	}
 
@@ -68,11 +67,11 @@ func newTestRunnerClient() *testRunnerClient {
 }
 
 // Encrypt on the test runner just returns the "plainStr" as the encrypted encryptedStr.
-func (c *testRunnerClient) Encrypt(ctx context.Context, plainStr string) (string, error) {
+func (c *testRunnerClient) Encrypt(ctx context.Context, _ string, plainStr string) (string, error) {
 	return plainStr, nil
 }
 
 // Decrypt on the test runner just returns the "encryptedStr" as the decrypted plainstr.
-func (c *testRunnerClient) Decrypt(ctx context.Context, encryptedStr string) (string, error) {
+func (c *testRunnerClient) Decrypt(ctx context.Context, _ string, encryptedStr string) (string, error) {
 	return encryptedStr, nil
 }

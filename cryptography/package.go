@@ -16,20 +16,19 @@ func getInstance() *KMSCryptography {
 		client = newTestRunnerClient()
 	} else {
 		region := os.Getenv("AWS_REGION")
-		keyID := os.Getenv("KMS_KEY_ID")
-		client = newAWSKMSClient(region, keyID)
+		client = newAWSKMSClient(region)
 	}
 	return NewKMSCryptographyWithClient(client)
 }
 
-// Encrypt uses the default AWS_REGION and KMS_KEY_ID to kms encrypt "plainStr".
-func Encrypt(ctx context.Context, plainStr string) (string, error) {
-	return DefaultKMSCryptogrphy.Encrypt(ctx, plainStr)
+// Encrypt uses the default AWS_REGION to kms encrypt "plainStr".
+func Encrypt(ctx context.Context, keyId string, plainStr string) (string, error) {
+	return DefaultKMSCryptogrphy.Encrypt(ctx, keyId, plainStr)
 }
 
 // Decrypt uses the default AWS_REGION and KMS_KEY_ID to kms decrypt "encryptedStr".
-func Decrypt(ctx context.Context, encryptedStr string) (string, error) {
-	return DefaultKMSCryptogrphy.Decrypt(ctx, encryptedStr)
+func Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error) {
+	return DefaultKMSCryptogrphy.Decrypt(ctx, keyId, encryptedStr)
 }
 
 func isTestMode() bool {
