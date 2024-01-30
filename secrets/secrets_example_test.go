@@ -15,7 +15,7 @@ func BasicExamples() {
 	fmt.Printf("The answer to the secret is '%s' (err='%v')\n", answer, err)
 
 	// or if you need secrets from another region other than the one you are running in use
-	sm, err := secrets.NewAWSSecretsManager(ctx, "a-different-region")
+	sm, err := secrets.NewAWSSecretsManager("a-different-region")
 	answer, err = sm.Get(ctx, "my-test-secret2")
 	fmt.Printf("The answer to the secret2 is '%s' (err='%v')\n", answer, err)
 
