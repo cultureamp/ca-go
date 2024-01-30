@@ -1,72 +1,65 @@
 package secrets
 
 import (
+	"context"
 	"errors"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestNewAWSSecretsClient(t *testing.T) {
-	client := NewAWSSecrets("us-west-2")
-	assert.NotNil(t, client)
+	ctx := context.Background()
+	secrets, err := NewAWSSecretsManager(ctx, "us-west-2")
+	assert.Nil(t, err)
+	assert.NotNil(t, secrets)
 }
 
 func TestGetSecretSuccess(t *testing.T) {
-	expectedOutput := &secretsmanager.GetSecretValueOutput{
-		SecretString: aws.String("my-super-secret-value"),
-	}
-	mockedAwsClient := new(mockedSMClient)
-	mockedAwsClient.On("GetSecretValue", mock.Anything).Return(expectedOutput, nil)
+	ctx := context.Background()
+	expectedOutput := "my-super-secret-value"
+	mockedClient := new(mockedAWSSecretsManagerClient)
+	mockedClient.On("GetSecretValue", mock.Anything, mock.Anything).Return(expectedOutput, nil)
 
-	secrets := NewAWSSecrets("us-west-2")
-	secrets.client = mockedAwsClient
-
-	result, err := secrets.Get("my-secret")
+	secrets := NewAWSSecretsManagerWithClient(mockedClient)
+	result, err := secrets.Get(ctx, "my-secret")
 	assert.Nil(t, err)
 	assert.Equal(t, "my-super-secret-value", result)
+	mockedClient.AssertExpectations(t)
 }
 
 func TestGetSecretOnError(t *testing.T) {
-	expectedOutput := &secretsmanager.GetSecretValueOutput{
-		SecretString: aws.String("my-super-secret-value"),
-	}
-	mockedAwsClient := new(mockedSMClient)
-	mockedAwsClient.On("GetSecretValue", mock.Anything).Return(expectedOutput, errors.New("test-error"))
+	ctx := context.Background()
+	mockedClient := new(mockedAWSSecretsManagerClient)
+	mockedClient.On("GetSecretValue", mock.Anything, mock.Anything).Return("", errors.New("test-error"))
 
-	secrets := NewAWSSecrets("us-west-2")
-	secrets.client = mockedAwsClient
-
-	result, err := secrets.Get("my-secret")
+	secrets := NewAWSSecretsManagerWithClient(mockedClient)
+	result, err := secrets.Get(ctx, "my-secret")
 	assert.NotNil(t, err)
 	assert.Equal(t, "", result)
+	mockedClient.AssertExpectations(t)
 }
 
 func TestGetSecretOnEmpty(t *testing.T) {
-	expectedOutput := &secretsmanager.GetSecretValueOutput{
-		SecretString: nil,
-	}
-	mockedAwsClient := new(mockedSMClient)
-	mockedAwsClient.On("GetSecretValue", mock.Anything).Return(expectedOutput, nil)
+	ctx := context.Background()
+	mockedClient := new(mockedAWSSecretsManagerClient)
+	mockedClient.On("GetSecretValue", mock.Anything, mock.Anything).Return("", nil)
 
-	secrets := NewAWSSecrets("us-west-2")
-	secrets.client = mockedAwsClient
-
-	result, err := secrets.Get("my-secret")
+	secrets := NewAWSSecretsManagerWithClient(mockedClient)
+	result, err := secrets.Get(ctx, "my-secret")
 	assert.NotNil(t, err)
 	assert.Equal(t, "", result)
+	mockedClient.AssertExpectations(t)
 }
 
-type mockedSMClient struct {
+type mockedAWSSecretsManagerClient struct {
 	mock.Mock
 }
 
-func (m *mockedSMClient) GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error) {
-	args := m.Called(input)
-	argZero, _ := args.Get(0).(*secretsmanager.GetSecretValueOutput)
+func (m *mockedAWSSecretsManagerClient) GetSecretValue(ctx context.Context, secretKey string) (string, error) {
+	args := m.Called(ctx, secretKey)
+	argZero, _ := args.Get(0).(string)
 	argOne, _ := args.Get(1).(error)
 	return argZero, argOne
 }
