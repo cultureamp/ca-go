@@ -1,59 +1,43 @@
 package secrets
 
 import (
+	"context"
 	"fmt"
-	"os"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/config"
 )
 
-// smClient used for mock testing.
-type smClient interface {
-	GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error)
+// AWSSecretsManager supports wraps the AWSSecretsManagerClient interface.
+type AWSSecretsManager struct {
+	Client AWSSecretsManagerClient
 }
 
-// AWSSecrets supports the GetSecretValue method.
-type AWSSecrets struct {
-	client smClient
-}
-
-var defaultAWSSecrets = getInstance()
-
-func getInstance() *AWSSecrets {
-	// Should this take dependency on 'env' package and call env.AwsRegion()?
-	region := os.Getenv("AWS_REGION")
-	return NewAWSSecrets(region)
-}
-
-func NewAWSSecrets(region string) *AWSSecrets {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String(region),
-	}))
-
-	client := secretsmanager.New(sess)
-	return &AWSSecrets{
-		client: client,
-	}
-}
-
-// Get retrives the secret from AWS SecretsManager.
-func Get(secretName string) (string, error) {
-	return defaultAWSSecrets.Get(secretName)
-}
-
-func (s *AWSSecrets) Get(secretName string) (string, error) {
-	input := &secretsmanager.GetSecretValueInput{
-		SecretId: aws.String(secretName),
-	}
-
-	result, err := s.client.GetSecretValue(input)
+// NewAWSSecretsManager creates a new AWS Secret Manager for a given region.
+func NewAWSSecretsManager(ctx context.Context, region string) (*AWSSecretsManager, error) {
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve '%s': %w", secretName, err)
+		return nil, err
 	}
-	if result == nil || result.SecretString == nil {
-		return "", fmt.Errorf("retrieved secret '%s' is empty", secretName)
+	client := newSecretManagerClient(cfg)
+	return NewAWSSecretsManagerWithClient(client), nil
+}
+
+// NewAWSSecretsManagerWithClient creates a new AWS Secret Manager with a custom client
+// that supports the AWSSecretsManagerClient interface.
+func NewAWSSecretsManagerWithClient(client AWSSecretsManagerClient) *AWSSecretsManager {
+	return &AWSSecretsManager{
+		Client: client,
 	}
-	return *result.SecretString, nil
+}
+
+// Get retrieves the secret from AWS SecretsManager.
+func (s *AWSSecretsManager) Get(ctx context.Context, secretKey string) (string, error) {
+	secret, err := s.Client.GetSecretValue(ctx, secretKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve '%s': %w", secretKey, err)
+	}
+	if secret == "" {
+		return "", fmt.Errorf("retrieved secret '%s' is empty", secretKey)
+	}
+	return secret, nil
 }
