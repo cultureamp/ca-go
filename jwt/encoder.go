@@ -25,8 +25,7 @@ func NewJwtEncoder(privateKey string, kid string) (*JwtEncoder, error) {
 }
 
 func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
-	registerClaims := claims.toRegisteredClaims()
-
+	registerClaims := newEncoderClaims(claims)
 	token := jwtgo.NewWithClaims(jwtgo.SigningMethodRS256, registerClaims)
 	if e.kid != "" {
 		token.Header[KidHeaderKey] = e.kid

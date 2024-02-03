@@ -22,9 +22,9 @@ const (
 
 	PublicKeyType = "RSA PUBLIC KEY"
 
-	// AccountIDClaim       = "accountId"
-	// RealUserIDClaim      = "realUserId"
-	// EffectiveUserIDClaim = "effectiveUserId"
+	AccountIDClaim       = "accountId"
+	RealUserIDClaim      = "realUserId"
+	EffectiveUserIDClaim = "effectiveUserId"
 )
 
 // PublicRSAKeyMap "keyid => PublicKey".
@@ -81,7 +81,7 @@ func (d *JwtDecoder) Decode(tokenString string) (*StandardClaims, error) {
 	return NewStandardClaims(claims), nil
 }
 
-func (decoder *JwtDecoder) decodeClaims(tokenString string) (*jwtgo.MapClaims, error) {
+func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwtgo.MapClaims, error) {
 	// sample token string in the form "header.payload.signature"
 	// eg. "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIiLCJuYmYiOjE0NDQ0Nzg0MDB9.u1riaD1rW97opCoAuRCTy4w58Br-Zk-bh7vLiRIsrpU"
 
@@ -104,12 +104,12 @@ func (decoder *JwtDecoder) decodeClaims(tokenString string) (*jwtgo.MapClaims, e
 		return nil, err
 	}
 
-	mapClaim, ok := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, errors.New("missing claims in jwt token")
 	}
 
-	return &mapClaim, nil
+	return claims, nil
 }
 
 func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (*rsa.PublicKey, error) {
