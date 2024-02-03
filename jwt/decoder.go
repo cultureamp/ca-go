@@ -9,8 +9,8 @@ import (
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
-	jwtgo "github.com/golang-jwt/jwt/v5"
-	"github.com/lestrrat-go/jwx/v2/jwk"
+	//"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/lestrrat-go/jwx/jwk"
 )
 
 const (
@@ -84,7 +84,7 @@ func (d *JwtDecoder) Decode(tokenString string) (*StandardClaims, error) {
 	return newStandardClaims(claims), nil
 }
 
-func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwtgo.MapClaims, error) {
+func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwt.MapClaims, error) {
 	// sample token string in the form "header.payload.signature"
 	// eg. "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIiLCJuYmYiOjE0NDQ0Nzg0MDB9.u1riaD1rW97opCoAuRCTy4w58Br-Zk-bh7vLiRIsrpU"
 
@@ -154,7 +154,7 @@ func (decoder *JwtDecoder) parseJWKs(ctx context.Context, jwks string) (publicRS
 		return rsaKeys, nil
 	}
 
-	// 1. Parse the jwks JSON string and extra the jwks set
+	// 1. Parse the jwks JSON string to an iterable set
 	jwkset, err := jwk.ParseString(jwks)
 	if err != nil {
 		return rsaKeys, err
