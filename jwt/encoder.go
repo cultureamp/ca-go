@@ -6,11 +6,13 @@ import (
 	jwtgo "github.com/golang-jwt/jwt/v5"
 )
 
+// JwtEncoder can encode a claim to a jwt token string.
 type JwtEncoder struct {
 	privatePEMKey *rsa.PrivateKey
 	kid           string
 }
 
+// NewJwtEncoder creates a new JwtEncoder.
 func NewJwtEncoder(privateKey string, kid string) (*JwtEncoder, error) {
 	privatePEMKey := []byte(privateKey)
 	pemKey, err := jwtgo.ParseRSAPrivateKeyFromPEM(privatePEMKey)
@@ -24,6 +26,7 @@ func NewJwtEncoder(privateKey string, kid string) (*JwtEncoder, error) {
 	}, nil
 }
 
+// Encode the Standard Culture Amp Claims in a jwt token string.
 func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
 	registerClaims := newEncoderClaims(claims)
 	token := jwtgo.NewWithClaims(jwtgo.SigningMethodRS256, registerClaims)

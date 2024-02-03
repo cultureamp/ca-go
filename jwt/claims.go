@@ -7,6 +7,7 @@ import (
 	jwtgo "github.com/golang-jwt/jwt/v5"
 )
 
+// StandardClaims represent the standard Culture Amp JWT claims.
 type StandardClaims struct {
 	AccountId       string    // uuid
 	RealUserId      string    // uuid
@@ -21,7 +22,7 @@ type encoderStandardClaims struct {
 	jwtgo.RegisteredClaims
 }
 
-func NewStandardClaims(claims jwtgo.MapClaims) *StandardClaims {
+func newStandardClaims(claims jwtgo.MapClaims) *StandardClaims {
 	// todo check for error and do what?
 	accountId, _ := getRawClaimString(claims, AccountIDClaim)
 	realUserId, _ := getRawClaimString(claims, RealUserIDClaim)

@@ -17,7 +17,7 @@ func getDecoderInstance() *JwtDecoder {
 
 	decoder, err := NewJwtDecoder(pubKey, perfCoreKey, jwkKeys)
 	if err != nil {
-		err := fmt.Errorf("error loading jwk decoder, err='%w'\n", err)
+		err := fmt.Errorf("error loading jwk decoder, maybe missing env vars: err='%w'\n", err)
 		panic(err)
 	}
 
@@ -30,17 +30,19 @@ func getEncoderInstance() *JwtEncoder {
 
 	encoder, err := NewJwtEncoder(privKey, keyId)
 	if err != nil {
-		err := fmt.Errorf("error loading jwk encoder, err='%w'\n", err)
+		err := fmt.Errorf("error loading jwk encoder, maybe missing env vars: err='%w'\n", err)
 		panic(err)
 	}
 
 	return encoder
 }
 
+// Decode a jwt token string and return the Standard Culture Amp Claims.
 func Decode(tokenString string) (*StandardClaims, error) {
 	return DefaultJwtDecoder.Decode(tokenString)
 }
 
+// Encode the Standard Culture Amp Claims in a jwt token string.
 func Encode(claims *StandardClaims) (string, error) {
 	return DefaultJwtEncoder.Encode(claims)
 }

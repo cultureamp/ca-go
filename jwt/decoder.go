@@ -27,14 +27,16 @@ const (
 	EffectiveUserIDClaim = "effectiveUserId"
 )
 
-// PublicRSAKeyMap "keyid => PublicKey".
+// PublicRSAKeyMap "keyid => Public RSA Key".
 type publicRSAKeyMap map[string]*rsa.PublicKey
 
+// JwtDecoder can decode a jwt token string.
 type JwtDecoder struct {
 	publicPEMKey *rsa.PublicKey  // Web Gateway does not provide a kid header
 	jwkPEMKeys   publicRSAKeyMap // Optional jwt's signed by other services or Fusion Auth (via JWKS)
 }
 
+// NewJwtDecoder creates a new JwtDecoder.
 func NewJwtDecoder(pubKey string, perfCoreKey string, jwkKeys string) (*JwtDecoder, error) {
 	decoder := &JwtDecoder{}
 	decoder.jwkPEMKeys = make(publicRSAKeyMap)
@@ -48,7 +50,7 @@ func NewJwtDecoder(pubKey string, perfCoreKey string, jwkKeys string) (*JwtDecod
 	}
 	decoder.publicPEMKey = publicKey
 
-	// 2. Get the the Perform-Core public key
+	// 2. Get the Perform-Core public key
 	// REVISIT: Remove this as soon as perf-core key in JWK
 	perfKey, err := decoder.getPublicKey(perfCoreKey)
 	if err != nil {
@@ -70,6 +72,7 @@ func NewJwtDecoder(pubKey string, perfCoreKey string, jwkKeys string) (*JwtDecod
 	return decoder, nil
 }
 
+// Decode a jwt token string and return the Standard Culture Amp Claims.
 func (d *JwtDecoder) Decode(tokenString string) (*StandardClaims, error) {
 	payload := &StandardClaims{}
 
@@ -78,7 +81,7 @@ func (d *JwtDecoder) Decode(tokenString string) (*StandardClaims, error) {
 		return payload, err
 	}
 
-	return NewStandardClaims(claims), nil
+	return newStandardClaims(claims), nil
 }
 
 func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwtgo.MapClaims, error) {
