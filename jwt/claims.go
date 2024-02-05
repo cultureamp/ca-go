@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	jwtgo "github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // StandardClaims represent the standard Culture Amp JWT claims.
@@ -19,10 +19,10 @@ type encoderStandardClaims struct {
 	AccountID       string `json:"accountId"`
 	EffectiveUserID string `json:"effectiveUserId"`
 	RealUserID      string `json:"realUserId"`
-	jwtgo.RegisteredClaims
+	jwt.RegisteredClaims
 }
 
-func newStandardClaims(claims jwtgo.MapClaims) *StandardClaims {
+func newStandardClaims(claims jwt.MapClaims) *StandardClaims {
 	// todo check for error and do what?
 	accountId, _ := getRawClaimString(claims, AccountIDClaim)
 	realUserId, _ := getRawClaimString(claims, RealUserIDClaim)
@@ -44,16 +44,23 @@ func newEncoderClaims(sc *StandardClaims) *encoderStandardClaims {
 		RealUserID:      sc.RealUserId,
 	}
 
-	claims.ExpiresAt = jwtgo.NewNumericDate(time.Now().Add(1 * time.Hour))
-	claims.IssuedAt = jwtgo.NewNumericDate(time.Now())
-	claims.NotBefore = jwtgo.NewNumericDate(time.Now())
+	// If Expiry is set, then use it, else set it 1 hour into the future
+	if sc.Expiry.IsZero() {
+		claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(1 * time.Hour))
+	} else {
+		claims.ExpiresAt = jwt.NewNumericDate(sc.Expiry)
+	}
+
+	claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(1 * time.Hour))
+	claims.IssuedAt = jwt.NewNumericDate(time.Now())
+	claims.NotBefore = jwt.NewNumericDate(time.Now())
 	claims.Issuer = "ca-go/jwt"
 	claims.Subject = "standard"
 
 	return claims
 }
 
-func getExpirationTime(claims jwtgo.MapClaims) (time.Time, error) {
+func getExpirationTime(claims jwt.MapClaims) (time.Time, error) {
 	// can return nil date with no error
 	date, err := claims.GetExpirationTime()
 	if err != nil || date == nil {
@@ -63,7 +70,7 @@ func getExpirationTime(claims jwtgo.MapClaims) (time.Time, error) {
 	return date.Time, nil
 }
 
-func getRawClaimString(claims jwtgo.MapClaims, key string) (string, error) {
+func getRawClaimString(claims jwt.MapClaims, key string) (string, error) {
 	val, ok := claims[key].(string)
 	if !ok {
 		return "", fmt.Errorf("missing %s in jwt token", key)
