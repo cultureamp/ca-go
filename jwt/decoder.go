@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
-	//"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/jwk"
 )
 
@@ -32,33 +31,35 @@ type publicRSAKeyMap map[string]*rsa.PublicKey
 
 // JwtDecoder can decode a jwt token string.
 type JwtDecoder struct {
-	publicPEMKey *rsa.PublicKey  // Web Gateway does not provide a kid header
-	jwkPEMKeys   publicRSAKeyMap // Optional jwt's signed by other services or Fusion Auth (via JWKS)
+	defaultPublicPEMKey *rsa.PublicKey  // Default key to use if no kid header (eg. Web Gateway)
+	jwkPEMKeys          publicRSAKeyMap // Optional jwt's signed by other services or Fusion Auth (via JWKS)
 }
 
 // NewJwtDecoder creates a new JwtDecoder.
-func NewJwtDecoder(pubKey string, perfCoreKey string, jwkKeys string) (*JwtDecoder, error) {
+func NewJwtDecoder(defaultPublicKey string, perfCorePubicKey string, jwkKeys string) (*JwtDecoder, error) {
 	decoder := &JwtDecoder{}
 	decoder.jwkPEMKeys = make(publicRSAKeyMap)
 
 	// 1. Get default (web-gateway) public key. This is current MANDATORY, but when its included in the JWKS then
 	// change the error handling here to be optional
 	// REVISIT: Remove this as soon as web-gateway key in JWK
-	publicKey, err := decoder.getPublicKey(pubKey)
+	publicKey, err := decoder.getPublicKey(defaultPublicKey)
 	if err != nil {
 		return nil, err
 	}
-	decoder.publicPEMKey = publicKey
+	decoder.defaultPublicPEMKey = publicKey
 
-	// 2. Get the Perform-Core public key
-	// REVISIT: Remove this as soon as perf-core key in JWK
-	perfKey, err := decoder.getPublicKey(perfCoreKey)
-	if err != nil {
-		return nil, err
+	// 2. Get the optional Perform-Core public key
+	if perfCorePubicKey != "" {
+		// REVISIT: Remove this as soon as perf-core key in JWK
+		perfKey, err := decoder.getPublicKey(perfCorePubicKey)
+		if err != nil {
+			return nil, err
+		}
+		decoder.jwkPEMKeys["perform-core"] = perfKey
 	}
-	decoder.jwkPEMKeys["perform-core"] = perfKey
 
-	// 3. Parse JWKs JSON keys if supplied
+	// 3. Parse all JWKs JSON keys
 	rsaPublicKeyMap, err := decoder.parseJWKs(context.Background(), jwkKeys)
 	if err != nil {
 		return nil, err
@@ -117,7 +118,7 @@ func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwt.MapClaims, erro
 
 func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (*rsa.PublicKey, error) {
 	if token == nil {
-		return d.publicPEMKey, nil
+		return d.defaultPublicPEMKey, nil
 	}
 
 	if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
@@ -126,15 +127,18 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (*rsa.PublicKey, erro
 
 	kid, found := token.Header[KidHeaderKey]
 	if !found {
-		return d.publicPEMKey, nil
+		// no kid header, so use the default public key
+		return d.defaultPublicPEMKey, nil
 	}
 
 	key, found := d.jwkPEMKeys[kid.(string)]
-	if !found {
-		return nil, fmt.Errorf("missing key for kid header: %s", kid)
+	if found {
+		// Found a match, so use this key
+		return key, nil
 	}
 
-	return key, nil
+	// Didn't find a match so try default public key (and probably fail)
+	return d.defaultPublicPEMKey, nil
 }
 
 func (d *JwtDecoder) getPublicKey(key string) (*rsa.PublicKey, error) {
