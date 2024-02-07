@@ -26,7 +26,6 @@ const (
 	RealUserIDClaim      = "realUserId"
 	EffectiveUserIDClaim = "effectiveUserId"
 
-	testAuthJwks string = "./testKeys/development.jwks"
 )
 
 // PublicRSAKeyMap "keyid => Public RSA Key".

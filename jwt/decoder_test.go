@@ -9,6 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	testAuthJwks string = "./testKeys/development.jwks"
+)
+
 func TestNewDecoder(t *testing.T) {
 	pubJwkKeyBytes, err := os.ReadFile(filepath.Clean(testAuthJwks))
 	require.NoError(t, err)
