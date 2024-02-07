@@ -1,8 +1,11 @@
 package jwt
 
 import (
+	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 var (
@@ -11,11 +14,18 @@ var (
 )
 
 func getDecoderInstance() *JwtDecoder {
-	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
+	jwkKeys, ok := os.LookupEnv("AUTH_PUBLIC_JWK_KEYS")
+	if !ok && isTestMode() {
+		pubJwksBytes, err := os.ReadFile(filepath.Clean(testAuthJwks))
+		if err != nil {
+		} else {
+			jwkKeys = string(pubJwksBytes)
+		}
+	}
 
 	decoder, err := NewJwtDecoder(jwkKeys)
 	if err != nil {
-		err := fmt.Errorf("error loading jwk decoder, maybe missing env vars: err='%w'\n", err)
+		err := fmt.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
 		panic(err)
 	}
 
@@ -43,4 +53,17 @@ func Decode(tokenString string) (*StandardClaims, error) {
 // Encode the Standard Culture Amp Claims in a jwt token string.
 func Encode(claims *StandardClaims) (string, error) {
 	return DefaultJwtEncoder.Encode(claims)
+}
+
+func isTestMode() bool {
+	// https://stackoverflow.com/questions/14249217/how-do-i-know-im-running-within-go-test
+	argZero := os.Args[0]
+
+	if strings.HasSuffix(argZero, ".test") ||
+		strings.Contains(argZero, "/_test/") ||
+		flag.Lookup("test.v") != nil {
+		return true
+	}
+
+	return false
 }

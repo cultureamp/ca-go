@@ -22,7 +22,7 @@ func getInstance() *AWSSecretsManager {
 		region := os.Getenv("AWS_REGION")
 		cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
 		if err != nil {
-			err := fmt.Errorf("error loading aws sdk config, err='%w'\n", err)
+			err := fmt.Errorf("error loading default aws sdk config, err='%w'\n", err)
 			panic(err)
 		}
 

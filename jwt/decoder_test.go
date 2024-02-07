@@ -4,21 +4,13 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	day  = 24 * time.Hour
-	year = 365 * day // approx
-
-	decoderAuthJwks string = "./testKeys/development.jwks"
-)
-
 func TestNewDecoder(t *testing.T) {
-	pubJwkKeyBytes, err := os.ReadFile(filepath.Clean(decoderAuthJwks))
+	pubJwkKeyBytes, err := os.ReadFile(filepath.Clean(testAuthJwks))
 	require.NoError(t, err)
 	validJwks := string(pubJwkKeyBytes)
 
@@ -64,7 +56,7 @@ func TestNewDecoder(t *testing.T) {
 }
 
 func TestDecoderDecodeAllClaims(t *testing.T) {
-	pubJwksBytes, err := os.ReadFile(filepath.Clean(decoderAuthJwks))
+	pubJwksBytes, err := os.ReadFile(filepath.Clean(testAuthJwks))
 	require.NoError(t, err)
 
 	decoder, err := NewJwtDecoder(string(pubJwksBytes))
