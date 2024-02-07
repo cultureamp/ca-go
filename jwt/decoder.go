@@ -17,7 +17,8 @@ const (
 	KidHeaderKey       = "kid"
 	AlgorithmHeaderKey = "alg"
 	SignatureHeaderKey = "sig"
-	PerformCoreKid     = "perform-core"
+
+	WebGatewayKid = "web-gateway"
 
 	PublicKeyType = "RSA PUBLIC KEY"
 
@@ -36,39 +37,27 @@ type JwtDecoder struct {
 }
 
 // NewJwtDecoder creates a new JwtDecoder.
-func NewJwtDecoder(defaultPublicKey string, perfCorePubicKey string, jwkKeys string) (*JwtDecoder, error) {
+func NewJwtDecoder(jwkKeys string) (*JwtDecoder, error) {
 	decoder := &JwtDecoder{}
 	decoder.jwkPEMKeys = make(publicRSAKeyMap)
 
-	// 1. Get default (web-gateway) public key. This is current MANDATORY, but when its included in the JWKS then
-	// change the error handling here to be optional
-	// REVISIT: Remove this as soon as web-gateway key in JWK
-	publicKey, err := decoder.getPublicKey(defaultPublicKey)
-	if err != nil {
-		return nil, err
-	}
-	decoder.defaultPublicPEMKey = publicKey
-
-	// 2. Get the optional Perform-Core public key
-	if perfCorePubicKey != "" {
-		// REVISIT: Remove this as soon as perf-core key in JWK
-		perfKey, err := decoder.getPublicKey(perfCorePubicKey)
-		if err != nil {
-			return nil, err
-		}
-		decoder.jwkPEMKeys["perform-core"] = perfKey
-	}
-
-	// 3. Parse all JWKs JSON keys
+	// 1. Parse all JWKs JSON keys
 	rsaPublicKeyMap, err := decoder.parseJWKs(context.Background(), jwkKeys)
 	if err != nil {
-		return nil, err
+		return decoder, err
 	}
 
-	// 4. Upsert into machine keys with "kid" as the key (may overwrite settings.JwtPublicMachineKeys)
+	// 2. Upsert into machine keys with "kid" as the key (may overwrite settings.JwtPublicMachineKeys)
 	for key, val := range rsaPublicKeyMap {
 		decoder.jwkPEMKeys[key] = val
 	}
+
+	// 3. Get default (web-gateway) public key.
+	key, ok := rsaPublicKeyMap[WebGatewayKid]
+	if !ok {
+		return decoder, fmt.Errorf("missing default 'web-gateway' key in JWKS")
+	}
+	decoder.defaultPublicPEMKey = key
 
 	return decoder, nil
 }
@@ -155,7 +144,7 @@ func (decoder *JwtDecoder) parseJWKs(ctx context.Context, jwks string) (publicRS
 
 	if jwks == "" {
 		// If no jwks json, then returm empty map
-		return rsaKeys, nil
+		return rsaKeys, fmt.Errorf("missing jwks")
 	}
 
 	// 1. Parse the jwks JSON string to an iterable set

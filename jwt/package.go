@@ -11,11 +11,9 @@ var (
 )
 
 func getDecoderInstance() *JwtDecoder {
-	pubKey := os.Getenv("AUTH_PUBLIC_KEY")
-	perfCoreKey := os.Getenv("AUTH_PERFORM_CORE_PUBLIC_KEY")
 	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
 
-	decoder, err := NewJwtDecoder(pubKey, perfCoreKey, jwkKeys)
+	decoder, err := NewJwtDecoder(jwkKeys)
 	if err != nil {
 		err := fmt.Errorf("error loading jwk decoder, maybe missing env vars: err='%w'\n", err)
 		panic(err)
