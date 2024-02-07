@@ -130,15 +130,6 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (*rsa.PublicKey, erro
 	return d.defaultPublicPEMKey, nil
 }
 
-func (d *JwtDecoder) getPublicKey(key string) (*rsa.PublicKey, error) {
-	pubKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(key))
-	if err != nil {
-		return nil, err
-	}
-
-	return pubKey, nil
-}
-
 func (decoder *JwtDecoder) parseJWKs(ctx context.Context, jwks string) (publicRSAKeyMap, error) {
 	rsaKeys := make(publicRSAKeyMap)
 
