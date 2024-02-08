@@ -11,7 +11,7 @@ import (
 const (
 	testAuthJwks              string = "./testKeys/development.jwks"
 	testDefaultAuthPrivateKey string = "./testKeys/jwt-rsa256-test-webgateway.key"
-	testOtherAuthPrivateKey string = "./testKeys/jwt-rsa256-test-other.key"
+	testOtherAuthPrivateKey   string = "./testKeys/jwt-rsa256-test-other.key"
 )
 
 var (
