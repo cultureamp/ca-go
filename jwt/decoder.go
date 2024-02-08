@@ -25,7 +25,6 @@ const (
 	AccountIDClaim       = "accountId"
 	RealUserIDClaim      = "realUserId"
 	EffectiveUserIDClaim = "effectiveUserId"
-
 )
 
 // PublicRSAKeyMap "keyid => Public RSA Key".

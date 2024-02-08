@@ -34,26 +34,46 @@ type encoderStandardClaims struct {
 }
 
 func newStandardClaims(claims jwt.MapClaims) *StandardClaims {
-	// todo check for error and do what?
-	accountId := getRawClaimString(claims, AccountIDClaim)
-	realUserId := getRawClaimString(claims, RealUserIDClaim)
-	effectiveUserId := getRawClaimString(claims, EffectiveUserIDClaim)
-	expiryTime := getExpirationTime(claims)
-	notBeforeTime := getNotBeforeTime(claims)
-	issuedAtTime := getIssuedAtTime(claims)
-	issuer := getIssuer(claims)
-	subject := getSubject(claims)
+	std := &StandardClaims{}
 
-	return &StandardClaims{
-		AccountId:       accountId,
-		RealUserId:      realUserId,
-		EffectiveUserId: effectiveUserId,
-		ExpiresAt:       expiryTime,
-		NotBefore:       notBeforeTime,
-		IssuedAt:        issuedAtTime,
-		Issuer:          issuer,
-		Subject:         subject,
+	std.AccountId = std.getCustomString(claims, AccountIDClaim)
+	std.RealUserId = std.getCustomString(claims, RealUserIDClaim)
+	std.EffectiveUserId = std.getCustomString(claims, EffectiveUserIDClaim)
+	std.ExpiresAt = std.getTime(claims.GetExpirationTime)
+	std.NotBefore = std.getTime(claims.GetNotBefore)
+	std.IssuedAt = std.getTime(claims.GetIssuedAt)
+	std.Issuer = std.getString(claims.GetIssuer)
+	std.Subject = std.getString(claims.GetSubject)
+
+	return std
+}
+
+func (sc *StandardClaims) getTime(f func() (*jwt.NumericDate, error)) time.Time {
+	// can return nil date with no error
+	date, err := f()
+	if err != nil || date == nil {
+		return time.Time{}
 	}
+
+	return date.Time
+}
+
+func (sc *StandardClaims) getString(f func() (string, error)) string {
+	s, err := f()
+	if err != nil {
+		return ""
+	}
+
+	return s
+}
+
+func (sc *StandardClaims) getCustomString(claims jwt.MapClaims, key string) string {
+	val, ok := claims[key].(string)
+	if !ok {
+		return ""
+	}
+
+	return val
 }
 
 func newEncoderClaims(sc *StandardClaims) *encoderStandardClaims {
@@ -63,29 +83,13 @@ func newEncoderClaims(sc *StandardClaims) *encoderStandardClaims {
 		RealUserID:      sc.RealUserId,
 	}
 
-	// If Expiry is set, then use it, else set it 1 hour into the future
-	if sc.ExpiresAt.IsZero() {
-		claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(1 * time.Hour))
-	} else {
-		claims.ExpiresAt = jwt.NewNumericDate(sc.ExpiresAt)
-	}
-
-	if sc.IssuedAt.IsZero() {
-		claims.IssuedAt = jwt.NewNumericDate(time.Now())
-	} else {
-		claims.IssuedAt = jwt.NewNumericDate(sc.IssuedAt)
-	}
-
-	if sc.NotBefore.IsZero() {
-		claims.NotBefore = jwt.NewNumericDate(time.Now())
-	} else {
-		claims.NotBefore = jwt.NewNumericDate(sc.NotBefore)
-	}
-
+	claims.IssuedAt = claims.correctTime(sc.IssuedAt, time.Now())
+	claims.NotBefore = claims.correctTime(sc.NotBefore, time.Now())
+	claims.ExpiresAt = claims.correctTime(sc.ExpiresAt, time.Now().Add(1 * time.Hour))
+	
 	if sc.Issuer == "" {
 		claims.Issuer = "ca-go/jwt"
 	}
-
 	if sc.Subject == "" {
 		claims.Subject = "standard"
 	}
@@ -93,59 +97,10 @@ func newEncoderClaims(sc *StandardClaims) *encoderStandardClaims {
 	return claims
 }
 
-func getExpirationTime(claims jwt.MapClaims) time.Time {
-	// can return nil date with no error
-	date, err := claims.GetExpirationTime()
-	if err != nil || date == nil {
-		return time.Time{}
+func (esc *encoderStandardClaims) correctTime(t time.Time, def time.Time) *jwt.NumericDate {
+	if t.IsZero() {
+		return jwt.NewNumericDate(def)
 	}
 
-	return date.Time
-}
-
-func getNotBeforeTime(claims jwt.MapClaims) time.Time {
-	// can return nil date with no error
-	date, err := claims.GetNotBefore()
-	if err != nil || date == nil {
-		return time.Time{}
-	}
-
-	return date.Time
-}
-
-func getIssuedAtTime(claims jwt.MapClaims) time.Time {
-	// can return nil date with no error
-	date, err := claims.GetIssuedAt()
-	if err != nil || date == nil {
-		return time.Time{}
-	}
-
-	return date.Time
-}
-
-func getIssuer(claims jwt.MapClaims) string {
-	issuer, err := claims.GetIssuer()
-	if err != nil {
-		return ""
-	}
-
-	return issuer
-}
-
-func getSubject(claims jwt.MapClaims) string {
-	sub, err := claims.GetSubject()
-	if err != nil {
-		return ""
-	}
-
-	return sub
-}
-
-func getRawClaimString(claims jwt.MapClaims, key string) string {
-	val, ok := claims[key].(string)
-	if !ok {
-		return ""
-	}
-
-	return val
+	return jwt.NewNumericDate(t)
 }
