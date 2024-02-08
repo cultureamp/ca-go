@@ -83,10 +83,11 @@ func newEncoderClaims(sc *StandardClaims) *encoderStandardClaims {
 		RealUserID:      sc.RealUserId,
 	}
 
-	claims.IssuedAt = claims.correctTime(sc.IssuedAt, time.Now())
-	claims.NotBefore = claims.correctTime(sc.NotBefore, time.Now())
-	claims.ExpiresAt = claims.correctTime(sc.ExpiresAt, time.Now().Add(1 * time.Hour))
-	
+	now := time.Now()
+	claims.IssuedAt = claims.correctTime(sc.IssuedAt, now)
+	claims.NotBefore = claims.correctTime(sc.NotBefore, now)
+	claims.ExpiresAt = claims.correctTime(sc.ExpiresAt, now.Add(1*time.Hour))
+
 	if sc.Issuer == "" {
 		claims.Issuer = "ca-go/jwt"
 	}

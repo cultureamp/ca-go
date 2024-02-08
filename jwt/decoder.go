@@ -36,8 +36,13 @@ type JwtDecoder struct {
 	jwkPEMKeys          publicRSAKeyMap // Optional jwt's signed by other services or Fusion Auth (via JWKS)
 }
 
-// NewJwtDecoder creates a new JwtDecoder.
+// NewJwtDecoder creates a new JwtDecoder with the default "web-gateway" kid key.
 func NewJwtDecoder(jwkKeys string) (*JwtDecoder, error) {
+	return NewJwtDecoderWithDefaultKid(jwkKeys, WebGatewayKid)
+}
+
+// NewJwtDecoder creates a new JwtDecoder with a specified default kid key.
+func NewJwtDecoderWithDefaultKid(jwkKeys string, defaultKid string) (*JwtDecoder, error) {
 	decoder := &JwtDecoder{}
 	decoder.jwkPEMKeys = make(publicRSAKeyMap)
 
@@ -53,9 +58,9 @@ func NewJwtDecoder(jwkKeys string) (*JwtDecoder, error) {
 	}
 
 	// 3. Get default (web-gateway) public key.
-	key, ok := rsaPublicKeyMap[WebGatewayKid]
+	key, ok := rsaPublicKeyMap[defaultKid]
 	if !ok {
-		return decoder, fmt.Errorf("missing default 'web-gateway' key in JWKS")
+		return decoder, fmt.Errorf("missing default '%s' key in JWKS", defaultKid)
 	}
 	decoder.defaultPublicPEMKey = key
 

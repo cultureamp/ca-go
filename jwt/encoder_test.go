@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	encoderAuthKey string = "./testKeys/jwt-rsa256.key"
+	encoderAuthKey string = "./testKeys/jwt-rsa256-test-webgateway.key"
 )
 
 func TestNewEncoderSuccess(t *testing.T) {
-	privateKeyBytes, err := os.ReadFile(filepath.Clean(encoderAuthKey))
+	privateKeyBytes, err := os.ReadFile(filepath.Clean(testAuthPrivateKey))
 	require.NoError(t, err)
 
 	encoder, err := NewJwtEncoder(string(privateKeyBytes), "")
@@ -25,10 +25,10 @@ func TestNewEncoderSuccess(t *testing.T) {
 }
 
 func TestEncoderEncodeStandardClaims(t *testing.T) {
-	privateKeyBytes, err := os.ReadFile(filepath.Clean(encoderAuthKey))
+	privateKeyBytes, err := os.ReadFile(filepath.Clean(testAuthPrivateKey))
 	require.NoError(t, err)
 
-	encoder, err := NewJwtEncoder(string(privateKeyBytes), "web-gateway")
+	encoder, err := NewJwtEncoder(string(privateKeyBytes), WebGatewayKid)
 	assert.Nil(t, err)
 
 	claims := &StandardClaims{
