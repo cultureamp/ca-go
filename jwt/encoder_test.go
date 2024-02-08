@@ -16,7 +16,7 @@ const (
 )
 
 func TestNewEncoder(t *testing.T) {
-	b, err := os.ReadFile(filepath.Clean(testAuthPrivateKey))
+	b, err := os.ReadFile(filepath.Clean(testDefaultAuthPrivateKey))
 	require.NoError(t, err)
 	privKey := string(b)
 
@@ -51,7 +51,7 @@ func TestNewEncoder(t *testing.T) {
 			if tC.expectedErrMsg != "" {
 				assert.NotNil(t, err)
 				assert.ErrorContains(t, err, tC.expectedErrMsg)
-				assert.NotNil(t, encoder)
+				assert.Nil(t, encoder)
 			} else {
 				assert.Nil(t, err)
 				assert.NotNil(t, encoder)
@@ -61,7 +61,9 @@ func TestNewEncoder(t *testing.T) {
 }
 
 func TestEncoderEncodeStandardClaims(t *testing.T) {
-	privateKeyBytes, err := os.ReadFile(filepath.Clean(testAuthPrivateKey))
+	// useful to create RS256 test tokens https://jwt.io/
+
+	privateKeyBytes, err := os.ReadFile(filepath.Clean(testDefaultAuthPrivateKey))
 	require.NoError(t, err)
 
 	encoder, err := NewJwtEncoder(string(privateKeyBytes), WebGatewayKid)

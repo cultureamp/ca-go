@@ -49,7 +49,7 @@ func NewJwtDecoderWithDefaultKid(jwkKeys string, defaultKid string) (*JwtDecoder
 	// 1. Parse all JWKs JSON keys
 	rsaPublicKeyMap, err := decoder.parseJWKs(context.Background(), jwkKeys)
 	if err != nil {
-		return decoder, err
+		return nil, err
 	}
 
 	// 2. Upsert into machine keys with "kid" as the key (may overwrite settings.JwtPublicMachineKeys)
@@ -60,10 +60,10 @@ func NewJwtDecoderWithDefaultKid(jwkKeys string, defaultKid string) (*JwtDecoder
 	// 3. Get default (web-gateway) public key.
 	key, ok := rsaPublicKeyMap[defaultKid]
 	if !ok {
-		return decoder, fmt.Errorf("missing default '%s' key in JWKS", defaultKid)
+		return nil, fmt.Errorf("missing default key in JWKS: '%s'", defaultKid)
 	}
-	decoder.defaultPublicPEMKey = key
 
+	decoder.defaultPublicPEMKey = key
 	return decoder, nil
 }
 
@@ -94,11 +94,7 @@ func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwt.MapClaims, erro
 		// jwt.WithLeeway(10 * time.Second), // add this if we want to add some leeway for clock scew across systems
 		// jwt.WithExpirationRequired(),     // add this if we want to enforce that tokens MUST have an expiry
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	if !token.Valid {
+	if err != nil || !token.Valid {
 		return nil, err
 	}
 
@@ -116,7 +112,7 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (*rsa.PublicKey, erro
 	}
 
 	if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-		return nil, fmt.Errorf("unexpected signing method: %v", token.Header[AlgorithmHeaderKey])
+		return nil, fmt.Errorf("unexpected signing method - only rsa supported: %v", token.Header[AlgorithmHeaderKey])
 	}
 
 	kid, found := token.Header[KidHeaderKey]

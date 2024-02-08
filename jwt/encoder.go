@@ -19,7 +19,7 @@ func NewJwtEncoder(privateKey string, kid string) (*JwtEncoder, error) {
 	privatePEMKey := []byte(privateKey)
 	pemKey, err := jwt.ParseRSAPrivateKeyFromPEM(privatePEMKey)
 	if err != nil {
-		return encoder, err
+		return nil, err
 	}
 
 	encoder.privatePEMKey = pemKey

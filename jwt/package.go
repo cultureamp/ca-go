@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	testAuthJwks       string = "./testKeys/development.jwks"
-	testAuthPrivateKey string = "./testKeys/jwt-rsa256-test-webgateway.key"
+	testAuthJwks              string = "./testKeys/development.jwks"
+	testDefaultAuthPrivateKey string = "./testKeys/jwt-rsa256-test-webgateway.key"
+	testOtherAuthPrivateKey string = "./testKeys/jwt-rsa256-test-other.key"
 )
 
 var (
@@ -19,17 +20,16 @@ var (
 )
 
 func getDecoderInstance() *JwtDecoder {
-	keyId, ok := os.LookupEnv("AUTH_PUBLIC_DEFAULT_KEY_ID")
-	if !ok {
+	keyId := os.Getenv("AUTH_PUBLIC_DEFAULT_KEY_ID")
+	if keyId == "" {
 		keyId = WebGatewayKid
 	}
 
-	jwkKeys, ok := os.LookupEnv("AUTH_PUBLIC_JWK_KEYS")
-	if !ok && isTestMode() {
+	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
+	if jwkKeys == "" && isTestMode() {
 		// test key only, not the production key
 		b, _ := os.ReadFile(filepath.Clean(testAuthJwks))
 		jwkKeys = string(b)
-		keyId = WebGatewayKid
 	}
 
 	decoder, err := NewJwtDecoderWithDefaultKid(jwkKeys, keyId)
@@ -42,17 +42,16 @@ func getDecoderInstance() *JwtDecoder {
 }
 
 func getEncoderInstance() *JwtEncoder {
-	keyId, ok := os.LookupEnv("AUTH_PRIVATE_KEY_ID")
-	if !ok {
+	keyId := os.Getenv("AUTH_PRIVATE_KEY_ID")
+	if keyId == "" {
 		keyId = WebGatewayKid
 	}
 
-	privKey, ok := os.LookupEnv("AUTH_PRIVATE_KEY")
-	if !ok && isTestMode() {
+	privKey := os.Getenv("AUTH_PRIVATE_KEY")
+	if privKey == "" && isTestMode() {
 		// test key only, not the production key
-		b, _ := os.ReadFile(filepath.Clean(testAuthPrivateKey))
+		b, _ := os.ReadFile(filepath.Clean(testDefaultAuthPrivateKey))
 		privKey = string(b)
-		keyId = WebGatewayKid
 	}
 
 	encoder, err := NewJwtEncoder(privKey, keyId)
