@@ -15,13 +15,49 @@ const (
 	encoderAuthKey string = "./testKeys/jwt-rsa256-test-webgateway.key"
 )
 
-func TestNewEncoderSuccess(t *testing.T) {
-	privateKeyBytes, err := os.ReadFile(filepath.Clean(testAuthPrivateKey))
+func TestNewEncoder(t *testing.T) {
+	b, err := os.ReadFile(filepath.Clean(testAuthPrivateKey))
 	require.NoError(t, err)
+	privKey := string(b)
 
-	encoder, err := NewJwtEncoder(string(privateKeyBytes), "")
-	assert.Nil(t, err)
-	assert.NotNil(t, encoder)
+	testCases := []struct {
+		desc           string
+		key            string
+		kid            string
+		expectedErrMsg string
+	}{
+		{
+			desc:           "Success 1: valid private key",
+			key:            privKey,
+			kid:            "web-gateway",
+			expectedErrMsg: "",
+		},
+		{
+			desc:           "Error 1: missing key",
+			key:            "",
+			kid:            "",
+			expectedErrMsg: "invalid key",
+		},
+		{
+			desc:           "Error 2: bad key",
+			key:            "bad key",
+			kid:            "bad",
+			expectedErrMsg: "invalid key",
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			encoder, err := NewJwtEncoder(tC.key, tC.kid)
+			if tC.expectedErrMsg != "" {
+				assert.NotNil(t, err)
+				assert.ErrorContains(t, err, tC.expectedErrMsg)
+				assert.NotNil(t, encoder)
+			} else {
+				assert.Nil(t, err)
+				assert.NotNil(t, encoder)
+			}
+		})
+	}
 }
 
 func TestEncoderEncodeStandardClaims(t *testing.T) {

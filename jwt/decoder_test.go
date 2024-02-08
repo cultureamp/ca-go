@@ -9,12 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
-
 func TestNewDecoder(t *testing.T) {
-	pubJwkKeyBytes, err := os.ReadFile(filepath.Clean(testAuthJwks))
+	b, err := os.ReadFile(filepath.Clean(testAuthJwks))
 	require.NoError(t, err)
-	validJwks := string(pubJwkKeyBytes)
+	validJwks := string(b)
 
 	testCases := []struct {
 		desc           string
@@ -58,10 +56,10 @@ func TestNewDecoder(t *testing.T) {
 }
 
 func TestDecoderDecodeAllClaims(t *testing.T) {
-	pubJwksBytes, err := os.ReadFile(filepath.Clean(testAuthJwks))
+	b, err := os.ReadFile(filepath.Clean(testAuthJwks))
 	require.NoError(t, err)
 
-	decoder, err := NewJwtDecoder(string(pubJwksBytes))
+	decoder, err := NewJwtDecoder(string(b))
 	assert.Nil(t, err)
 	assert.NotNil(t, decoder)
 

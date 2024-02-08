@@ -14,16 +14,17 @@ type JwtEncoder struct {
 
 // NewJwtEncoder creates a new JwtEncoder.
 func NewJwtEncoder(privateKey string, kid string) (*JwtEncoder, error) {
+	encoder := &JwtEncoder{}
+
 	privatePEMKey := []byte(privateKey)
 	pemKey, err := jwt.ParseRSAPrivateKeyFromPEM(privatePEMKey)
 	if err != nil {
-		return nil, err
+		return encoder, err
 	}
 
-	return &JwtEncoder{
-		privatePEMKey: pemKey,
-		kid:           kid,
-	}, nil
+	encoder.privatePEMKey = pemKey
+	encoder.kid = kid
+	return encoder, nil
 }
 
 // Encode the Standard Culture Amp Claims in a jwt token string.
