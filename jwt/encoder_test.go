@@ -73,9 +73,9 @@ func TestEncoderEncodeStandardClaims(t *testing.T) {
 		AccountId:       "abc123",
 		RealUserId:      "xyz234",
 		EffectiveUserId: "xyz345",
-		ExpiresAt:       time.Unix(2208952861, 0), //  1/1/2040
-		IssuedAt:        time.Unix(1577800861, 0), // 1/1/2020
-		NotBefore:       time.Unix(1577800861, 0), // 1/1/2020
+		ExpiresAt:       time.Unix(2211797532, 0), //  2/2/2040
+		IssuedAt:        time.Unix(1580608922, 0), // 1/1/2020
+		NotBefore:       time.Unix(1580608922, 0), // 1/1/2020
 	}
 
 	token, err := encoder.Encode(claims)
@@ -90,7 +90,7 @@ func TestEncoderEncodeStandardClaims(t *testing.T) {
 	header := splitToken[0]
 	assert.Equal(t, "eyJhbGciOiJSUzI1NiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0", header)
 	payload := splitToken[1]
-	assert.Equal(t, "eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMDg5NTI4NjEsIm5iZiI6MTU3NzgwMDg2MSwiaWF0IjoxNTc3ODAwODYxfQ", payload)
+	assert.Equal(t, "eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ", payload)
 	signature := splitToken[2]
-	assert.Equal(t, "wV6z_kUjsKUebT7wcyTLqelUGhGfNA_82I_3lSsZOutegU4ct_652tp8enACcpgv2ZRmhbmCIC5w7PQn4rGLPx4Bdffjvf_4HvCqtvig0JV-0lmCpbNaadK93kiYNteZYFjLokLRKEHDt-uOoQbiWhc8DQBn7KbebLBRqp28HF28WL4-WVPDFsQ6H6pWL1RsXiuGyY8pI1y5b02t8-mte7CzrVx6uBgHPvfGgzWiTw4WpauxOxXUWTBIfK34OmPLb5sJQjrhM9RysE76j9703ptVfygTpokCcit-v_K3XlzQWw0T9sVfOu35mOS-NtXPJLB4-PK__gR60nANB-nNMsFf2Z1_ok44GAKE3an5Bi7cEaM-S5ZSbkq0rm6gbxEVZT5yjmJMNeecSgKc1dt_TAK5VMg5SJKzxXJ1DhLvKIB3rVNLyNfZVJT3mQW5NIBMjmfZad69_cu2TtS2_b8jOso7C7Vc3V-rB7MWYLsS47SDA46HFcAJvq7vsUHWM7POhoZEdSyN0cnpw0pWEOnhtpguJIw5XtrLQX00h2FytTAZEBnBUBYU-4AMQUBjK_FeEv5zDXSiXtR-iMs1YM0Qryhcw3Cx2EInkF8qt5AGNp6mYMwsFLJiv0RMO0CxxZ-08uZsng3Ekv8ewquKsXR5ZjSvtHO0vYSQEUcYvRUjELE", signature)
+	assert.Equal(t, "IYPu_PGUO7lpy_wTSObA4S-n9HQUwPf2kTG2AzvSFUwfz994SHZOazYL7CyiRqqhIndIt5R4CQ3cXY7_Lok_wgBQ-U4FAciJw0Fx9tawJIEqwVeL10P4w0h5OIU21E7jeNmlcLOO57QN-ip7hc_--zyAFVKV5qjlbemuHWWpeUGu62SsdHr4J33O6hR8ubTyfXVF7wxKhNM4hCdM7PNanP9OOyAgEWxhwutURiA1nJsATwDf6QKNceGpqkb5A31PvFdfPHoktY4u6e4feBt2KjYJ1xy9opDlllFOEIwTw4nuksQk4q3437bGtfoQkC_CTGO83YTX5GHs70rxu_AubBxCazqSxqMwagiekkpgKZd6d0g7u5F5K8QImRJsore3oHNDAuVg7pbZmH9sApFN_bJhonOkECoPeeF5oYLSLHOXjN7CakvAsmCW01_ENPVXXO2E1yObzwmsY28_Ox5r_jC6XugGdXVfco6l1Oqbxb0ogG6BbOngYEZwVMbEO5qsBnUtBfr0nNUjFKIYCYXdpoeT_bxlt8GI4H2cMAb6FGa_XIEd60fJGazgAk9axA61xHEnqxgUyZv5PEL908zPBRvcNGpQuMsDpGOXTOQ_fgJO1IRBx4VwWcobzKbOyRNarTNwQZH0OY13HMMnFoiPjk8U0fWkJdj1ujobTQYYtz0", signature)
 }
