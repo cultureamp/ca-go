@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go v1.50.14
 	github.com/aws/aws-sdk-go-v2/service/kms v1.27.9
 	github.com/cenkalti/backoff/v4 v4.2.1
-	github.com/getsentry/sentry-go v0.26.0
+	github.com/getsentry/sentry-go v0.27.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-hclog v1.6.2
