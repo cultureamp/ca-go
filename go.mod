@@ -1,6 +1,6 @@
 module github.com/cultureamp/ca-go
 
-go 1.21.6
+go 1.21.7
 
 require (
 	github.com/IBM/sarama v1.42.1
