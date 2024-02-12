@@ -22,9 +22,12 @@ func newTestRunnerClient(topic string) *testRunnerClient {
 }
 
 func (c *testRunnerClient) Run(ctx context.Context, handler Handler) error {
-	for i := int64(1); i < 100; i++ {
+	for i := int64(1); i < 9223372036854775807; i++ {
 		msg := c.newMessage(i)
-		handler(ctx, msg)
+		err := handler(ctx, msg)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

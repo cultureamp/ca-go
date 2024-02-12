@@ -180,28 +180,26 @@ func (c *Consumer) Stop() error {
 }
 
 func (c *Consumer) process(ctx context.Context, handler Handler) error {
+	if c.withExplicitCommit {
+		return c.processFetch(ctx, handler)
+	}
+
+	return c.processRead(ctx, handler)
+}
+
+func (c *Consumer) processFetch(ctx context.Context, handler Handler) error {
 	var msg kafka.Message
 	var err error
 
-	if c.withExplicitCommit {
-		msg, err = c.reader.FetchMessage(ctx)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				return nil
-			}
-			return fmt.Errorf("unable to fetch message: %w", err)
+	msg, err = c.reader.FetchMessage(ctx)
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			return nil
 		}
-	} else {
-		msg, err = c.reader.ReadMessage(ctx)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				return nil
-			}
-			return fmt.Errorf("unable to read message: %w", err)
-		}
+		return fmt.Errorf("unable to fetch message: %w", err)
 	}
 
-	log.Debug("kafka_consumer").
+	log.Debug("kafka_consumer_fetch").
 		WithSystemTracing().
 		Properties(log.SubDoc().
 			Str("id", c.id).
@@ -213,7 +211,7 @@ func (c *Consumer) process(ctx context.Context, handler Handler) error {
 	if err = c.handlerExecutor.execute(ctx, msg, handler); err != nil {
 		return fmt.Errorf("unable to handle message: %w", err)
 	}
-	log.Debug("kafka_consumer").
+	log.Debug("kafka_consumer_fetch").
 		WithSystemTracing().
 		Properties(log.SubDoc().
 			Str("id", c.id).
@@ -222,12 +220,10 @@ func (c *Consumer) process(ctx context.Context, handler Handler) error {
 			Int64("offset", msg.Offset),
 		).Details("message handled")
 
-	if c.withExplicitCommit {
-		if err = c.reader.CommitMessages(ctx, msg); err != nil {
-			return fmt.Errorf("unable to commit message: %w", err)
-		}
+	if err = c.reader.CommitMessages(ctx, msg); err != nil {
+		return fmt.Errorf("unable to commit message: %w", err)
 	}
-	log.Debug("kafka_consumer").
+	log.Debug("kafka_consumer_fetch").
 		WithSystemTracing().
 		Properties(log.SubDoc().
 			Str("id", c.id).
@@ -235,6 +231,42 @@ func (c *Consumer) process(ctx context.Context, handler Handler) error {
 			Int("partition", msg.Partition).
 			Int64("offset", msg.Offset),
 		).Details("message committed")
+
+	return nil
+}
+
+func (c *Consumer) processRead(ctx context.Context, handler Handler) error {
+	var msg kafka.Message
+	var err error
+
+	msg, err = c.reader.ReadMessage(ctx)
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		return fmt.Errorf("unable to read message: %w", err)
+	}
+
+	log.Debug("kafka_consumer_readcommit").
+		WithSystemTracing().
+		Properties(log.SubDoc().
+			Str("id", c.id).
+			Str("topic", c.readerConfig.Topic).
+			Int("partition", msg.Partition).
+			Int64("offset", msg.Offset),
+		).Details("message received")
+
+	if err = c.handlerExecutor.execute(ctx, msg, handler); err != nil {
+		return fmt.Errorf("unable to handle message: %w", err)
+	}
+	log.Debug("kafka_consumer_readcommit").
+		WithSystemTracing().
+		Properties(log.SubDoc().
+			Str("id", c.id).
+			Str("topic", c.readerConfig.Topic).
+			Int("partition", msg.Partition).
+			Int64("offset", msg.Offset),
+		).Details("message handled")
 
 	return nil
 }

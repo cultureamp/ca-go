@@ -47,7 +47,6 @@ func (lf *Property) UInt64(key string, val uint64) *Property {
 	return lf
 }
 
-
 // Bool adds the property key with val as an bool to the log.
 func (lf *Property) Bool(key string, b bool) *Property {
 	lf.impl = lf.impl.Bool(key, b)
