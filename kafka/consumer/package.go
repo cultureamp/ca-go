@@ -27,22 +27,22 @@ func getInstance() AutoConsumers {
 	return auto
 }
 
-func Run(topic string) <-chan Message {
+func Run(ctx context.Context, topic string) <-chan Message {
 	c, found := DefaultKafkaConsumers[topic]
 	if !found {
 		c = newAutoConsumer(topic)
 		DefaultKafkaConsumers[topic] = c
-		go c.run()
+		go c.run(ctx)
 	}
 	return c.channel
 }
 
 func newAutoConsumer(topic string) *AutoConsumer {
-	var consumer ConsumerClient
+	var client ConsumerClient
 	var channel chan Message
 
 	if isTestMode() {
-		consumer = newTestRunnerClient(topic)
+		client = newTestRunnerClient(topic)
 		channel = make(chan Message, 1)
 	} else {
 		brokers := os.Getenv("KAFKA_BROKERS")
@@ -61,9 +61,9 @@ func newAutoConsumer(topic string) *AutoConsumer {
 			Topic:   topic,
 		}
 
-		wantBackOff := NonStopExponentialBackOff
-		wantBalancers := []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}}
-		wantNotify := func(ctx context.Context, err error, msg Message) {
+		autoBackOff := NonStopExponentialBackOff
+		autoBalancers := []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}}
+		autoNotify := func(ctx context.Context, err error, msg Message) {
 			log.Error("auto_consumer_notif_error", err).
 				WithSystemTracing().
 				Properties(log.SubDoc().
@@ -72,13 +72,13 @@ func newAutoConsumer(topic string) *AutoConsumer {
 					Str("value", string(msg.Value)),
 				).Details("error consuming message")
 		}
-		wantReaderLogger := func(s string, i ...interface{}) {
+		autoReaderLogger := func(s string, i ...interface{}) {
 			msg := fmt.Sprintf(s, i...)
 			log.Info("auto_consumer_reader").
 				WithSystemTracing().
 				Details(msg)
 		}
-		wantReaderErrorLogger := func(s string, i ...interface{}) {
+		autoReaderErrorLogger := func(s string, i ...interface{}) {
 			msg := fmt.Sprintf(s, i...)
 			err := errors.New(msg)
 			log.Error("auto_consumer_reader_error", err).
@@ -86,34 +86,35 @@ func newAutoConsumer(topic string) *AutoConsumer {
 				Details(msg)
 		}
 
-		consumer = NewConsumer(kafka.DefaultDialer, cfg,
+		consumer := NewConsumer(kafka.DefaultDialer, cfg,
 			WithExplicitCommit(),
-			WithGroupBalancers(wantBalancers...),
-			WithHandlerBackOffRetry(wantBackOff),
-			WithNotifyError(wantNotify),
-			WithReaderLogger(wantReaderLogger),
-			WithReaderErrorLogger(wantReaderErrorLogger),
+			WithGroupBalancers(autoBalancers...),
+			WithHandlerBackOffRetry(autoBackOff),
+			WithNotifyError(autoNotify),
+			WithReaderLogger(autoReaderLogger),
+			WithReaderErrorLogger(autoReaderErrorLogger),
 			WithDataDogTracing(),
 		)
-		channel = make(chan Message, 100)
+		channel = make(chan Message, consumer.readerConfig.QueueCapacity)
+		client = consumer
 	}
 
 	dc := &AutoConsumer{
 		topic:   topic,
-		client:  consumer,
+		client:  client,
 		channel: channel,
 	}
 
 	return dc
 }
 
-func (dc *AutoConsumer) run() {
+func (dc *AutoConsumer) run(ctx context.Context) {
 	log.Debug("kafka_auto_consumer_run").
 		WithSystemTracing().
 		Properties(log.SubDoc().
 			Str("topic", dc.topic),
 		).Details("auto consumer started")
-	if err := dc.client.Run(context.Background(), dc.handle); err != nil {
+	if err := dc.client.Run(ctx, dc.handle); err != nil {
 		panic(err)
 	}
 
