@@ -9,7 +9,7 @@ import (
 
 func TestPackage(t *testing.T) {
 	ctx := context.Background()
-	ch := Run(ctx, "topic-name")
+	ch := ConsumeTopic(ctx, "topic-name")
 
 	// Read the next message from the topic
 	msg, ok := <-ch
@@ -34,7 +34,7 @@ func TestPackage(t *testing.T) {
 
 func TestPackageWithTimeout(t *testing.T) {
 	ctx := context.Background()
-	ch := Run(ctx, "topic-name")
+	ch := ConsumeTopic(ctx, "topic-name")
 
 	select {
 	case msg, ok := <-ch:
@@ -50,7 +50,7 @@ func TestPackageWithDeadline(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), deadline)
 	defer cancel()
 
-	ch := Run(ctx, "topic-name")
+	ch := ConsumeTopic(ctx, "topic-name")
 
 	select {
 	case msg, ok := <-ch:

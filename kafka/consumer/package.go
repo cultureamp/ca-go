@@ -27,7 +27,9 @@ func getInstance() AutoConsumers {
 	return auto
 }
 
-func Run(ctx context.Context, topic string) <-chan Message {
+// ConsumeTopic reads messages from the topic until there is an error
+// or if the ctx deadline is reached.
+func ConsumeTopic(ctx context.Context, topic string) <-chan Message {
 	c, found := DefaultKafkaConsumers[topic]
 	if !found {
 		c = newAutoConsumer(topic)

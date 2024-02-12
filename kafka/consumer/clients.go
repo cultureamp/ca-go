@@ -39,7 +39,7 @@ func (c *testRunnerClient) newMessage(i int64) Message {
 	msg.Attempt = 1
 	msg.Offset = i
 	msg.ConsumerID = uuid.New().String()
-	msg.Partition = rand.Intn(20-1) + 1 //nolint:gosec
+	msg.Partition = rand.Intn(20-1) + 1 //#nosec G404 -- This for the test runner client, not used in production.
 	msg.Value = []byte(uuid.New().String())
 	return msg
 }
