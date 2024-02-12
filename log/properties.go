@@ -35,6 +35,19 @@ func (lf *Property) Int(key string, val int) *Property {
 	return lf
 }
 
+// Int64 adds the property key with val as an int to the log.
+func (lf *Property) Int64(key string, val int64) *Property {
+	lf.impl = lf.impl.Int64(key, val)
+	return lf
+}
+
+// UInt64 adds the property key with val as an int to the log.
+func (lf *Property) UInt64(key string, val uint64) *Property {
+	lf.impl = lf.impl.Uint64(key, val)
+	return lf
+}
+
+
 // Bool adds the property key with val as an bool to the log.
 func (lf *Property) Bool(key string, b bool) *Property {
 	lf.impl = lf.impl.Bool(key, b)
