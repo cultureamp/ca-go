@@ -9,54 +9,60 @@ import (
 
 func TestPackage(t *testing.T) {
 	ctx := context.Background()
-	ch := ConsumeTopic(ctx, "topic-name")
+	ch := Consume(ctx, "topic-name")
 
 	// Read the next message from the topic
 	msg, ok := <-ch
 	fmt.Printf("Channel open=%t, message=%v\n", ok, msg)
 
-	/*
-		// typical use would be read until channel is closed
-		open := true
-		for open {
-			select {
-			case msg, ok := <-ch:
-				if ok {
-					fmt.Println(msg)
-				} else {
-					fmt.Println("topic closed")
-					open = false
-				}
-			}
-		}
-	*/
+	// when finished close it
+	err := Stop("topic-name")
+	if err != nil {
+		fmt.Printf("Error: %v", err)
+	}
 }
 
 func TestPackageWithTimeout(t *testing.T) {
 	ctx := context.Background()
-	ch := ConsumeTopic(ctx, "topic-name")
+	ch := Consume(ctx, "topic-name")
 
 	select {
 	case msg, ok := <-ch:
 		fmt.Printf("Channel open=%t, message=%v\n", ok, msg)
 
-	case <-time.After(time.Duration(30) * time.Second):
+	case <-time.After(time.Duration(1) * time.Second):
 		fmt.Println("No message received before timeout")
+	}
+
+	// when finished close it
+	err := Stop("topic-name")
+	if err != nil {
+		fmt.Printf("Error: %v", err)
 	}
 }
 
 func TestPackageWithDeadline(t *testing.T) {
-	deadline := time.Duration(30) * time.Second
+	deadline := time.Duration(1) * time.Millisecond
 	ctx, cancel := context.WithTimeout(context.Background(), deadline)
 	defer cancel()
 
-	ch := ConsumeTopic(ctx, "topic-name")
+	ch := Consume(ctx, "topic-name")
 
-	select {
-	case msg, ok := <-ch:
-		fmt.Printf("Channel open=%t, message=%v\n", ok, msg)
+	ok := true
+	for ok {
+		select {
+		case msg, ok := <-ch:
+			fmt.Printf("Channel open=%t, message=%v\n", ok, msg)
 
-	case <-ctx.Done():
-		fmt.Println("No message received before context deadline")
+		case <-ctx.Done():
+			fmt.Println("Context deadline received. Stopping.")
+			ok = false
+		}
+	}
+
+	// when finished close it
+	err := Stop("topic-name")
+	if err != nil {
+		fmt.Printf("Error: %v", err)
 	}
 }

@@ -20,23 +20,30 @@ type AutoConsumer struct {
 
 type AutoConsumers map[string]*AutoConsumer
 
-var DefaultKafkaConsumers = getInstance()
+var TopicConsumers = getInstance()
 
 func getInstance() AutoConsumers {
 	auto := make(AutoConsumers)
 	return auto
 }
 
-// ConsumeTopic reads messages from the topic until there is an error
+// Consume reads messages from the topic until there is an error
 // or if the ctx deadline is reached.
-func ConsumeTopic(ctx context.Context, topic string) <-chan Message {
-	c, found := DefaultKafkaConsumers[topic]
-	if !found {
-		c = newAutoConsumer(topic)
-		DefaultKafkaConsumers[topic] = c
-		go c.run(ctx)
-	}
+func Consume(ctx context.Context, topic string) <-chan Message {
+	c := newAutoConsumer(topic)
+	TopicConsumers[topic] = c
+	go c.run(ctx)
 	return c.channel
+}
+
+// Stop sends a signal to the consumer to finish returning an error if it failed to do so.
+func Stop(topic string) error {
+	c, found := TopicConsumers[topic]
+	if found {
+		delete(TopicConsumers, topic)
+		return c.client.Stop()
+	}
+	return nil
 }
 
 func newAutoConsumer(topic string) *AutoConsumer {

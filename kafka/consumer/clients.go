@@ -9,26 +9,40 @@ import (
 
 type ConsumerClient interface {
 	Run(ctx context.Context, handler Handler) error
+	Stop() error
 }
 
 type testRunnerClient struct {
-	topic string
+	topic  string
+	stopCh chan struct{}
 }
 
 func newTestRunnerClient(topic string) *testRunnerClient {
 	return &testRunnerClient{
-		topic: topic,
+		topic:  topic,
+		stopCh: make(chan struct{}),
 	}
 }
 
 func (c *testRunnerClient) Run(ctx context.Context, handler Handler) error {
-	for i := int64(1); i < 9223372036854775807; i++ {
-		msg := c.newMessage(i)
-		err := handler(ctx, msg)
-		if err != nil {
-			return err
+	i := int64(1)
+	for {
+		select {
+		case <-c.stopCh:
+			return nil
+		default:
+			i++
+			msg := c.newMessage(i)
+			err := handler(ctx, msg)
+			if err != nil {
+				return err
+			}
 		}
 	}
+}
+
+func (c *testRunnerClient) Stop() error {
+	close(c.stopCh)
 	return nil
 }
 

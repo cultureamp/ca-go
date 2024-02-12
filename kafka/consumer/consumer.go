@@ -87,7 +87,7 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 	if config.MaxWait == 0 {
 		config.MaxWait = 250 * time.Millisecond
 	}
-	if config.QueueCapacity == 0 {
+	if config.QueueCapacity < 1 {
 		config.QueueCapacity = 100
 	}
 
@@ -148,7 +148,7 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 		default:
 		}
 
-		if err := c.process(ctx, handler); err != nil {
+		if err := c.retreiveNextMessage(ctx, handler); err != nil {
 			return fmt.Errorf("consumer error: %w", err)
 		}
 	}
@@ -179,15 +179,15 @@ func (c *Consumer) Stop() error {
 	return nil
 }
 
-func (c *Consumer) process(ctx context.Context, handler Handler) error {
+func (c *Consumer) retreiveNextMessage(ctx context.Context, handler Handler) error {
 	if c.withExplicitCommit {
-		return c.processFetch(ctx, handler)
+		return c.fetchNextMessage(ctx, handler)
 	}
 
-	return c.processRead(ctx, handler)
+	return c.readNextMessage(ctx, handler)
 }
 
-func (c *Consumer) processFetch(ctx context.Context, handler Handler) error {
+func (c *Consumer) fetchNextMessage(ctx context.Context, handler Handler) error {
 	var msg kafka.Message
 	var err error
 
@@ -235,7 +235,7 @@ func (c *Consumer) processFetch(ctx context.Context, handler Handler) error {
 	return nil
 }
 
-func (c *Consumer) processRead(ctx context.Context, handler Handler) error {
+func (c *Consumer) readNextMessage(ctx context.Context, handler Handler) error {
 	var msg kafka.Message
 	var err error
 
