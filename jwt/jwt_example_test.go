@@ -9,6 +9,10 @@ import (
 	"github.com/cultureamp/ca-go/jwt"
 )
 
+const (
+	webGatewayKid = "web-gateway"
+)
+
 func Example() {
 	claims := &jwt.StandardClaims{
 		AccountId:       "abc123",
@@ -29,13 +33,13 @@ func Example() {
 
 	// To create a specific instance of the encoder and decoder you can use the following
 	privateKeyBytes, err := os.ReadFile(filepath.Clean("./testKeys/jwt-rsa256-test-webgateway.key"))
-	encoder, err := jwt.NewJwtEncoder(string(privateKeyBytes), "web-gateway")
+	encoder, err := jwt.NewJwtEncoder(string(privateKeyBytes), webGatewayKid)
 
 	token, err = encoder.Encode(claims)
 	fmt.Printf("The encoded token is '%s' (err='%v')\n", token, err)
 
 	b, err := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
-	decoder, err := jwt.NewJwtDecoderWithDefaultKid(string(b), "web-gateway")
+	decoder, err := jwt.NewJwtDecoderWithDefaultKid(string(b), webGatewayKid)
 
 	claim, err := decoder.Decode(token)
 	fmt.Printf("The decoded token is '%v' (err='%+v')\n", claim, err)
