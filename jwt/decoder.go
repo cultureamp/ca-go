@@ -13,18 +13,17 @@ import (
 )
 
 const (
-	AuthBearerPrefix   = "Bearer "
-	KidHeaderKey       = "kid"
-	AlgorithmHeaderKey = "alg"
-	SignatureHeaderKey = "sig"
+	kidHeaderKey       = "kid"
+	algorithmHeaderKey = "alg"
+	signatureHeaderKey = "sig"
 
-	WebGatewayKid = "web-gateway"
+	webGatewayKid = "web-gateway"
 
-	PublicKeyType = "RSA PUBLIC KEY"
+	publicKeyType = "RSA PUBLIC KEY"
 
-	AccountIDClaim       = "accountId"
-	RealUserIDClaim      = "realUserId"
-	EffectiveUserIDClaim = "effectiveUserId"
+	accountIDClaim       = "accountId"
+	realUserIDClaim      = "realUserId"
+	effectiveUserIDClaim = "effectiveUserId"
 )
 
 // PublicRSAKeyMap "keyid => Public RSA Key".
@@ -38,7 +37,7 @@ type JwtDecoder struct {
 
 // NewJwtDecoder creates a new JwtDecoder with the default "web-gateway" kid key.
 func NewJwtDecoder(jwkKeys string) (*JwtDecoder, error) {
-	return NewJwtDecoderWithDefaultKid(jwkKeys, WebGatewayKid)
+	return NewJwtDecoderWithDefaultKid(jwkKeys, webGatewayKid)
 }
 
 // NewJwtDecoder creates a new JwtDecoder with a specified default kid key.
@@ -112,10 +111,10 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (*rsa.PublicKey, erro
 	}
 
 	if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-		return nil, fmt.Errorf("unexpected signing method - only rsa supported: %v", token.Header[AlgorithmHeaderKey])
+		return nil, fmt.Errorf("unexpected signing method - only rsa supported: %v", token.Header[algorithmHeaderKey])
 	}
 
-	kid, found := token.Header[KidHeaderKey]
+	kid, found := token.Header[kidHeaderKey]
 	if !found {
 		// no kid header, so use the default public key
 		return d.defaultPublicPEMKey, nil
@@ -155,7 +154,7 @@ func (decoder *JwtDecoder) parseJWKs(ctx context.Context, jwks string) (publicRS
 		}
 
 		usage := key.KeyUsage()
-		if usage != SignatureHeaderKey {
+		if usage != signatureHeaderKey {
 			// we aren't interested if it isn't a "sig"
 			continue
 		}
@@ -175,7 +174,7 @@ func (decoder *JwtDecoder) parseJWKs(ctx context.Context, jwks string) (publicRS
 
 		pubKeyPEM := pem.EncodeToMemory(
 			&pem.Block{
-				Type:  PublicKeyType,
+				Type:  publicKeyType,
 				Bytes: pubKeyBytes,
 			},
 		)

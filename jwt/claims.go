@@ -36,9 +36,9 @@ type encoderStandardClaims struct {
 func newStandardClaims(claims jwt.MapClaims) *StandardClaims {
 	std := &StandardClaims{}
 
-	std.AccountId = std.getCustomString(claims, AccountIDClaim)
-	std.RealUserId = std.getCustomString(claims, RealUserIDClaim)
-	std.EffectiveUserId = std.getCustomString(claims, EffectiveUserIDClaim)
+	std.AccountId = std.getCustomString(claims, accountIDClaim)
+	std.RealUserId = std.getCustomString(claims, realUserIDClaim)
+	std.EffectiveUserId = std.getCustomString(claims, effectiveUserIDClaim)
 	std.ExpiresAt = std.getTime(claims.GetExpirationTime)
 	std.NotBefore = std.getTime(claims.GetNotBefore)
 	std.IssuedAt = std.getTime(claims.GetIssuedAt)

@@ -22,7 +22,7 @@ var (
 func getDecoderInstance() *JwtDecoder {
 	keyId := os.Getenv("AUTH_PUBLIC_DEFAULT_KEY_ID")
 	if keyId == "" {
-		keyId = WebGatewayKid
+		keyId = webGatewayKid
 	}
 
 	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
@@ -44,7 +44,7 @@ func getDecoderInstance() *JwtDecoder {
 func getEncoderInstance() *JwtEncoder {
 	keyId := os.Getenv("AUTH_PRIVATE_KEY_ID")
 	if keyId == "" {
-		keyId = WebGatewayKid
+		keyId = webGatewayKid
 	}
 
 	privKey := os.Getenv("AUTH_PRIVATE_KEY")

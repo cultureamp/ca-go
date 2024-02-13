@@ -32,7 +32,7 @@ func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
 	registerClaims := newEncoderClaims(claims)
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, registerClaims)
 	if e.kid != "" {
-		token.Header[KidHeaderKey] = e.kid
+		token.Header[kidHeaderKey] = e.kid
 	}
 	return token.SignedString(e.privatePEMKey)
 }

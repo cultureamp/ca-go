@@ -11,10 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	encoderAuthKey string = "./testKeys/jwt-rsa256-test-webgateway.key"
-)
-
 func TestNewEncoder(t *testing.T) {
 	b, err := os.ReadFile(filepath.Clean(testDefaultAuthPrivateKey))
 	require.NoError(t, err)
@@ -66,7 +62,7 @@ func TestEncoderEncodeStandardClaims(t *testing.T) {
 	privateKeyBytes, err := os.ReadFile(filepath.Clean(testDefaultAuthPrivateKey))
 	require.NoError(t, err)
 
-	encoder, err := NewJwtEncoder(string(privateKeyBytes), WebGatewayKid)
+	encoder, err := NewJwtEncoder(string(privateKeyBytes), webGatewayKid)
 	assert.Nil(t, err)
 
 	claims := &StandardClaims{
