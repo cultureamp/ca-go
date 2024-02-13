@@ -122,18 +122,18 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 // Run consumes and handles messages from the topic. The method call blocks until
 // the context is canceled, the consumer is closed, or an error occurs.
 func (c *Consumer) Run(ctx context.Context, handler Handler) error {
-	log.Debug("kafka_consumer").
+	log.Debug("consumer_run").
 		WithSystemTracing().
 		Properties(log.SubDoc().
 			Str("id", c.id).
 			Str("topic", c.readerConfig.Topic),
-		).Details("running")
+		).Details("running until context is cancelled, or an error occurs, or the consumer is Stop()'ed")
 
 	// Run forever until we read from the stopCh or we have an error processing a message
 	for {
 		select {
 		case <-c.stopCh:
-			log.Debug("kafka_consumer").
+			log.Info("consumer_run").
 				WithSystemTracing().
 				Properties(log.SubDoc().
 					Str("id", c.id).
@@ -154,22 +154,16 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 // from reading any more messages.
 func (c *Consumer) Stop() error {
 	close(c.stopCh)
-	log.Debug("kafka_consumer").
-		WithSystemTracing().
-		Properties(log.SubDoc().
-			Str("id", c.id).
-			Str("topic", c.readerConfig.Topic),
-		).Details("stopping")
-
 	if err := c.reader.Close(); err != nil {
 		return fmt.Errorf("unable to close consumer reader: %w", err)
 	}
-	log.Debug("kafka_consumer").
+
+	log.Debug("consumer_stop").
 		WithSystemTracing().
 		Properties(log.SubDoc().
 			Str("id", c.id).
 			Str("topic", c.readerConfig.Topic),
-		).Details("reader closed")
+		).Details("consumer has stopped")
 
 	return nil
 }
@@ -194,38 +188,13 @@ func (c *Consumer) fetchNextMessage(ctx context.Context, handler Handler) error 
 		return fmt.Errorf("unable to fetch message: %w", err)
 	}
 
-	log.Debug("kafka_consumer_fetch").
-		WithSystemTracing().
-		Properties(log.SubDoc().
-			Str("id", c.id).
-			Str("topic", c.readerConfig.Topic).
-			Int("partition", msg.Partition).
-			Int64("offset", msg.Offset),
-		).Details("message received")
-
 	if err = c.handlerExecutor.execute(ctx, msg, handler); err != nil {
 		return fmt.Errorf("unable to handle message: %w", err)
 	}
-	log.Debug("kafka_consumer_fetch").
-		WithSystemTracing().
-		Properties(log.SubDoc().
-			Str("id", c.id).
-			Str("topic", c.readerConfig.Topic).
-			Int("partition", msg.Partition).
-			Int64("offset", msg.Offset),
-		).Details("message handled")
 
 	if err = c.reader.CommitMessages(ctx, msg); err != nil {
 		return fmt.Errorf("unable to commit message: %w", err)
 	}
-	log.Debug("kafka_consumer_fetch").
-		WithSystemTracing().
-		Properties(log.SubDoc().
-			Str("id", c.id).
-			Str("topic", c.readerConfig.Topic).
-			Int("partition", msg.Partition).
-			Int64("offset", msg.Offset),
-		).Details("message committed")
 
 	return nil
 }
@@ -242,26 +211,9 @@ func (c *Consumer) readNextMessage(ctx context.Context, handler Handler) error {
 		return fmt.Errorf("unable to read message: %w", err)
 	}
 
-	log.Debug("kafka_consumer_readcommit").
-		WithSystemTracing().
-		Properties(log.SubDoc().
-			Str("id", c.id).
-			Str("topic", c.readerConfig.Topic).
-			Int("partition", msg.Partition).
-			Int64("offset", msg.Offset),
-		).Details("message received")
-
 	if err = c.handlerExecutor.execute(ctx, msg, handler); err != nil {
 		return fmt.Errorf("unable to handle message: %w", err)
 	}
-	log.Debug("kafka_consumer_readcommit").
-		WithSystemTracing().
-		Properties(log.SubDoc().
-			Str("id", c.id).
-			Str("topic", c.readerConfig.Topic).
-			Int("partition", msg.Partition).
-			Int64("offset", msg.Offset),
-		).Details("message handled")
 
 	return nil
 }

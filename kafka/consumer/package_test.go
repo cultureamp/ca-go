@@ -25,7 +25,7 @@ func TestPackage(t *testing.T) {
 
 func TestPackageWithTimeout(t *testing.T) {
 	ctx := context.Background()
-	ch, stop := Consume(ctx, "topic-name")
+	ch, stop := Consume(ctx, "topic-name-with-timeout")
 	// when finished close it
 	defer func() {
 		err := stop()
@@ -48,7 +48,7 @@ func TestPackageWithDeadline(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), deadline)
 	defer cancel()
 
-	ch, stop := Consume(ctx, "employee.v1")
+	ch, stop := Consume(ctx, "topic-name-with-context-deadline")
 	// when finished close it
 	defer func() {
 		err := stop()

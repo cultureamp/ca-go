@@ -42,7 +42,7 @@ func newAutoConsumer(topic string) *AutoConsumer {
 	autoBackOff := NonStopExponentialBackOff
 	autoBalancers := []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}}
 	autoNotify := func(ctx context.Context, err error, msg Message) {
-		log.Error("auto_consumer_notif_error", err).
+		log.Error("auto_consumer_notify_error", err).
 			WithSystemTracing().
 			Properties(log.SubDoc().
 				Str("topic", msg.Topic).
@@ -52,7 +52,7 @@ func newAutoConsumer(topic string) *AutoConsumer {
 	}
 	autoReaderLogger := func(s string, i ...interface{}) {
 		msg := fmt.Sprintf(s, i...)
-		log.Info("auto_consumer_reader").
+		log.Debug("auto_consumer_reader").
 			WithSystemTracing().
 			Details(msg)
 	}
@@ -101,25 +101,19 @@ func newAutoConsumer(topic string) *AutoConsumer {
 }
 
 func (dc *AutoConsumer) run(ctx context.Context) {
-	log.Debug("kafka_auto_consumer_run").
-		WithSystemTracing().
-		Properties(log.SubDoc().
-			Str("topic", dc.topic),
-		).Details("auto consumer started")
+	defer close(dc.channel)
 
 	if err := dc.consumer.Run(ctx, dc.handleRetrievedMessage); err != nil {
-		log.Error("kafka_auto_consumer_run", err).
+		log.Error("auto_consumer_run", err).
 			WithSystemTracing().
 			Properties(log.SubDoc().
 				Str("topic", dc.topic),
 			).Details("auto consumer run error")
 	}
-
-	close(dc.channel)
 }
 
 func (dc *AutoConsumer) handleRetrievedMessage(ctx context.Context, msg Message) error {
-	log.Debug("kafka_auto_consumer_handle_retrieved_message").
+	log.Debug("auto_consumer_handle_message").
 		WithSystemTracing().
 		Properties(log.SubDoc().
 			Str("consumer_id", msg.Metadata.ConsumerID).
@@ -128,7 +122,7 @@ func (dc *AutoConsumer) handleRetrievedMessage(ctx context.Context, msg Message)
 			Int64("offset", msg.Offset).
 			Str("key", string(msg.Key)).
 			Str("value", string(msg.Value)),
-		).Details("handle message")
+		).Details("writing message to channel...")
 
 	dc.channel <- msg
 	return nil
