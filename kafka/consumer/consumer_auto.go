@@ -17,7 +17,7 @@ type AutoConsumer struct {
 	channel  chan Message
 }
 
-// AutoConsumers is a type that maps "topic name" to "consumer"
+// AutoConsumers is a type that maps "topic name" to "consumer".
 type AutoConsumers map[string]*AutoConsumer
 
 func newAutoConsumer(topic string) *AutoConsumer {
