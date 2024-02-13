@@ -8,6 +8,7 @@ require (
 	github.com/aws/aws-sdk-go v1.50.14
 	github.com/aws/aws-sdk-go-v2/service/kms v1.27.9
 	github.com/cenkalti/backoff/v4 v4.2.1
+	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
@@ -28,6 +29,16 @@ require (
 	github.com/xdg-go/scram v1.1.2
 	goa.design/goa/v3 v3.14.6
 	gopkg.in/DataDog/dd-trace-go.v1 v1.60.1
+)
+
+require (
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
+	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
+	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
+	github.com/lestrrat-go/httpcc v1.0.1 // indirect
+	github.com/lestrrat-go/iter v1.0.2 // indirect
+	github.com/lestrrat-go/option v1.0.1 // indirect
 )
 
 require (
@@ -219,6 +230,7 @@ require (
 	github.com/launchdarkly/go-sdk-events/v3 v3.1.0 // indirect
 	github.com/launchdarkly/go-semver v1.0.2 // indirect
 	github.com/launchdarkly/go-server-sdk-evaluation/v3 v3.0.0 // indirect
+	github.com/lestrrat-go/jwx v1.2.28
 	github.com/linode/linodego v0.7.1 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
