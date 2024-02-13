@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+type StopFunc func() error
+
 var TopicConsumers = getInstance()
 
 func getInstance() AutoConsumers {
@@ -16,15 +18,15 @@ func getInstance() AutoConsumers {
 
 // Consume reads messages from the topic until there is an error
 // or if the ctx deadline is reached.
-func Consume(ctx context.Context, topic string) <-chan Message {
+func Consume(ctx context.Context, topic string) (<-chan Message, StopFunc) {
 	c := newAutoConsumer(topic)
 	TopicConsumers[topic] = c
 	go c.run(ctx)
-	return c.channel
+	return c.channel, func() error { return stop(topic) }
 }
 
-// Stop sends a signal to the consumer to finish returning an error if it failed to do so.
-func Stop(topic string) error {
+// stop sends a signal to the consumer to finish returning an error if it failed to do so.
+func stop(topic string) error {
 	c, found := TopicConsumers[topic]
 	if found {
 		delete(TopicConsumers, topic)

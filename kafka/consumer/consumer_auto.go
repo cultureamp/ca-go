@@ -17,6 +17,7 @@ type AutoConsumer struct {
 	channel  chan Message
 }
 
+// AutoConsumers is a type that maps "topic name" to "consumer"
 type AutoConsumers map[string]*AutoConsumer
 
 func newAutoConsumer(topic string) *AutoConsumer {
@@ -74,10 +75,6 @@ func newAutoConsumer(topic string) *AutoConsumer {
 			WithExplicitCommit(),
 			WithGroupBalancers(autoBalancers...),
 			WithHandlerBackOffRetry(autoBackOff),
-			WithNotifyError(autoNotify),
-			WithReaderLogger(autoReaderLogger),
-			WithReaderErrorLogger(autoReaderErrorLogger),
-			WithDataDogTracing(),
 			WithKafkaReader(testRunnerKafkaReader),
 		)
 	} else {
@@ -110,7 +107,7 @@ func (dc *AutoConsumer) run(ctx context.Context) {
 			Str("topic", dc.topic),
 		).Details("auto consumer started")
 
-	if err := dc.consumer.Run(ctx, dc.handle); err != nil {
+	if err := dc.consumer.Run(ctx, dc.handleRetrievedMessage); err != nil {
 		log.Error("kafka_auto_consumer_run", err).
 			WithSystemTracing().
 			Properties(log.SubDoc().
@@ -121,8 +118,8 @@ func (dc *AutoConsumer) run(ctx context.Context) {
 	close(dc.channel)
 }
 
-func (dc *AutoConsumer) handle(ctx context.Context, msg Message) error {
-	log.Debug("kafka_auto_consumer_handle").
+func (dc *AutoConsumer) handleRetrievedMessage(ctx context.Context, msg Message) error {
+	log.Debug("kafka_auto_consumer_handle_retrieved_message").
 		WithSystemTracing().
 		Properties(log.SubDoc().
 			Str("consumer_id", msg.Metadata.ConsumerID).
