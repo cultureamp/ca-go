@@ -3,10 +3,11 @@ package kms
 import (
 	"context"
 	b64 "encoding/base64"
+	"errors"
+	"fmt"
 
 	awskms "github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/cultureamp/ca-go/x/encryption"
-	"github.com/pkg/errors"
 )
 
 type KMSClient interface {
@@ -34,7 +35,7 @@ func (e *Encryptor) Encrypt(ctx context.Context, plainStr string) (string, error
 
 	result, err := e.client.Encrypt(ctx, input)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to encrypt with kms")
+		return "", fmt.Errorf("failed to encrypt with kms: %w", err)
 	}
 
 	blobString := b64.StdEncoding.EncodeToString(result.CiphertextBlob)
@@ -44,7 +45,7 @@ func (e *Encryptor) Encrypt(ctx context.Context, plainStr string) (string, error
 func (e *Encryptor) Decrypt(ctx context.Context, encryptedStr string) (string, error) {
 	blob, err := b64.StdEncoding.DecodeString(encryptedStr)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to decode")
+		return "", fmt.Errorf("failed to decode: %w", err)
 	}
 
 	input := &awskms.DecryptInput{
@@ -53,7 +54,7 @@ func (e *Encryptor) Decrypt(ctx context.Context, encryptedStr string) (string, e
 
 	result, err := e.client.Decrypt(ctx, input)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to decrypt with kms")
+		return "", fmt.Errorf("failed to decrypt with kms: %w", err)
 	}
 
 	decStr := string(result.Plaintext)

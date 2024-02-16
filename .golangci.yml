@@ -12,11 +12,11 @@ linters:
     - asciicheck
     - bidichk
     - bodyclose
-    #    - containedctx
-    #    - contextcheck
-    #    - cyclop
+    - containedctx
+    - contextcheck
+    - cyclop
     - decorder
-    #    - depguard
+    - depguard
     - dogsled
     - dupl
     - dupword
@@ -29,7 +29,7 @@ linters:
     #    - exhaustive
     #    - exhaustruct
     - exportloopref
-    #    - forbidigo
+    # - forbidigo
     - forcetypeassert
     - funlen
     - gci
@@ -45,9 +45,9 @@ linters:
     #    - godox
     #    - goerr113
     - gofmt
-    #    - gofumpt
+    - gofumpt
     - goheader
-    #    - goimports
+    - goimports
     #    - gomnd
     #    - gomoddirectives
     - gomodguard
@@ -68,14 +68,14 @@ linters:
     - mirror
     - misspell
     - musttag
-    #    - nakedret
+    - nakedret
     - nestif
     - nilerr
-    #    - nilnil
+    - nilnil
     #    - nlreturn
     - noctx
     - nolintlint
-    #    - nonamedreturns
+    - nonamedreturns
     - nosprintfhostport
     - paralleltest
     - prealloc
@@ -85,7 +85,7 @@ linters:
     #    - revive
     - rowserrcheck
     - sqlclosecheck
-    #    - staticcheck
+    - staticcheck
     #    - stylecheck
     - tagalign
     - tagliatelle
@@ -109,7 +109,77 @@ linters:
 linters-settings:
   funlen:
     lines: 120
-    statements: 50
+    statements: 60
+
+  depguard:
+    # Rules to apply.
+    #
+    # Variables:
+    # - File Variables
+    #   you can still use and exclamation mark ! in front of a variable to say not to use it.
+    #   Example !$test will match any file that is not a go test file.
+    #
+    #   `$all` - matches all go files
+    #   `$test` - matches all go test files
+    #
+    # - Package Variables
+    #
+    #  `$gostd` - matches all of go's standard library (Pulled from `GOROOT`)
+    #
+    # Default: Only allow $gostd in all files.
+    rules:
+      # Name of a rule.
+      main:
+        # Used to determine the package matching priority.
+        # There are three different modes: `original`, `strict`, and `lax`.
+        # Default: "original"
+        list-mode: strict
+        # List of file globs that will match this list of settings to compare against.
+        # Default: $all
+        files:
+          - $all
+        # List of allowed packages.
+        allow:
+          - $gostd
+          - github.com/aws
+          - github.com/cultureamp
+          - github.com/google
+          - github.com/go-errors
+          - github.com/getsentry
+          - github.com/hashicorp
+          - github.com/launchdarkly
+          - github.com/rs/zerolog
+          - github.com/segmentio
+          - github.com/lestrrat-go
+          - github.com/golang-jwt
+          # not sure about these below
+          - github.com/IBM/sarama 
+          - github.com/xdg-go/scram
+          - github.com/kelseyhightower/envconfig
+          - github.com/cenkalti/backoff
+        # Packages that are not allowed where the value is a suggestion.
+        deny:
+          - pkg: "github.com/sirupsen/logrus"
+            desc: not allowed
+          - pkg: "github.com/pkg/errors"
+            desc: Should be replaced by standard lib errors package fmt.Errorf("msg %w", err)
+
+  tagliatelle:
+    # Check the struct tag name case.
+    case:
+      # Use the struct field name to check the name of the struct tag.
+      # Default: false
+      use-field-name: false
+      rules:
+        # Any struct tag type can be used.
+        # Support string case: `camel`, `pascal`, `kebab`, `snake`, `upperSnake`, `goCamel`, `goPascal`, `goKebab`, `goSnake`, `upper`, `lower`, `header`.
+        #json: snake
+        #yaml: snake
+        #xml: snake
+        #toml: snake
+
+  cyclop:
+    max-complexity: 15 # the default of 10 was unnecessarily strict
 
   gci:
     # Section configuration to compare against.
@@ -143,12 +213,9 @@ linters-settings:
         # allow #nosec override comments
         nosec: enabled
         # disable potentially noisy stricter audit mode
-        audit: disabled
-      G101: # "Look for hard-coded credentials"
+        audit: enabled
+      G101: # "Look for hard coded credentials"
         mode: strict
-
-  cyclop:
-    max-complexity: 15 # the default of 10 was unnecessarily strict
 
 issues:
   exclude-rules:
