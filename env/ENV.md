@@ -4,7 +4,7 @@ The `env` package provides access to common environment values . The design of t
 
 There are no new settings to create or pass around, instead there is a singleton setting created in the package that you can call directly.
 
-The env package provides access to many of the common field required for logging in line with our [logging standard](https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3114598406/Logging+Standard). 
+The env package provides access to many of the common field required for logging in line with our [logging standard](https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3114598406/Logging+Standard).
 However, the [log](../log) package will add these fields by default, to avoid duplicating fields please see the documentation for the [log](../log) package [here](../log/LOGGER.md)
 
 Note: The env package does NOT support redacting, so be mindful about logging any sensitive setting information.
@@ -49,26 +49,26 @@ func AppVersion() string [Default: "1.0.0"]
 func AppEnv() string
 func Farm() string
 func ProductSuite() string
-func AwsProfile() string 
+func AwsProfile() string
 func AwsRegion() string
 func AwsAccountID() string
 func IsXrayTracingEnabled() bool
-func LogLevel() string 
+func LogLevel() string
 func DatadogApiKey() string
 func DatadogLogEndpoint() string
 func DatadogEnv() string
-func DatadogService() string 
+func DatadogService() string
 func DatadogVersion() string
 func DatadogAgentHost()
 func DatadogStatsDPort()
 func DatadogTimeoutInMs() int [Default: 500]
-func DatadogSite() string 
+func DatadogSite() string
 func DatadogLogLevel()
 func SentryDSN() string
 func SentryFlushTimeoutInMs() int
 func IsProduction() bool
 func IsRunningInAWS() bool
-func IsRunningLocal() bool 
+func IsRunningLocal() bool
 
 
 ## Examples

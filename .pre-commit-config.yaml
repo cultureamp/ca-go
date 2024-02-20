@@ -1,15 +1,29 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+# To setup/install
+# %> brew install pre-commit
+# %> brew install trufflehog
+# %> pre-commit install
+# %> pre-commit run --all-files
 repos:
--   repo: https://github.com/cultureamp/ca-go
-    rev: v0.0.20
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0  # Use the ref you want to point at
     hooks:
-    - id: trufflehog
+    -   id: check-json
+    -   id: check-yaml
+    -   id: check-added-large-files
+    -   id: detect-aws-credentials
+        args: [--allow-missing-credentials]
+    -   id: detect-private-key
+        exclude: jwt-rsa256-test.*\.key
+    -   id: end-of-file-fixer
+    -   id: mixed-line-ending
+    -   id: trailing-whitespace
+-   repo: local
+    hooks:
+      - id: trufflehog
         name: TruffleHog
-        verbose: true
         description: Detect secrets in your data.
-        entry: bash -c 'trufflehog git file://. --since-commit HEAD --only-verified --fail'
-        # For running trufflehog in docker, use the following entry instead:
-        # entry: bash -c 'docker run --rm -v "$(pwd):/workdir" -i --rm trufflesecurity/trufflehog:latest git file:///workdir --since-commit HEAD --only-verified --fail'
+        entry: bash -c 'trufflehog git file://. --since-commit HEAD --only-verified --fail --no-update'
         language: system
         stages: ["commit", "push"]

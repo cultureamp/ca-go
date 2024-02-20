@@ -38,7 +38,7 @@ These packages are under development and are subject to change.
 - `x/sarama`:
 - `x/secrets`: provides methods for fetching secrets from AWS secret manager
 - `x/sentry/errorreport`: eases the implementation and usage of Sentry for error reporting
-- `x/valut`: 
+- `x/valut`:
 
 ## Context
 
