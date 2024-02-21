@@ -52,7 +52,7 @@ func (lf *Property) WithRequestTracing(req *http.Request) *Property {
 	)
 }
 
-// WithAuthenticatedUserTracing adds a "authentication" subdocument to the log that
+// WithAuthenticatedUserTracing adds an "authentication" subdocument to the log that
 // includes important account, user and realuser fields.
 func (lf *Property) WithAuthenticatedUserTracing(auth *AuthPayload) *Property {
 	if auth == nil {
@@ -66,7 +66,7 @@ func (lf *Property) WithAuthenticatedUserTracing(auth *AuthPayload) *Property {
 	)
 }
 
-// WithAuthorizationTracing adds a "authorization" subdocument to the log that
+// WithAuthorizationTracing adds an "authorization" subdocument to the log that
 // includes important authorization headers that are automatically redacted.
 func (lf *Property) WithAuthorizationTracing(req *http.Request) *Property {
 	if req == nil {
