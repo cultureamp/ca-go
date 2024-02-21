@@ -6,7 +6,7 @@ import (
 
 // KMSCipher supports basic Encrypt & Decrypt methods.
 type KMSCipher struct {
-	client KMSClient
+	Client KMSClient
 }
 
 // NewKMSCipher creates a new kms cipher for the specific "region" and "keyid".
@@ -22,10 +22,10 @@ func NewKMSCipherWithClient(client KMSClient) *KMSCipher {
 
 // Encrypt will encrypt the "plainStr" using the region and keyID of the cipher.
 func (c *KMSCipher) Encrypt(ctx context.Context, keyID string, plainStr string) (string, error) {
-	return c.client.Encrypt(ctx, keyID, plainStr)
+	return c.Client.Encrypt(ctx, keyID, plainStr)
 }
 
 // Decrypt will decrypt the "encryptedStr" using the region and keyID of the cipher.
 func (c *KMSCipher) Decrypt(ctx context.Context, keyID string, encryptedStr string) (string, error) {
-	return c.client.Decrypt(ctx, keyID, encryptedStr)
+	return c.Client.Decrypt(ctx, keyID, encryptedStr)
 }
