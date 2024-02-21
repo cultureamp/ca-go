@@ -18,6 +18,42 @@ Here is the list of supported environment variables currently supported:
 - func Encrypt(ctx context.Context, keyId string, plainStr string) (string, error)
 - func Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error)
 
+## Testing and Mocks
+
+During tests you can override the package level DefaultKMSCipher.client with a mock that supports the KMSClient interface.
+
+- Encrypt(ctx context.Context, keyId string, plainStr string) (string, error)
+- Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error)
+
+```
+import (
+	"context"
+	"testing"
+
+	"github.com/cultureamp/ca-go/cipher"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestPackageEncrypt(t *testing.T) {
+	ctx := context.Background()
+	keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+
+	// replace the package level client with our mock
+	stdClient := cipher.DefaultKMSCipher.Client
+	cipher.DefaultKMSCipher.Client = newTestRunnerClient()
+	defer func() {
+		cipher.DefaultKMSCipher.Client = stdClient
+	}()
+
+	cipherText, err := cipher.Encrypt(ctx, keyId, "test_plain_str")
+	assert.Nil(t, err)
+
+	plainText, err := cipher.Decrypt(ctx, keyId, cipherText)
+	assert.Nil(t, err)
+	assert.Equal(t, "test_plain_str", plainText)
+}
+```
+
 ## Examples
 ```
 package cago
@@ -30,7 +66,7 @@ import (
 	"github.com/cultureamp/ca-go/cipher"
 )
 
-func BasicExamples() {
+func Example() {
 	ctx := context.Background()
 
 	os.SetEnv("AWS_REGION", "us-west-2")
