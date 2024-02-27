@@ -14,7 +14,7 @@ func TestPackageEncrypt(t *testing.T) {
 
 	// replace the package level client with our mock
 	stdClient := cipher.DefaultKMSCipher.Client
-	cipher.DefaultKMSCipher.Client = newTestRunnerClient()
+	cipher.DefaultKMSCipher.Client = newMockedCipherClient()
 	defer func() {
 		cipher.DefaultKMSCipher.Client = stdClient
 	}()
@@ -27,18 +27,18 @@ func TestPackageEncrypt(t *testing.T) {
 	assert.Equal(t, "test_plain_str", plainText)
 }
 
-type testRunnerClient struct{}
+type mockedCipherClient struct{}
 
-func newTestRunnerClient() *testRunnerClient {
-	return &testRunnerClient{}
+func newMockedCipherClient() *mockedCipherClient {
+	return &mockedCipherClient{}
 }
 
 // Encrypt on the test runner just returns the "plainStr" as the encrypted encryptedStr.
-func (c *testRunnerClient) Encrypt(ctx context.Context, _ string, plainStr string) (string, error) {
+func (c *mockedCipherClient) Encrypt(ctx context.Context, _ string, plainStr string) (string, error) {
 	return plainStr, nil
 }
 
 // Decrypt on the test runner just returns the "encryptedStr" as the decrypted plainstr.
-func (c *testRunnerClient) Decrypt(ctx context.Context, _ string, encryptedStr string) (string, error) {
+func (c *mockedCipherClient) Decrypt(ctx context.Context, _ string, encryptedStr string) (string, error) {
 	return encryptedStr, nil
 }

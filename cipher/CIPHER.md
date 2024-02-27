@@ -2,7 +2,7 @@
 
 The `cipher` package provides access to kms Encrpyt and Decrpyt. The design of this package is to provide a simple system that can be used in a variety of situations without requiring high cognitive load.
 
-The package creates a default cipher that uses the `AWS_REGION` environment variable. However, if you need to Encrpyt or Decrypt for another region then you can create a `NewKMSCipher("region")` and manage the class life-cycle yourself.
+The package creates a default cipher that uses the `AWS_REGION` environment variable. For ease of use, it is recommended that you use the package level methods Encrypt and Decrypt. However, if you need to support another region then you can create a `NewKMSCipher("region")` and manage the class life-cycle yourself.
 
 The `keyId` parameter should be set to something like: `arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab`
 
@@ -18,43 +18,8 @@ Here is the list of supported environment variables currently supported:
 - func Encrypt(ctx context.Context, keyId string, plainStr string) (string, error)
 - func Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error)
 
-## Testing and Mocks
-
-During tests you can override the package level DefaultKMSCipher.client with a mock that supports the KMSClient interface.
-
-- Encrypt(ctx context.Context, keyId string, plainStr string) (string, error)
-- Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error)
-
-```
-import (
-	"context"
-	"testing"
-
-	"github.com/cultureamp/ca-go/cipher"
-	"github.com/stretchr/testify/assert"
-)
-
-func TestPackageEncrypt(t *testing.T) {
-	ctx := context.Background()
-	keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
-
-	// replace the package level client with our mock
-	stdClient := cipher.DefaultKMSCipher.Client
-	cipher.DefaultKMSCipher.Client = newTestRunnerClient()
-	defer func() {
-		cipher.DefaultKMSCipher.Client = stdClient
-	}()
-
-	cipherText, err := cipher.Encrypt(ctx, keyId, "test_plain_str")
-	assert.Nil(t, err)
-
-	plainText, err := cipher.Decrypt(ctx, keyId, cipherText)
-	assert.Nil(t, err)
-	assert.Equal(t, "test_plain_str", plainText)
-}
-```
-
 ## Examples
+
 ```
 package cago
 
@@ -88,5 +53,56 @@ func Example() {
 
 	decrypted, err = crypto.Decrypt(ctx, keyId, encrypted)
 	fmt.Printf("The decrypted string is '%s' (err='%v')\n", decrypted, err)
+}
+```
+## Testing and Mocks
+
+During tests you can override the package level `DefaultKMSCipher.Client` with a mock that supports the `KMSClient` interface.
+
+- Encrypt(ctx context.Context, keyId string, plainStr string) (string, error)
+- Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error)
+
+```
+import (
+	"context"
+	"testing"
+
+	"github.com/cultureamp/ca-go/cipher"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestPackageEncrypt(t *testing.T) {
+	ctx := context.Background()
+	keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+
+	// replace the package level client with our mock
+	stdClient := cipher.DefaultKMSCipher.Client
+	cipher.DefaultKMSCipher.Client = newMockedCipherClient()
+	defer func() {
+		cipher.DefaultKMSCipher.Client = stdClient
+	}()
+
+	cipherText, err := cipher.Encrypt(ctx, keyId, "test_plain_str")
+	assert.Nil(t, err)
+
+	plainText, err := cipher.Decrypt(ctx, keyId, cipherText)
+	assert.Nil(t, err)
+	assert.Equal(t, "test_plain_str", plainText)
+}
+
+type mockedCipherClient struct{}
+
+func newMockedCipherClient() *mockedCipherClient {
+	return &mockedCipherClient{}
+}
+
+// Encrypt on the test runner just returns the "plainStr" as the encrypted encryptedStr.
+func (c *mockedCipherClient) Encrypt(ctx context.Context, _ string, plainStr string) (string, error) {
+	return plainStr, nil
+}
+
+// Decrypt on the test runner just returns the "encryptedStr" as the decrypted plainstr.
+func (c *mockedCipherClient) Decrypt(ctx context.Context, _ string, encryptedStr string) (string, error) {
+	return encryptedStr, nil
 }
 ```
