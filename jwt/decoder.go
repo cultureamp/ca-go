@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/v2/jwk"
 )
 
 const (
@@ -84,7 +84,7 @@ func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwt.MapClaims, erro
 
 	// Expiry claim is current OPTIONAL (set jwt.WithExpirationRequired() below if we want to make it mandatory)
 	// If the token includes an expiry claim, then it is honoured and the time is checked correctly and will return error if expired
-	// If the toekn does not include an expiry clain, then the time is not checked and it will not return an error
+	// If the token does not include an expiry clain, then the time is not checked and it will not return an error
 	token, err := jwt.Parse(
 		tokenString,
 		func(token *jwt.Token) (interface{}, error) {
@@ -145,7 +145,7 @@ func (decoder *JwtDecoder) parseJWKs(ctx context.Context, jwks string) (publicRS
 	}
 
 	// 2. Enumerate the set
-	for it := jwkset.Iterate(ctx); it.Next(ctx); {
+	for it := jwkset.Keys(ctx); it.Next(ctx); {
 		pair := it.Pair()
 		key, ok := pair.Value.(jwk.Key)
 		if !ok {
