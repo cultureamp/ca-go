@@ -20,11 +20,6 @@ var (
 )
 
 func getDecoderInstance() *JwtDecoder {
-	keyId := os.Getenv("AUTH_PUBLIC_DEFAULT_KEY_ID")
-	if keyId == "" {
-		keyId = webGatewayKid
-	}
-
 	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
 	if jwkKeys == "" && isTestMode() {
 		// test key only, not the production key
@@ -32,7 +27,7 @@ func getDecoderInstance() *JwtDecoder {
 		jwkKeys = string(b)
 	}
 
-	decoder, err := NewJwtDecoderWithDefaultKid(jwkKeys, keyId)
+	decoder, err := NewJwtDecoder(jwkKeys)
 	if err != nil {
 		err := fmt.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
 		panic(err)

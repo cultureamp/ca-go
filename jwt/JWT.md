@@ -9,7 +9,6 @@ You can MUST set these:
 - AUTH_PRIVATE_KEY = The private RSA PEM key used for Encoding a token.
 
 You can OPTIONALLY set these:
-- AUTH_PUBLIC_DEFAULT_KEY_ID = The default "kid" to use when no kid in present in the token (default to 'web-gateway`).
 - AUTH_PRIVATE_KEY_ID = The default "kid" to add to the token heading when Encoding.
 
 ## Examples

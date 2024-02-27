@@ -39,29 +39,29 @@ func TestEncodeDecodeWhenMissingEnvVars(t *testing.T) {
 
 	testCases := []struct {
 		desc                  string
-		privateKeyId          string
+		encodedKeyId          string
 		privateKey            string
 		expectedEncoderErrMsg string
 		expectedDecoderErrMsg string
 	}{
 		{
 			desc:                  "Success 1: missing env vars defaults to test values",
-			privateKeyId:          "",
+			encodedKeyId:          "",
 			privateKey:            "",
 			expectedEncoderErrMsg: "",
 			expectedDecoderErrMsg: "",
 		},
 		{
 			desc:                  "Error 1: missing decoder kid",
-			privateKeyId:          "missing-kid",
+			encodedKeyId:          "missing-kid",
 			privateKey:            testOtherAuthPrivateKey,
 			expectedEncoderErrMsg: "",
-			expectedDecoderErrMsg: "token signature is invalid",
+			expectedDecoderErrMsg: "no matching key_id (kid) header",
 		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			t.Setenv("AUTH_PRIVATE_KEY_ID", tC.privateKeyId)
+			t.Setenv("AUTH_PRIVATE_KEY_ID", tC.encodedKeyId)
 			privateKeys := ""
 			if tC.privateKey != "" {
 				b, err := os.ReadFile(filepath.Clean(tC.privateKey))
@@ -80,7 +80,6 @@ func TestEncodeDecodeWhenMissingEnvVars(t *testing.T) {
 				assert.ErrorContains(t, err, tC.expectedEncoderErrMsg)
 			}
 
-			t.Setenv("AUTH_PUBLIC_DEFAULT_KEY_ID", "")
 			t.Setenv("AUTH_PUBLIC_JWK_KEYS", "")
 
 			// Decode it back again

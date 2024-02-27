@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lestrrat-go/jwx/v2/jwk"
@@ -26,43 +27,32 @@ const (
 	effectiveUserIDClaim = "effectiveUserId"
 )
 
-// PublicRSAKeyMap "keyid => Public RSA Key".
-type publicRSAKeyMap map[string]*rsa.PublicKey
+type (
+	publicKey    interface{}          // Only ECDSA (perferred) and RSA public keys allowed
+	publicKeyMap map[string]publicKey // "keyid => Public ECDSA/RSA Key".
+)
 
 // JwtDecoder can decode a jwt token string.
 type JwtDecoder struct {
-	defaultPublicPEMKey *rsa.PublicKey  // Default key to use if no kid header (eg. Web Gateway)
-	jwkPEMKeys          publicRSAKeyMap // Optional jwt's signed by other services or Fusion Auth (via JWKS)
+	jwkKeys publicKeyMap // public jwt's
 }
 
-// NewJwtDecoder creates a new JwtDecoder with the default "web-gateway" kid key.
+// NewJwtDecoder creates a new JwtDecoder with the set ECDSA and RSA public keys in the JWK string.
 func NewJwtDecoder(jwkKeys string) (*JwtDecoder, error) {
-	return NewJwtDecoderWithDefaultKid(jwkKeys, webGatewayKid)
-}
-
-// NewJwtDecoder creates a new JwtDecoder with a specified default kid key.
-func NewJwtDecoderWithDefaultKid(jwkKeys string, defaultKid string) (*JwtDecoder, error) {
 	decoder := &JwtDecoder{}
-	decoder.jwkPEMKeys = make(publicRSAKeyMap)
+	decoder.jwkKeys = make(publicKeyMap)
 
 	// 1. Parse all JWKs JSON keys
-	rsaPublicKeyMap, err := decoder.parseJWKs(context.Background(), jwkKeys)
+	publicKeyMap, err := decoder.parseJWKs(context.Background(), jwkKeys)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Upsert into machine keys with "kid" as the key (may overwrite settings.JwtPublicMachineKeys)
-	for key, val := range rsaPublicKeyMap {
-		decoder.jwkPEMKeys[key] = val
+	// 2. Upsert into machine keys with "kid" as the key
+	for key, val := range publicKeyMap {
+		decoder.jwkKeys[key] = val
 	}
 
-	// 3. Get default (web-gateway) public key.
-	key, ok := rsaPublicKeyMap[defaultKid]
-	if !ok {
-		return nil, fmt.Errorf("missing default key in JWKS: '%s'", defaultKid)
-	}
-
-	decoder.defaultPublicPEMKey = key
 	return decoder, nil
 }
 
@@ -82,16 +72,17 @@ func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwt.MapClaims, erro
 	// sample token string in the form "header.payload.signature"
 	// eg. "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIiLCJuYmYiOjE0NDQ0Nzg0MDB9.u1riaD1rW97opCoAuRCTy4w58Br-Zk-bh7vLiRIsrpU"
 
-	// Expiry claim is current OPTIONAL (set jwt.WithExpirationRequired() below if we want to make it mandatory)
-	// If the token includes an expiry claim, then it is honoured and the time is checked correctly and will return error if expired
-	// If the token does not include an expiry clain, then the time is not checked and it will not return an error
+	// Eng Std: https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3253240053/JWT+Authentication
+	// Expiry claim is currently MANDATORY.
+	// If the token includes an expiry claim, then the time is checked correctly and will return error if expired.
+	// If the token does not include an expiry claim then returns an error.
 	token, err := jwt.Parse(
 		tokenString,
 		func(token *jwt.Token) (interface{}, error) {
 			return decoder.useCorrectPublicKey(token)
 		},
-		// jwt.WithLeeway(10 * time.Second), // add this if we want to add some leeway for clock scew across systems
-		// jwt.WithExpirationRequired(),     // add this if we want to enforce that tokens MUST have an expiry
+		jwt.WithLeeway(30*time.Second), // add this if we want to add some leeway for clock scew across systems
+		jwt.WithExpirationRequired(),   // add this if we want to enforce that tokens MUST have an expiry
 	)
 	if err != nil || !token.Valid {
 		return nil, err
@@ -105,33 +96,37 @@ func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwt.MapClaims, erro
 	return claims, nil
 }
 
-func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (*rsa.PublicKey, error) {
+func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	if token == nil {
-		return d.defaultPublicPEMKey, nil
+		return nil, fmt.Errorf("failed to decode: missing token")
 	}
 
-	if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-		return nil, fmt.Errorf("unexpected signing method - only rsa supported: %v", token.Header[algorithmHeaderKey])
+	// Eng Std: https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3253240053/JWT+Authentication
+	// Perferred is ECDSA, but is RSA accepted
+	if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method - only ecdsa or rsa supported: %v", token.Header[algorithmHeaderKey])
+		}
 	}
 
 	kid, found := token.Header[kidHeaderKey]
 	if !found {
-		// no kid header, so use the default public key
-		return d.defaultPublicPEMKey, nil
+		// no kid header but its MANDATORY
+		return nil, fmt.Errorf("failed to decode: missing key_id (kid) header")
 	}
 
-	key, found := d.jwkPEMKeys[kid.(string)]
+	key, found := d.jwkKeys[kid.(string)]
 	if found {
 		// Found a match, so use this key
 		return key, nil
 	}
 
-	// Didn't find a match so try default public key (and probably fail)
-	return d.defaultPublicPEMKey, nil
+	// Didn't find a matching kid
+	return nil, fmt.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)
 }
 
-func (decoder *JwtDecoder) parseJWKs(ctx context.Context, jwks string) (publicRSAKeyMap, error) {
-	rsaKeys := make(publicRSAKeyMap)
+func (decoder *JwtDecoder) parseJWKs(ctx context.Context, jwks string) (publicKeyMap, error) {
+	rsaKeys := make(publicKeyMap)
 
 	if jwks == "" {
 		// If no jwks json, then returm empty map

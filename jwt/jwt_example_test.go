@@ -39,7 +39,7 @@ func Example() {
 	fmt.Printf("The encoded token is '%s' (err='%v')\n", token, err)
 
 	b, err := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
-	decoder, err := jwt.NewJwtDecoderWithDefaultKid(string(b), webGatewayKid)
+	decoder, err := jwt.NewJwtDecoder(string(b))
 
 	claim, err = decoder.Decode(token)
 	fmt.Printf("The decoded token is '%s %s %s %s' (err='%+v')\n", claim.AccountId, claim.RealUserId, claim.EffectiveUserId, claim.ExpiresAt.UTC().Format(time.RFC3339), err)
