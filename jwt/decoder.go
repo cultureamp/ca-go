@@ -145,7 +145,7 @@ func (decoder *JwtDecoder) parseJWKs(ctx context.Context, jwks string) (publicRS
 	}
 
 	// 2. Enumerate the set
-	for it := jwkset.Iterate(ctx); it.Next(ctx); {
+	for it := jwkset.Keys(ctx); it.Next(ctx); {
 		pair := it.Pair()
 		key, ok := pair.Value.(jwk.Key)
 		if !ok {
