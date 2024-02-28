@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,8 +23,8 @@ func getDecoderInstance() *JwtDecoder {
 
 	decoder, err := NewJwtDecoder(jwkKeys)
 	if err != nil {
-		// err := fmt.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
-		// panic(err)
+		err := fmt.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
+		panic(err)
 	}
 
 	return decoder
@@ -44,8 +45,8 @@ func getEncoderInstance() *JwtEncoder {
 
 	encoder, err := NewJwtEncoder(privKey, keyId)
 	if err != nil {
-		// err := fmt.Errorf("error loading jwk encoder, maybe missing env vars: err='%w'\n", err)
-		// panic(err)
+		err := fmt.Errorf("error loading jwk encoder, maybe missing env vars: err='%w'\n", err)
+		panic(err)
 	}
 
 	return encoder
@@ -67,6 +68,7 @@ func isTestMode() bool {
 
 	if strings.HasSuffix(argZero, ".test") ||
 		strings.Contains(argZero, "/_test/") ||
+		strings.Contains(argZero, "__debug_bin") || // vscode debug binary
 		flag.Lookup("test.v") != nil {
 		return true
 	}
