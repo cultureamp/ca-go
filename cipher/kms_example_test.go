@@ -7,10 +7,11 @@ import (
 	"github.com/cultureamp/ca-go/cipher"
 )
 
-func BasicExamples() {
-	// os.SetEnv("AWS_REGION", "us-west-2")
+func Example() {
+	// Note: Make sure AWS_REGION is set in the environment
 
 	ctx := context.Background()
+
 	// Replace the following example key ARN with any valid key identfier
 	keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
 
