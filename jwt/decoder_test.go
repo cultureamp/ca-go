@@ -9,6 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	testAuthJwks        string = "./testKeys/development.jwks"
+)
+
+// useful to create RS256 test tokens https://jwt.io/
+// useful for PEM to JWKS https://jwkset.com/generate
+
 func TestNewDecoder(t *testing.T) {
 	b, err := os.ReadFile(filepath.Clean(testAuthJwks))
 	require.NoError(t, err)
@@ -56,8 +63,6 @@ func TestNewDecoder(t *testing.T) {
 }
 
 func TestDecoderDecodeAllClaims(t *testing.T) {
-	// useful to create RS256 test tokens https://jwt.io/
-
 	b, err := os.ReadFile(filepath.Clean(testAuthJwks))
 	require.NoError(t, err)
 

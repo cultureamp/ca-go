@@ -2,21 +2,10 @@ package jwt
 
 import (
 	"flag"
-	//"fmt"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-)
-
-const (
-	testAuthJwks        string = "./testKeys/development.jwks"
-	testRSAPrivateKey   string = "./testKeys/jwt-rsa256-test-webgateway.key"
-	testECDSAPrivateKey string = "./testKeys/jwt-ecdsa521-test.key"
-)
-
-const (
-	ECDSA512 = iota
-	RSA512
 )
 
 var (
@@ -28,14 +17,14 @@ func getDecoderInstance() *JwtDecoder {
 	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
 	if jwkKeys == "" && isTestMode() {
 		// test key only, not the production key
-		b, _ := os.ReadFile(filepath.Clean(testAuthJwks))
+		b, _ := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
 		jwkKeys = string(b)
 	}
 
 	decoder, err := NewJwtDecoder(jwkKeys)
 	if err != nil {
-		// err := fmt.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
-		// panic(err)
+		err := fmt.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
+		panic(err)
 	}
 
 	return decoder
@@ -50,14 +39,14 @@ func getEncoderInstance() *JwtEncoder {
 	privKey := os.Getenv("AUTH_PRIVATE_KEY")
 	if privKey == "" && isTestMode() {
 		// test key only, not the production key
-		b, _ := os.ReadFile(filepath.Clean(testRSAPrivateKey))
+		b, _ := os.ReadFile(filepath.Clean("./testKeys/jwt-rsa256-test-webgateway.key"))
 		privKey = string(b)
 	}
 
 	encoder, err := NewJwtEncoder(privKey, keyId)
 	if err != nil {
-		// err := fmt.Errorf("error loading jwk encoder, maybe missing env vars: err='%w'\n", err)
-		// panic(err)
+		err := fmt.Errorf("error loading jwk encoder, maybe missing env vars: err='%w'\n", err)
+		panic(err)
 	}
 
 	return encoder

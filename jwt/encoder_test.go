@@ -11,6 +11,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	testRSAPrivateKey   string = "./testKeys/jwt-rsa256-test-webgateway.key"
+	testECDSAPrivateKey string = "./testKeys/jwt-ecdsa521-test.key"
+)
+
+// useful to create RS256 test tokens https://jwt.io/
+// useful for PEM to JWKS https://jwkset.com/generate
+
 func TestNewEncoder(t *testing.T) {
 	b, err := os.ReadFile(filepath.Clean(testRSAPrivateKey))
 	require.NoError(t, err)
@@ -57,9 +65,7 @@ func TestNewEncoder(t *testing.T) {
 }
 
 func TestEncoderRSAEncodeStandardClaims(t *testing.T) {
-	// useful to create RS256 test tokens https://jwt.io/
-
-	b1, err := os.ReadFile(filepath.Clean(testRSAPrivateKey))
+ 	b1, err := os.ReadFile(filepath.Clean(testRSAPrivateKey))
 	require.NoError(t, err)
 
 	rsaEncoder, err := NewJwtEncoder(string(b1), webGatewayKid)

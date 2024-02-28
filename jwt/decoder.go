@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"context"
 	"errors"
 	"fmt"
 
@@ -10,14 +9,10 @@ import (
 )
 
 const (
-	kidHeaderKey       = "kid"
-	algorithmHeaderKey = "alg"
-	signatureHeaderKey = "sig"
-
-	webGatewayKid = "web-gateway"
-
-	publicKeyType = "RSA PUBLIC KEY"
-
+	kidHeaderKey         = "kid"
+	algorithmHeaderKey   = "alg"
+	signatureHeaderKey   = "sig"
+	webGatewayKid        = "web-gateway"
 	accountIDClaim       = "accountId"
 	realUserIDClaim      = "realUserId"
 	effectiveUserIDClaim = "effectiveUserId"
@@ -37,7 +32,7 @@ func NewJwtDecoder(jwkKeys string) (*JwtDecoder, error) {
 	decoder := &JwtDecoder{}
 
 	// 1. Parse all JWKs JSON keys
-	jwkSet, err := decoder.parseJWKs(context.Background(), jwkKeys)
+	jwkSet, err := decoder.parseJWKs(jwkKeys)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +118,7 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	return nil, fmt.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)
 }
 
-func (decoder *JwtDecoder) parseJWKs(ctx context.Context, jwks string) (jwk.Set, error) {
+func (decoder *JwtDecoder) parseJWKs(jwks string) (jwk.Set, error) {
 	if jwks == "" {
 		// If no jwks json, then returm empty map
 		return nil, fmt.Errorf("missing jwks")

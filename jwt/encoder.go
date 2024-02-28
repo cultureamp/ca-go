@@ -6,6 +6,11 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const (
+	ecdsa512 = iota
+	rsa512
+)
+
 type privateKey interface{} // Only ECDSA (perferred) and RSA public keys allowed
 
 // JwtEncoder can encode a claim to a jwt token string.
@@ -23,7 +28,7 @@ func NewJwtEncoder(privateKey string, kid string) (*JwtEncoder, error) {
 	pemECDSAKey, err := jwt.ParseECPrivateKeyFromPEM(privatePEMKey)
 	if err == nil {
 		encoder.privatePEMKey = pemECDSAKey
-		encoder.keyType = ECDSA512
+		encoder.keyType = ecdsa512
 		encoder.kid = kid
 		return encoder, nil
 	}
@@ -31,7 +36,7 @@ func NewJwtEncoder(privateKey string, kid string) (*JwtEncoder, error) {
 	pemRSAKey, err := jwt.ParseRSAPrivateKeyFromPEM(privatePEMKey)
 	if err == nil {
 		encoder.privatePEMKey = pemRSAKey
-		encoder.keyType = RSA512
+		encoder.keyType = rsa512
 		encoder.kid = kid
 		return encoder, nil
 	}
@@ -47,9 +52,9 @@ func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
 	registerClaims := newEncoderClaims(claims)
 
 	switch e.keyType {
-	case ECDSA512:
+	case ecdsa512:
 		token = jwt.NewWithClaims(jwt.SigningMethodES512, registerClaims)
-	case RSA512:
+	case rsa512:
 		token = jwt.NewWithClaims(jwt.SigningMethodRS512, registerClaims)
 	default:
 		return "", fmt.Errorf("Only ECDSA and RSA private keys are supported")
