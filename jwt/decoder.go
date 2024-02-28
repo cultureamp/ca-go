@@ -2,12 +2,8 @@ package jwt
 
 import (
 	"context"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lestrrat-go/jwx/v2/jwk"
@@ -28,31 +24,25 @@ const (
 )
 
 type (
-	publicKey    interface{}          // Only ECDSA (perferred) and RSA public keys allowed
-	publicKeyMap map[string]publicKey // "keyid => Public ECDSA/RSA Key".
+	publicKey interface{} // Only ECDSA (perferred) and RSA public keys allowed
 )
 
 // JwtDecoder can decode a jwt token string.
 type JwtDecoder struct {
-	jwkKeys publicKeyMap // public jwt's
+	jwkSet jwk.Set // public jwt's
 }
 
 // NewJwtDecoder creates a new JwtDecoder with the set ECDSA and RSA public keys in the JWK string.
 func NewJwtDecoder(jwkKeys string) (*JwtDecoder, error) {
 	decoder := &JwtDecoder{}
-	decoder.jwkKeys = make(publicKeyMap)
 
 	// 1. Parse all JWKs JSON keys
-	publicKeyMap, err := decoder.parseJWKs(context.Background(), jwkKeys)
+	jwkSet, err := decoder.parseJWKs(context.Background(), jwkKeys)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Upsert into machine keys with "kid" as the key
-	for key, val := range publicKeyMap {
-		decoder.jwkKeys[key] = val
-	}
-
+	decoder.jwkSet = jwkSet
 	return decoder, nil
 }
 
@@ -81,8 +71,8 @@ func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwt.MapClaims, erro
 		func(token *jwt.Token) (interface{}, error) {
 			return decoder.useCorrectPublicKey(token)
 		},
-		jwt.WithLeeway(30*time.Second), // add this if we want to add some leeway for clock scew across systems
-		jwt.WithExpirationRequired(),   // add this if we want to enforce that tokens MUST have an expiry
+		// jwt.WithLeeway(30*time.Second), // add this if we want to add some leeway for clock scew across systems
+		// jwt.WithExpirationRequired(),   // add this if we want to enforce that tokens MUST have an expiry
 	)
 	if err != nil || !token.Valid {
 		return nil, err
@@ -109,80 +99,36 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 		}
 	}
 
-	kid, found := token.Header[kidHeaderKey]
+	kidHeader, found := token.Header[kidHeaderKey]
 	if !found {
 		// no kid header but its MANDATORY
 		return nil, fmt.Errorf("failed to decode: missing key_id (kid) header")
 	}
 
-	key, found := d.jwkKeys[kid.(string)]
+	kid, ok := kidHeader.(string)
+	if !ok {
+		// kid header isn't a string?!
+		return nil, fmt.Errorf("failed to decode: invalid key_id (kid) header")
+	}
+
+	key, found := d.jwkSet.LookupKeyID(kid)
 	if found {
 		// Found a match, so use this key
-		return key, nil
+		var correctKey publicKey
+		err := key.Raw(&correctKey)
+		return correctKey, err
 	}
 
 	// Didn't find a matching kid
 	return nil, fmt.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)
 }
 
-func (decoder *JwtDecoder) parseJWKs(ctx context.Context, jwks string) (publicKeyMap, error) {
-	rsaKeys := make(publicKeyMap)
-
+func (decoder *JwtDecoder) parseJWKs(ctx context.Context, jwks string) (jwk.Set, error) {
 	if jwks == "" {
 		// If no jwks json, then returm empty map
-		return rsaKeys, fmt.Errorf("missing jwks")
+		return nil, fmt.Errorf("missing jwks")
 	}
 
 	// 1. Parse the jwks JSON string to an iterable set
-	jwkset, err := jwk.ParseString(jwks)
-	if err != nil {
-		return rsaKeys, err
-	}
-
-	// 2. Enumerate the set
-	for it := jwkset.Keys(ctx); it.Next(ctx); {
-		pair := it.Pair()
-		key, ok := pair.Value.(jwk.Key)
-		if !ok {
-			// the jwks Set value isn't valid (for some reason) - just skip it
-			continue
-		}
-
-		usage := key.KeyUsage()
-		if usage != signatureHeaderKey {
-			// we aren't interested if it isn't a "sig"
-			continue
-		}
-
-		kid := key.KeyID()
-
-		var rsa rsa.PublicKey
-		if err := key.Raw(&rsa); err != nil {
-			// We only support RSA keys currently so skip if not a RSA public key
-			continue
-		}
-
-		pubKeyBytes, err := x509.MarshalPKIXPublicKey(&rsa)
-		if err != nil {
-			return rsaKeys, err
-		}
-
-		pubKeyPEM := pem.EncodeToMemory(
-			&pem.Block{
-				Type:  publicKeyType,
-				Bytes: pubKeyBytes,
-			},
-		)
-
-		publicKey, err := jwt.ParseRSAPublicKeyFromPEM(pubKeyPEM)
-		if err != nil {
-			return rsaKeys, err
-		}
-
-		// 3. add public key to the map, overwriting if already exists
-		rsaKeys[kid] = publicKey
-	}
-
-	// 4. return all the valid RSA keys
-	return rsaKeys, nil
+	return jwk.ParseString(jwks)
 }

@@ -54,7 +54,7 @@ func TestEncodeDecodeWhenMissingEnvVars(t *testing.T) {
 		{
 			desc:                  "Error 1: missing decoder kid",
 			encodedKeyId:          "missing-kid",
-			privateKey:            testOtherAuthPrivateKey,
+			privateKey:            testECDSAPrivateKey,
 			expectedEncoderErrMsg: "",
 			expectedDecoderErrMsg: "no matching key_id (kid) header",
 		},

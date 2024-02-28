@@ -42,6 +42,24 @@
       "x5t#S256" : "sPTFZxgSmGF4GFwPOdBcExZTYsDy_v8p_6IukHvygbs"
     },
     {
+      "kty": "EC",
+      "alg": "ES512",
+      "kid": "ecdsa-test",
+      "crv": "P-521",
+      "x": "33cWVWXZyYbSipqjddKrHYVt-CfujDbrBA_LosKaMH8ct9UfqL1Zr265L403Em6T0FoFxQ4iQBZUqgVC8XTL-uI",
+      "y": "AUQVxyCPadJKs9AdGbZ3zBePF79IWX3I5-RGbJk-ZASw1xosSpYG4kPDxn0ji2BBJZDKTdzJ7qvn1e6HQ4640Fgc"
+    },
+    {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "IB230zS3aUd7sQeBkahu29RnZkc8MPRXjpu5cSHbV-k",
+      "y": "0HCeeGAbaTxXAqdgHUb_jFW5af6f7sLjt0tr4gk5Yv8",
+      "ext": true,
+      "kid": "ecdsa-test-256",
+      "alg": "ES256",
+      "use": "sig"
+    },
+    {
       "alg" : "ES256",
       "crv" : "P-256",
       "kid" : "l58lc98hi1UDp1_HWq_BkcQbQH0",
