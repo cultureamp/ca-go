@@ -1,23 +1,26 @@
 package jwt
 
 import (
+	"crypto/elliptic"
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 const (
-	ecdsa512 = iota
-	rsa512
+	ecdsaKey512 = iota
+	ecdsaKey384
+	ecdsaKey256
+	rsaKey
 )
 
 type privateKey interface{} // Only ECDSA (perferred) and RSA public keys allowed
 
 // JwtEncoder can encode a claim to a jwt token string.
 type JwtEncoder struct {
-	privatePEMKey privateKey
-	keyType       int
-	kid           string
+	privateSigningKey privateKey
+	keyType           int
+	kid               string
 }
 
 // NewJwtEncoder creates a new JwtEncoder.
@@ -25,18 +28,25 @@ func NewJwtEncoder(privateKey string, kid string) (*JwtEncoder, error) {
 	encoder := &JwtEncoder{}
 	privatePEMKey := []byte(privateKey)
 
-	pemECDSAKey, err := jwt.ParseECPrivateKeyFromPEM(privatePEMKey)
+	ecdaPrivateKey, err := jwt.ParseECPrivateKeyFromPEM(privatePEMKey)
 	if err == nil {
-		encoder.privatePEMKey = pemECDSAKey
-		encoder.keyType = ecdsa512
+		encoder.privateSigningKey = ecdaPrivateKey
 		encoder.kid = kid
+		switch ecdaPrivateKey.Curve {
+		case elliptic.P256():
+			encoder.keyType = ecdsaKey256
+		case elliptic.P384():
+			encoder.keyType = ecdsaKey384
+		default:
+			encoder.keyType = ecdsaKey512
+		}
 		return encoder, nil
 	}
 
-	pemRSAKey, err := jwt.ParseRSAPrivateKeyFromPEM(privatePEMKey)
+	rsaPrivateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privatePEMKey)
 	if err == nil {
-		encoder.privatePEMKey = pemRSAKey
-		encoder.keyType = rsa512
+		encoder.privateSigningKey = rsaPrivateKey
+		encoder.keyType = rsaKey
 		encoder.kid = kid
 		return encoder, nil
 	}
@@ -52,9 +62,13 @@ func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
 	registerClaims := newEncoderClaims(claims)
 
 	switch e.keyType {
-	case ecdsa512:
+	case ecdsaKey512:
 		token = jwt.NewWithClaims(jwt.SigningMethodES512, registerClaims)
-	case rsa512:
+	case ecdsaKey384:
+		token = jwt.NewWithClaims(jwt.SigningMethodES384, registerClaims)
+	case ecdsaKey256:
+		token = jwt.NewWithClaims(jwt.SigningMethodES256, registerClaims)
+	case rsaKey:
 		token = jwt.NewWithClaims(jwt.SigningMethodRS512, registerClaims)
 	default:
 		return "", fmt.Errorf("Only ECDSA and RSA private keys are supported")
@@ -64,5 +78,5 @@ func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
 		token.Header[kidHeaderKey] = e.kid
 	}
 
-	return token.SignedString(e.privatePEMKey)
+	return token.SignedString(e.privateSigningKey)
 }
