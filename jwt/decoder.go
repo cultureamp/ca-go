@@ -1,6 +1,8 @@
 package jwt
 
 import (
+	"crypto/ecdsa"
+	"crypto/rsa"
 	"errors"
 	"fmt"
 	"time"
@@ -112,9 +114,22 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	key, found := d.jwkSet.LookupKeyID(kid)
 	if found {
 		// Found a match, so use this key
-		var correctKey publicKey
-		err := key.Raw(&correctKey)
-		return correctKey, err
+		var rawkey interface{}
+		err := key.Raw(&rawkey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode: bad public key in jwks")
+		}
+
+		// If the JWKS contains the full key (Private AND Public) then check for that for both ECDSA & RSA
+		if ecdsa, ok := rawkey.(*ecdsa.PrivateKey); ok {
+			return &ecdsa.PublicKey, nil
+		}
+
+		if rsa, ok := rawkey.(*rsa.PrivateKey); ok {
+			return &rsa.PublicKey, nil
+		}
+
+		return rawkey, err
 	}
 
 	// Didn't find a matching kid

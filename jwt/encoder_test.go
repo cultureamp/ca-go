@@ -11,16 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	testRSAPrivateKey   string = "./testKeys/jwt-rsa256-test-webgateway.key"
-	testECDSAPrivateKey string = "./testKeys/jwt-ecdsa521-test.key"
-)
-
 // useful to create RS256 test tokens https://jwt.io/
 // useful for PEM to JWKS https://jwkset.com/generate
 
 func TestNewEncoder(t *testing.T) {
-	b, err := os.ReadFile(filepath.Clean(testRSAPrivateKey))
+	b, err := os.ReadFile(filepath.Clean(testRSA256PrivateKey))
 	require.NoError(t, err)
 	privKey := string(b)
 

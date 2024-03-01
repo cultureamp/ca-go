@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEncodeDecode(t *testing.T) {
+func TestPackageEncodeDecode(t *testing.T) {
 	claims := &StandardClaims{
 		AccountId:       "abc123",
 		RealUserId:      "xyz234",
@@ -30,7 +30,7 @@ func TestEncodeDecode(t *testing.T) {
 	assert.Equal(t, "xyz345", sc.EffectiveUserId)
 }
 
-func TestEncodeDecodeWithDifferentEnvVars(t *testing.T) {
+func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 	claims := &StandardClaims{
 		AccountId:       "abc123",
 		RealUserId:      "xyz234",
@@ -54,7 +54,7 @@ func TestEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 		{
 			desc:                  "Error 1: missing decoder kid",
 			encodedKeyId:          "missing-kid",
-			privateKey:            testECDSAPrivateKey,
+			privateKey:            testECDSA521PrivateKey,
 			expectedEncoderErrMsg: "",
 			expectedDecoderErrMsg: "no matching key_id (kid) header",
 		},

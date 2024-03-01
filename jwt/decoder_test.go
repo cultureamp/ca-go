@@ -9,10 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	testAuthJwks        string = "./testKeys/development.jwks"
-)
-
 // useful to create RS256 test tokens https://jwt.io/
 // useful for PEM to JWKS https://jwkset.com/generate
 
