@@ -30,7 +30,7 @@ func TestEncodeDecode(t *testing.T) {
 	assert.Equal(t, "xyz345", sc.EffectiveUserId)
 }
 
-func TestEncodeDecodeWhenMissingEnvVars(t *testing.T) {
+func TestEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 	claims := &StandardClaims{
 		AccountId:       "abc123",
 		RealUserId:      "xyz234",

@@ -3,6 +3,7 @@ package jwt
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lestrrat-go/jwx/v2/jwk"
@@ -58,16 +59,18 @@ func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwt.MapClaims, erro
 	// eg. "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIiLCJuYmYiOjE0NDQ0Nzg0MDB9.u1riaD1rW97opCoAuRCTy4w58Br-Zk-bh7vLiRIsrpU"
 
 	// Eng Std: https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3253240053/JWT+Authentication
-	// Expiry claim is currently MANDATORY.
+	// Expiry claim is currently MANDATORY, but until all producing services are reliably setting the Expiry claim,
+	// we MAY still accept verified JWTs with no Expiry claim.
+	// So:
 	// If the token includes an expiry claim, then the time is checked correctly and will return error if expired.
-	// If the token does not include an expiry claim then returns an error.
+	// If the token does not include an expiry claim then ignore and just test that verification is valid.
 	token, err := jwt.Parse(
 		tokenString,
 		func(token *jwt.Token) (interface{}, error) {
 			return decoder.useCorrectPublicKey(token)
 		},
-		// jwt.WithLeeway(30*time.Second), // add this if we want to add some leeway for clock scew across systems
-		// jwt.WithExpirationRequired(),   // add this if we want to enforce that tokens MUST have an expiry
+		jwt.WithLeeway(10*time.Second), // as per the JWT eng std: clock skew set to 10 seconds
+		// jwt.WithExpirationRequired(),	// add this if we want to enforce that tokens MUST have an expiry
 	)
 	if err != nil || !token.Valid {
 		return nil, err
