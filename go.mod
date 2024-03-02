@@ -4,7 +4,7 @@ go 1.21.7
 
 require (
 	github.com/IBM/sarama v1.42.1
-	github.com/aws/aws-lambda-go v1.45.0
+	github.com/aws/aws-lambda-go v1.46.0
 	github.com/aws/aws-sdk-go v1.50.14
 	github.com/aws/aws-sdk-go-v2/service/kms v1.27.9
 	github.com/cenkalti/backoff/v4 v4.2.1
