@@ -11,7 +11,7 @@ import (
 
 const (
 	testAuthJwks           string = "./testKeys/development.jwks"
-	testRSA256PrivateKey   string = "./testKeys/jwt-rsa256-test-webgateway.key"
+	testRSA256PrivateKey   string = "./testKeys/jwt-rsa256-test.key"
 	testRSA384PrivateKey   string = "./testKeys/jwt-rsa384-test.key"
 	testRSA512PrivateKey   string = "./testKeys/jwt-rsa512-test.key"
 	testECDSA521PrivateKey string = "./testKeys/jwt-ecdsa521-test.key"
@@ -40,7 +40,7 @@ func TestEncodeDecode(t *testing.T) {
 		{
 			desc:    "Success 1: RSA 256 Key",
 			privkey: testRSA256PrivateKey,
-			kid:     "web-gateway",
+			kid:     "rsa-256",
 		},
 		{
 			desc:    "Success 2: RSA 384 Key",

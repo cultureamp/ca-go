@@ -121,10 +121,10 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 		}
 
 		// If the JWKS contains the full key (Private AND Public) then check for that for both ECDSA & RSA
+		// NOTE: this should never happen in PRPD - but does in the unit tests
 		if ecdsa, ok := rawkey.(*ecdsa.PrivateKey); ok {
 			return &ecdsa.PublicKey, nil
 		}
-
 		if rsa, ok := rawkey.(*rsa.PrivateKey); ok {
 			return &rsa.PublicKey, nil
 		}

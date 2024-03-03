@@ -28,7 +28,7 @@ func TestNewEncoder(t *testing.T) {
 		{
 			desc:           "Success 1: valid private key",
 			key:            privKey,
-			kid:            "web-gateway",
+			kid:            "rsa-256",
 			expectedErrMsg: "",
 		},
 		{
@@ -79,11 +79,11 @@ func TestEncoderRSA(t *testing.T) {
 	}{
 		{
 			desc:      "Success 1: RSA 256",
-			key:       "./testKeys/jwt-rsa256-test-webgateway.key",
-			kid:       "web-gateway",
-			header:    "eyJhbGciOiJSUzUxMiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0",
+			key:       "./testKeys/jwt-rsa256-test.key",
+			kid:       "rsa-256",
+			header:    "eyJhbGciOiJSUzUxMiIsImtpZCI6InJzYS0yNTYiLCJ0eXAiOiJKV1QifQ",
 			payload:   "eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ",
-			signature: "B4yOj6cwkICFgIlqOCxV2nIrGS_u8O2zk22uqJW40dpmm0TD3rH57Fjq_TwNSIpx84tIfRUhA-FHfHu-ci0epurvJBcQ_nOG1IfRlxOjd1goZjxPPplddwelECQGCdAyqkoGHXy8YgTe0ZvupPijfRIVmgpJcznmQphqLIuIJhcFGnoruhp4NAxQfqyONQf1S5h2H57-vvmXnQk5tpdocXYC-MP3jFtmNukmdUWpsFlpr2Fclgy3d4opf2fDQzdC51vBpVl1DjKEngjGULtRo4jDy7VRKvrdHhNX25zeUQSsKyetlWARnn-O2RT_d7kYAbBBy195kqtplZ47QQjhptW8WBEfS8X0-wjOHM04gdW3p1iAJ4A88wYywy1T75zUMTH2iPiIHRilzwwPj5j4tWPiUCj__i8tQvLXIZVIIpV7jdP1yP9Kp_Vb2WV-DKy9osiImZotc_kAWxl5Jq6xqhKNAnRirWrwk1q_Z7KmPmnswC84Ao6h3Lqf728pR5NVQzFB2t5vWvFk-ocAx0gKNCGF0fug4PUS5t_M5WecFkLOrAx68fvRLfr7BA1JFAP6wPu4Alz0HbtixD1gUC6bHO4A8g7pb0lWoLE0a4hKkPnvrQjtV5ccjpVIj-4sgQLr9zIpYnPwxbzGg13DRGBPySKic7qrD4nBEktcep01q50",
+			signature: "LWPPB0zeLOrpzBIHcjnNONEDgAOPn3NnrD_DkyZ6Bvmvv5M4J2Yi3V-l3yAlYw98o3o60qAg_lAdePHsFNY37NPZ17KK9dQqCAkCjyujU1J37GEhH4-4OujCyNqNxasi4OIbPiEhlngioKdWxjhKzyT63ROtIgMziDYafV438DG2zQpw9mUYc3q_Bf-RnErouaeR6nvzqT0TMWpw-tYovoGS3Bm0qGFlOCpk1q-SfpLb6IRtERs7N2F2LmHZ-M6Xgoc8stOQ9RRy1Asvrm2Jxi5tc30orTSerpBVaC90KkPvcvfwX28-CNC2Laa5obQyHGwBfyJUN8wpgVVV4RaNVQ",
 		},
 		{
 			desc:      "Success 2: RSA 384",
