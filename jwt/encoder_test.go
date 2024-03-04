@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // useful to create RS256 test tokens https://jwt.io/
@@ -16,7 +15,7 @@ import (
 
 func TestNewEncoder(t *testing.T) {
 	b, err := os.ReadFile(filepath.Clean(testRSA256PrivateKey))
-	require.NoError(t, err)
+	assert.Nil(t, err)
 	privKey := string(b)
 
 	testCases := []struct {
@@ -105,13 +104,13 @@ func TestEncoderRSA(t *testing.T) {
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			b, err := os.ReadFile(filepath.Clean(tC.key))
-			require.NoError(t, err)
+			assert.Nil(t, err)
 
 			rsaEncoder, err := NewJwtEncoder(string(b), tC.kid)
 			assert.Nil(t, err)
 
 			token, err := rsaEncoder.Encode(claims)
-			// fmt.Printf("Token: '%s'", token)
+			// fmt.Printf("\n%s token: '%s'\n", tC.desc, token)
 
 			assert.Nil(t, err)
 			assert.NotEmpty(t, token)
@@ -175,13 +174,13 @@ func TestEncoderECDSA(t *testing.T) {
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			b, err := os.ReadFile(filepath.Clean(tC.key))
-			require.NoError(t, err)
+			assert.Nil(t, err)
 
 			ecdsaEncoder, err := NewJwtEncoder(string(b), tC.kid)
 			assert.Nil(t, err)
 
 			token, err := ecdsaEncoder.Encode(claims)
-			// fmt.Printf("Token: '%s'", token)
+			// fmt.Printf("\nToken for %s: '%s'", tC.desc, token)
 
 			assert.Nil(t, err)
 			assert.NotEmpty(t, token)

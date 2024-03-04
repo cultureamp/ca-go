@@ -75,6 +75,14 @@
       "crv": "P-521",
       "x": "33cWVWXZyYbSipqjddKrHYVt-CfujDbrBA_LosKaMH8ct9UfqL1Zr265L403Em6T0FoFxQ4iQBZUqgVC8XTL-uI",
       "y": "AUQVxyCPadJKs9AdGbZ3zBePF79IWX3I5-RGbJk-ZASw1xosSpYG4kPDxn0ji2BBJZDKTdzJ7qvn1e6HQ4640Fgc"
+    },
+    {
+      "kty": "EC",
+      "alg": "ES123",
+      "kid": "bad-ecdsa",
+      "crv": "P-123",
+      "x": "bad-33cWVWXZyYbSipqjddKrHYVt-CfujDbrBA_LosKaMH8ct9UfqL1Zr265L403Em6T0FoFxQ4iQBZUqgVC8XTL-uI",
+      "y": "bad-AUQVxyCPadJKs9AdGbZ3zBePF79IWX3I5-RGbJk-ZASw1xosSpYG4kPDxn0ji2BBJZDKTdzJ7qvn1e6HQ4640Fgc"
     }
   ]
 }

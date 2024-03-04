@@ -98,6 +98,33 @@ func TestDecoderDecodeAllClaims(t *testing.T) {
 			effectiveUserId: "",
 			year:            1,
 		},
+		{
+			desc:            "Error 2: missing kid",
+			token:           "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.S48Yfs0COCQR70jCrD2y6kD26nns6-c9CLvxKTahxzv0KrkdAXC7I62yIz2yD6j3v3rTKVQ8eGhSKOkN6EU_M8BZa5ltt7TmcIOnn5RWbwnfSfFLMR3njzlMiRT2MGAi2A2WMkx_LrTk9PZZRIlfceQxFVhThjc-Dp92C_zFJARZ8yss3upAW0m0pbeD5Y23GWs6bkkBbAAvh8Rw6rICjW6qROnqj6u8mcb4bS3kDlmmFkYnQdKMLu4bWa6twyLwUMg0N-Y5h2rp6GyAYuTrqyKif5IU1IEhNW63gj5h1xCLNyX4ZGJsNSZP_HOQGVVQMBDg2rsg7tBxow_E2wvYTgDYn8f1SjKE7vKdL2uYzA732hcd63fNwJpNcrwFs3lW8DjM_VYf-M4ePSr4GqHg6PawTCFgWCVNvi-lsmogfRUq_1t21GXlX7pQd029CFJ7mnnxUBau7KxTuX-Pxpny3jhYpJ87GlDA3WaB0r1tEg4Hl87VDawQ5Cb5ac6R6eXEO34i5oESVt6lFL-wpWUnU7KbiWVxKkSifN0M27IE8vAEsUBhgD8sKZpBsUvUDpRcb_atpFE_xU0K6DZXGUgFpZBx-CULmmfoDubTNfRNtqwmJiXI-M1YyiRbc_lOVQBAibuZ20ucixyhhqYSa-5fWa4m5NcjkRquTR2J-OaxmhA",
+			expectedErrMsg:  "missing key_id (kid) header",
+			accountId:       "",
+			realUserId:      "",
+			effectiveUserId: "",
+			year:            1,
+		},
+		{
+			desc:            "Error 3: signed with EdDSA",
+			token:           "eyJhbGciOiJFZERTQSIsImtpZCI6ImVkZHNhIiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.ZjBuTNqC74M525ROjM1kRANBCb7JUjl6ko8dSD52S-Q_f5p7EaUM5TxCPg4rICvVWxF26B99EkVzNNhivcw9Dw",
+			expectedErrMsg:  "unexpected signing method",
+			accountId:       "",
+			realUserId:      "",
+			effectiveUserId: "",
+			year:            1,
+		},
+		{
+			desc:            "Error 4: bad jwks key",
+			token:           "eyJhbGciOiJFUzUxMiIsImtpZCI6ImJhZC1lY2RzYSIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.ALtrklCsBs5Z3QZp8p8qfClXKS8pj0asOzHspDRghmOoA5XWzYriMWFElb2UlhZeSazIsyR7P2k_oKt8S4qdY3jxAbpkBL6BQURudNeuw-bBipPPBehscuUlOhQl7ckl4RO7c5U60uHyaek0m4LMpEIuziWX9IHikDSVBzkNuji8zWQ1",
+			expectedErrMsg:  "bad public key in jwks",
+			accountId:       "",
+			realUserId:      "",
+			effectiveUserId: "",
+			year:            1,
+		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
