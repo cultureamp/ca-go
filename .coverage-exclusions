@@ -1,0 +1,2 @@
+# which packages to exclude from coverage calculations
+github.com/cultureamp/ca-go/x/*
