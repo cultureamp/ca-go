@@ -110,11 +110,9 @@ jobs:
           
       - name: Run tests
         run: |
-          mkdir -p artifacts
           go test -race -json -v -coverprofile=coverage.json -covermode atomic `go list ./... | grep -v \/x\/` 2>&1 | tee gotest.log | gotestfmt
       
       - name: Convert go coverage to corbetura format
-        working-directory: ./src  
         run: gocover-cobertura -ignore-files test\*.go < coverage.json > coverage.xml
 
       - name: Generate code coverage report
