@@ -3,6 +3,7 @@
 # To setup/install
 # %> brew install pre-commit
 # %> brew install trufflehog
+# %> brew install snyk-cli
 # %> pre-commit install
 # %> pre-commit run --all-files
 repos:
