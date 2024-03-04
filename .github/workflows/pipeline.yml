@@ -108,7 +108,11 @@ jobs:
           go install github.com/boumenot/gocover-cobertura@v1.2.0
           go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@v2.5.0
           
-      - name: Run tests
+      - name: Run all tests
+        run: |
+          go test ./...
+
+      - name: Run coverage tests
         run: |
           go test -race -json -v -coverprofile=coverage.json -covermode atomic `go list ./... | grep -v \/x\/` 2>&1 | tee gotest.log | gotestfmt
       
