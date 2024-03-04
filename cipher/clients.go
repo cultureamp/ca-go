@@ -15,13 +15,13 @@ type KMSClient interface {
 }
 
 type awsKMSClient struct {
-	kmsClient *kms.Client
+	aws *kms.Client
 }
 
 func newAWSKMSClient(region string) *awsKMSClient {
 	client := kms.New(kms.Options{Region: region})
 	return &awsKMSClient{
-		kmsClient: client,
+		aws: client,
 	}
 }
 
@@ -31,7 +31,7 @@ func (c *awsKMSClient) Encrypt(ctx context.Context, keyId string, plainStr strin
 		Plaintext: []byte(plainStr),
 	}
 
-	result, err := c.kmsClient.Encrypt(ctx, input)
+	result, err := c.aws.Encrypt(ctx, input)
 	if err != nil {
 		return "", err
 	}
@@ -51,27 +51,11 @@ func (c *awsKMSClient) Decrypt(ctx context.Context, keyId string, encryptedStr s
 		CiphertextBlob: blob,
 	}
 
-	result, err := c.kmsClient.Decrypt(ctx, input)
+	result, err := c.aws.Decrypt(ctx, input)
 	if err != nil {
 		return "", err
 	}
 
 	decStr := string(result.Plaintext)
 	return decStr, nil
-}
-
-type testRunnerClient struct{}
-
-func newTestRunnerClient() *testRunnerClient {
-	return &testRunnerClient{}
-}
-
-// Encrypt on the test runner just returns the "plainStr" as the encrypted encryptedStr.
-func (c *testRunnerClient) Encrypt(ctx context.Context, _ string, plainStr string) (string, error) {
-	return plainStr, nil
-}
-
-// Decrypt on the test runner just returns the "encryptedStr" as the decrypted plainstr.
-func (c *testRunnerClient) Decrypt(ctx context.Context, _ string, encryptedStr string) (string, error) {
-	return encryptedStr, nil
 }

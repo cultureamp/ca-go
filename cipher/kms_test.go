@@ -42,7 +42,7 @@ func TestEncrypt(t *testing.T) {
 		// arrange
 		mockKmsClient := &mockKMSClient{}
 		crypto := NewKMSCipherWithClient(mockKmsClient)
-		crypto.client = mockKmsClient
+		crypto.Client = mockKmsClient
 
 		mockKmsClient.On("Encrypt", ctx, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 
@@ -83,7 +83,7 @@ func TestDecrypt(t *testing.T) {
 		// arrange
 		mockKmsClient := &mockKMSClient{}
 		crypto := NewKMSCipherWithClient(mockKmsClient)
-		crypto.client = mockKmsClient
+		crypto.Client = mockKmsClient
 
 		mockKmsClient.On("Decrypt", ctx, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 
