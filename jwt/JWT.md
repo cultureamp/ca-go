@@ -1,15 +1,17 @@
 # ca-go/jwt
 
-The `jwt` package wraps JWT & JWKs `Encode` and `Decode` in a simple to use sington pattern that you can call directly. Only RSA public and private keys are currently supported (but this can easily be updated if needed in the future).
+The `jwt` package wraps JWT & JWKs `Encode` and `Decode` in a simple to use sington pattern that you can call directly. Only ECDSA and RSA public and private keys are currently supported (but this can easily be updated if needed in the future).
 
 ## Environment Variables
 
-You can MUST set these:
+To use the package level methods `Encode` and `Decode` you MUST set these:
+
 - AUTH_PUBLIC_JWK_KEYS = A JSON string containing the well known public keys for Decoding a token.
 - AUTH_PRIVATE_KEY = The private RSA PEM key used for Encoding a token.
 
-You can OPTIONALLY set these:
-- AUTH_PRIVATE_KEY_ID = The default "kid" to add to the token heading when Encoding.
+You can SHOULD also set:
+
+- AUTH_PRIVATE_KEY_ID = The default "kid" to add to the token heading when Encoding (defaults to "web-gateway")
 
 ## Examples
 ```

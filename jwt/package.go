@@ -16,7 +16,7 @@ var (
 func getDecoderInstance() *JwtDecoder {
 	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
 	if jwkKeys == "" && isTestMode() {
-		// test key only, not the production key
+		// test key only, not the production keys
 		b, _ := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
 		jwkKeys = string(b)
 	}
