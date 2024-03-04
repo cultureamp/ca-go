@@ -7,8 +7,8 @@ on:
   pull_request:
 
 env:
-  GO_VERSION: 1.21
-  GOTOOLCHAIN: go1.21.7
+  GO_VERSION: 1.22
+  GOTOOLCHAIN: go1.22.0
 
 jobs:
   go-setup:
