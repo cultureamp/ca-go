@@ -45,7 +45,7 @@ func NewLogger(config *Config) *Logger {
 				if i == nil {
 					return ""
 				}
-				return fmt.Sprintf("event=\"%s\"", i)
+				return fmt.Sprintf("details=\"%s\"", i)
 			},
 		}
 	}
