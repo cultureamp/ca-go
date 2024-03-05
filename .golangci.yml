@@ -133,6 +133,12 @@ linters-settings:
         # Used to determine the package matching priority.
         # There are three different modes: `original`, `strict`, and `lax`.
         # Default: "original"
+        # Original:
+        # Is the original way that the package was written to use. It is not recommended to stay with this and is only here for backwards compatibility.
+        # Strict:
+        # Is everything is denied unless in allowed.
+        # Lax:
+        # Is everything is allowed unless it is denied.
         list-mode: strict
         # List of file globs that will match this list of settings to compare against.
         # Default: $all
