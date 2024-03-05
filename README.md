@@ -79,7 +79,7 @@ Config for what is checked is stored in `.pre-commit-config.yaml`
 
 Download:
 1. brew install pre-commit
-2. brew install trufflehug
+2. brew install trufflehog
 3. brew install snyk-cli
 
 To install / turn on for a repo:
