@@ -5,10 +5,10 @@ import (
 	"os"
 )
 
-var DefaultKMSCipher *KMSCipher = getInstance()
+var DefaultKMSCipher KMSCipher = getInstance()
 
-func getInstance() *KMSCipher {
-	var client KMSClient
+func getInstance() *kmsCipher {
+	var client KMSCipher
 
 	region := os.Getenv("AWS_REGION")
 	client = newAWSKMSClient(region)

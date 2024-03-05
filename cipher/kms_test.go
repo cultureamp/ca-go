@@ -15,6 +15,14 @@ const (
 	testRegion = "us-west-1"
 )
 
+func TestNewKMSCipher(t *testing.T) {
+	cipher := NewKMSCipher("region")
+	assert.NotNil(t, cipher)
+
+	cipher = NewKMSCipherWithClient(&mockKMSClient{})
+	assert.NotNil(t, cipher)
+}
+
 func TestEncrypt(t *testing.T) {
 	strInput := "inputStr"
 	ctx := context.Background()

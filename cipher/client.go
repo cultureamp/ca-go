@@ -8,18 +8,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// KMSClient used for mock testing.
-type KMSClient interface {
-	Encrypt(ctx context.Context, keyId string, plainStr string) (string, error)
-	Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error)
-}
-
 type awsKMSClient struct {
 	aws *kms.Client
 }
 
-func newAWSKMSClient(region string) *awsKMSClient {
-	client := kms.New(kms.Options{Region: region})
+func newAWSKMSClient(region string, optFns ...func(*kms.Options)) *awsKMSClient {
+	client := kms.New(kms.Options{Region: region}, optFns...)
 	return &awsKMSClient{
 		aws: client,
 	}

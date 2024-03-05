@@ -13,10 +13,10 @@ func TestPackageEncrypt(t *testing.T) {
 	keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
 
 	// replace the package level client with our mock
-	stdClient := cipher.DefaultKMSCipher.Client
-	cipher.DefaultKMSCipher.Client = newMockedCipherClient()
+	stdCipher := cipher.DefaultKMSCipher
+	cipher.DefaultKMSCipher = newMockedCipherClient()
 	defer func() {
-		cipher.DefaultKMSCipher.Client = stdClient
+		cipher.DefaultKMSCipher = stdCipher
 	}()
 
 	cipherText, err := cipher.Encrypt(ctx, keyId, "test_plain_str")
