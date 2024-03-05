@@ -102,10 +102,43 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: ./go.sum
 
-      - name: Test code
+      - name: Install gocover-cobertura and gotestfmt
+        shell: bash
+        run: | # install required tooling
+          go install github.com/boumenot/gocover-cobertura@v1.2.0
+          go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@v2.5.0
+          
+      - name: Run all tests
         run: |
-          make test-ci
+          go test ./...
 
-      - uses: shogo82148/actions-goveralls@v1
+      - name: Run coverage tests
+        run: |
+          go test -race -json -v -coverprofile=coverage.json -covermode atomic `go list ./... | grep -v \/x\/` 2>&1 | tee gotest.log | gotestfmt
+      
+      - name: Convert go coverage to corbetura format
+        run: gocover-cobertura -ignore-files test\*.go < coverage.json > coverage.xml
+
+      - name: Generate code coverage report
+        uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          path-to-profile: artifacts/count.out
+          filename: ./coverage.xml
+          badge: false
+          fail_below_min: false
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: '60 80'
+
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          recreate: true
+          path: code-coverage-results.md
+
+      - name: Write to Job Summary
+        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
+        
