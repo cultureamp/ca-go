@@ -65,7 +65,7 @@ func NewLoggerConfig() *Config {
 	}
 
 	quiet := getEnvBool(LogQuietModeEnv, isTestMode())
-	consoleWriter := getEnvBool(LogConsoleWriterEnv, false)
+	consoleWriter := getEnvBool(LogConsoleWriterEnv, isTestMode())
 
 	return &Config{
 		LogLevel:      logLevel,

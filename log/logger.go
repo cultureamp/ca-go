@@ -9,12 +9,12 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// Logger that implements the CA Logging standard.
-type Logger struct {
+// standardLogger that implements the CA Logging standard.
+type standardLogger struct {
 	impl zerolog.Logger
 }
 
-func NewLogger(config *Config) *Logger {
+func NewLogger(config *Config) *standardLogger {
 	var lvl zerolog.Level
 	switch config.LogLevel {
 	case "DEBUG":
@@ -31,22 +31,26 @@ func NewLogger(config *Config) *Logger {
 		lvl = zerolog.InfoLevel
 	}
 
-	// Default to Stdout, but if running in TestMode then set the logger to silently NoOp
+	// Default to Stdout, but if running in QuietMode then set the logger to silently NoOp
 	var writer io.Writer = os.Stdout
 	if config.Quiet {
 		writer = io.Discard
 	}
 
-	if config.isLocal() && config.ConsoleWriter {
-		writer = zerolog.ConsoleWriter{
-			Out:        writer,
-			TimeFormat: time.RFC3339,
-			FormatMessage: func(i interface{}) string {
-				if i == nil {
-					return ""
-				}
-				return fmt.Sprintf("event=\"%s\"", i)
-			},
+	if config.isLocal() {
+		// NOTE: only allow ConsoleWriter to be configured if we are NOT production
+		// as the ConsoleWriter is NOT performant and should just be used for local only
+		if config.ConsoleWriter {
+			writer = zerolog.ConsoleWriter{
+				Out:        writer,
+				TimeFormat: time.RFC3339,
+				FormatMessage: func(i interface{}) string {
+					if i == nil {
+						return ""
+					}
+					return fmt.Sprintf("event=\"%s\"", i)
+				},
+			}
 		}
 	}
 
@@ -63,7 +67,7 @@ func NewLogger(config *Config) *Logger {
 		Timestamp().
 		Logger()
 
-	return &Logger{impl: impl}
+	return &standardLogger{impl: impl}
 }
 
 func setGlobalLogger() {
@@ -76,7 +80,7 @@ func setGlobalLogger() {
 // Debug starts a new message with debug level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *Logger) Debug(event string) *Property {
+func (l *standardLogger) Debug(event string) *Property {
 	le := l.impl.Debug().Str("event", toSnakeCase(event))
 	return &Property{le}
 }
@@ -84,7 +88,7 @@ func (l *Logger) Debug(event string) *Property {
 // Info starts a new message with info level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *Logger) Info(event string) *Property {
+func (l *standardLogger) Info(event string) *Property {
 	le := l.impl.Info().Str("event", toSnakeCase(event))
 	return &Property{le}
 }
@@ -92,7 +96,7 @@ func (l *Logger) Info(event string) *Property {
 // Warn starts a new message with warn level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *Logger) Warn(event string) *Property {
+func (l *standardLogger) Warn(event string) *Property {
 	le := l.impl.Warn().Str("event", toSnakeCase(event))
 	return &Property{le}
 }
@@ -100,7 +104,7 @@ func (l *Logger) Warn(event string) *Property {
 // Error starts a new message with error level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *Logger) Error(event string, err error) *Property {
+func (l *standardLogger) Error(event string, err error) *Property {
 	le := l.impl.Error().
 		Err(err).
 		Str("event", toSnakeCase(event))
@@ -112,7 +116,7 @@ func (l *Logger) Error(event string, err error) *Property {
 // is called by the Msg method, which terminates the program immediately.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *Logger) Fatal(event string, err error) *Property {
+func (l *standardLogger) Fatal(event string, err error) *Property {
 	le := l.impl.Fatal().Err(err).Str("event", toSnakeCase(event))
 	return &Property{le}
 }
@@ -121,7 +125,7 @@ func (l *Logger) Fatal(event string, err error) *Property {
 // is called by the Msg method, which stops the ordinary flow of a goroutine.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *Logger) Panic(event string, err error) *Property {
+func (l *standardLogger) Panic(event string, err error) *Property {
 	le := l.impl.Panic().Err(err).Str("event", toSnakeCase(event))
 	return &Property{le}
 }

@@ -4,7 +4,7 @@ import "context"
 
 // Deprecated: LegacyLogger supports the legacy glamplify logging interface.
 type LegacyLogger struct {
-	impl *Logger
+	impl *standardLogger
 }
 
 // Deprecated: NewLegacyLogger is deprecated but included here for easy migration from glamplify.

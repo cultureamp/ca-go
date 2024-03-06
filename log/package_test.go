@@ -8,7 +8,28 @@ import (
 	"testing"
 
 	"github.com/cultureamp/ca-go/log"
+	"github.com/stretchr/testify/mock"
 )
+
+func TestMockedPackageLogger(t *testing.T) {
+	// Revert the DefaultLogger once the test if finished
+	stdLogger := log.DefaultLogger
+	defer func() { log.DefaultLogger = stdLogger }()
+
+	mockLogger := new(mockLogger)
+	log.DefaultLogger = mockLogger
+
+	mockLogger.On("Debug", "should_call_mock").Return(log.SubDoc())
+
+	log.Debug("should_call_mock").
+		Properties(log.SubDoc().
+			Str("resource", "resource_id").
+			Int("test-number", 1),
+		).Details("detailed information explain")
+
+	// Output:
+	//
+}
 
 func TestCommonExamples(t *testing.T) {
 	log.Debug("hander_added").
@@ -106,4 +127,44 @@ func recoverFromPanic() {
 
 		log.Error("recovered_from_panic", err).Send()
 	}
+}
+
+type mockLogger struct {
+	mock.Mock
+}
+
+func (ml *mockLogger) Debug(event string) *log.Property {
+	args := ml.Called(event)
+	output, _ := args.Get(0).(*log.Property)
+	return output
+}
+
+func (ml *mockLogger) Info(event string) *log.Property {
+	args := ml.Called(event)
+	output, _ := args.Get(0).(*log.Property)
+	return output
+}
+
+func (ml *mockLogger) Warn(event string) *log.Property {
+	args := ml.Called(event)
+	output, _ := args.Get(0).(*log.Property)
+	return output
+}
+
+func (ml *mockLogger) Error(event string, err error) *log.Property {
+	args := ml.Called(event)
+	output, _ := args.Get(0).(*log.Property)
+	return output
+}
+
+func (ml *mockLogger) Fatal(event string, err error) *log.Property {
+	args := ml.Called(event)
+	output, _ := args.Get(0).(*log.Property)
+	return output
+}
+
+func (ml *mockLogger) Panic(event string, err error) *log.Property {
+	args := ml.Called(event)
+	output, _ := args.Get(0).(*log.Property)
+	return output
 }

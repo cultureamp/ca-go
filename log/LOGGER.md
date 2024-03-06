@@ -25,6 +25,17 @@ By default the logger will not emit any output when running inside a test. You c
 
 When running localling you can also set the `CONSOLE_WRITER` to "true" to change from json to key-value colour coded output. Note: Never run with the `CONSOLE_WRITER` set to "true" in production.
 
+## Extensions
+
+The log package includes some extensions for common groups:
+- WithRequestTracing(req *http.Request)
+- WithAuthenticatedUserTracing(auth *AuthPayload)
+- WithAuthorizationTracing(req *http.Request)
+- WithSystemTracing()
+- WithGlamplifyRequestFieldsFromCtx(ctx context.Context)
+
+Each of these will create the correct sub-doc ("system", "tracing" etc.) and print a number of standard properties. The use of these extensions is highly encouraged.
+
 ## Managing Loggers Yourself
 
 While we recommend using the package level methods for their ease of use, you may desire to create and manage loggers yourself, which you can do by calling:
