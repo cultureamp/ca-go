@@ -4,11 +4,11 @@ import (
 	"context"
 )
 
-// Deprecated: EventCtxKey type
+// Deprecated: EventCtxKey type.
 type EventCtxKey int
 
 const (
-	// Deprecated: RequestFieldsCtx EventCtxKey = iota
+	// Deprecated: RequestFieldsCtx EventCtxKey = iota.
 	RequestFieldsCtx EventCtxKey = iota
 )
 

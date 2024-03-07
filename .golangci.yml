@@ -251,6 +251,10 @@ issues:
       linters:
         - zerologlint
 
+    - path: log/legacy_extensions.go
+      linters:
+        - tagliatelle
+
     - path: log/helper.go
       linters:
         - nestif
