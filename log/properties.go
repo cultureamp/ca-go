@@ -47,6 +47,13 @@ func (lf *Property) Duration(key string, d time.Duration) *Property {
 	return lf
 }
 
+// Time adds the property key with val as an uuid.UUID to the log.
+func (lf *Property) Time(key string, t time.Time) *Property {
+	// uses zerolog.TimeFieldFormat which we set to time.RFC3339
+	lf.impl = lf.impl.Time(key, t)
+	return lf
+}
+
 // IPAddr adds the property key with val as an net.IP to the log.
 func (lf *Property) IPAddr(key string, ip net.IP) *Property {
 	lf.impl = lf.impl.IPAddr(key, ip)
@@ -62,14 +69,6 @@ func (lf *Property) UUID(key string, uuid uuid.UUID) *Property {
 // Properties adds an entire sub-document of type Property to the log.
 func (lf *Property) Properties(props *Property) *Property {
 	lf.impl = lf.impl.Dict("properties", props.impl)
-	return lf
-}
-
-// Deprecated: LegacyFields to support glamplify interface.
-func (lf *Property) LegacyFields(key string, f Fields) *Property {
-	if len(f) > 0 {
-		lf.impl = lf.impl.Interface(key, f)
-	}
 	return lf
 }
 

@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -13,6 +14,8 @@ const (
 	AppFarmDefault      = "local"
 	LogLevelDefault     = "INFO"
 )
+
+type timeNowFunc = func() time.Time
 
 // Config contains logging configuration values.
 type Config struct {
@@ -28,6 +31,9 @@ type Config struct {
 	LogLevel      string // The logging level
 	Quiet         bool   // Are we running inside tests and we should be quiet?
 	ConsoleWriter bool   // If Farm=local use key-value colour console logging
+	ConsoleColour bool   // If ConsoleWriter=true then enable/disable colour
+
+	TimeNow timeNowFunc // Defaults to "time.Now" but useful to set in tests
 }
 
 // NewLoggerConfig creates a new configuration based on environment variables
@@ -66,6 +72,7 @@ func NewLoggerConfig() *Config {
 
 	quiet := getEnvBool(LogQuietModeEnv, isTestMode())
 	consoleWriter := getEnvBool(LogConsoleWriterEnv, isTestMode())
+	consoleColour := getEnvBool(LogConsoleWriterEnv, isTestMode())
 
 	return &Config{
 		LogLevel:      logLevel,
@@ -77,6 +84,8 @@ func NewLoggerConfig() *Config {
 		Farm:          farm,
 		Quiet:         quiet,
 		ConsoleWriter: consoleWriter,
+		ConsoleColour: consoleColour,
+		TimeNow:       time.Now,
 	}
 }
 

@@ -11,7 +11,8 @@ import (
 
 // standardLogger that implements the CA Logging standard.
 type standardLogger struct {
-	impl zerolog.Logger
+	impl   zerolog.Logger
+	config *Config
 }
 
 func NewLogger(config *Config) *standardLogger {
@@ -44,6 +45,7 @@ func NewLogger(config *Config) *standardLogger {
 			writer = zerolog.ConsoleWriter{
 				Out:        writer,
 				TimeFormat: time.RFC3339,
+				NoColor:    !config.ConsoleColour,
 				FormatMessage: func(i interface{}) string {
 					if i == nil {
 						return ""
@@ -64,10 +66,15 @@ func NewLogger(config *Config) *standardLogger {
 		Str("aws_account_id", config.AwsAccountID).
 		Str("farm", config.Farm).
 		Str("product", config.Product).
-		Timestamp().
 		Logger()
 
-	return &standardLogger{impl: impl}
+	// We have our own Timestamp hook so that we can mock in tests
+	impl = impl.Hook(&timestampHook{config: config})
+
+	return &standardLogger{
+		impl:   impl,
+		config: config,
+	}
 }
 
 func setGlobalLogger() {

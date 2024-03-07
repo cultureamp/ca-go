@@ -4,14 +4,15 @@ import (
 	"context"
 )
 
-// EventCtxKey type
+// Deprecated: EventCtxKey type
 type EventCtxKey int
 
 const (
-	// RequestFieldsCtx EventCtxKey = iota
+	// Deprecated: RequestFieldsCtx EventCtxKey = iota
 	RequestFieldsCtx EventCtxKey = iota
 )
 
+// Deprecated: RequestScopedFields instead use the WithRequestTracing() and WithAuthenticatedUserTracing() extension methods.
 type RequestScopedFields struct {
 	TraceID             string `json:"trace_id"`       // AWS XRAY trace id. Format of this is controlled by AWS. Do not rely on it, some services may not use XRAY.
 	RequestID           string `json:"request_id"`     // Client generated RANDOM string. Most of the time this will be empty. Clients can set this to help us diagnose issues.
@@ -20,12 +21,14 @@ type RequestScopedFields struct {
 	CustomerAggregateID string `json:"customer"`       // If JWT and correct key present, then this will be set to the Customer UUID (aka Account)
 }
 
-// AddRequestFields adds a RequestScopedFields to the context
+// Deprecated: AddRequestFields adds a RequestScopedFields to the context.
+// Please migrate to use the WithRequestTracing() and WithAuthenticatedUserTracing() extension methods.
 func AddRequestFields(ctx context.Context, rsFields RequestScopedFields) context.Context {
 	return context.WithValue(ctx, RequestFieldsCtx, rsFields)
 }
 
-// GetRequestScopedFields gets the RequestScopedFields from the context
+// Deprecated: GetRequestScopedFields gets the RequestScopedFields from the context.
+// Please migrate to use the WithRequestTracing() and WithAuthenticatedUserTracing() extension methods.
 func GetRequestScopedFields(ctx context.Context) (RequestScopedFields, bool) {
 	if ctx == nil {
 		return RequestScopedFields{}, false
@@ -35,6 +38,8 @@ func GetRequestScopedFields(ctx context.Context) (RequestScopedFields, bool) {
 	return rsFields, ok
 }
 
+// Deprecated: WithGlamplifyRequestFieldsFromCtx emits a new log message with panic level.
+// Please migrate to use the WithRequestTracing() and WithAuthenticatedUserTracing() extension methods.
 func (lf *Property) WithGlamplifyRequestFieldsFromCtx(ctx context.Context) *Property {
 	rsFields, ok := GetRequestScopedFields(ctx)
 	if !ok {
