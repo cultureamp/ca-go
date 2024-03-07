@@ -6,7 +6,7 @@ import (
 
 // commonSettings that drive behavior used by at least 90% of apps.
 type commonSettings struct {
-	App        string `env:"APP"`
+	App        string `env:"APP,required,notEmpty"`
 	AppVersion string `env:"APP_VERSION" envDefault:"1.0.0"`
 	AppEnv     string `env:"APP_ENV"     envDefault:"development"`
 	Farm       string `env:"FARM"        envDefault:"local"`

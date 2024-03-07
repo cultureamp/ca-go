@@ -7,7 +7,7 @@ import (
 // awsSettings that drive behavior.
 type awsSettings struct {
 	AwsProfile   string `env:"AWS_PROFILE"    envDefault:"default"`
-	AwsRegion    string `env:"AWS_REGION"`
+	AwsRegion    string `env:"AWS_REGION,required,notEmpty"`
 	AwsAccountID string `env:"AWS_ACCOUNT_ID"`
 	XrayLogging  bool   `env:"XRAY_LOGGING"   envDefault:"true"`
 }

@@ -10,7 +10,7 @@ import (
 
 func TestDefaultSettings(t *testing.T) {
 	appName := env.AppName()
-	assert.Equal(t, "", appName)
+	assert.Equal(t, "test-app", appName)
 
 	appVer := env.AppVersion()
 	assert.Equal(t, "1.0.0", appVer)
@@ -28,7 +28,7 @@ func TestDefaultSettings(t *testing.T) {
 	assert.Equal(t, "default", awsProfile)
 
 	awsRegion := env.AwsRegion()
-	assert.Equal(t, "", awsRegion)
+	assert.Equal(t, "dev", awsRegion)
 
 	awsAccountID := env.AwsAccountID()
 	assert.Equal(t, "", awsAccountID)
