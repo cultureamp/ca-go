@@ -1,4 +1,4 @@
-Portions of the scram_client.go originally sourced from 
+Portions of the scram_client.go originally sourced from
 from https://github.com/Shopify/sarama/blob/4c0bbf8d8ee3a91ee008efe5daa9d4abc42c10fa/examples/sasl_scram_client/scram_client.go
 before modification under the terms of the license (included below).
 

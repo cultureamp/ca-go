@@ -39,7 +39,7 @@ func Example() {
 	// Replace the following example key ARN with any valid key identfier
 	keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab";
 
-	// this will automatically use the environment variable "AWS_REGION" 
+	// this will automatically use the environment variable "AWS_REGION"
 	encrypted, err := cipher.Encrypt(ctx, keyId, "plain-string")
 	fmt.Printf("The encrypted string is '%s' (err='%v')\n", encrypted, err)
 

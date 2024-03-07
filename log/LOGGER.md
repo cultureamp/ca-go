@@ -16,7 +16,7 @@ You MUST set these:
 You can OPTIONALLY set these:
 - LOG_LEVEL = One of DEBUG, INFO, WARN, ERROR, defaults to "INFO"
 - AWS_ACCOUNT_ID = The AWS account Id this code is running in, defaults to  "development"
-- FARM = The name of the farm or where the code is running, defaults to "local" (eg. "production", "dolly") 
+- FARM = The name of the farm or where the code is running, defaults to "local" (eg. "production", "dolly")
 - APP_VERSION = The version of the application, defaults to "1.0.0"
 
 ## Use in Unit Tests
