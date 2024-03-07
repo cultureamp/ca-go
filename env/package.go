@@ -1,5 +1,6 @@
 package env
 
+// CommonSettings implements common settings used in 90% of all our apps.
 type CommonSettings interface {
 	GetAppName() string
 	GetAppVersion() string
@@ -11,35 +12,7 @@ type CommonSettings interface {
 	IsRunningLocal() bool
 }
 
-type AWSSettings interface {
-	GetAwsProfile() string
-	GetAwsRegion() string
-	GetAwsAccountID() string
-	IsXrayTracingEnabled() bool
-}
-
-type LogSettings interface {
-	GetLogLevel() string
-}
-
-type DatadogSettings interface {
-	GetDatadogApiKey() string
-	GetDatadogLogEndpoint() string
-	GetDatadogEnv() string
-	GetDatadogService() string
-	GetDatadogVersion() string
-	GetDatadogAgentHost() string
-	GetDatadogStatsDPort() int
-	GetDatadogTimeoutInMs() int
-	GetDatadogSite() string
-	GetDatadogLogLevel() string
-}
-
-type SentrySettings interface {
-	GetSentryDSN() string
-	GetSentryFlushTimeoutInMs() int
-}
-
+// DefaultCommonSettings is the package level instance of CommonSettings.
 var DefaultCommonSettings CommonSettings = getCommonInstance()
 
 func getCommonInstance() *commonSettings {
@@ -90,6 +63,15 @@ func IsRunningLocal() bool {
 	return DefaultCommonSettings.IsRunningLocal()
 }
 
+// AWSSettings implements AWS settings.
+type AWSSettings interface {
+	GetAwsProfile() string
+	GetAwsRegion() string
+	GetAwsAccountID() string
+	IsXrayTracingEnabled() bool
+}
+
+// DefaultAWSSettings is the package level instance of AWSSettings.
 var DefaultAWSSettings AWSSettings = getAWSInstance()
 
 func getAWSInstance() *awsSettings {
@@ -116,6 +98,12 @@ func IsXrayTracingEnabled() bool {
 	return DefaultAWSSettings.IsXrayTracingEnabled()
 }
 
+// LogSettings implements Logging settings.
+type LogSettings interface {
+	GetLogLevel() string
+}
+
+// DefaultLogSettings is the package level instance of LoggingSettings.
 var DefaultLogSettings LogSettings = getLogInstance()
 
 func getLogInstance() *logSettings {
@@ -128,6 +116,21 @@ func LogLevel() string {
 	return DefaultLogSettings.GetLogLevel()
 }
 
+// DatadogSettings implements Datadog settings.
+type DatadogSettings interface {
+	GetDatadogApiKey() string
+	GetDatadogLogEndpoint() string
+	GetDatadogEnv() string
+	GetDatadogService() string
+	GetDatadogVersion() string
+	GetDatadogAgentHost() string
+	GetDatadogStatsDPort() int
+	GetDatadogTimeoutInMs() int
+	GetDatadogSite() string
+	GetDatadogLogLevel() string
+}
+
+// DefaultDatadogSettings is the package level instance of DatadogSettings.
 var DefaultDatadogSettings DatadogSettings = getDatadogInstance()
 
 func getDatadogInstance() *datadogSettings {
@@ -190,6 +193,13 @@ func DatadogLogLevel() string {
 	return DefaultDatadogSettings.GetDatadogLogLevel()
 }
 
+// SentrySettings implements Sentry settings.
+type SentrySettings interface {
+	GetSentryDSN() string
+	GetSentryFlushTimeoutInMs() int
+}
+
+// DefaultSentrySettings is the package level instance of SentrySettings.
 var DefaultSentrySettings SentrySettings = getSentryInstance()
 
 func getSentryInstance() *sentrySettings {

@@ -9,8 +9,6 @@ import (
 )
 
 func TestDefaultSettings(t *testing.T) {
-	// call env methods to retrieve environment values
-
 	appName := env.AppName()
 	assert.Equal(t, "", appName)
 
@@ -78,9 +76,7 @@ func TestDefaultSettings(t *testing.T) {
 	assert.Equal(t, 100, sentryFlushTimeout)
 }
 
-func TestHelperExample(t *testing.T) {
-	// call env methods to retrieve environment values
-
+func TestIsHelpers(t *testing.T) {
 	isProd := env.IsProduction()
 	assert.Equal(t, false, isProd)
 
