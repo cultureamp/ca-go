@@ -9,7 +9,7 @@ import (
 	"github.com/cultureamp/ca-go/log"
 )
 
-func ExampleLogInfoWithRequestTracing() {
+func ExampleLogger_Info_withRequestTracing() {
 	config := getExampleLoggerConfig("INFO")
 	logger := log.NewLogger(config)
 
@@ -49,7 +49,7 @@ func ExampleLogInfoWithRequestTracing() {
 	// 2020-02-02T13:02:02+11:00 INF event="logging should contain request tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_request_tracing farm=local product= properties={"resource":"resource_id","test-number":1} tracing={"correlation_id":"correlation_789_id","request_id":"request_456_id","trace_id":"trace_123_id"}
 }
 
-func ExampleLogInfoWithAuthenticationUserTracing() {
+func ExampleLogger_Info_withAuthenticationUserTracing() {
 	config := getExampleLoggerConfig("INFO")
 	logger := log.NewLogger(config)
 
@@ -91,7 +91,7 @@ func ExampleLogInfoWithAuthenticationUserTracing() {
 	// 2020-02-02T13:02:02+11:00 INF event="logging should contain authN tracing" app= app_version=1.0.0 authentication={"account_id":"account_123_id","realuser_id":"real_456_id","user_id":"user_789_id"} aws_account_id=development aws_region= event=info_with_auth_n_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
 }
 
-func ExampleLogInfoWithAuthorizationTracing() {
+func ExampleLogger_Info_withAuthorizationTracing() {
 	config := getExampleLoggerConfig("INFO")
 	logger := log.NewLogger(config)
 

@@ -7,7 +7,7 @@ import (
 	"github.com/cultureamp/ca-go/log"
 )
 
-func ExampleLogInfoWithGlamplifyRequestFieldsFromCtx() {
+func ExampleLogger_Info_withGlamplifyRequestFieldsFromCtx() {
 	logger := getGlamplifyExtensionExampleLogger("INFO")
 
 	// Log with no context
