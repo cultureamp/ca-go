@@ -52,6 +52,16 @@ func NewLogger(config *Config) *standardLogger {
 					}
 					return fmt.Sprintf("event=\"%s\"", i)
 				},
+				FormatTimestamp: func(i interface{}) string {
+					if i == nil {
+						return "nil"
+					}
+					timeString, ok := i.(string)
+					if !ok {
+						return "nil"
+					}
+					return timeString
+				},
 			}
 		}
 	}
