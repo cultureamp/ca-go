@@ -1,7 +1,6 @@
 package env
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,7 +11,7 @@ func TestNewSettings(t *testing.T) {
 	assert.NotNil(t, settings)
 }
 
-func TestGlobalSettings(t *testing.T) {
+func TestCommonSettings(t *testing.T) {
 	t.Setenv(AppNameEnv, "ca-go-unit-tests")
 	t.Setenv(AppVerEnv, "1.2.3")
 	t.Setenv(AppEnvironmentEnv, "local")
@@ -103,36 +102,34 @@ func TestSentrySettings(t *testing.T) {
 func TestSettingsHelpers(t *testing.T) {
 	t.Setenv(AppEnvironmentEnv, "production")
 	settings := newSettings()
-	isProd := settings.isProduction()
+	isProd := settings.IsProduction()
 	assert.True(t, isProd)
 
 	t.Setenv(AppEnvironmentEnv, "dev")
 	settings = newSettings()
-	isProd = settings.isProduction()
+	isProd = settings.IsProduction()
 	assert.False(t, isProd)
 }
 
 func Test_Settings_Env_IsAws_IsLocal(t *testing.T) {
-	defer os.Unsetenv(AppFarmEnv)
-
 	t.Setenv(AppFarmEnv, "local")
 	settings := newSettings()
 	assert.NotNil(t, settings)
 	assert.Equal(t, "local", settings.Farm)
-	assert.True(t, settings.isRunningLocal())
-	assert.False(t, settings.isRunningInAWS())
+	assert.True(t, settings.IsRunningLocal())
+	assert.False(t, settings.IsRunningInAWS())
 
 	t.Setenv(AppFarmEnv, "falcon")
 	settings = newSettings()
 	assert.NotNil(t, settings)
 	assert.Equal(t, "falcon", settings.Farm)
-	assert.False(t, settings.isRunningLocal())
-	assert.True(t, settings.isRunningInAWS())
+	assert.False(t, settings.IsRunningLocal())
+	assert.True(t, settings.IsRunningInAWS())
 
 	t.Setenv(AppFarmEnv, "production")
 	settings = newSettings()
 	assert.NotNil(t, settings)
 	assert.Equal(t, "production", settings.Farm)
-	assert.False(t, settings.isRunningLocal())
-	assert.True(t, settings.isRunningInAWS())
+	assert.False(t, settings.IsRunningLocal())
+	assert.True(t, settings.IsRunningInAWS())
 }

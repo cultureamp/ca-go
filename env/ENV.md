@@ -7,7 +7,7 @@ There are no new settings to create or pass around, instead there is a singleton
 The env package provides access to many of the common field required for logging in line with our [logging standard](https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3114598406/Logging+Standard).
 However, the [log](../log) package will add these fields by default, to avoid duplicating fields please see the documentation for the [log](../log) package [here](../log/LOGGER.md)
 
-Note: The env package does NOT support redacting, so be mindful about logging any sensitive setting information.
+__Note__: The env package does NOT support redacting, so be mindful about logging any sensitive setting information.
 
 ## Environment Variables
 

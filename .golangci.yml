@@ -148,21 +148,22 @@ linters-settings:
         allow:
           - $gostd
           - github.com/aws
+          - github.com/caarlos0/env/v10
           - github.com/cultureamp
-          - github.com/google
-          - github.com/go-errors
           - github.com/getsentry
+          - github.com/google
+          - github.com/golang-jwt
+          - github.com/go-errors
           - github.com/hashicorp
           - github.com/launchdarkly
+          - github.com/lestrrat-go
           - github.com/rs/zerolog
           - github.com/segmentio
-          - github.com/lestrrat-go
-          - github.com/golang-jwt
           # not sure about these below
-          - github.com/IBM/sarama 
-          - github.com/xdg-go/scram
-          - github.com/kelseyhightower/envconfig
           - github.com/cenkalti/backoff
+          - github.com/IBM/sarama
+          - github.com/kelseyhightower/envconfig
+          - github.com/xdg-go/scram
         # Packages that are not allowed where the value is a suggestion.
         deny:
           - pkg: "github.com/sirupsen/logrus"
@@ -262,3 +263,7 @@ issues:
     - path: env/settings.go
       linters:
         - tagliatelle
+
+    - path: env/package.go
+      linters:
+        - interfacebloat
