@@ -263,7 +263,3 @@ issues:
     - path: env/settings.go
       linters:
         - tagliatelle
-
-    - path: env/package.go
-      linters:
-        - interfacebloat

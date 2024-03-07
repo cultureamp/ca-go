@@ -97,9 +97,9 @@ func TestMockPackageLevelMethods(t *testing.T) {
 	mock.On("GetAppEnv").Return("abc")
 
 	// 2. override the package level DefaultAWSSecrets.Client with your mock
-	oldSettings := env.DefaultSettings
-	defer func() { env.DefaultSettings = oldSettings }()
-	env.DefaultSettings = mock
+	oldSettings := env.DefaultCommonSettings
+	defer func() { env.DefaultCommonSettings = oldSettings }()
+	env.DefaultCommonSettings = mock
 
 	// 3. call the package methods which will call you mock
 	app := env.AppEnv()
