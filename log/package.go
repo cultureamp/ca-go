@@ -1,5 +1,11 @@
 package log
 
+import (
+	"time"
+
+	"github.com/rs/zerolog"
+)
+
 type Logger interface {
 	Debug(event string) *Property
 	Info(event string) *Property
@@ -15,6 +21,13 @@ func getInstance() *standardLogger {
 	setGlobalLogger()
 	config := NewLoggerConfig()
 	return NewLogger(config)
+}
+
+func setGlobalLogger() {
+	zerolog.TimeFieldFormat = time.RFC3339
+	zerolog.MessageFieldName = "details"
+	zerolog.LevelFieldName = "severity"
+	zerolog.DurationFieldInteger = true
 }
 
 // Debug starts a new message with debug level.

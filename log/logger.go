@@ -1,11 +1,6 @@
 package log
 
 import (
-	"fmt"
-	"io"
-	"os"
-	"time"
-
 	"github.com/rs/zerolog"
 )
 
@@ -16,55 +11,8 @@ type standardLogger struct {
 }
 
 func NewLogger(config *Config) *standardLogger {
-	var lvl zerolog.Level
-	switch config.LogLevel {
-	case "DEBUG":
-		lvl = zerolog.DebugLevel
-	case "WARN":
-		lvl = zerolog.WarnLevel
-	case "ERROR":
-		lvl = zerolog.ErrorLevel
-	case "FATAL":
-		lvl = zerolog.FatalLevel
-	case "PANIC":
-		lvl = zerolog.PanicLevel
-	default:
-		lvl = zerolog.InfoLevel
-	}
-
-	// Default to Stdout, but if running in QuietMode then set the logger to silently NoOp
-	var writer io.Writer = os.Stdout
-	if config.Quiet {
-		writer = io.Discard
-	}
-
-	if config.isLocal() {
-		// NOTE: only allow ConsoleWriter to be configured if we are NOT production
-		// as the ConsoleWriter is NOT performant and should just be used for local only
-		if config.ConsoleWriter {
-			writer = zerolog.ConsoleWriter{
-				Out:        writer,
-				TimeFormat: time.RFC3339,
-				NoColor:    !config.ConsoleColour,
-				FormatMessage: func(i interface{}) string {
-					if i == nil {
-						return ""
-					}
-					return fmt.Sprintf("event=\"%s\"", i)
-				},
-				FormatTimestamp: func(i interface{}) string {
-					if i == nil {
-						return "nil"
-					}
-					timeString, ok := i.(string)
-					if !ok {
-						return "nil"
-					}
-					return timeString
-				},
-			}
-		}
-	}
+	lvl := config.severityToLevel()
+	writer := config.getWriter()
 
 	impl := zerolog.
 		New(writer).
@@ -85,13 +33,6 @@ func NewLogger(config *Config) *standardLogger {
 		impl:   impl,
 		config: config,
 	}
-}
-
-func setGlobalLogger() {
-	zerolog.TimeFieldFormat = time.RFC3339
-	zerolog.MessageFieldName = "details"
-	zerolog.LevelFieldName = "severity"
-	zerolog.DurationFieldInteger = true
 }
 
 // Debug starts a new message with debug level.
