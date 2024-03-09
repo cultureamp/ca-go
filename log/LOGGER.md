@@ -23,7 +23,20 @@ You can OPTIONALLY set these:
 
 By default the logger will not emit any output when running inside a test. You can override this behaviour by setting the `QUIET_MODE` environment variable to "false".
 
-When running localling you can also set the `CONSOLE_WRITER` to "true" to change from json to key-value colour coded output. Note: Never run with the `CONSOLE_WRITER` set to "true" in production.
+When running localling you can also set the `CONSOLE_WRITER` to "true" to change from json to key-value output. If you want coloured console output you can also set 'CONSOLE_COLOUR' to "true".
+
+__Note__: Never run with the `CONSOLE_WRITER` set to "true" in production.
+
+## Extensions
+
+The log package includes some extensions for common groups:
+- WithRequestTracing(req *http.Request)
+- WithAuthenticatedUserTracing(auth *AuthPayload)
+- WithAuthorizationTracing(req *http.Request)
+- WithSystemTracing()
+- WithGlamplifyRequestFieldsFromCtx(ctx context.Context)
+
+Each of these will create the correct sub-doc ("system", "tracing" etc.) and print a number of standard properties. The use of these extensions is highly encouraged.
 
 ## Managing Loggers Yourself
 

@@ -20,6 +20,7 @@ func TestFieldTypes(t *testing.T) {
 		Int("int", 1).
 		Bool("bool", true).
 		Duration("dur", duration).
+		Time("time", then).
 		IPAddr("ipaddr", ipv4).
 		UUID("uuid", u)
 
