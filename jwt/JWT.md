@@ -8,10 +8,7 @@ To use the package level methods `Encode` and `Decode` you MUST set these:
 
 - AUTH_PUBLIC_JWK_KEYS = A JSON string containing the well known public keys for Decoding a token.
 - AUTH_PRIVATE_KEY = The private RSA PEM key used for Encoding a token.
-
-You can SHOULD also set:
-
-- AUTH_PRIVATE_KEY_ID = The default "kid" to add to the token heading when Encoding (defaults to "web-gateway")
+- AUTH_PRIVATE_KEY_ID = The "kid" (key_id) header to add to the token heading when Encoding.
 
 ## Examples
 ```

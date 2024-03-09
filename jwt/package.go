@@ -15,10 +15,15 @@ var (
 
 func getDecoderInstance() *JwtDecoder {
 	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
-	if jwkKeys == "" && isTestMode() {
-		// test key only, not the production keys
-		b, _ := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
-		jwkKeys = string(b)
+
+	if isTestMode() {
+		// If we are running inside a test, the make sure the DefaultJwtDecoder package level
+		// instance doesn't panic with missing values.
+		if jwkKeys == "" {
+			// test key only, not the production keys
+			b, _ := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
+			jwkKeys = string(b)
+		}
 	}
 
 	decoder, err := NewJwtDecoder(jwkKeys)
@@ -32,15 +37,20 @@ func getDecoderInstance() *JwtDecoder {
 
 func getEncoderInstance() *JwtEncoder {
 	keyId := os.Getenv("AUTH_PRIVATE_KEY_ID")
-	if keyId == "" {
-		keyId = webGatewayKid
-	}
-
 	privKey := os.Getenv("AUTH_PRIVATE_KEY")
-	if privKey == "" && isTestMode() {
-		// test key only, not the production key
-		b, _ := os.ReadFile(filepath.Clean("./testKeys/jwt-rsa256-test-webgateway.key"))
-		privKey = string(b)
+
+	if isTestMode() {
+		// If we are running inside a test, the make sure the DefaultJwtEncoder package level
+		// instance doesn't panic with missing values.
+		if keyId == "" {
+			keyId = webGatewayKid
+		}
+
+		if privKey == "" {
+			// test key only, not the production key
+			b, _ := os.ReadFile(filepath.Clean("./testKeys/jwt-rsa256-test-webgateway.key"))
+			privKey = string(b)
+		}
 	}
 
 	encoder, err := NewJwtEncoder(privKey, keyId)
