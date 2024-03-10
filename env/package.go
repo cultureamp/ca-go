@@ -23,7 +23,10 @@ var DefaultCommonSettings CommonSettings = getCommonInstance()
 
 func getCommonInstance() *commonSettings {
 	if isTestMode() {
-		os.Setenv(AppNameEnv, "test-app")
+		err := os.Setenv(AppNameEnv, "test-app")
+		if err != nil {
+			panic(err)
+		}
 	}
 	return newCommonSettings()
 }
@@ -85,7 +88,10 @@ var DefaultAWSSettings AWSSettings = getAWSInstance()
 
 func getAWSInstance() *awsSettings {
 	if isTestMode() {
-		os.Setenv(AwsRegionEnv, "dev")
+		err := os.Setenv(AwsRegionEnv, "dev")
+		if err != nil {
+			panic(err)
+		}
 	}
 	return newAWSSettings()
 }
