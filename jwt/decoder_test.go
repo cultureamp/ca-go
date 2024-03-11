@@ -110,7 +110,7 @@ func TestDecoderDecodeAllClaims(t *testing.T) {
 		{
 			desc:            "Error 3: signed with EdDSA",
 			token:           "eyJhbGciOiJFZERTQSIsImtpZCI6ImVkZHNhIiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.ZjBuTNqC74M525ROjM1kRANBCb7JUjl6ko8dSD52S-Q_f5p7EaUM5TxCPg4rICvVWxF26B99EkVzNNhivcw9Dw",
-			expectedErrMsg:  "unexpected signing method",
+			expectedErrMsg:  "signing method EdDSA is invalid",
 			accountId:       "",
 			realUserId:      "",
 			effectiveUserId: "",

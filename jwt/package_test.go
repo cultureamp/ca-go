@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,6 +29,82 @@ func TestPackageEncodeDecode(t *testing.T) {
 	assert.Equal(t, "abc123", sc.AccountId)
 	assert.Equal(t, "xyz234", sc.RealUserId)
 	assert.Equal(t, "xyz345", sc.EffectiveUserId)
+}
+
+func TestPackageEncodeDecodeNotBeforeExpiryChecks(t *testing.T) {
+	now := time.Now()
+
+	expiry := now.Add(10 * time.Hour)
+	notBefore := now.Add(-10 * time.Hour)
+	okClaims := &StandardClaims{
+		AccountId:       "abc123",
+		RealUserId:      "xyz234",
+		EffectiveUserId: "xyz345",
+		ExpiresAt:       expiry,
+		NotBefore:       notBefore,
+	}
+
+	expiry = now.Add(-1 * time.Hour)
+	notBefore = now.Add(-10 * time.Hour)
+	expiryClaims := &StandardClaims{
+		AccountId:       "abc123",
+		RealUserId:      "xyz234",
+		EffectiveUserId: "xyz345",
+		ExpiresAt:       expiry,
+		NotBefore:       notBefore,
+	}
+
+	expiry = now.Add(10 * time.Hour)
+	notBefore = now.Add(1 * time.Hour)
+	notBeforeClaims := &StandardClaims{
+		AccountId:       "abc123",
+		RealUserId:      "xyz234",
+		EffectiveUserId: "xyz345",
+		ExpiresAt:       expiry,
+		NotBefore:       notBefore,
+	}
+
+	testCases := []struct {
+		desc                  string
+		claims                *StandardClaims
+		expectedDecoderErrMsg string
+	}{
+		{
+			desc:                  "Success 1: valid expiry and not before times",
+			claims:                okClaims,
+			expectedDecoderErrMsg: "",
+		},
+		{
+			desc:                  "Error 1: expired token",
+			claims:                expiryClaims,
+			expectedDecoderErrMsg: "token is expired",
+		},
+		{
+			desc:                  "Error 2: not available token",
+			claims:                notBeforeClaims,
+			expectedDecoderErrMsg: "token is not valid yet",
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			// Encode this claim
+			token, err := Encode(tC.claims)
+			assert.Nil(t, err)
+
+			// Decode it back again
+			sc, err := Decode(token)
+			if tC.expectedDecoderErrMsg == "" {
+				assert.Nil(t, err)
+				// check it matches
+				assert.Equal(t, "abc123", sc.AccountId)
+				assert.Equal(t, "xyz234", sc.RealUserId)
+				assert.Equal(t, "xyz345", sc.EffectiveUserId)
+			} else {
+				assert.NotNil(t, err)
+				assert.ErrorContains(t, err, tC.expectedDecoderErrMsg)
+			}
+		})
+	}
 }
 
 func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {

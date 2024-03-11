@@ -57,21 +57,27 @@ func (d *JwtDecoder) Decode(tokenString string) (*StandardClaims, error) {
 }
 
 func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwt.MapClaims, error) {
+	// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
+	validAlgs := []string{"RS256", "RS384", "RS512", "ES256", "ES384", "ES512"}
+
 	// sample token string in the form "header.payload.signature"
 	// eg. "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIiLCJuYmYiOjE0NDQ0Nzg0MDB9.u1riaD1rW97opCoAuRCTy4w58Br-Zk-bh7vLiRIsrpU"
 
 	// Eng Std: https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3253240053/JWT+Authentication
+
+	// Exp
 	// Expiry claim is currently MANDATORY, but until all producing services are reliably setting the Expiry claim,
 	// we MAY still accept verified JWTs with no Expiry claim.
-	// So:
-	// If the token includes an expiry claim, then the time is checked correctly and will return error if expired.
-	// If the token does not include an expiry claim then ignore and just test that verification is valid.
+	// Nbf
+	// NotBefore claim is currently MANDATORY, but until all producing services are reliably settings the NotBEfore claim,
+	// we MAY still accept verificed JWT's with no NotBefore claim.
 	token, err := jwt.Parse(
 		tokenString,
 		func(token *jwt.Token) (interface{}, error) {
 			return decoder.useCorrectPublicKey(token)
 		},
-		jwt.WithLeeway(10*time.Second), // as per the JWT eng std: clock skew set to 10 seconds
+		jwt.WithValidMethods(validAlgs), // only keys with these "alg's" will be considered
+		jwt.WithLeeway(10*time.Second),  // as per the JWT eng std: clock skew set to 10 seconds
 		// jwt.WithExpirationRequired(),	// add this if we want to enforce that tokens MUST have an expiry
 	)
 	if err != nil || !token.Valid {
