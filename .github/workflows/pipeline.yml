@@ -107,7 +107,7 @@ jobs:
         run: | # install required tooling
           go install github.com/boumenot/gocover-cobertura@v1.2.0
           go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@v2.5.0
-          
+
       - name: Run all tests
         run: |
           go test ./...
@@ -115,7 +115,7 @@ jobs:
       - name: Run coverage tests
         run: |
           go test -race -json -v -coverprofile=coverage.json -covermode atomic `go list ./... | grep -v \/x\/` 2>&1 | tee gotest.log | gotestfmt
-      
+
       - name: Convert go coverage to corbetura format
         run: gocover-cobertura -ignore-files test\*.go < coverage.json > coverage.xml
 
@@ -141,4 +141,3 @@ jobs:
 
       - name: Write to Job Summary
         run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
-        

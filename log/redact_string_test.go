@@ -61,4 +61,3 @@ func TestStringRedaction(t *testing.T) {
 		})
 	}
 }
-
