@@ -15,6 +15,9 @@ func TestPackageEncodeDecode(t *testing.T) {
 		AccountId:       "abc123",
 		RealUserId:      "xyz234",
 		EffectiveUserId: "xyz345",
+		Issuer:          "encoder-name",
+		Subject:         "test",
+		Audience:        []string{"decoder-name"},
 	}
 
 	// Encode this claim
@@ -40,6 +43,9 @@ func TestPackageEncodeDecodeNotBeforeExpiryChecks(t *testing.T) {
 		AccountId:       "abc123",
 		RealUserId:      "xyz234",
 		EffectiveUserId: "xyz345",
+		Issuer:          "encoder-name",
+		Subject:         "test",
+		Audience:        []string{"decoder-name"},
 		ExpiresAt:       expiry,
 		NotBefore:       notBefore,
 	}
@@ -50,6 +56,9 @@ func TestPackageEncodeDecodeNotBeforeExpiryChecks(t *testing.T) {
 		AccountId:       "abc123",
 		RealUserId:      "xyz234",
 		EffectiveUserId: "xyz345",
+		Issuer:          "encoder-name",
+		Subject:         "test",
+		Audience:        []string{"decoder-name"},
 		ExpiresAt:       expiry,
 		NotBefore:       notBefore,
 	}
@@ -60,6 +69,9 @@ func TestPackageEncodeDecodeNotBeforeExpiryChecks(t *testing.T) {
 		AccountId:       "abc123",
 		RealUserId:      "xyz234",
 		EffectiveUserId: "xyz345",
+		Issuer:          "encoder-name",
+		Subject:         "test",
+		Audience:        []string{"decoder-name"},
 		ExpiresAt:       expiry,
 		NotBefore:       notBefore,
 	}
@@ -99,6 +111,9 @@ func TestPackageEncodeDecodeNotBeforeExpiryChecks(t *testing.T) {
 				assert.Equal(t, "abc123", sc.AccountId)
 				assert.Equal(t, "xyz234", sc.RealUserId)
 				assert.Equal(t, "xyz345", sc.EffectiveUserId)
+				assert.Equal(t, "encoder-name", sc.Issuer)
+				assert.Equal(t, "test", sc.Subject)
+				assert.Equal(t, []string{"decoder-name"}, sc.Audience)
 			} else {
 				assert.NotNil(t, err)
 				assert.ErrorContains(t, err, tC.expectedDecoderErrMsg)
@@ -112,6 +127,9 @@ func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 		AccountId:       "abc123",
 		RealUserId:      "xyz234",
 		EffectiveUserId: "xyz345",
+		Issuer:          "encoder-name",
+		Subject:         "test",
+		Audience:        []string{"decoder-name"},
 	}
 
 	testCases := []struct {
@@ -168,6 +186,9 @@ func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 				assert.Equal(t, "abc123", sc.AccountId)
 				assert.Equal(t, "xyz234", sc.RealUserId)
 				assert.Equal(t, "xyz345", sc.EffectiveUserId)
+				assert.Equal(t, "encoder-name", sc.Issuer)
+				assert.Equal(t, "test", sc.Subject)
+				assert.Equal(t, []string{"decoder-name"}, sc.Audience)
 			} else {
 				assert.NotNil(t, err)
 				assert.ErrorContains(t, err, tC.expectedDecoderErrMsg)

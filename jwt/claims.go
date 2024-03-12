@@ -14,16 +14,18 @@ type StandardClaims struct {
 
 	// Optional claims
 
+	// the `iss` (Issuer) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
+	Issuer string
+	// the `sub` (Subject) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2
+	Subject string
+	// the `sub` (Subject) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3
+	Audience []string
 	// the `exp` (Expiration Time) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4
 	ExpiresAt time.Time // default on Encode is +1 hour from now
-	// the `iat` (Issued At) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6
-	IssuedAt time.Time // default on Encode is "now"
 	// the `nbf` (Not Before) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.5
 	NotBefore time.Time // default on Encode is "now"
-	// the `iss` (Issuer) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
-	Issuer string // default on Encode is "ca-jwt-go"
-	// the `sub` (Subject) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2
-	Subject string // default on Encode is "standard"
+	// the `iat` (Issued At) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6
+	IssuedAt time.Time // default on Encode is "now"
 }
 
 type encoderStandardClaims struct {
@@ -39,11 +41,13 @@ func newStandardClaims(claims jwt.MapClaims) *StandardClaims {
 	std.AccountId = std.getCustomString(claims, accountIDClaim)
 	std.RealUserId = std.getCustomString(claims, realUserIDClaim)
 	std.EffectiveUserId = std.getCustomString(claims, effectiveUserIDClaim)
+
+	std.Issuer = std.getString(claims.GetIssuer)
+	std.Subject = std.getString(claims.GetSubject)
+	std.Audience = std.getStringList(claims.GetAudience)
 	std.ExpiresAt = std.getTime(claims.GetExpirationTime)
 	std.NotBefore = std.getTime(claims.GetNotBefore)
 	std.IssuedAt = std.getTime(claims.GetIssuedAt)
-	std.Issuer = std.getString(claims.GetIssuer)
-	std.Subject = std.getString(claims.GetSubject)
 
 	return std
 }
@@ -67,6 +71,15 @@ func (sc *StandardClaims) getString(f func() (string, error)) string {
 	return s
 }
 
+func (sc *StandardClaims) getStringList(f func() (jwt.ClaimStrings, error)) []string {
+	s, err := f()
+	if err != nil {
+		return []string{""}
+	}
+
+	return s
+}
+
 func (sc *StandardClaims) getCustomString(claims jwt.MapClaims, key string) string {
 	val, ok := claims[key].(string)
 	if !ok {
@@ -83,17 +96,13 @@ func newEncoderClaims(sc *StandardClaims) *encoderStandardClaims {
 		RealUserID:      sc.RealUserId,
 	}
 
+	claims.Issuer = sc.Issuer
+	claims.Subject = sc.Subject
+	claims.Audience = sc.Audience
 	now := time.Now()
-	claims.IssuedAt = claims.correctTime(sc.IssuedAt, now)
+	claims.ExpiresAt = claims.correctTime(sc.ExpiresAt, now.Add(10*time.Minute))
 	claims.NotBefore = claims.correctTime(sc.NotBefore, now)
-	claims.ExpiresAt = claims.correctTime(sc.ExpiresAt, now.Add(1*time.Hour))
-
-	if sc.Issuer == "" {
-		claims.Issuer = "ca-go/jwt"
-	}
-	if sc.Subject == "" {
-		claims.Subject = "standard"
-	}
+	claims.IssuedAt = claims.correctTime(sc.IssuedAt, now)
 
 	return claims
 }

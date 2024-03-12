@@ -18,6 +18,9 @@ func Example() {
 		AccountId:       "abc123",
 		RealUserId:      "xyz234",
 		EffectiveUserId: "xyz345",
+		Issuer:          "encoder-name",
+		Subject:         "test",
+		Audience:        []string{"decoder-name"},
 		ExpiresAt:       time.Unix(2211797532, 0), //  2/2/2040
 		IssuedAt:        time.Unix(1580608922, 0), // 1/1/2020
 		NotBefore:       time.Unix(1580608922, 0), // 1/1/2020
@@ -29,7 +32,13 @@ func Example() {
 
 	// Decode it back again using the key that matches the kid header using the default JWKS JSON keys
 	claim, err := jwt.Decode(token)
-	fmt.Printf("The decoded token is '%s %s %s %s' (err='%+v')\n", claim.AccountId, claim.RealUserId, claim.EffectiveUserId, claim.ExpiresAt.UTC().Format(time.RFC3339), err)
+	fmt.Printf(
+		"The decoded token is '%s %s %s %s %v %s %s' (err='%+v')\n",
+		claim.AccountId, claim.RealUserId, claim.EffectiveUserId,
+		claim.Issuer, claim.Subject, claim.Audience,
+		claim.ExpiresAt.UTC().Format(time.RFC3339),
+		err,
+	)
 
 	// To create a specific instance of the encoder and decoder you can use the following
 	privateKeyBytes, err := os.ReadFile(filepath.Clean("./testKeys/jwt-rsa256-test-webgateway.key"))
@@ -42,11 +51,17 @@ func Example() {
 	decoder, err := jwt.NewJwtDecoder(string(b))
 
 	claim, err = decoder.Decode(token)
-	fmt.Printf("The decoded token is '%s %s %s %s' (err='%+v')\n", claim.AccountId, claim.RealUserId, claim.EffectiveUserId, claim.ExpiresAt.UTC().Format(time.RFC3339), err)
+	fmt.Printf(
+		"The decoded token is '%s %s %s %s %v %s %s' (err='%+v')\n",
+		claim.AccountId, claim.RealUserId, claim.EffectiveUserId,
+		claim.Issuer, claim.Subject, claim.Audience,
+		claim.ExpiresAt.UTC().Format(time.RFC3339),
+		err,
+	)
 
 	// Output:
-	// The encoded token is 'eyJhbGciOiJSUzUxMiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.B4yOj6cwkICFgIlqOCxV2nIrGS_u8O2zk22uqJW40dpmm0TD3rH57Fjq_TwNSIpx84tIfRUhA-FHfHu-ci0epurvJBcQ_nOG1IfRlxOjd1goZjxPPplddwelECQGCdAyqkoGHXy8YgTe0ZvupPijfRIVmgpJcznmQphqLIuIJhcFGnoruhp4NAxQfqyONQf1S5h2H57-vvmXnQk5tpdocXYC-MP3jFtmNukmdUWpsFlpr2Fclgy3d4opf2fDQzdC51vBpVl1DjKEngjGULtRo4jDy7VRKvrdHhNX25zeUQSsKyetlWARnn-O2RT_d7kYAbBBy195kqtplZ47QQjhptW8WBEfS8X0-wjOHM04gdW3p1iAJ4A88wYywy1T75zUMTH2iPiIHRilzwwPj5j4tWPiUCj__i8tQvLXIZVIIpV7jdP1yP9Kp_Vb2WV-DKy9osiImZotc_kAWxl5Jq6xqhKNAnRirWrwk1q_Z7KmPmnswC84Ao6h3Lqf728pR5NVQzFB2t5vWvFk-ocAx0gKNCGF0fug4PUS5t_M5WecFkLOrAx68fvRLfr7BA1JFAP6wPu4Alz0HbtixD1gUC6bHO4A8g7pb0lWoLE0a4hKkPnvrQjtV5ccjpVIj-4sgQLr9zIpYnPwxbzGg13DRGBPySKic7qrD4nBEktcep01q50' (err='<nil>')
-	// The decoded token is 'abc123 xyz234 xyz345 2040-02-02T12:12:12Z' (err='<nil>')
-	// The encoded token is 'eyJhbGciOiJSUzUxMiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.B4yOj6cwkICFgIlqOCxV2nIrGS_u8O2zk22uqJW40dpmm0TD3rH57Fjq_TwNSIpx84tIfRUhA-FHfHu-ci0epurvJBcQ_nOG1IfRlxOjd1goZjxPPplddwelECQGCdAyqkoGHXy8YgTe0ZvupPijfRIVmgpJcznmQphqLIuIJhcFGnoruhp4NAxQfqyONQf1S5h2H57-vvmXnQk5tpdocXYC-MP3jFtmNukmdUWpsFlpr2Fclgy3d4opf2fDQzdC51vBpVl1DjKEngjGULtRo4jDy7VRKvrdHhNX25zeUQSsKyetlWARnn-O2RT_d7kYAbBBy195kqtplZ47QQjhptW8WBEfS8X0-wjOHM04gdW3p1iAJ4A88wYywy1T75zUMTH2iPiIHRilzwwPj5j4tWPiUCj__i8tQvLXIZVIIpV7jdP1yP9Kp_Vb2WV-DKy9osiImZotc_kAWxl5Jq6xqhKNAnRirWrwk1q_Z7KmPmnswC84Ao6h3Lqf728pR5NVQzFB2t5vWvFk-ocAx0gKNCGF0fug4PUS5t_M5WecFkLOrAx68fvRLfr7BA1JFAP6wPu4Alz0HbtixD1gUC6bHO4A8g7pb0lWoLE0a4hKkPnvrQjtV5ccjpVIj-4sgQLr9zIpYnPwxbzGg13DRGBPySKic7qrD4nBEktcep01q50' (err='<nil>')
-	// The decoded token is 'abc123 xyz234 xyz345 2040-02-02T12:12:12Z' (err='<nil>')
+	// The encoded token is 'eyJhbGciOiJSUzUxMiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiZW5jb2Rlci1uYW1lIiwic3ViIjoidGVzdCIsImF1ZCI6WyJkZWNvZGVyLW5hbWUiXSwiZXhwIjoyMjExNzk3NTMyLCJuYmYiOjE1ODA2MDg5MjIsImlhdCI6MTU4MDYwODkyMn0.CH_UIzR_W1275ffAUES0EzsHNRYZyBbrLsKQBbfJ6DpsLW3HAxH5RSjzXL_yCGTrbcHytTYLIZKhN37lC9BZdhkxZtR9bMqqGu4K0zHNtztoC5u1P7kc81FX_dPi9aiR7B4hruSfOFHoWM1A_D_i55qPAJlB0LRFf4nwX9FIWt2IIMwSGUcxfjFYE7MKTlzP3heCYNVzIxLD5g5gcoIyttmltiD_bBvObvExuDsJSlxwrAYvKc2cpIsh1MZ1x16uhG-du2_YdfSK6Ykd6aAvVpq3IGkb99SKS3xUsCV3JkSDRIcWMKzPhEh_huDV4Z3AA3jA4sWvR20WOqzaW3dRAoYIYL7kP92PrXX8m0EtLPAlX471POgNREWqdmxrbdkZcYNHqrmHcAsMRPMXcZ15tH8_-jIDUvGpNbcetgmQRjcpLtyniN_Ag4kGoPhYzGLx6122DEBrYf0Os5TQcRAzAoSF1n_43hsfmuGw00ey3ye5siJle7LN8EHUAXjegrpC7WTFF_eIsOtkuXTJx6OMmuggRvlMaCughYP6IvoIXD7ME0DnzmuvANID9yo-X8DJpMiWbZ2_edCE7dmuqxIZOqJmTolswQs1p0hzFyaX5SrEgcGjHxwTpuCYfaQ7qrbz2D_OQfXbglbk4e8Hm63bGmmz9bKV4KDBVPJO1zOGLtM' (err='<nil>')
+	// The decoded token is 'abc123 xyz234 xyz345 encoder-name test [decoder-name] 2040-02-02T12:12:12Z' (err='<nil>')
+	// The encoded token is 'eyJhbGciOiJSUzUxMiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiZW5jb2Rlci1uYW1lIiwic3ViIjoidGVzdCIsImF1ZCI6WyJkZWNvZGVyLW5hbWUiXSwiZXhwIjoyMjExNzk3NTMyLCJuYmYiOjE1ODA2MDg5MjIsImlhdCI6MTU4MDYwODkyMn0.CH_UIzR_W1275ffAUES0EzsHNRYZyBbrLsKQBbfJ6DpsLW3HAxH5RSjzXL_yCGTrbcHytTYLIZKhN37lC9BZdhkxZtR9bMqqGu4K0zHNtztoC5u1P7kc81FX_dPi9aiR7B4hruSfOFHoWM1A_D_i55qPAJlB0LRFf4nwX9FIWt2IIMwSGUcxfjFYE7MKTlzP3heCYNVzIxLD5g5gcoIyttmltiD_bBvObvExuDsJSlxwrAYvKc2cpIsh1MZ1x16uhG-du2_YdfSK6Ykd6aAvVpq3IGkb99SKS3xUsCV3JkSDRIcWMKzPhEh_huDV4Z3AA3jA4sWvR20WOqzaW3dRAoYIYL7kP92PrXX8m0EtLPAlX471POgNREWqdmxrbdkZcYNHqrmHcAsMRPMXcZ15tH8_-jIDUvGpNbcetgmQRjcpLtyniN_Ag4kGoPhYzGLx6122DEBrYf0Os5TQcRAzAoSF1n_43hsfmuGw00ey3ye5siJle7LN8EHUAXjegrpC7WTFF_eIsOtkuXTJx6OMmuggRvlMaCughYP6IvoIXD7ME0DnzmuvANID9yo-X8DJpMiWbZ2_edCE7dmuqxIZOqJmTolswQs1p0hzFyaX5SrEgcGjHxwTpuCYfaQ7qrbz2D_OQfXbglbk4e8Hm63bGmmz9bKV4KDBVPJO1zOGLtM' (err='<nil>')
+	// The decoded token is 'abc123 xyz234 xyz345 encoder-name test [decoder-name] 2040-02-02T12:12:12Z' (err='<nil>')
 }

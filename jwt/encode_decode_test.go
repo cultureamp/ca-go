@@ -27,9 +27,12 @@ func TestEncodeDecode(t *testing.T) {
 		AccountId:       "abc123",
 		RealUserId:      "xyz234",
 		EffectiveUserId: "xyz345",
+		Issuer:          "encoder-name",
+		Subject:         "test",
+		Audience:        []string{"decoder-name"},
 		ExpiresAt:       time.Unix(2211797532, 0), //  2/2/2040
-		IssuedAt:        time.Unix(1580608922, 0), // 1/1/2020
 		NotBefore:       time.Unix(1580608922, 0), // 1/1/2020
+		IssuedAt:        time.Unix(1580608922, 0), // 1/1/2020
 	}
 
 	testCases := []struct {
@@ -100,6 +103,9 @@ func TestEncodeDecode(t *testing.T) {
 			assert.Equal(t, claims.AccountId, actual.AccountId)
 			assert.Equal(t, claims.RealUserId, actual.RealUserId)
 			assert.Equal(t, claims.EffectiveUserId, actual.EffectiveUserId)
+			assert.Equal(t, claims.Issuer, actual.Issuer)
+			assert.Equal(t, claims.Subject, actual.Subject)
+			assert.Equal(t, claims.Audience, actual.Audience)
 			assert.Equal(t, claims.ExpiresAt.Year(), actual.ExpiresAt.Year())
 		})
 	}
