@@ -19,7 +19,8 @@ func TestMockedPackageLogger(t *testing.T) {
 	mockLogger := new(mockLogger)
 	log.DefaultLogger = mockLogger
 
-	mockLogger.On("Debug", "should_call_mock").Return(log.SubDoc())
+	nilProperty := &log.Property{}
+	mockLogger.On("Debug", "should_call_mock").Return(nilProperty)
 
 	log.Debug("should_call_mock").
 		Properties(log.SubDoc().

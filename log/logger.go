@@ -40,7 +40,7 @@ func NewLogger(config *Config) *standardLogger {
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Debug(event string) *Property {
 	le := l.impl.Debug().Str("event", toSnakeCase(event))
-	return &Property{le}
+	return newLoggerProperty(le)
 }
 
 // Info starts a new message with info level.
@@ -48,7 +48,7 @@ func (l *standardLogger) Debug(event string) *Property {
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Info(event string) *Property {
 	le := l.impl.Info().Str("event", toSnakeCase(event))
-	return &Property{le}
+	return newLoggerProperty(le)
 }
 
 // Warn starts a new message with warn level.
@@ -56,7 +56,7 @@ func (l *standardLogger) Info(event string) *Property {
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Warn(event string) *Property {
 	le := l.impl.Warn().Str("event", toSnakeCase(event))
-	return &Property{le}
+	return newLoggerProperty(le)
 }
 
 // Error starts a new message with error level.
@@ -66,8 +66,8 @@ func (l *standardLogger) Error(event string, err error) *Property {
 	le := l.impl.Error().
 		Err(err).
 		Str("event", toSnakeCase(event))
-	fields := &Property{le}
-	return fields.withFullStack()
+	props := newLoggerProperty(le)
+	return props.withFullStack()
 }
 
 // Fatal starts a new message with fatal level. The os.Exit(1) function
@@ -76,7 +76,7 @@ func (l *standardLogger) Error(event string, err error) *Property {
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Fatal(event string, err error) *Property {
 	le := l.impl.Fatal().Err(err).Str("event", toSnakeCase(event))
-	return &Property{le}
+	return newLoggerProperty(le)
 }
 
 // Panic starts a new message with panic level. The panic() function
@@ -85,5 +85,5 @@ func (l *standardLogger) Fatal(event string, err error) *Property {
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Panic(event string, err error) *Property {
 	le := l.impl.Panic().Err(err).Str("event", toSnakeCase(event))
-	return &Property{le}
+	return newLoggerProperty(le)
 }
