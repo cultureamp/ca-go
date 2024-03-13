@@ -46,10 +46,10 @@ func (lf *Property) WithGlamplifyRequestFieldsFromCtx(ctx context.Context) *Prop
 		return lf
 	}
 
-	return lf.doc("authentication", SubDoc().
+	return lf.doc("authentication", Add().
 		Str("account_id", rsFields.CustomerAggregateID).
 		Str("user_id", rsFields.UserAggregateID),
-	).doc("tracing", SubDoc().
+	).doc("tracing", Add().
 		Str("trace_id", rsFields.TraceID).
 		Str("request_id", rsFields.RequestID).
 		Str("correlation_id", rsFields.CorrelationID),
