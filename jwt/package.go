@@ -8,32 +8,20 @@ import (
 	"strings"
 )
 
-var (
-	DefaultJwtDecoder *JwtDecoder = getDecoderInstance()
-	DefaultJwtEncoder *JwtEncoder = getEncoderInstance()
-)
-
-func getDecoderInstance() *JwtDecoder {
-	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
-
-	if isTestMode() {
-		// If we are running inside a test, the make sure the DefaultJwtDecoder package level
-		// instance doesn't panic with missing values.
-		if jwkKeys == "" {
-			// test key only, not the production keys
-			b, _ := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
-			jwkKeys = string(b)
-		}
-	}
-
-	decoder, err := NewJwtDecoder(jwkKeys)
-	if err != nil {
-		err := fmt.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
-		panic(err)
-	}
-
-	return decoder
+// Encoder interface allows for mocking of the Encoder.
+type Encoder interface {
+	Encode(claims *StandardClaims) (string, error)
 }
+
+// Decoder interface allows for mocking of the Decoder.
+type Decoder interface {
+	Decode(tokenString string) (*StandardClaims, error)
+}
+
+var (
+	DefaultJwtEncoder Encoder = getEncoderInstance()
+	DefaultJwtDecoder Decoder = getDecoderInstance()
+)
 
 func getEncoderInstance() *JwtEncoder {
 	keyId := os.Getenv("AUTH_PRIVATE_KEY_ID")
@@ -60,6 +48,28 @@ func getEncoderInstance() *JwtEncoder {
 	}
 
 	return encoder
+}
+
+func getDecoderInstance() *JwtDecoder {
+	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
+
+	if isTestMode() {
+		// If we are running inside a test, the make sure the DefaultJwtDecoder package level
+		// instance doesn't panic with missing values.
+		if jwkKeys == "" {
+			// test key only, not the production keys
+			b, _ := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
+			jwkKeys = string(b)
+		}
+	}
+
+	decoder, err := NewJwtDecoder(jwkKeys)
+	if err != nil {
+		err := fmt.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
+		panic(err)
+	}
+
+	return decoder
 }
 
 // Decode a jwt token string and return the Standard Culture Amp Claims.
