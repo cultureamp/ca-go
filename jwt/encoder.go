@@ -61,7 +61,7 @@ func NewJwtEncoder(fetchPrivateKey EncoderKeyRetriever, options ...JwtEncoderOpt
 	// call the fetchPrivateKey func to make sure the private key is valid
 	_, err := encoder.getPrivateKey()
 	if err != nil {
-		return nil, fmt.Errorf("failed to load private key: %v", err)
+		return nil, fmt.Errorf("failed to load private key: %w", err)
 	}
 
 	return encoder, nil
@@ -103,7 +103,12 @@ func (e *JwtEncoder) getPrivateKey() (*encoderPrivateKey, error) {
 	// First chech cache, if its there then great, use it!
 	obj, found := e.cache.Get(privCacheKey)
 	if found {
-		return obj.(*encoderPrivateKey), nil
+		key, ok := obj.(*encoderPrivateKey)
+		if !ok {
+			return nil, fmt.Errorf("internal error: cache key does not point to private key")
+		}
+
+		return key, nil
 	}
 
 	// The cache has expired the key

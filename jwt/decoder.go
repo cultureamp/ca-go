@@ -57,7 +57,7 @@ func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) 
 	// call the getJWKS func to make sure its valid and we can parse the JWKS
 	_, err := decoder.getJWKSet()
 	if err != nil {
-		return nil, fmt.Errorf("failed to load jwks: %v", err)
+		return nil, fmt.Errorf("failed to load jwks: %w", err)
 	}
 
 	return decoder, nil
@@ -139,7 +139,7 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	// check cache and possibly fetch new JWKS
 	jwkSet, err := d.getJWKSet()
 	if err != nil {
-		return nil, fmt.Errorf("failed to load jwks: %v", err)
+		return nil, fmt.Errorf("failed to load jwks: %w", err)
 	}
 
 	key, found := jwkSet.LookupKeyID(kid)
@@ -171,7 +171,12 @@ func (d *JwtDecoder) getJWKSet() (jwk.Set, error) {
 	// First chech cache, if its there then great, use it!
 	obj, found := d.cache.Get(jwksCacheKey)
 	if found {
-		return obj.(jwk.Set), nil
+		jwks, ok := obj.(jwk.Set)
+		if !ok {
+			return nil, fmt.Errorf("internal error: cache key does not point to jwk.Set")
+		}
+
+		return jwks, nil
 	}
 
 	// The cache has expired the keys
