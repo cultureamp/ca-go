@@ -67,7 +67,7 @@ func (l *standardLogger) Error(event string, err error) *Property {
 		Err(err).
 		Str("event", toSnakeCase(event))
 	props := newLoggerProperty(le)
-	return props.withFullStack()
+	return props.withFullStack().WithSystemTracing()
 }
 
 // Fatal starts a new message with fatal level. The os.Exit(1) function
@@ -76,7 +76,7 @@ func (l *standardLogger) Error(event string, err error) *Property {
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Fatal(event string, err error) *Property {
 	le := l.impl.Fatal().Err(err).Str("event", toSnakeCase(event))
-	return newLoggerProperty(le)
+	return newLoggerProperty(le).WithSystemTracing()
 }
 
 // Panic starts a new message with panic level. The panic() function
@@ -85,5 +85,5 @@ func (l *standardLogger) Fatal(event string, err error) *Property {
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Panic(event string, err error) *Property {
 	le := l.impl.Panic().Err(err).Str("event", toSnakeCase(event))
-	return newLoggerProperty(le)
+	return newLoggerProperty(le).WithSystemTracing()
 }

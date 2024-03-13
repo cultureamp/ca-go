@@ -16,7 +16,7 @@ func ExampleLogger_Info_withRequestTracing() {
 	// First test nil Request
 	logger.Info("info_with_nil_request_tracing").
 		WithRequestTracing(nil).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should not contain request tracing")
@@ -26,7 +26,7 @@ func ExampleLogger_Info_withRequestTracing() {
 
 	logger.Info("info_with_missing_headers_request_tracing").
 		WithRequestTracing(req).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should log empty request tracing")
@@ -38,7 +38,7 @@ func ExampleLogger_Info_withRequestTracing() {
 
 	logger.Info("info_with_request_tracing").
 		WithRequestTracing(req).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should contain request tracing")
@@ -49,6 +49,44 @@ func ExampleLogger_Info_withRequestTracing() {
 	// 2020-11-14T11:30:32Z INF event="logging should contain request tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_request_tracing farm=local product= properties={"resource":"resource_id","test-number":1} tracing={"correlation_id":"correlation_789_id","request_id":"request_456_id","trace_id":"trace_123_id"}
 }
 
+func ExampleLogger_Info_withRequestDiagnostics() {
+	config := getExampleLoggerConfig("INFO")
+	logger := log.NewLogger(config)
+
+	// First test nil Request
+	logger.Info("info_with_nil_request_diagnostics").
+		WithRequestDiagnostics(nil).
+		Properties(log.Add().
+			Str("resource", "resource_id").
+			Int("test-number", 1),
+		).Details("logging should not contain request diagnostics")
+
+	// Next with Request but empty url
+	req := httptest.NewRequest(http.MethodGet, "http://example.com", nil)
+
+	logger.Info("info_with_minimal_url_request_diagnostics").
+		WithRequestDiagnostics(req).
+		Properties(log.Add().
+			Str("resource", "resource_id").
+			Int("test-number", 1),
+		).Details("logging should log minimal request diagnostics")
+
+	// Next with Request but with url
+	req = httptest.NewRequest(http.MethodGet, "https://example.com/foo?arg=value#fragment-1", nil)
+
+	logger.Info("info_with_request_diagnostics").
+		WithRequestDiagnostics(req).
+		Properties(log.Add().
+			Str("resource", "resource_id").
+			Int("test-number", 1),
+		).Details("logging should contain request diagnostics")
+
+	// Output:
+	// 2020-11-14T11:30:32Z INF event="logging should not contain request diagnostics" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_nil_request_diagnostics farm=local product= properties={"resource":"resource_id","test-number":1}
+	// 2020-11-14T11:30:32Z INF event="logging should log minimal request diagnostics" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_minimal_url_request_diagnostics farm=local product= properties={"resource":"resource_id","test-number":1} request={"fragment":"","host":"example.com","method":"GET","path":"","proto":"HTTP/1.1","query":"","scheme":"http"}
+	// 2020-11-14T11:30:32Z INF event="logging should contain request diagnostics" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_request_diagnostics farm=local product= properties={"resource":"resource_id","test-number":1} request={"fragment":"","host":"example.com","method":"GET","path":"/foo","proto":"HTTP/1.1","query":"arg=value#fragment-1","scheme":"https"}
+}
+
 func ExampleLogger_Info_withAuthenticationUserTracing() {
 	config := getExampleLoggerConfig("INFO")
 	logger := log.NewLogger(config)
@@ -56,7 +94,7 @@ func ExampleLogger_Info_withAuthenticationUserTracing() {
 	// First test nil Auth Payload
 	logger.Info("info_with_nil_authN_tracing").
 		WithAuthenticatedUserTracing(nil).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should not contain authN tracing")
@@ -66,7 +104,7 @@ func ExampleLogger_Info_withAuthenticationUserTracing() {
 
 	logger.Info("info_with_missing_authN_tracing").
 		WithAuthenticatedUserTracing(auth).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should log empty authN tracing")
@@ -80,7 +118,7 @@ func ExampleLogger_Info_withAuthenticationUserTracing() {
 
 	logger.Info("info_with_authN_tracing").
 		WithAuthenticatedUserTracing(auth).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should contain authN tracing")
@@ -98,7 +136,7 @@ func ExampleLogger_Info_withAuthorizationTracing() {
 	// First test nil Request
 	logger.Info("info_with_nil_authZ_tracing").
 		WithAuthorizationTracing(nil).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should not contain authZ tracing")
@@ -108,7 +146,7 @@ func ExampleLogger_Info_withAuthorizationTracing() {
 
 	logger.Info("info_with_missing_headers_authZ_tracing").
 		WithAuthorizationTracing(req).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should log empty authZ tracing")
@@ -121,7 +159,7 @@ func ExampleLogger_Info_withAuthorizationTracing() {
 
 	logger.Info("info_with_authZ_tracing").
 		WithAuthorizationTracing(req).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should contain authZ tracing")
@@ -139,7 +177,7 @@ func TestExtensionWithSystemTracing(t *testing.T) {
 
 	logger.Info("info_with_nil_auth_tracing").
 		WithSystemTracing().
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should contain system tracing")

@@ -14,7 +14,7 @@ func ExampleLogger_Info_withGlamplifyRequestFieldsFromCtx() {
 	// Log with no context
 	logger.Info("info_with_glampify_request_field_tracing_no_ctx").
 		WithGlamplifyRequestFieldsFromCtx(nil).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should contain glamplify request fields tracing")
@@ -32,7 +32,7 @@ func ExampleLogger_Info_withGlamplifyRequestFieldsFromCtx() {
 	// Log with context but no request fields
 	logger.Info("info_with_glampify_request_field_tracing_no_request_fields").
 		WithGlamplifyRequestFieldsFromCtx(ctx).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should contain glamplify request fields tracing")
@@ -42,7 +42,7 @@ func ExampleLogger_Info_withGlamplifyRequestFieldsFromCtx() {
 	// Log with context and request fields
 	logger.Info("info_with_glampify_request_field_tracing").
 		WithGlamplifyRequestFieldsFromCtx(ctx).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should contain glamplify request fields tracing")

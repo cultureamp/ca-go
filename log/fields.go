@@ -17,8 +17,8 @@ func newLoggerField(impl *zerolog.Event) *Field {
 	return &Field{impl: impl}
 }
 
-// SubDoc creates a new sub-document with in list of log properties.
-func SubDoc() *Field {
+// Add creates a new custom log properties list.
+func Add() *Field {
 	subDoc := zerolog.Dict()
 	return newLoggerField(subDoc)
 }
