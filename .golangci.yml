@@ -159,7 +159,7 @@ linters-settings:
           - github.com/lestrrat-go
           - github.com/golang-jwt
           # not sure about these below
-          - github.com/IBM/sarama 
+          - github.com/IBM/sarama
           - github.com/xdg-go/scram
           - github.com/kelseyhightower/envconfig
           - github.com/cenkalti/backoff

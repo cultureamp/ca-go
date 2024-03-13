@@ -105,4 +105,3 @@ The design of each package follows the [RFC: Design of Shared Golang packages](h
 1. Constructor methods provide a clean interface for mocking behaviour.
 1. Packages should have a “Testable Example” for the top level package methods.
 1. Packages should not depend on each other.
-
