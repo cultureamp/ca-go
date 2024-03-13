@@ -16,6 +16,6 @@ func TestSentrySettings(t *testing.T) {
 	t.Setenv(SentryFlushTimeoutInMsEnv, "1234")
 
 	settings := newSentrySettings()
-	assert.Equal(t, "sentry.dsn.com", settings.SSSentryDSN)
-	assert.Equal(t, 1234, settings.SSSentryFlushInMs)
+	assert.Equal(t, "sentry.dsn.com", settings.Sentry_DSN)
+	assert.Equal(t, 1234, settings.Sentry_FlushInMs)
 }

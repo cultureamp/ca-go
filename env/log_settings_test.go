@@ -15,5 +15,5 @@ func TestLogSettings(t *testing.T) {
 	t.Setenv(LogLevelEnv, "WARN")
 
 	settings := newLogSettings()
-	assert.Equal(t, "WARN", settings.LSLogLevel)
+	assert.Equal(t, "WARN", settings.Log_Level)
 }
