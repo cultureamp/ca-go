@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPackageEncodeDecode(t *testing.T) {
@@ -160,7 +159,7 @@ func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 			privateKeys := ""
 			if tC.privateKey != "" {
 				b, err := os.ReadFile(filepath.Clean(tC.privateKey))
-				require.NoError(t, err)
+				assert.Nil(t, err)
 				privateKeys = string(b)
 			}
 			t.Setenv("AUTH_PRIVATE_KEY", privateKeys)

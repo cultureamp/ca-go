@@ -5,10 +5,12 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/patrickmn/go-cache"
 )
 
 const (
@@ -19,28 +21,45 @@ const (
 	accountIDClaim       = "accountId"
 	realUserIDClaim      = "realUserId"
 	effectiveUserIDClaim = "effectiveUserId"
+	jwksCacheKey         = "decoder_jwks_key"
 )
 
-type (
-	publicKey interface{} // Only ECDSA (perferred) and RSA public keys allowed
-)
+type publicKey interface{} // Only ECDSA (perferred) and RSA public keys allowed
+
+type DecoderJwksRetriever func() string
 
 // JwtDecoder can decode a jwt token string.
 type JwtDecoder struct {
-	jwkSet jwk.Set // public jwt's
+	fetchJwkKeys DecoderJwksRetriever
+
+	// memory cache holding the jwk.Set
+	mu                sync.Mutex
+	cache             *cache.Cache
+	defaultExpiration time.Duration
+	cleanupInterval   time.Duration
 }
 
 // NewJwtDecoder creates a new JwtDecoder with the set ECDSA and RSA public keys in the JWK string.
-func NewJwtDecoder(jwkKeys string) (*JwtDecoder, error) {
-	decoder := &JwtDecoder{}
-
-	// 1. Parse all JWKs JSON keys
-	jwkSet, err := decoder.parseJWKs(jwkKeys)
-	if err != nil {
-		return nil, err
+func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) (*JwtDecoder, error) {
+	decoder := &JwtDecoder{
+		fetchJwkKeys:      fetchJWKS,
+		defaultExpiration: 60 * time.Minute,
+		cleanupInterval:   10 * time.Minute,
 	}
 
-	decoder.jwkSet = jwkSet
+	// Loop through our Decoder options and apply them
+	for _, option := range options {
+		option(decoder)
+	}
+
+	decoder.cache = cache.New(decoder.defaultExpiration, decoder.cleanupInterval)
+
+	// call the getJWKS func to make sure its valid and we can parse the JWKS
+	_, err := decoder.getJWKSet()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load jwks: %v", err)
+	}
+
 	return decoder, nil
 }
 
@@ -117,7 +136,13 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 		return nil, fmt.Errorf("failed to decode: invalid key_id (kid) header")
 	}
 
-	key, found := d.jwkSet.LookupKeyID(kid)
+	// check cache and possibly fetch new JWKS
+	jwkSet, err := d.getJWKSet()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load jwks: %v", err)
+	}
+
+	key, found := jwkSet.LookupKeyID(kid)
 	if found {
 		// Found a match, so use this key
 		var rawkey interface{}
@@ -140,6 +165,33 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 
 	// Didn't find a matching kid
 	return nil, fmt.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)
+}
+
+func (d *JwtDecoder) getJWKSet() (jwk.Set, error) {
+	// First chech cache, if its there then great, use it!
+	obj, found := d.cache.Get(jwksCacheKey)
+	if found {
+		return obj.(jwk.Set), nil
+	}
+
+	// The cache has expired the keys
+
+	// Only allow one thread to fetch, parse and update the cache
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	// Time to fetch new ones
+	jwkKeys := d.fetchJwkKeys()
+
+	// Parse all new JWKs JSON keys and make sure its valid
+	jwkSet, err := d.parseJWKs(jwkKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add back into the cache
+	err = d.cache.Add(jwksCacheKey, jwkSet, cache.DefaultExpiration)
+	return jwkSet, err
 }
 
 func (decoder *JwtDecoder) parseJWKs(jwks string) (jwk.Set, error) {

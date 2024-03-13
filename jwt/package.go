@@ -14,6 +14,16 @@ var (
 )
 
 func getDecoderInstance() *JwtDecoder {
+	decoder, err := NewJwtDecoder(jwksFromEnvVarRetriever)
+	if err != nil {
+		err := fmt.Errorf("error loading default jwk decoder, maybe missing env vars: err='%v'\n", err)
+		panic(err)
+	}
+
+	return decoder
+}
+
+func jwksFromEnvVarRetriever() string {
 	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
 
 	if isTestMode() {
@@ -26,40 +36,38 @@ func getDecoderInstance() *JwtDecoder {
 		}
 	}
 
-	decoder, err := NewJwtDecoder(jwkKeys)
-	if err != nil {
-		err := fmt.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
-		panic(err)
-	}
-
-	return decoder
+	return jwkKeys
 }
 
 func getEncoderInstance() *JwtEncoder {
-	keyId := os.Getenv("AUTH_PRIVATE_KEY_ID")
+	encoder, err := NewJwtEncoder(privateKeyFromEnvVarRetriever)
+	if err != nil {
+		err := fmt.Errorf("error loading jwk encoder, maybe missing env vars: err='%v'\n", err)
+		panic(err)
+	}
+
+	return encoder
+}
+
+func privateKeyFromEnvVarRetriever() (string, string) {
 	privKey := os.Getenv("AUTH_PRIVATE_KEY")
+	keyId := os.Getenv("AUTH_PRIVATE_KEY_ID")
 
 	if isTestMode() {
 		// If we are running inside a test, the make sure the DefaultJwtEncoder package level
 		// instance doesn't panic with missing values.
-		if keyId == "" {
-			keyId = webGatewayKid
-		}
-
 		if privKey == "" {
 			// test key only, not the production key
 			b, _ := os.ReadFile(filepath.Clean("./testKeys/jwt-rsa256-test-webgateway.key"))
 			privKey = string(b)
 		}
+
+		if keyId == "" {
+			keyId = webGatewayKid
+		}
 	}
 
-	encoder, err := NewJwtEncoder(privKey, keyId)
-	if err != nil {
-		err := fmt.Errorf("error loading jwk encoder, maybe missing env vars: err='%w'\n", err)
-		panic(err)
-	}
-
-	return encoder
+	return privKey, keyId
 }
 
 // Decode a jwt token string and return the Standard Culture Amp Claims.
