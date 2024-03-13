@@ -18,6 +18,9 @@ func Example() {
 		AccountId:       "abc123",
 		RealUserId:      "xyz234",
 		EffectiveUserId: "xyz345",
+		Issuer:          "encoder-name",
+		Subject:         "test",
+		Audience:        []string{"decoder-name"},
 		ExpiresAt:       time.Unix(2211797532, 0), //  2/2/2040
 		IssuedAt:        time.Unix(1580608922, 0), // 1/1/2020
 		NotBefore:       time.Unix(1580608922, 0), // 1/1/2020
@@ -29,7 +32,13 @@ func Example() {
 
 	// Decode it back again using the key that matches the kid header using the default JWKS JSON keys
 	claim, err := jwt.Decode(token)
-	fmt.Printf("The decoded token is '%s %s %s %s' (err='%+v')\n", claim.AccountId, claim.RealUserId, claim.EffectiveUserId, claim.ExpiresAt.UTC().Format(time.RFC3339), err)
+	fmt.Printf(
+		"The decoded token is '%s %s %s %s %v %s %s' (err='%+v')\n",
+		claim.AccountId, claim.RealUserId, claim.EffectiveUserId,
+		claim.Issuer, claim.Subject, claim.Audience,
+		claim.ExpiresAt.UTC().Format(time.RFC3339),
+		err,
+	)
 
 	// To create a specific instance of the encoder and decoder you can use the following
 	privateKeyBytes, err := os.ReadFile(filepath.Clean("./testKeys/jwt-rsa256-test-webgateway.key"))
@@ -39,14 +48,20 @@ func Example() {
 	fmt.Printf("The encoded token is '%s' (err='%v')\n", token, err)
 
 	b, err := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
-	decoder, err := jwt.NewJwtDecoderWithDefaultKid(string(b), webGatewayKid)
+	decoder, err := jwt.NewJwtDecoder(string(b))
 
 	claim, err = decoder.Decode(token)
-	fmt.Printf("The decoded token is '%s %s %s %s' (err='%+v')\n", claim.AccountId, claim.RealUserId, claim.EffectiveUserId, claim.ExpiresAt.UTC().Format(time.RFC3339), err)
+	fmt.Printf(
+		"The decoded token is '%s %s %s %s %v %s %s' (err='%+v')\n",
+		claim.AccountId, claim.RealUserId, claim.EffectiveUserId,
+		claim.Issuer, claim.Subject, claim.Audience,
+		claim.ExpiresAt.UTC().Format(time.RFC3339),
+		err,
+	)
 
 	// Output:
-	// The encoded token is 'eyJhbGciOiJSUzI1NiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.IYPu_PGUO7lpy_wTSObA4S-n9HQUwPf2kTG2AzvSFUwfz994SHZOazYL7CyiRqqhIndIt5R4CQ3cXY7_Lok_wgBQ-U4FAciJw0Fx9tawJIEqwVeL10P4w0h5OIU21E7jeNmlcLOO57QN-ip7hc_--zyAFVKV5qjlbemuHWWpeUGu62SsdHr4J33O6hR8ubTyfXVF7wxKhNM4hCdM7PNanP9OOyAgEWxhwutURiA1nJsATwDf6QKNceGpqkb5A31PvFdfPHoktY4u6e4feBt2KjYJ1xy9opDlllFOEIwTw4nuksQk4q3437bGtfoQkC_CTGO83YTX5GHs70rxu_AubBxCazqSxqMwagiekkpgKZd6d0g7u5F5K8QImRJsore3oHNDAuVg7pbZmH9sApFN_bJhonOkECoPeeF5oYLSLHOXjN7CakvAsmCW01_ENPVXXO2E1yObzwmsY28_Ox5r_jC6XugGdXVfco6l1Oqbxb0ogG6BbOngYEZwVMbEO5qsBnUtBfr0nNUjFKIYCYXdpoeT_bxlt8GI4H2cMAb6FGa_XIEd60fJGazgAk9axA61xHEnqxgUyZv5PEL908zPBRvcNGpQuMsDpGOXTOQ_fgJO1IRBx4VwWcobzKbOyRNarTNwQZH0OY13HMMnFoiPjk8U0fWkJdj1ujobTQYYtz0' (err='<nil>')
-	// The decoded token is 'abc123 xyz234 xyz345 2040-02-02T12:12:12Z' (err='<nil>')
-	// The encoded token is 'eyJhbGciOiJSUzI1NiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.IYPu_PGUO7lpy_wTSObA4S-n9HQUwPf2kTG2AzvSFUwfz994SHZOazYL7CyiRqqhIndIt5R4CQ3cXY7_Lok_wgBQ-U4FAciJw0Fx9tawJIEqwVeL10P4w0h5OIU21E7jeNmlcLOO57QN-ip7hc_--zyAFVKV5qjlbemuHWWpeUGu62SsdHr4J33O6hR8ubTyfXVF7wxKhNM4hCdM7PNanP9OOyAgEWxhwutURiA1nJsATwDf6QKNceGpqkb5A31PvFdfPHoktY4u6e4feBt2KjYJ1xy9opDlllFOEIwTw4nuksQk4q3437bGtfoQkC_CTGO83YTX5GHs70rxu_AubBxCazqSxqMwagiekkpgKZd6d0g7u5F5K8QImRJsore3oHNDAuVg7pbZmH9sApFN_bJhonOkECoPeeF5oYLSLHOXjN7CakvAsmCW01_ENPVXXO2E1yObzwmsY28_Ox5r_jC6XugGdXVfco6l1Oqbxb0ogG6BbOngYEZwVMbEO5qsBnUtBfr0nNUjFKIYCYXdpoeT_bxlt8GI4H2cMAb6FGa_XIEd60fJGazgAk9axA61xHEnqxgUyZv5PEL908zPBRvcNGpQuMsDpGOXTOQ_fgJO1IRBx4VwWcobzKbOyRNarTNwQZH0OY13HMMnFoiPjk8U0fWkJdj1ujobTQYYtz0' (err='<nil>')
-	// The decoded token is 'abc123 xyz234 xyz345 2040-02-02T12:12:12Z' (err='<nil>')
+	// The encoded token is 'eyJhbGciOiJSUzUxMiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiZW5jb2Rlci1uYW1lIiwic3ViIjoidGVzdCIsImF1ZCI6WyJkZWNvZGVyLW5hbWUiXSwiZXhwIjoyMjExNzk3NTMyLCJuYmYiOjE1ODA2MDg5MjIsImlhdCI6MTU4MDYwODkyMn0.CH_UIzR_W1275ffAUES0EzsHNRYZyBbrLsKQBbfJ6DpsLW3HAxH5RSjzXL_yCGTrbcHytTYLIZKhN37lC9BZdhkxZtR9bMqqGu4K0zHNtztoC5u1P7kc81FX_dPi9aiR7B4hruSfOFHoWM1A_D_i55qPAJlB0LRFf4nwX9FIWt2IIMwSGUcxfjFYE7MKTlzP3heCYNVzIxLD5g5gcoIyttmltiD_bBvObvExuDsJSlxwrAYvKc2cpIsh1MZ1x16uhG-du2_YdfSK6Ykd6aAvVpq3IGkb99SKS3xUsCV3JkSDRIcWMKzPhEh_huDV4Z3AA3jA4sWvR20WOqzaW3dRAoYIYL7kP92PrXX8m0EtLPAlX471POgNREWqdmxrbdkZcYNHqrmHcAsMRPMXcZ15tH8_-jIDUvGpNbcetgmQRjcpLtyniN_Ag4kGoPhYzGLx6122DEBrYf0Os5TQcRAzAoSF1n_43hsfmuGw00ey3ye5siJle7LN8EHUAXjegrpC7WTFF_eIsOtkuXTJx6OMmuggRvlMaCughYP6IvoIXD7ME0DnzmuvANID9yo-X8DJpMiWbZ2_edCE7dmuqxIZOqJmTolswQs1p0hzFyaX5SrEgcGjHxwTpuCYfaQ7qrbz2D_OQfXbglbk4e8Hm63bGmmz9bKV4KDBVPJO1zOGLtM' (err='<nil>')
+	// The decoded token is 'abc123 xyz234 xyz345 encoder-name test [decoder-name] 2040-02-02T12:12:12Z' (err='<nil>')
+	// The encoded token is 'eyJhbGciOiJSUzUxMiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiZW5jb2Rlci1uYW1lIiwic3ViIjoidGVzdCIsImF1ZCI6WyJkZWNvZGVyLW5hbWUiXSwiZXhwIjoyMjExNzk3NTMyLCJuYmYiOjE1ODA2MDg5MjIsImlhdCI6MTU4MDYwODkyMn0.CH_UIzR_W1275ffAUES0EzsHNRYZyBbrLsKQBbfJ6DpsLW3HAxH5RSjzXL_yCGTrbcHytTYLIZKhN37lC9BZdhkxZtR9bMqqGu4K0zHNtztoC5u1P7kc81FX_dPi9aiR7B4hruSfOFHoWM1A_D_i55qPAJlB0LRFf4nwX9FIWt2IIMwSGUcxfjFYE7MKTlzP3heCYNVzIxLD5g5gcoIyttmltiD_bBvObvExuDsJSlxwrAYvKc2cpIsh1MZ1x16uhG-du2_YdfSK6Ykd6aAvVpq3IGkb99SKS3xUsCV3JkSDRIcWMKzPhEh_huDV4Z3AA3jA4sWvR20WOqzaW3dRAoYIYL7kP92PrXX8m0EtLPAlX471POgNREWqdmxrbdkZcYNHqrmHcAsMRPMXcZ15tH8_-jIDUvGpNbcetgmQRjcpLtyniN_Ag4kGoPhYzGLx6122DEBrYf0Os5TQcRAzAoSF1n_43hsfmuGw00ey3ye5siJle7LN8EHUAXjegrpC7WTFF_eIsOtkuXTJx6OMmuggRvlMaCughYP6IvoIXD7ME0DnzmuvANID9yo-X8DJpMiWbZ2_edCE7dmuqxIZOqJmTolswQs1p0hzFyaX5SrEgcGjHxwTpuCYfaQ7qrbz2D_OQfXbglbk4e8Hm63bGmmz9bKV4KDBVPJO1zOGLtM' (err='<nil>')
+	// The decoded token is 'abc123 xyz234 xyz345 encoder-name test [decoder-name] 2040-02-02T12:12:12Z' (err='<nil>')
 }

@@ -2,9 +2,14 @@ package log
 
 import (
 	"flag"
+	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/rs/zerolog"
 )
 
 const (
@@ -13,6 +18,8 @@ const (
 	AppFarmDefault      = "local"
 	LogLevelDefault     = "INFO"
 )
+
+type timeNowFunc = func() time.Time
 
 // Config contains logging configuration values.
 type Config struct {
@@ -28,6 +35,9 @@ type Config struct {
 	LogLevel      string // The logging level
 	Quiet         bool   // Are we running inside tests and we should be quiet?
 	ConsoleWriter bool   // If Farm=local use key-value colour console logging
+	ConsoleColour bool   // If ConsoleWriter=true then enable/disable colour
+
+	TimeNow timeNowFunc // Defaults to "time.Now" but useful to set in tests
 }
 
 // NewLoggerConfig creates a new configuration based on environment variables
@@ -65,7 +75,8 @@ func NewLoggerConfig() *Config {
 	}
 
 	quiet := getEnvBool(LogQuietModeEnv, isTestMode())
-	consoleWriter := getEnvBool(LogConsoleWriterEnv, false)
+	consoleWriter := getEnvBool(LogConsoleWriterEnv, isTestMode())
+	consoleColour := getEnvBool(LogConsoleWriterEnv, isTestMode())
 
 	return &Config{
 		LogLevel:      logLevel,
@@ -77,11 +88,73 @@ func NewLoggerConfig() *Config {
 		Farm:          farm,
 		Quiet:         quiet,
 		ConsoleWriter: consoleWriter,
+		ConsoleColour: consoleColour,
+		TimeNow:       time.Now,
 	}
 }
 
 func (c *Config) isLocal() bool {
 	return c.Farm == AppFarmDefault && c.AwsAccountID == AwsAccountIDDefault
+}
+
+func (c *Config) severityToLevel() zerolog.Level {
+	var lvl zerolog.Level
+	switch c.LogLevel {
+	case "DEBUG":
+		lvl = zerolog.DebugLevel
+	case "WARN":
+		lvl = zerolog.WarnLevel
+	case "ERROR":
+		lvl = zerolog.ErrorLevel
+	case "FATAL":
+		lvl = zerolog.FatalLevel
+	case "PANIC":
+		lvl = zerolog.PanicLevel
+	default:
+		lvl = zerolog.InfoLevel
+	}
+
+	return lvl
+}
+
+func (c *Config) getWriter() io.Writer {
+	// Default to Stdout, but if running in QuietMode then set the logger to silently NoOp
+	var writer io.Writer = os.Stdout
+	if c.Quiet {
+		writer = io.Discard
+	}
+
+	// NOTE: only allow ConsoleWriter to be configured if we are NOT production
+	// as the ConsoleWriter is NOT performant and should just be used for local only
+	if c.isLocal() && c.ConsoleWriter {
+		writer = zerolog.ConsoleWriter{
+			Out:             writer,
+			TimeFormat:      time.RFC3339,
+			NoColor:         !c.ConsoleColour,
+			FormatMessage:   c.formatMessage,
+			FormatTimestamp: c.formatTimestamp,
+		}
+	}
+
+	return writer
+}
+
+func (c *Config) formatMessage(i interface{}) string {
+	if i == nil {
+		return ""
+	}
+	return fmt.Sprintf("event=\"%s\"", i)
+}
+
+func (c *Config) formatTimestamp(i interface{}) string {
+	if i == nil {
+		return "nil"
+	}
+	timeString, ok := i.(string)
+	if !ok {
+		return "nil"
+	}
+	return timeString
 }
 
 func isTestMode() bool {

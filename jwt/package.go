@@ -8,31 +8,25 @@ import (
 	"strings"
 )
 
-const (
-	testAuthJwks              string = "./testKeys/development.jwks"
-	testDefaultAuthPrivateKey string = "./testKeys/jwt-rsa256-test-webgateway.key"
-	testOtherAuthPrivateKey   string = "./testKeys/jwt-rsa256-test-other.key"
-)
-
 var (
 	DefaultJwtDecoder *JwtDecoder = getDecoderInstance()
 	DefaultJwtEncoder *JwtEncoder = getEncoderInstance()
 )
 
 func getDecoderInstance() *JwtDecoder {
-	keyId := os.Getenv("AUTH_PUBLIC_DEFAULT_KEY_ID")
-	if keyId == "" {
-		keyId = webGatewayKid
-	}
-
 	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
-	if jwkKeys == "" && isTestMode() {
-		// test key only, not the production key
-		b, _ := os.ReadFile(filepath.Clean(testAuthJwks))
-		jwkKeys = string(b)
+
+	if isTestMode() {
+		// If we are running inside a test, the make sure the DefaultJwtDecoder package level
+		// instance doesn't panic with missing values.
+		if jwkKeys == "" {
+			// test key only, not the production keys
+			b, _ := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
+			jwkKeys = string(b)
+		}
 	}
 
-	decoder, err := NewJwtDecoderWithDefaultKid(jwkKeys, keyId)
+	decoder, err := NewJwtDecoder(jwkKeys)
 	if err != nil {
 		err := fmt.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
 		panic(err)
@@ -43,15 +37,20 @@ func getDecoderInstance() *JwtDecoder {
 
 func getEncoderInstance() *JwtEncoder {
 	keyId := os.Getenv("AUTH_PRIVATE_KEY_ID")
-	if keyId == "" {
-		keyId = webGatewayKid
-	}
-
 	privKey := os.Getenv("AUTH_PRIVATE_KEY")
-	if privKey == "" && isTestMode() {
-		// test key only, not the production key
-		b, _ := os.ReadFile(filepath.Clean(testDefaultAuthPrivateKey))
-		privKey = string(b)
+
+	if isTestMode() {
+		// If we are running inside a test, the make sure the DefaultJwtEncoder package level
+		// instance doesn't panic with missing values.
+		if keyId == "" {
+			keyId = webGatewayKid
+		}
+
+		if privKey == "" {
+			// test key only, not the production key
+			b, _ := os.ReadFile(filepath.Clean("./testKeys/jwt-rsa256-test-webgateway.key"))
+			privKey = string(b)
+		}
 	}
 
 	encoder, err := NewJwtEncoder(privKey, keyId)
@@ -79,6 +78,7 @@ func isTestMode() bool {
 
 	if strings.HasSuffix(argZero, ".test") ||
 		strings.Contains(argZero, "/_test/") ||
+		strings.Contains(argZero, "__debug_bin") || // vscode debug binary
 		flag.Lookup("test.v") != nil {
 		return true
 	}

@@ -9,6 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// useful to create RS256 test tokens https://jwt.io/
+// useful for PEM to JWKS https://jwkset.com/generate
+
 func TestNewDecoder(t *testing.T) {
 	b, err := os.ReadFile(filepath.Clean(testAuthJwks))
 	require.NoError(t, err)
@@ -17,43 +20,32 @@ func TestNewDecoder(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		jwks           string
-		defaultKid     string
 		expectedErrMsg string
 	}{
 		{
 			desc:           "Success 1: valid jwks and found kid",
 			jwks:           validJwks,
-			defaultKid:     "web-gateway",
 			expectedErrMsg: "",
 		},
 		{
-			desc:           "Error 1: missing key",
+			desc:           "Error 1: missing jwk keys",
 			jwks:           "",
-			defaultKid:     "",
 			expectedErrMsg: "missing jwks",
 		},
 		{
 			desc:           "Error 2: JWKS json bad",
 			jwks:           "{\"bad\": \"jwks-json\" }",
-			defaultKid:     "missing-kid",
 			expectedErrMsg: "failed to unmarshal JWK set",
 		},
 		{
 			desc:           "Error 3: JWKS json invalid",
 			jwks:           "invalid JSON",
-			defaultKid:     "missing-kid",
 			expectedErrMsg: "failed to unmarshal JWK set",
-		},
-		{
-			desc:           "Error 4: missing default kid",
-			jwks:           validJwks,
-			defaultKid:     "missing-kid",
-			expectedErrMsg: "missing default key in JWKS",
 		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			decoder, err := NewJwtDecoderWithDefaultKid(tC.jwks, tC.defaultKid)
+			decoder, err := NewJwtDecoder(tC.jwks)
 			if tC.expectedErrMsg != "" {
 				assert.NotNil(t, err)
 				assert.ErrorContains(t, err, tC.expectedErrMsg)
@@ -67,101 +59,114 @@ func TestNewDecoder(t *testing.T) {
 }
 
 func TestDecoderDecodeAllClaims(t *testing.T) {
-	// useful to create RS256 test tokens https://jwt.io/
-
 	b, err := os.ReadFile(filepath.Clean(testAuthJwks))
 	require.NoError(t, err)
 
 	testCases := []struct {
 		desc            string
 		token           string
-		defaultKid      string
 		expectedErrMsg  string
 		accountId       string
 		realUserId      string
 		effectiveUserId string
+		issuer          string
+		subject         string
+		audience        []string
 		year            int
 	}{
 		{
-			desc:            "Success 1: valid token with default kid",
-			token:           "eyJhbGciOiJSUzI1NiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.IYPu_PGUO7lpy_wTSObA4S-n9HQUwPf2kTG2AzvSFUwfz994SHZOazYL7CyiRqqhIndIt5R4CQ3cXY7_Lok_wgBQ-U4FAciJw0Fx9tawJIEqwVeL10P4w0h5OIU21E7jeNmlcLOO57QN-ip7hc_--zyAFVKV5qjlbemuHWWpeUGu62SsdHr4J33O6hR8ubTyfXVF7wxKhNM4hCdM7PNanP9OOyAgEWxhwutURiA1nJsATwDf6QKNceGpqkb5A31PvFdfPHoktY4u6e4feBt2KjYJ1xy9opDlllFOEIwTw4nuksQk4q3437bGtfoQkC_CTGO83YTX5GHs70rxu_AubBxCazqSxqMwagiekkpgKZd6d0g7u5F5K8QImRJsore3oHNDAuVg7pbZmH9sApFN_bJhonOkECoPeeF5oYLSLHOXjN7CakvAsmCW01_ENPVXXO2E1yObzwmsY28_Ox5r_jC6XugGdXVfco6l1Oqbxb0ogG6BbOngYEZwVMbEO5qsBnUtBfr0nNUjFKIYCYXdpoeT_bxlt8GI4H2cMAb6FGa_XIEd60fJGazgAk9axA61xHEnqxgUyZv5PEL908zPBRvcNGpQuMsDpGOXTOQ_fgJO1IRBx4VwWcobzKbOyRNarTNwQZH0OY13HMMnFoiPjk8U0fWkJdj1ujobTQYYtz0",
-			defaultKid:      "web-gateway",
+			desc:            "Success 1: valid token RSA",
+			token:           "eyJhbGciOiJSUzUxMiIsImtpZCI6InJzYS01MTIiLCJ0eXAiOiJKV1QifQ.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiZW5jb2Rlci1uYW1lIiwic3ViIjoidGVzdCIsImF1ZCI6WyJkZWNvZGVyLW5hbWUiXSwiZXhwIjoyMjExNzk3NTMyLCJuYmYiOjE1ODA2MDg5MjIsImlhdCI6MTU4MDYwODkyMn0.hQLuOe8qZHUgstYe0A0n4-Pww7ovlReyKiDR1Y02ltUnUlgbm9qpp-Ef6YNFuIKdHmS-ynQbDx5pbI36szsggzi80apNpI48cwSXshx82TwuU-_Z4wNBXu7MdPvbA5FdjhxCvRqaqhglsGJ6NofC1bP9awVyyy4j9LGfkVuVEXJQrVpdvEs8Ks-LxlWz7_9Cr7BrZcLuBJnujhe4CbdSudkrfeFl19EY3i1wH9OatGjfjwOSJVqv-ZLnn3QkaZmrQ1xwXTm3MlMUH3KSQjBn8h6vbqosIB5iHDFtqR11mLCgYExGHBpzFjM1d5NEmcTNLV9MtZ_qDZwG0wkgv9O4rXVQ0JfdXypMwhchED2Z45_mc2OiLidtKtDmeoE5g0Daq8YpM0ZpVRbXUFeYIZ1doQKUNsbWNdITmrjVOC3Zn8BecYPu1pC4Hk1y-ViArDzxlCMHA7Bua64BfzVuaJ8pBTEmbqMiZ9VujWcimCOtJ5yfCks_RPAhFYOErcqy3B56fmyYdIN__mKl7VvRDtBSiiPGCq07BUjGywaMoZIULbyXYSV4zs3hX_R4_o4asGiVWCZgn7k4pZzCJo_y2e-Mf85nYoRlyr1MXx7IM4srFQCgO-KTjDWL_TXqpMJU5zDzKyelrMFkc6EaMQ2KP_yBhOrh4UW-Pm7ghusox_-bV1U",
 			expectedErrMsg:  "",
 			accountId:       "abc123",
 			realUserId:      "xyz234",
 			effectiveUserId: "xyz345",
+			issuer:          "encoder-name",
+			subject:         "test",
+			audience:        []string{"decoder-name"},
 			year:            2040,
 		},
 		{
-			desc:            "Success 2: valid token with different default kid",
-			token:           "eyJhbGciOiJSUzI1NiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.IYPu_PGUO7lpy_wTSObA4S-n9HQUwPf2kTG2AzvSFUwfz994SHZOazYL7CyiRqqhIndIt5R4CQ3cXY7_Lok_wgBQ-U4FAciJw0Fx9tawJIEqwVeL10P4w0h5OIU21E7jeNmlcLOO57QN-ip7hc_--zyAFVKV5qjlbemuHWWpeUGu62SsdHr4J33O6hR8ubTyfXVF7wxKhNM4hCdM7PNanP9OOyAgEWxhwutURiA1nJsATwDf6QKNceGpqkb5A31PvFdfPHoktY4u6e4feBt2KjYJ1xy9opDlllFOEIwTw4nuksQk4q3437bGtfoQkC_CTGO83YTX5GHs70rxu_AubBxCazqSxqMwagiekkpgKZd6d0g7u5F5K8QImRJsore3oHNDAuVg7pbZmH9sApFN_bJhonOkECoPeeF5oYLSLHOXjN7CakvAsmCW01_ENPVXXO2E1yObzwmsY28_Ox5r_jC6XugGdXVfco6l1Oqbxb0ogG6BbOngYEZwVMbEO5qsBnUtBfr0nNUjFKIYCYXdpoeT_bxlt8GI4H2cMAb6FGa_XIEd60fJGazgAk9axA61xHEnqxgUyZv5PEL908zPBRvcNGpQuMsDpGOXTOQ_fgJO1IRBx4VwWcobzKbOyRNarTNwQZH0OY13HMMnFoiPjk8U0fWkJdj1ujobTQYYtz0",
-			defaultKid:      "test-other",
+			desc:            "Success 2: valid token ECDSA",
+			token:           "eyJhbGciOiJFUzI1NiIsImtpZCI6ImVjZHNhLTI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiZW5jb2Rlci1uYW1lIiwic3ViIjoidGVzdCIsImF1ZCI6WyJkZWNvZGVyLW5hbWUiXSwiZXhwIjoyMjExNzk3NTMyLCJuYmYiOjE1ODA2MDg5MjIsImlhdCI6MTU4MDYwODkyMn0.tuevuDAPABxVW8_SqD6T8SeCrFucXxyBEIk3Yk8xKsfqYSNv1nW0HPNPE_a-E02fKYAsXJY8yn1R8u1idj9Z5Q",
 			expectedErrMsg:  "",
 			accountId:       "abc123",
 			realUserId:      "xyz234",
 			effectiveUserId: "xyz345",
+			issuer:          "encoder-name",
+			subject:         "test",
+			audience:        []string{"decoder-name"},
 			year:            2040,
 		},
 		{
-			desc:            "Error 1: invalid token with default kid",
+			desc:            "Error 1: invalid token",
 			token:           "eyJhbGciOiJSUzI1NiIsImtpZCI6ld2F50.eyJhY2g2MSwiaWF0IjoxNTc3ODAwODYxfQ.wV6z_kUjsKUebT7RUjELE",
-			defaultKid:      "test-other",
 			expectedErrMsg:  "token is malformed",
 			accountId:       "",
 			realUserId:      "",
 			effectiveUserId: "",
+			issuer:          "encoder-name",
+			subject:         "test",
+			audience:        []string{"decoder-name"},
 			year:            1,
 		},
 		{
-			desc:            "Error 2: non RSA token with default kid",
-			token:           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-			defaultKid:      "test-other",
-			expectedErrMsg:  "unexpected signing method",
+			desc:            "Error 2: missing kid",
+			token:           "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.S48Yfs0COCQR70jCrD2y6kD26nns6-c9CLvxKTahxzv0KrkdAXC7I62yIz2yD6j3v3rTKVQ8eGhSKOkN6EU_M8BZa5ltt7TmcIOnn5RWbwnfSfFLMR3njzlMiRT2MGAi2A2WMkx_LrTk9PZZRIlfceQxFVhThjc-Dp92C_zFJARZ8yss3upAW0m0pbeD5Y23GWs6bkkBbAAvh8Rw6rICjW6qROnqj6u8mcb4bS3kDlmmFkYnQdKMLu4bWa6twyLwUMg0N-Y5h2rp6GyAYuTrqyKif5IU1IEhNW63gj5h1xCLNyX4ZGJsNSZP_HOQGVVQMBDg2rsg7tBxow_E2wvYTgDYn8f1SjKE7vKdL2uYzA732hcd63fNwJpNcrwFs3lW8DjM_VYf-M4ePSr4GqHg6PawTCFgWCVNvi-lsmogfRUq_1t21GXlX7pQd029CFJ7mnnxUBau7KxTuX-Pxpny3jhYpJ87GlDA3WaB0r1tEg4Hl87VDawQ5Cb5ac6R6eXEO34i5oESVt6lFL-wpWUnU7KbiWVxKkSifN0M27IE8vAEsUBhgD8sKZpBsUvUDpRcb_atpFE_xU0K6DZXGUgFpZBx-CULmmfoDubTNfRNtqwmJiXI-M1YyiRbc_lOVQBAibuZ20ucixyhhqYSa-5fWa4m5NcjkRquTR2J-OaxmhA",
+			expectedErrMsg:  "missing key_id (kid) header",
 			accountId:       "",
 			realUserId:      "",
 			effectiveUserId: "",
+			issuer:          "encoder-name",
+			subject:         "test",
+			audience:        []string{"decoder-name"},
 			year:            1,
 		},
 		{
-			desc:            "Error 3: RSA token with wrong kid",
-			token:           "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.NHVaYe26MbtOYhSKkoKYdFVomg4i8ZJd8_-RU8VNbftc4TSMb4bXP3l3YlNWACwyXPGffz5aXHc6lty1Y2t4SWRqGteragsVdZufDn5BlnJl9pdR_kdVFUsra2rWKEofkZeIC4yWytE58sMIihvo9H1ScmmVwBcQP6XETqYd0aSHp1gOa9RdUPDvoXQ5oqygTqVtxaDr6wUFKrKItgBMzWIdNZ6y7O9E0DhEPTbE9rfBo6KTFsHAZnMg4k68CDp2woYIaXbmYTWcvbzIuHO7_37GT79XdIwkm95QJ7hYC9RiwrV7mesbY4PAahERJawntho0my942XheVLmGwLMBkQ",
-			defaultKid:      "test-other",
-			expectedErrMsg:  "token signature is invalid",
+			desc:            "Error 3: signed with EdDSA",
+			token:           "eyJhbGciOiJFZERTQSIsImtpZCI6ImVkZHNhIiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.ZjBuTNqC74M525ROjM1kRANBCb7JUjl6ko8dSD52S-Q_f5p7EaUM5TxCPg4rICvVWxF26B99EkVzNNhivcw9Dw",
+			expectedErrMsg:  "signing method EdDSA is invalid",
 			accountId:       "",
 			realUserId:      "",
 			effectiveUserId: "",
+			issuer:          "encoder-name",
+			subject:         "test",
+			audience:        []string{"decoder-name"},
 			year:            1,
 		},
 		{
-			desc:            "Error 4: RSA token with missing kid",
-			token:           "eyJhbGciOiJSUzI1NiIsImtpZCI6Im1pc3Npbmcta2lkIiwidHlwIjoiSldUIn0.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMDg5NTI4NjEsIm5iZiI6MTU3NzgwMDg2MSwiaWF0IjoxNTc3ODAwODYxfQ.gpIoU05GPVaCdv1X9HTMH7Wotrlhwa_O-RpTTnN0H9cjYBvYICO25hUs4kw0ipV1F3QMo-k7a4F9FkmH2RL-gMp93wfFNpldaIASUqvrHZ3jBTDEKpk1VDD7YWDp8eqYkLetVSN0nui16U1HSOf2_Aw1vKqZUqOQGNYtjgNavPfSaBposa_ujfsA-On4guYwf2QDrgIuuOrJjoTys6mxaV5LBklKFJq_F5DrGTo_dBr9CSBUV0eIW6YLMpVuBBAJeLTAk3hFbxqz1Lcy68dW6_1bfhj9znuizgL5DMjXFNoKO9EXct_0Q8xa7RckT3Eu72ZPHWImUl1L9KepIM3N61SRdM7EOaLcT3G39a1Bjk1NLeNLA6S-m-dKAPDdkaGjF4yTTtsEmZS-W2gINuUyKs2Z_IbagDpmd1vAFMyl7MMs6Ul4Z9Rheuu_eHd4XKjgoLwd85hymqcKED70XuLSgIak0vtVXWixRDEAYvyeHlrFsZc4Vo4X_q1SyxIbwj1laDC0Y8Y7O_LnGrOH7D5DmVbCXbm1vJUJ7U98K8JRrv5y7ZETofvyLqSE4FY2aAiE7tc9BuTDOjIcEiUPLxEUSB6c08L53FmJCehdB80OR1Fv24G_vothsTnRtsBpiXVTQPpbS5Po_CNl-sFQBKViRsE6IxQt81HhoEJ1Ui4A0r8",
-			defaultKid:      "test-other",
-			expectedErrMsg:  "token signature is invalid",
+			desc:            "Error 4: bad jwks key",
+			token:           "eyJhbGciOiJFUzUxMiIsImtpZCI6ImJhZC1lY2RzYSIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.ALtrklCsBs5Z3QZp8p8qfClXKS8pj0asOzHspDRghmOoA5XWzYriMWFElb2UlhZeSazIsyR7P2k_oKt8S4qdY3jxAbpkBL6BQURudNeuw-bBipPPBehscuUlOhQl7ckl4RO7c5U60uHyaek0m4LMpEIuziWX9IHikDSVBzkNuji8zWQ1",
+			expectedErrMsg:  "bad public key in jwks",
 			accountId:       "",
 			realUserId:      "",
 			effectiveUserId: "",
+			issuer:          "encoder-name",
+			subject:         "test",
+			audience:        []string{"decoder-name"},
 			year:            1,
 		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			decoder, err := NewJwtDecoderWithDefaultKid(string(b), tC.defaultKid)
+			decoder, err := NewJwtDecoder(string(b))
 			assert.Nil(t, err)
 			assert.NotNil(t, decoder)
 
 			claim, err := decoder.Decode(tC.token)
-
 			if tC.expectedErrMsg == "" {
 				assert.Nil(t, err)
+				assert.Equal(t, tC.accountId, claim.AccountId)
+				assert.Equal(t, tC.realUserId, claim.RealUserId)
+				assert.Equal(t, tC.effectiveUserId, claim.EffectiveUserId)
+				assert.Equal(t, tC.issuer, claim.Issuer)
+				assert.Equal(t, tC.subject, claim.Subject)
+				assert.Equal(t, tC.audience, claim.Audience)
+				assert.Equal(t, tC.year, claim.ExpiresAt.Year())
 			} else {
 				assert.NotNil(t, err)
 				assert.ErrorContains(t, err, tC.expectedErrMsg)
 			}
-
-			assert.Equal(t, tC.accountId, claim.AccountId)
-			assert.Equal(t, tC.realUserId, claim.RealUserId)
-			assert.Equal(t, tC.effectiveUserId, claim.EffectiveUserId)
-			assert.Equal(t, tC.year, claim.ExpiresAt.Year())
 		})
 	}
 }

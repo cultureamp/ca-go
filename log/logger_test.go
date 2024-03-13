@@ -104,7 +104,7 @@ func TestLoggerMethods(t *testing.T) {
 			assert.NotNil(t, config)
 
 			config.LogLevel = tC.logLevel
-			config.Quiet = false
+			config.Quiet = true
 			logger := NewLogger(config)
 			assert.NotNil(t, logger)
 
@@ -120,10 +120,4 @@ func TestLoggerMethods(t *testing.T) {
 			}
 		})
 	}
-
-	// Output:
-	// {"severity":"debug","app":"","app_version":"1.0.0","aws_region":"","aws_account_id":"local","farm":"local","product":"","event":"debug_event","time":"2024-01-17T16:03:30+11:00"}
-	// {"severity":"info","app":"","app_version":"1.0.0","aws_region":"","aws_account_id":"local","farm":"local","product":"","event":"info_event","time":"2024-01-17T16:03:30+11:00"}
-	// {"severity":"warn","app":"","app_version":"1.0.0","aws_region":"","aws_account_id":"local","farm":"local","product":"","event":"warn_event","time":"2024-01-17T16:03:30+11:00"}
-	// {"severity":"error","app":"","app_version":"1.0.0","aws_region":"","aws_account_id":"local","farm":"local","product":"","error":"test error","event":"error_event","time":"2024-01-17T16:03:30+11:00"}
 }

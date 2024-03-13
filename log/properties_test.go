@@ -15,11 +15,12 @@ func TestFieldTypes(t *testing.T) {
 	u := uuid.New()
 	duration := time.Since(then)
 
-	props := SubDoc().
+	props := Add().
 		Str("str", "value").
 		Int("int", 1).
 		Bool("bool", true).
 		Duration("dur", duration).
+		Time("time", then).
 		IPAddr("ipaddr", ipv4).
 		UUID("uuid", u)
 
