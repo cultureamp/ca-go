@@ -18,8 +18,8 @@ func TestAwsSettings(t *testing.T) {
 	t.Setenv(AwsXrayEnv, "true")
 
 	settings := newAWSSettings()
-	assert.Equal(t, "dev", settings.AwsProfile)
-	assert.Equal(t, "us-west-1", settings.AwsRegion)
-	assert.Equal(t, "123456789", settings.AwsAccountID)
-	assert.Equal(t, true, settings.XrayLogging)
+	assert.Equal(t, "dev", settings.ASAwsProfile)
+	assert.Equal(t, "us-west-1", settings.ASAwsRegion)
+	assert.Equal(t, "123456789", settings.ASAwsAccountID)
+	assert.Equal(t, true, settings.ASXrayLogging)
 }

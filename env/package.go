@@ -6,18 +6,6 @@ import (
 	"strings"
 )
 
-// CommonSettings implements common settings used in 90% of all our apps.
-type CommonSettings interface {
-	GetAppName() string
-	GetAppVersion() string
-	GetAppEnv() string
-	GetFarm() string
-	GetProductSuite() string
-	IsProduction() bool
-	IsRunningInAWS() bool
-	IsRunningLocal() bool
-}
-
 // DefaultCommonSettings is the package level instance of CommonSettings.
 var DefaultCommonSettings CommonSettings = getCommonInstance()
 
@@ -31,33 +19,33 @@ func getCommonInstance() *commonSettings {
 	return newCommonSettings()
 }
 
-// GetAppName returns the application name from the "APP" environment variable.
+// AppName returns the application name from the "APP" environment variable.
 func AppName() string {
-	return DefaultCommonSettings.GetAppName()
+	return DefaultCommonSettings.AppName()
 }
 
-// GetAppVersion returns the application version from the "APP_VER" environment variable.
+// AppVersion returns the application version from the "APP_VER" environment variable.
 // Default: "1.0.0".
 func AppVersion() string {
-	return DefaultCommonSettings.GetAppVersion()
+	return DefaultCommonSettings.AppVersion()
 }
 
-// GetAppEnv returns the application environment from the "APP_ENV" environment variable.
+// AppEnv returns the application environment from the "APP_ENV" environment variable.
 // Examples: "development", "production".
 func AppEnv() string {
-	return DefaultCommonSettings.GetAppEnv()
+	return DefaultCommonSettings.AppEnv()
 }
 
-// GetFarm returns the farm running the application from the "FARM" environment variable.
+// Farm returns the farm running the application from the "FARM" environment variable.
 // Examples: "local", "dolly", "production".
 func Farm() string {
-	return DefaultCommonSettings.GetFarm()
+	return DefaultCommonSettings.Farm()
 }
 
-// GetProductSuite returns the product suite this application belongs to from the "PRODUCT" environment variable.
+// ProductSuite returns the product suite this application belongs to from the "PRODUCT" environment variable.
 // Examples: "engagement", "performance".
 func ProductSuite() string {
-	return DefaultCommonSettings.GetProductSuite()
+	return DefaultCommonSettings.ProductSuite()
 }
 
 // IsProduction returns true if "APP_ENV" == "production".
@@ -75,14 +63,6 @@ func IsRunningLocal() bool {
 	return DefaultCommonSettings.IsRunningLocal()
 }
 
-// AWSSettings implements AWS settings.
-type AWSSettings interface {
-	GetAwsProfile() string
-	GetAwsRegion() string
-	GetAwsAccountID() string
-	IsXrayTracingEnabled() bool
-}
-
 // DefaultAWSSettings is the package level instance of AWSSettings.
 var DefaultAWSSettings AWSSettings = getAWSInstance()
 
@@ -98,27 +78,22 @@ func getAWSInstance() *awsSettings {
 
 // GetAwsProfile returns the AWS profile from the "AWS_PROFILE" environment variable.
 func AwsProfile() string {
-	return DefaultAWSSettings.GetAwsProfile()
+	return DefaultAWSSettings.AwsProfile()
 }
 
 // GetAwsRegion returns the AWS region from the "AWS_REGION" environment variable.
 func AwsRegion() string {
-	return DefaultAWSSettings.GetAwsRegion()
+	return DefaultAWSSettings.AwsRegion()
 }
 
 // GetAwsAccountID returns the AWS region from the "AWS_ACCOUNT_ID" environment variable.
 func AwsAccountID() string {
-	return DefaultAWSSettings.GetAwsAccountID()
+	return DefaultAWSSettings.AwsAccountID()
 }
 
 // IsXrayTracingEnabled returns "true" if the "XRAY_LOGGING" environment variable is turned on.
 func IsXrayTracingEnabled() bool {
 	return DefaultAWSSettings.IsXrayTracingEnabled()
-}
-
-// LogSettings implements Logging settings.
-type LogSettings interface {
-	GetLogLevel() string
 }
 
 // DefaultLogSettings is the package level instance of LoggingSettings.
@@ -131,21 +106,7 @@ func getLogInstance() *logSettings {
 // GetLogLevel returns the "LOG_LEVEL" environment variable.
 // Examples: "DEBUG, "INFO", "WARN", "ERROR".
 func LogLevel() string {
-	return DefaultLogSettings.GetLogLevel()
-}
-
-// DatadogSettings implements Datadog settings.
-type DatadogSettings interface {
-	GetDatadogApiKey() string
-	GetDatadogLogEndpoint() string
-	GetDatadogEnv() string
-	GetDatadogService() string
-	GetDatadogVersion() string
-	GetDatadogAgentHost() string
-	GetDatadogStatsDPort() int
-	GetDatadogTimeoutInMs() int
-	GetDatadogSite() string
-	GetDatadogLogLevel() string
+	return DefaultLogSettings.LogLevel()
 }
 
 // DefaultDatadogSettings is the package level instance of DatadogSettings.
@@ -157,64 +118,58 @@ func getDatadogInstance() *datadogSettings {
 
 // GetDatadogApiKey returns the "DD_API_KEY" environment variable.
 func DatadogApiKey() string {
-	return DefaultDatadogSettings.GetDatadogApiKey()
+	return DefaultDatadogSettings.DatadogApiKey()
 }
 
 // GetDatadogLogEndpoint returns the "DD_LOG_ENDPOINT" environment variable.
 func DatadogLogEndpoint() string {
-	return DefaultDatadogSettings.GetDatadogLogEndpoint()
+	return DefaultDatadogSettings.DatadogLogEndpoint()
 }
 
 // GetDatadogEnv returns the "DD_ENV" environment variable.
 // Default: AppEnv().
 func DatadogEnv() string {
-	return DefaultDatadogSettings.GetDatadogEnv()
+	return DefaultDatadogSettings.DatadogEnv()
 }
 
 // GetDatadogService returns the "DD_SERVICE" environment variable.
 // Default: App().
 func DatadogService() string {
-	return DefaultDatadogSettings.GetDatadogService()
+	return DefaultDatadogSettings.DatadogService()
 }
 
 // GetDatadogVersion returns the "DD_VERSION" environment variable.
 // Default: AppVersion().
 func DatadogVersion() string {
-	return DefaultDatadogSettings.GetDatadogVersion()
+	return DefaultDatadogSettings.DatadogVersion()
 }
 
 // GetDatadogAgentHost returns the "DD_AGENT_HOST" environment variable.
 func DatadogAgentHost() string {
-	return DefaultDatadogSettings.GetDatadogAgentHost()
+	return DefaultDatadogSettings.DatadogAgentHost()
 }
 
 // GetDatadogStatsDPort returns the "DD_DOGSTATSD_PORT" environment variable.
 // Default: 8125.
 func DatadogStatsDPort() int {
-	return DefaultDatadogSettings.GetDatadogStatsDPort()
+	return DefaultDatadogSettings.DatadogStatsDPort()
 }
 
 // GetDatadogTimeoutInMs returns the "DD_TIMEOUT" environment variable.
 // Default: 500.
 func DatadogTimeoutInMs() int {
-	return DefaultDatadogSettings.GetDatadogTimeoutInMs()
+	return DefaultDatadogSettings.DatadogTimeoutInMs()
 }
 
 // GetDatadogSite returns the "DD_SITE" environment variable.
 func DatadogSite() string {
-	return DefaultDatadogSettings.GetDatadogSite()
+	return DefaultDatadogSettings.DatadogSite()
 }
 
 // GetDatadogLogLevel returns the "DD_LOG_LEVEL" environment variable.
 // Default: LogLevel().
 func DatadogLogLevel() string {
-	return DefaultDatadogSettings.GetDatadogLogLevel()
-}
-
-// SentrySettings implements Sentry settings.
-type SentrySettings interface {
-	GetSentryDSN() string
-	GetSentryFlushTimeoutInMs() int
+	return DefaultDatadogSettings.DatadogLogLevel()
 }
 
 // DefaultSentrySettings is the package level instance of SentrySettings.
@@ -226,13 +181,13 @@ func getSentryInstance() *sentrySettings {
 
 // GetSentryDSN returns the "SENTRY_DSN" environment variable.
 func SentryDSN() string {
-	return DefaultSentrySettings.GetSentryDSN()
+	return DefaultSentrySettings.SentryDSN()
 }
 
 // GetSentryFlushTimeoutInMs returns the "SENTRY_FLUSH_TIMEOUT_IN_MS" environment variable.
 // Default: 100.
 func SentryFlushTimeoutInMs() int {
-	return DefaultSentrySettings.GetSentryFlushTimeoutInMs()
+	return DefaultSentrySettings.SentryFlushTimeoutInMs()
 }
 
 func isTestMode() bool {

@@ -90,7 +90,7 @@ func TestIsHelpers(t *testing.T) {
 func TestMockPackageLevelMethods(t *testing.T) {
 	// 1. set up your mock
 	mock := new(mockSettings)
-	mock.On("GetAppEnv").Return("abc")
+	mock.On("AppEnv").Return("abc")
 
 	// 2. override the package level DefaultAWSSecrets.Client with your mock
 	oldSettings := env.DefaultCommonSettings
@@ -107,31 +107,31 @@ type mockSettings struct {
 	mock.Mock
 }
 
-func (_m *mockSettings) GetAppName() string {
+func (_m *mockSettings) AppName() string {
 	args := _m.Called()
 	output, _ := args.Get(0).(string)
 	return output
 }
 
-func (_m *mockSettings) GetAppVersion() string {
+func (_m *mockSettings) AppVersion() string {
 	args := _m.Called()
 	output, _ := args.Get(0).(string)
 	return output
 }
 
-func (_m *mockSettings) GetAppEnv() string {
+func (_m *mockSettings) AppEnv() string {
 	args := _m.Called()
 	output, _ := args.Get(0).(string)
 	return output
 }
 
-func (_m *mockSettings) GetFarm() string {
+func (_m *mockSettings) Farm() string {
 	args := _m.Called()
 	output, _ := args.Get(0).(string)
 	return output
 }
 
-func (_m *mockSettings) GetProductSuite() string {
+func (_m *mockSettings) ProductSuite() string {
 	args := _m.Called()
 	output, _ := args.Get(0).(string)
 	return output

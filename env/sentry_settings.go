@@ -4,10 +4,18 @@ import (
 	senv "github.com/caarlos0/env/v10"
 )
 
+// SentrySettings implements Sentry settings.
+// This is an interface so that clients can mock out this behaviour in tests.
+type SentrySettings interface {
+	SentryDSN() string
+	SentryFlushTimeoutInMs() int
+}
+
 // sentrySettings that drive behavior.
 type sentrySettings struct {
-	SentryDSN       string `env:"SENTRY_DSN"`
-	SentryFlushInMs int    `env:"SENTRY_FLUSH_TIMEOUT_IN_MS" envDefault:"100"`
+	// These have to be public so that "github.com/caarlos0/env/v10" can populate them
+	SSSentryDSN       string `env:"SENTRY_DSN"`
+	SSSentryFlushInMs int    `env:"SENTRY_FLUSH_TIMEOUT_IN_MS" envDefault:"100"`
 }
 
 func newSentrySettings() *sentrySettings {
@@ -19,13 +27,13 @@ func newSentrySettings() *sentrySettings {
 	return &settings
 }
 
-// GetSentryDSN returns the "SENTRY_DSN" environment variable.
-func (s *sentrySettings) GetSentryDSN() string {
-	return s.SentryDSN
+// SentryDSN returns the "SENTRY_DSN" environment variable.
+func (s *sentrySettings) SentryDSN() string {
+	return s.SSSentryDSN
 }
 
-// GetSentryFlushTimeoutInMs returns the "SENTRY_FLUSH_TIMEOUT_IN_MS" environment variable.
+// SentryFlushTimeoutInMs returns the "SENTRY_FLUSH_TIMEOUT_IN_MS" environment variable.
 // Default: 100.
-func (s *sentrySettings) GetSentryFlushTimeoutInMs() int {
-	return s.SentryFlushInMs
+func (s *sentrySettings) SentryFlushTimeoutInMs() int {
+	return s.SSSentryFlushInMs
 }

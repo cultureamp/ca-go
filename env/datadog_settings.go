@@ -4,18 +4,34 @@ import (
 	senv "github.com/caarlos0/env/v10"
 )
 
+// DatadogSettings implements Datadog settings.
+// This is an interface so that clients can mock out this behaviour in tests.
+type DatadogSettings interface {
+	DatadogApiKey() string
+	DatadogLogEndpoint() string
+	DatadogEnv() string
+	DatadogService() string
+	DatadogVersion() string
+	DatadogAgentHost() string
+	DatadogStatsDPort() int
+	DatadogTimeoutInMs() int
+	DatadogSite() string
+	DatadogLogLevel() string
+}
+
 // datadogSettings that drive behavior.
 type datadogSettings struct {
-	DatadogApiKey      string `env:"DD_API_KEY"`
-	DatadogLogEndpoint string `env:"DD_LOG_ENDPOINT"`
-	DatadogEnv         string `env:"DD_ENV"            envDefault:"development"`
-	DatadogService     string `env:"DD_SERVICE"`
-	DatadogVersion     string `env:"DD_VERSION"        envDefault:"1.0.0"`
-	DatadogAgentHost   string `env:"DD_AGENT_HOST"`
-	DatadogStatsDPort  int    `env:"DD_DOGSTATSD_PORT" envDefault:"8125"`
-	DatadogTimeoutInMs int    `env:"DD_TIMEOUT"        envDefault:"500"`
-	DatadogSite        string `env:"DD_SITE"`
-	DatadogLogLevel    string `env:"DD_LOG_LEVEL"      envDefault:"INFO"`
+	// These have to be public so that "github.com/caarlos0/env/v10" can populate them
+	DSDatadogApiKey      string `env:"DD_API_KEY"`
+	DSDatadogLogEndpoint string `env:"DD_LOG_ENDPOINT"`
+	DSDatadogEnv         string `env:"DD_ENV"            envDefault:"development"`
+	DSDatadogService     string `env:"DD_SERVICE"`
+	DSDatadogVersion     string `env:"DD_VERSION"        envDefault:"1.0.0"`
+	DSDatadogAgentHost   string `env:"DD_AGENT_HOST"`
+	DSDatadogStatsDPort  int    `env:"DD_DOGSTATSD_PORT" envDefault:"8125"`
+	DSDatadogTimeoutInMs int    `env:"DD_TIMEOUT"        envDefault:"500"`
+	DSDatadogSite        string `env:"DD_SITE"`
+	DSDatadogLogLevel    string `env:"DD_LOG_LEVEL"      envDefault:"INFO"`
 }
 
 func newDatadogSettings() *datadogSettings {
@@ -27,58 +43,58 @@ func newDatadogSettings() *datadogSettings {
 	return &settings
 }
 
-// GetDatadogApiKey returns the "DD_API_KEY" environment variable.
-func (s *datadogSettings) GetDatadogApiKey() string {
-	return s.DatadogApiKey
+// DatadogApiKey returns the "DD_API_KEY" environment variable.
+func (s *datadogSettings) DatadogApiKey() string {
+	return s.DSDatadogApiKey
 }
 
-// GetDatadogLogEndpoint returns the "DD_LOG_ENDPOINT" environment variable.
-func (s *datadogSettings) GetDatadogLogEndpoint() string {
-	return s.DatadogLogEndpoint
+// DatadogLogEndpoint returns the "DD_LOG_ENDPOINT" environment variable.
+func (s *datadogSettings) DatadogLogEndpoint() string {
+	return s.DSDatadogLogEndpoint
 }
 
-// GetDatadogEnv returns the "DD_ENV" environment variable.
+// DatadogEnv returns the "DD_ENV" environment variable.
 // Default: AppEnv().
-func (s *datadogSettings) GetDatadogEnv() string {
-	return s.DatadogEnv
+func (s *datadogSettings) DatadogEnv() string {
+	return s.DSDatadogEnv
 }
 
-// GetDatadogService returns the "DD_SERVICE" environment variable.
+// DatadogService returns the "DD_SERVICE" environment variable.
 // Default: App().
-func (s *datadogSettings) GetDatadogService() string {
-	return s.DatadogService
+func (s *datadogSettings) DatadogService() string {
+	return s.DSDatadogService
 }
 
-// GetDatadogVersion returns the "DD_VERSION" environment variable.
+// DatadogVersion returns the "DD_VERSION" environment variable.
 // Default: AppVersion().
-func (s *datadogSettings) GetDatadogVersion() string {
-	return s.DatadogVersion
+func (s *datadogSettings) DatadogVersion() string {
+	return s.DSDatadogVersion
 }
 
-// GetDatadogAgentHost returns the "DD_AGENT_HOST" environment variable.
-func (s *datadogSettings) GetDatadogAgentHost() string {
-	return s.DatadogAgentHost
+// DatadogAgentHost returns the "DD_AGENT_HOST" environment variable.
+func (s *datadogSettings) DatadogAgentHost() string {
+	return s.DSDatadogAgentHost
 }
 
-// GetDatadogStatsDPort returns the "DD_DOGSTATSD_PORT" environment variable.
+// DatadogStatsDPort returns the "DD_DOGSTATSD_PORT" environment variable.
 // Default: 8125.
-func (s *datadogSettings) GetDatadogStatsDPort() int {
-	return s.DatadogStatsDPort
+func (s *datadogSettings) DatadogStatsDPort() int {
+	return s.DSDatadogStatsDPort
 }
 
-// GetDatadogTimeoutInMs returns the "DD_TIMEOUT" environment variable.
+// DatadogTimeoutInMs returns the "DD_TIMEOUT" environment variable.
 // Default: 500.
-func (s *datadogSettings) GetDatadogTimeoutInMs() int {
-	return s.DatadogTimeoutInMs
+func (s *datadogSettings) DatadogTimeoutInMs() int {
+	return s.DSDatadogTimeoutInMs
 }
 
-// GetDatadogSite returns the "DD_SITE" environment variable.
-func (s *datadogSettings) GetDatadogSite() string {
-	return s.DatadogSite
+// DatadogSite returns the "DD_SITE" environment variable.
+func (s *datadogSettings) DatadogSite() string {
+	return s.DSDatadogSite
 }
 
-// GetDatadogLogLevel returns the "DD_LOG_LEVEL" environment variable.
+// DatadogLogLevel returns the "DD_LOG_LEVEL" environment variable.
 // Default: LogLevel().
-func (s *datadogSettings) GetDatadogLogLevel() string {
-	return s.DatadogLogLevel
+func (s *datadogSettings) DatadogLogLevel() string {
+	return s.DSDatadogLogLevel
 }
