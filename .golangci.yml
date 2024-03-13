@@ -149,15 +149,16 @@ linters-settings:
           - $gostd
           - github.com/aws
           - github.com/cultureamp
+          - github.com/golang-jwt
           - github.com/google
           - github.com/go-errors
           - github.com/getsentry
           - github.com/hashicorp
           - github.com/launchdarkly
+          - github.com/lestrrat-go
+          - github.com/patrickmn/go-cache
           - github.com/rs/zerolog
           - github.com/segmentio
-          - github.com/lestrrat-go
-          - github.com/golang-jwt
           # not sure about these below
           - github.com/IBM/sarama
           - github.com/xdg-go/scram
@@ -168,7 +169,7 @@ linters-settings:
           - pkg: "github.com/sirupsen/logrus"
             desc: not allowed
           - pkg: "github.com/pkg/errors"
-            desc: Should be replaced by standard lib errors package fmt.Errorf("msg %w", err)
+            desc: Should be replaced by standard lib errors package fmt.Errorf("msg %v", err)
 
   tagliatelle:
     # Check the struct tag name case.
