@@ -11,7 +11,9 @@ import (
 )
 
 const (
-	privCacheKey = "encoder_priv_key"
+	privCacheKey                  = "encoder_priv_key"
+	defaultEncoderExpiration      = 60 * time.Minute
+	defaultEncoderCleanupInterval = 1 * time.Minute
 
 	invalidKey = iota
 	rsaKey
@@ -33,22 +35,19 @@ type encoderPrivateKey struct {
 
 // JwtEncoder can encode a claim to a jwt token string.
 type JwtEncoder struct {
-	fetchPrivateKey EncoderKeyRetriever
-
-	mu sync.Mutex
-
-	// memory cache holding the privateKey
-	cache             *cache.Cache
-	defaultExpiration time.Duration
-	cleanupInterval   time.Duration
+	fetchPrivateKey   EncoderKeyRetriever // func provided by clients of this library to supply a refreshed private key and kid
+	mu                sync.Mutex          // mutex to protect cache.Get/Set race condition
+	cache             *cache.Cache        // memory cache holding the encoderPrivateKey struct
+	defaultExpiration time.Duration       // default is 60 minutes
+	cleanupInterval   time.Duration       // default is every 1 minute
 }
 
 // NewJwtEncoder creates a new JwtEncoder.
 func NewJwtEncoder(fetchPrivateKey EncoderKeyRetriever, options ...JwtEncoderOption) (*JwtEncoder, error) {
 	encoder := &JwtEncoder{
 		fetchPrivateKey:   fetchPrivateKey,
-		defaultExpiration: 60 * time.Minute,
-		cleanupInterval:   10 * time.Minute,
+		defaultExpiration: defaultEncoderExpiration,
+		cleanupInterval:   defaultEncoderCleanupInterval,
 	}
 
 	// Loop through our Encoder options and apply them
@@ -111,15 +110,30 @@ func (e *JwtEncoder) getPrivateKey() (*encoderPrivateKey, error) {
 		return key, nil
 	}
 
-	// The cache has expired the key
+	// The cache has expired the key, so re-fetch
+	return e.refetchPrivateKey()
+}
 
-	// Only allow one thread to fetch, parse and update the cache
+func (e *JwtEncoder) refetchPrivateKey() (*encoderPrivateKey, error) {
+	// Only allow one thread to refetch, parse and update the cache
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	// Time to fetch new ones
+	// check the cache again in case another go routine just updated it
+	obj, found := e.cache.Get(privCacheKey)
+	if found {
+		key, ok := obj.(*encoderPrivateKey)
+		if !ok {
+			return nil, fmt.Errorf("internal error: cache key does not point to private key")
+		}
+
+		return key, nil
+	}
+
+	// Call client retriever func
 	privateKey, kid := e.fetchPrivateKey()
 
+	// check its valid by parsing the PEM key
 	encodingKey, err := e.parsePrivateKey(privateKey, kid)
 	if err != nil {
 		return nil, err

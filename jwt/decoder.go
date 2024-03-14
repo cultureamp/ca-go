@@ -14,14 +14,16 @@ import (
 )
 
 const (
-	kidHeaderKey         = "kid"
-	algorithmHeaderKey   = "alg"
-	signatureHeaderKey   = "sig"
-	webGatewayKid        = "web-gateway"
-	accountIDClaim       = "accountId"
-	realUserIDClaim      = "realUserId"
-	effectiveUserIDClaim = "effectiveUserId"
-	jwksCacheKey         = "decoder_jwks_key"
+	kidHeaderKey                  = "kid"
+	algorithmHeaderKey            = "alg"
+	signatureHeaderKey            = "sig"
+	webGatewayKid                 = "web-gateway"
+	accountIDClaim                = "accountId"
+	realUserIDClaim               = "realUserId"
+	effectiveUserIDClaim          = "effectiveUserId"
+	jwksCacheKey                  = "decoder_jwks_key"
+	defaultDecoderExpiration      = 60 * time.Minute
+	defaultDecoderCleanupInterval = 1 * time.Minute
 )
 
 type publicKey interface{} // Only ECDSA (perferred) and RSA public keys allowed
@@ -30,21 +32,19 @@ type DecoderJwksRetriever func() string
 
 // JwtDecoder can decode a jwt token string.
 type JwtDecoder struct {
-	fetchJwkKeys DecoderJwksRetriever
-
-	// memory cache holding the jwk.Set
-	mu                sync.Mutex
-	cache             *cache.Cache
-	defaultExpiration time.Duration
-	cleanupInterval   time.Duration
+	fetchJwkKeys      DecoderJwksRetriever // func provided by clients of this library to supply a refreshed JWKS
+	mu                sync.Mutex           // mutex to protect cache.Get/Set race condition
+	cache             *cache.Cache         // memory cache holding the jwk.Set
+	defaultExpiration time.Duration        // default is 60 minutes
+	cleanupInterval   time.Duration        // default is every 1 minute
 }
 
 // NewJwtDecoder creates a new JwtDecoder with the set ECDSA and RSA public keys in the JWK string.
 func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) (*JwtDecoder, error) {
 	decoder := &JwtDecoder{
 		fetchJwkKeys:      fetchJWKS,
-		defaultExpiration: 60 * time.Minute,
-		cleanupInterval:   10 * time.Minute,
+		defaultExpiration: defaultDecoderExpiration,
+		cleanupInterval:   defaultDecoderCleanupInterval,
 	}
 
 	// Loop through our Decoder options and apply them
@@ -180,12 +180,26 @@ func (d *JwtDecoder) getJWKSet() (jwk.Set, error) {
 	}
 
 	// The cache has expired the keys
+	return d.refetchJWKSet()
+}
 
+func (d *JwtDecoder) refetchJWKSet() (jwk.Set, error) {
 	// Only allow one thread to fetch, parse and update the cache
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	// Time to fetch new ones
+	// check the cache again in case another go routine just updated it
+	obj, found := d.cache.Get(jwksCacheKey)
+	if found {
+		jwks, ok := obj.(jwk.Set)
+		if !ok {
+			return nil, fmt.Errorf("internal error: cache key does not point to jwk.Set")
+		}
+
+		return jwks, nil
+	}
+
+	// Call client retriever func
 	jwkKeys := d.fetchJwkKeys()
 
 	// Parse all new JWKs JSON keys and make sure its valid
