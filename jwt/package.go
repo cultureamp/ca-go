@@ -8,9 +8,19 @@ import (
 	"strings"
 )
 
+// Encoder interface allows for mocking of the Encoder.
+type Encoder interface {
+	Encode(claims *StandardClaims) (string, error)
+}
+
+// Decoder interface allows for mocking of the Decoder.
+type Decoder interface {
+	Decode(tokenString string) (*StandardClaims, error)
+}
+
 var (
-	DefaultJwtDecoder *JwtDecoder = getDecoderInstance()
-	DefaultJwtEncoder *JwtEncoder = getEncoderInstance()
+	DefaultJwtEncoder Encoder = getEncoderInstance()
+	DefaultJwtDecoder Decoder = getDecoderInstance()
 )
 
 func getDecoderInstance() *JwtDecoder {
