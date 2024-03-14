@@ -76,7 +76,7 @@ func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
 	// Will check cache and re-fetch if expired
 	encodingKey, err := e.getPrivateKey()
 	if err != nil {
-		return "", fmt.Errorf("failed to load private key: %v", err)
+		return "", fmt.Errorf("failed to load private key: %w", err)
 	}
 
 	switch encodingKey.keyType {
