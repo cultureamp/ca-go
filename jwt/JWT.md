@@ -61,3 +61,89 @@ func BasicExamples() {
 	fmt.Printf("The decode token is '%v' (err='%+v')\n", sc, err)
 }
 ```
+
+
+## Testing and Mocks
+
+During tests you can override the package level `DefaultJwtEncoder` and/or `DefaultJwtDecoder` with a mock that supports 
+the `Encoder` or `Decoder` interface.
+
+- Encode(claims *StandardClaims) (string, error)
+- Decode(tokenString string) (*StandardClaims, error)
+
+```
+import (
+	"context"
+	"testing"
+
+	"github.com/cultureamp/ca-go/jwt"
+	"github.com/stretchr/testify/mock"
+)
+
+func ExampleMocked_EncoderDecoder() {
+	claims := &jwt.StandardClaims{
+		AccountId:       "abc123",
+		RealUserId:      "xyz234",
+		EffectiveUserId: "xyz345",
+		Issuer:          "encoder-name",
+		Subject:         "test",
+		Audience:        []string{"decoder-name"},
+		ExpiresAt:       time.Unix(2211797532, 0), //  2/2/2040
+		IssuedAt:        time.Unix(1580608922, 0), // 1/1/2020
+		NotBefore:       time.Unix(1580608922, 0), // 1/1/2020
+	}
+
+	mockEncDec := newMockedEncoderDecoder()
+	mockEncDec.On("Encode", mock.Anything).Return("eyJhbGciOiJSUzUxMiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0", nil)
+	mockEncDec.On("Decode", mock.Anything).Return(claims, nil)
+
+	// Overwrite the Default package level encoder and decoder
+	oldEncoder := jwt.DefaultJwtEncoder
+	oldDecoder := jwt.DefaultJwtDecoder
+	jwt.DefaultJwtEncoder = mockEncDec
+	jwt.DefaultJwtDecoder = mockEncDec
+	defer func() {
+		jwt.DefaultJwtEncoder = oldEncoder
+		jwt.DefaultJwtDecoder = oldDecoder
+	}()
+
+	// Encode this claim with the default "web-gateway" key and add the kid to the token header
+	token, err := jwt.Encode(claims)
+	fmt.Printf("The encoded token is '%s' (err='%v')\n", token, err)
+
+	// Decode it back again using the key that matches the kid header using the default JWKS JSON keys
+	claim, err := jwt.Decode(token)
+	fmt.Printf(
+		"The decoded token is '%s %s %s %s %v %s %s' (err='%+v')\n",
+		claim.AccountId, claim.RealUserId, claim.EffectiveUserId,
+		claim.Issuer, claim.Subject, claim.Audience,
+		claim.ExpiresAt.UTC().Format(time.RFC3339),
+		err,
+	)
+
+	// Output:
+	// The encoded token is 'eyJhbGciOiJSUzUxMiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0' (err='<nil>')
+	// The decoded token is 'abc123 xyz234 xyz345 encoder-name test [decoder-name] 2040-02-02T12:12:12Z' (err='<nil>')
+}
+
+type mockedEncoderDecoder struct {
+	mock.Mock
+}
+
+func newMockedEncoderDecoder() *mockedEncoderDecoder {
+	return &mockedEncoderDecoder{}
+}
+
+func (m *mockedEncoderDecoder) Encode(claims *jwt.StandardClaims) (string, error) {
+	args := m.Called(claims)
+	output, _ := args.Get(0).(string)
+	return output, args.Error(1)
+}
+
+// Decrypt on the test runner just returns the "encryptedStr" as the decrypted plainstr.
+func (m *mockedEncoderDecoder) Decode(tokenString string) (*jwt.StandardClaims, error) {
+	args := m.Called(tokenString)
+	output, _ := args.Get(0).(*jwt.StandardClaims)
+	return output, args.Error(1)
+}
+```
