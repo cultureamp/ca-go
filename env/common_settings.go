@@ -23,7 +23,7 @@ type commonSettings struct {
 	App_Name      string `env:"APP,required,notEmpty"`
 	App_Version   string `env:"APP_VERSION"           envDefault:"1.0.0"`
 	App_Env       string `env:"APP_ENV"               envDefault:"development"`
-	Farm_Location string `env:"FARM"                  envDefault:"local"`
+	Farm_Name     string `env:"FARM"                  envDefault:"local"`
 	Product_Suite string `env:"PRODUCT"`
 }
 
@@ -56,7 +56,7 @@ func (s *commonSettings) AppEnv() string {
 // Farm returns the farm running the application from the "FARM" environment variable.
 // Examples: "local", "dolly", "production".
 func (s *commonSettings) Farm() string {
-	return s.Farm_Location
+	return s.Farm_Name
 }
 
 // ProductSuite returns the product suite this application belongs to from the "PRODUCT" environment variable.
@@ -77,5 +77,5 @@ func (s *commonSettings) IsRunningInAWS() bool {
 
 // IsRunningLocal returns true if FARM" == "local".
 func (s *commonSettings) IsRunningLocal() bool {
-	return s.Farm_Location == "local"
+	return s.Farm_Name == "local"
 }
