@@ -55,7 +55,7 @@ func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) 
 	decoder.cache = cache.New(decoder.defaultExpiration, decoder.cleanupInterval)
 
 	// call the getJWKS func to make sure its valid and we can parse the JWKS
-	_, err := decoder.getJWKSet()
+	_, err := decoder.loadJWKSet()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load jwks: %w", err)
 	}
@@ -137,7 +137,7 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	}
 
 	// check cache and possibly fetch new JWKS
-	jwkSet, err := d.getJWKSet()
+	jwkSet, err := d.loadJWKSet()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load jwks: %w", err)
 	}
@@ -167,35 +167,18 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	return nil, fmt.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)
 }
 
-func (d *JwtDecoder) getJWKSet() (jwk.Set, error) {
+func (d *JwtDecoder) loadJWKSet() (jwk.Set, error) {
 	// First check cache, if its there then great, use it!
-	obj, found := d.cache.Get(jwksCacheKey)
-	if found {
-		jwks, ok := obj.(jwk.Set)
-		if !ok {
-			return nil, fmt.Errorf("internal error: cache key does not point to jwk.Set")
-		}
-
+	if jwks, ok := d.getCachedJWKSet(); ok {
 		return jwks, nil
 	}
 
-	// The cache has expired the keys
-	return d.refetchJWKSet()
-}
-
-func (d *JwtDecoder) refetchJWKSet() (jwk.Set, error) {
 	// Only allow one thread to fetch, parse and update the cache
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
 	// check the cache again in case another go routine just updated it
-	obj, found := d.cache.Get(jwksCacheKey)
-	if found {
-		jwks, ok := obj.(jwk.Set)
-		if !ok {
-			return nil, fmt.Errorf("internal error: cache key does not point to jwk.Set")
-		}
-
+	if jwks, ok := d.getCachedJWKSet(); ok {
 		return jwks, nil
 	}
 
@@ -211,6 +194,16 @@ func (d *JwtDecoder) refetchJWKSet() (jwk.Set, error) {
 	// Add back into the cache
 	err = d.cache.Add(jwksCacheKey, jwkSet, cache.DefaultExpiration)
 	return jwkSet, err
+}
+
+func (d *JwtDecoder) getCachedJWKSet() (jwk.Set, bool) {
+	obj, found := d.cache.Get(jwksCacheKey)
+	if !found {
+		return nil, false
+	}
+
+	jwks, ok := obj.(jwk.Set)
+	return jwks, ok
 }
 
 func (decoder *JwtDecoder) parseJWKs(jwks string) (jwk.Set, error) {
