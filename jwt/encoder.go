@@ -58,7 +58,7 @@ func NewJwtEncoder(fetchPrivateKey EncoderKeyRetriever, options ...JwtEncoderOpt
 	encoder.cache = cache.New(encoder.defaultExpiration, encoder.cleanupInterval)
 
 	// call the fetchPrivateKey func to make sure the private key is valid
-	_, err := encoder.getPrivateKey()
+	_, err := encoder.loadPrivateKey()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load private key: %w", err)
 	}
@@ -73,7 +73,7 @@ func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
 	registerClaims := newEncoderClaims(claims)
 
 	// Will check cache and re-fetch if expired
-	encodingKey, err := e.getPrivateKey()
+	encodingKey, err := e.loadPrivateKey()
 	if err != nil {
 		return "", fmt.Errorf("failed to load private key: %w", err)
 	}
@@ -98,35 +98,18 @@ func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
 	return token.SignedString(encodingKey.privateSigningKey)
 }
 
-func (e *JwtEncoder) getPrivateKey() (*encoderPrivateKey, error) {
+func (e *JwtEncoder) loadPrivateKey() (*encoderPrivateKey, error) {
 	// First chech cache, if its there then great, use it!
-	obj, found := e.cache.Get(privCacheKey)
-	if found {
-		key, ok := obj.(*encoderPrivateKey)
-		if !ok {
-			return nil, fmt.Errorf("internal error: cache key does not point to private key")
-		}
-
+	if key, ok := e.getCachedPrivateKey(); ok {
 		return key, nil
 	}
 
-	// The cache has expired the key, so re-fetch
-	return e.refetchPrivateKey()
-}
-
-func (e *JwtEncoder) refetchPrivateKey() (*encoderPrivateKey, error) {
 	// Only allow one thread to refetch, parse and update the cache
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
 	// check the cache again in case another go routine just updated it
-	obj, found := e.cache.Get(privCacheKey)
-	if found {
-		key, ok := obj.(*encoderPrivateKey)
-		if !ok {
-			return nil, fmt.Errorf("internal error: cache key does not point to private key")
-		}
-
+	if key, ok := e.getCachedPrivateKey(); ok {
 		return key, nil
 	}
 
@@ -142,6 +125,17 @@ func (e *JwtEncoder) refetchPrivateKey() (*encoderPrivateKey, error) {
 	// Add back into the cache
 	err = e.cache.Add(privCacheKey, encodingKey, cache.DefaultExpiration)
 	return encodingKey, err
+}
+
+func (e *JwtEncoder) getCachedPrivateKey() (*encoderPrivateKey, bool) {
+	// First chech cache, if its there then great, use it!
+	obj, found := e.cache.Get(privCacheKey)
+	if !found {
+		return nil, false
+	}
+
+	key, ok := obj.(*encoderPrivateKey)
+	return key, ok
 }
 
 func (e *JwtEncoder) parsePrivateKey(privKey string, kid string) (*encoderPrivateKey, error) {
