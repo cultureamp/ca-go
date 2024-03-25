@@ -168,7 +168,7 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 }
 
 func (d *JwtDecoder) getJWKSet() (jwk.Set, error) {
-	// First chech cache, if its there then great, use it!
+	// First check cache, if its there then great, use it!
 	obj, found := d.cache.Get(jwksCacheKey)
 	if found {
 		jwks, ok := obj.(jwk.Set)
