@@ -3,9 +3,9 @@ package cipher
 import (
 	"context"
 	b64 "encoding/base64"
-	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/kms"
+	"github.com/go-errors/errors"
 )
 
 type awsKMSClient struct {
@@ -37,7 +37,7 @@ func (c *awsKMSClient) Encrypt(ctx context.Context, keyId string, plainStr strin
 func (c *awsKMSClient) Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error) {
 	blob, err := b64.StdEncoding.DecodeString(encryptedStr)
 	if err != nil {
-		return "", fmt.Errorf("failed to decode: %w", err)
+		return "", errors.Errorf("failed to decode: %w", err)
 	}
 
 	input := &kms.DecryptInput{

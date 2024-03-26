@@ -2,10 +2,11 @@ package jwt
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/go-errors/errors"
 )
 
 // Encoder interface allows for mocking of the Encoder.
@@ -26,7 +27,7 @@ var (
 func getDecoderInstance() *JwtDecoder {
 	decoder, err := NewJwtDecoder(jwksFromEnvVarRetriever)
 	if err != nil {
-		err := fmt.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
+		err := errors.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
 		panic(err)
 	}
 
@@ -52,7 +53,7 @@ func jwksFromEnvVarRetriever() string {
 func getEncoderInstance() *JwtEncoder {
 	encoder, err := NewJwtEncoder(privateKeyFromEnvVarRetriever)
 	if err != nil {
-		err := fmt.Errorf("error loading jwk encoder, maybe missing env vars: err='%w'\n", err)
+		err := errors.Errorf("error loading jwk encoder, maybe missing env vars: err='%w'\n", err)
 		panic(err)
 	}
 

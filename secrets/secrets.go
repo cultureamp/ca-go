@@ -2,9 +2,9 @@ package secrets
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/go-errors/errors"
 )
 
 // AWSSecretsManager supports wraps the AWSSecretsManagerClient interface.
@@ -34,10 +34,10 @@ func NewAWSSecretsManagerWithClient(client AWSSecretsManagerClient) *AWSSecretsM
 func (s *AWSSecretsManager) Get(ctx context.Context, secretKey string) (string, error) {
 	secret, err := s.Client.GetSecretValue(ctx, secretKey)
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve '%s': %w", secretKey, err)
+		return "", errors.Errorf("failed to retrieve '%s': %w", secretKey, err)
 	}
 	if secret == "" {
-		return "", fmt.Errorf("retrieved secret '%s' is empty", secretKey)
+		return "", errors.Errorf("retrieved secret '%s' is empty", secretKey)
 	}
 	return secret, nil
 }

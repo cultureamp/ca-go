@@ -28,6 +28,7 @@ func setGlobalLogger() {
 	zerolog.MessageFieldName = "details"
 	zerolog.LevelFieldName = "severity"
 	zerolog.DurationFieldInteger = true
+	zerolog.ErrorStackMarshaler = logStackTracer
 }
 
 // Debug starts a new message with debug level.
