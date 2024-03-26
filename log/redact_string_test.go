@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
 func TestStringRedaction(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -19,7 +18,7 @@ func TestStringRedaction(t *testing.T) {
 			redacted: "",
 		},
 		{
-			desc:     "String less than 10 chars shows 10 stars",
+			desc:     "String less than 8 chars shows 10 stars",
 			str:      "1234",
 			redacted: "**********",
 		},
@@ -51,7 +50,7 @@ func TestStringRedaction(t *testing.T) {
 		{
 			desc:     "Real world test",
 			str:      "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJkNDc1ZGQ1Yi1mMTZjLTRiZmItODk4Yy1kMzQzNWEyMTUyMzkiLCJlZmZlY3RpdmVVc2VySWQiOiI1YjMxNjY0YS03NjEwLTRmYjAtYmM4OS1mOWY4ZTIwYmY4Y2UiLCJyZWFsVXNlcklkIjoiNWIzMTY2NGEtNzYxMC00ZmIwLWJjODktZjlmOGUrUC021FhB_zuETHmhQUXOfIyTkpvhcJfrrqwdcc-KmJGznckACLj65VmnayoltCce_3JGJ361GuutgrDaqp1aW4D05mvO8CCIRwGq8hTcRoi7IdXYSnA6UlXtLNYvttz92jaAAoNDCZmbbP-umHac4x5AT1xY-kVyh7VAadZG_Qe7dZWU9WCHtCV3mqTMwX9B9zrqY2NrpblevbbYpoiJiXOU7kex4BEivF1K6VWI-mpcmKtEOZLx2E",
-			redacted: "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJkNDc1ZGQ1Yi1mMTZjLTRiZmItODk4Yy1kMzQzNWEyMTUyMzkiLCJlZmZlY3R********************vttz92jaAAoNDCZmbbP-umHac4x5AT1xY-kVyh7VAadZG_Qe7dZWU9WCHtCV3mqTMwX9B9zrqY2NrpblevbbYpoiJiXOU7kex4BEivF1K6VWI-mpcmKtEOZLx2E",
+			redacted: "Bearer eyJ**********mKtEOZLx2E",
 		},
 	}
 	for _, tC := range testCases {

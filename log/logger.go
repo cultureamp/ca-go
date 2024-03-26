@@ -2,6 +2,7 @@ package log
 
 import (
 	"github.com/rs/zerolog"
+	strcase "github.com/stoewer/go-strcase"
 )
 
 // standardLogger that implements the CA Logging standard.
@@ -39,7 +40,7 @@ func NewLogger(config *Config) *standardLogger {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Debug(event string) *Property {
-	le := l.impl.Debug().Str("event", toSnakeCase(event))
+	le := l.impl.Debug().Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le)
 }
 
@@ -47,7 +48,7 @@ func (l *standardLogger) Debug(event string) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Info(event string) *Property {
-	le := l.impl.Info().Str("event", toSnakeCase(event))
+	le := l.impl.Info().Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le)
 }
 
@@ -55,7 +56,7 @@ func (l *standardLogger) Info(event string) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Warn(event string) *Property {
-	le := l.impl.Warn().Str("event", toSnakeCase(event))
+	le := l.impl.Warn().Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le)
 }
 
@@ -65,7 +66,7 @@ func (l *standardLogger) Warn(event string) *Property {
 func (l *standardLogger) Error(event string, err error) *Property {
 	le := l.impl.Error().
 		Err(err).
-		Str("event", toSnakeCase(event))
+		Str("event", strcase.SnakeCase(event))
 	props := newLoggerProperty(le)
 	return props.withFullStack().WithSystemTracing()
 }
@@ -75,7 +76,7 @@ func (l *standardLogger) Error(event string, err error) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Fatal(event string, err error) *Property {
-	le := l.impl.Fatal().Err(err).Str("event", toSnakeCase(event))
+	le := l.impl.Fatal().Err(err).Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le).WithSystemTracing()
 }
 
@@ -84,6 +85,6 @@ func (l *standardLogger) Fatal(event string, err error) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Panic(event string, err error) *Property {
-	le := l.impl.Panic().Err(err).Str("event", toSnakeCase(event))
+	le := l.impl.Panic().Err(err).Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le).WithSystemTracing()
 }
