@@ -13,7 +13,7 @@ func TestStackTrace(t *testing.T) {
 	assert.NotNil(t, standard_error)
 
 	trace := stackTracer(standard_error)
-	assert.Contains(t, trace, "runtime/asm_arm64.s")
+	assert.Contains(t, trace, "runtime/asm")
 
 	stacktraced_error := ge.Errorf("stack traced err")
 	assert.NotNil(t, stacktraced_error)
