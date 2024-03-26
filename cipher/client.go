@@ -3,7 +3,6 @@ package cipher
 import (
 	"context"
 	b64 "encoding/base64"
-	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/go-errors/errors"
