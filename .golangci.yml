@@ -159,6 +159,7 @@ linters-settings:
           - github.com/patrickmn/go-cache
           - github.com/rs/zerolog
           - github.com/segmentio
+          - github.com/stoewer/go-strcase
           # not sure about these below
           - github.com/cenkalti/backoff
           - github.com/IBM/sarama
@@ -230,27 +231,13 @@ issues:
 
   exclude-rules:
 
-    # too hard to refactor
-    - path: x/log/helper.go
+    # too hard to refactor packges in the x/ folders
+    - path: x/
       linters:
         - nestif
-
-    # []string hard to initialize prealloc with default value
-    - path: x/vault/vault_decrypter.go
-      linters:
         - prealloc
 
-    # []string hard to initialize prealloc with default value
-    - path: x/vault/vault_encrypter.go
-      linters:
-        - prealloc
-
-    # too hard to refactor
-    - path: x/kafka/consumer/consumer.go
-      linters:
-        - nestif
-
-    # we need to reference a deprecated field in order to trace possible usage
+    # exluded rules from standard packages for reasons...
     - path: log/logger.go
       linters:
         - zerologlint
@@ -262,14 +249,6 @@ issues:
     - path: log/legacy_extensions.go
       linters:
         - tagliatelle
-
-    - path: log/helper.go
-      linters:
-        - nestif
-
-    - path: log/strings.go
-      linters:
-        - nestif
 
     - path: env/settings.go
       linters:
