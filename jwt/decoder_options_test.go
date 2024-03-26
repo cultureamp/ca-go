@@ -15,6 +15,7 @@ func TestDecoderOptions(t *testing.T) {
 	validJwks := string(b)
 
 	i := 0
+// This will be called each time the cache is refreshed and they we can assert i has been incremented the correct number of times below.
 	jwks := func() string {
 		i++
 		return validJwks

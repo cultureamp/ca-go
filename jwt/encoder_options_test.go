@@ -15,6 +15,7 @@ func TestEncoderOptions(t *testing.T) {
 	privKey := string(b)
 
 	i := 0
+// This will be called each time the cache is refreshed and they we can assert i has been incremented the correct number of times below.
 	encoderKeyFunc := func() (string, string) {
 		i++
 		return privKey, "rsa-256"
