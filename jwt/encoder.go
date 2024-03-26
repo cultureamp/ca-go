@@ -2,10 +2,10 @@ package jwt
 
 import (
 	"crypto/elliptic"
-	"fmt"
 	"sync"
 	"time"
 
+	"github.com/go-errors/errors"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/patrickmn/go-cache"
 )
@@ -60,7 +60,7 @@ func NewJwtEncoder(fetchPrivateKey EncoderKeyRetriever, options ...JwtEncoderOpt
 	// call the fetchPrivateKey func to make sure the private key is valid
 	_, err := encoder.loadPrivateKey()
 	if err != nil {
-		return nil, fmt.Errorf("failed to load private key: %w", err)
+		return nil, errors.Errorf("failed to load private key: %w", err)
 	}
 
 	return encoder, nil
@@ -75,7 +75,7 @@ func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
 	// Will check cache and re-fetch if expired
 	encodingKey, err := e.loadPrivateKey()
 	if err != nil {
-		return "", fmt.Errorf("failed to load private key: %w", err)
+		return "", errors.Errorf("failed to load private key: %w", err)
 	}
 
 	switch encodingKey.keyType {
@@ -88,7 +88,7 @@ func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
 	case rsaKey:
 		token = jwt.NewWithClaims(jwt.SigningMethodRS512, registerClaims)
 	default:
-		return "", fmt.Errorf("Only ECDSA and RSA private keys are supported")
+		return "", errors.Errorf("Only ECDSA and RSA private keys are supported")
 	}
 
 	if encodingKey.kid != "" {
@@ -169,5 +169,5 @@ func (e *JwtEncoder) parsePrivateKey(privKey string, kid string) (*encoderPrivat
 	}
 	// add other key types in the future
 
-	return nil, fmt.Errorf("invalid private key: only ECDSA and RSA private keys are supported")
+	return nil, errors.Errorf("invalid private key: only ECDSA and RSA private keys are supported")
 }

@@ -169,7 +169,7 @@ linters-settings:
           - pkg: "github.com/sirupsen/logrus"
             desc: not allowed
           - pkg: "github.com/pkg/errors"
-            desc: Should be replaced by standard lib errors package fmt.Errorf("msg %v", err)
+            desc: Should be replaced by github.com/go-errors/errors package errors.Errorf("msg %v", err)
 
   tagliatelle:
     # Check the struct tag name case.

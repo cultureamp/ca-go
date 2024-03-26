@@ -3,11 +3,10 @@ package jwt
 import (
 	"crypto/ecdsa"
 	"crypto/rsa"
-	"errors"
-	"fmt"
 	"sync"
 	"time"
 
+	"github.com/go-errors/errors"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/patrickmn/go-cache"
@@ -56,7 +55,7 @@ func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) 
 	// call the getJWKS func to make sure its valid and we can parse the JWKS
 	_, err := decoder.loadJWKSet()
 	if err != nil {
-		return nil, fmt.Errorf("failed to load jwks: %w", err)
+		return nil, errors.Errorf("failed to load jwks: %w", err)
 	}
 
 	return decoder, nil
@@ -112,33 +111,33 @@ func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwt.MapClaims, erro
 
 func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	if token == nil {
-		return nil, fmt.Errorf("failed to decode: missing token")
+		return nil, errors.Errorf("failed to decode: missing token")
 	}
 
 	// Eng Std: https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3253240053/JWT+Authentication
 	// Perferred is ECDSA, but is RSA accepted
 	if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("unexpected signing method - only ecdsa or rsa supported: %v", token.Header[algorithmHeaderKey])
+			return nil, errors.Errorf("unexpected signing method - only ecdsa or rsa supported: %v", token.Header[algorithmHeaderKey])
 		}
 	}
 
 	kidHeader, found := token.Header[kidHeaderKey]
 	if !found {
 		// no kid header but its MANDATORY
-		return nil, fmt.Errorf("failed to decode: missing key_id (kid) header")
+		return nil, errors.Errorf("failed to decode: missing key_id (kid) header")
 	}
 
 	kid, ok := kidHeader.(string)
 	if !ok {
 		// kid header isn't a string?!
-		return nil, fmt.Errorf("failed to decode: invalid key_id (kid) header")
+		return nil, errors.Errorf("failed to decode: invalid key_id (kid) header")
 	}
 
 	// check cache and possibly fetch new JWKS
 	jwkSet, err := d.loadJWKSet()
 	if err != nil {
-		return nil, fmt.Errorf("failed to load jwks: %w", err)
+		return nil, errors.Errorf("failed to load jwks: %w", err)
 	}
 
 	key, found := jwkSet.LookupKeyID(kid)
@@ -147,7 +146,7 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 		var rawkey interface{}
 		err := key.Raw(&rawkey)
 		if err != nil {
-			return nil, fmt.Errorf("failed to decode: bad public key in jwks")
+			return nil, errors.Errorf("failed to decode: bad public key in jwks")
 		}
 
 		// If the JWKS contains the full key (Private AND Public) then check for that for both ECDSA & RSA
@@ -163,7 +162,7 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	}
 
 	// Didn't find a matching kid
-	return nil, fmt.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)
+	return nil, errors.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)
 }
 
 func (d *JwtDecoder) loadJWKSet() (jwk.Set, error) {
@@ -208,7 +207,7 @@ func (d *JwtDecoder) getCachedJWKSet() (jwk.Set, bool) {
 func (decoder *JwtDecoder) parseJWKs(jwks string) (jwk.Set, error) {
 	if jwks == "" {
 		// If no jwks json, then returm empty map
-		return nil, fmt.Errorf("missing jwks")
+		return nil, errors.Errorf("missing jwks")
 	}
 
 	// 1. Parse the jwks JSON string to an iterable set
