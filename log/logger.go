@@ -63,11 +63,12 @@ func (l *standardLogger) Warn(event string) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Error(event string, err error) *Property {
-	le := l.impl.Error().
-		Err(err).
-		Str("event", toSnakeCase(event))
-	props := newLoggerProperty(le)
-	return props.withFullStack().WithSystemTracing()
+	le := l.impl.Error()
+	le.Dict("error", zerolog.Dict().
+		Stack().
+		Err(err),
+	).Str("event", toSnakeCase(event))
+	return newLoggerProperty(le).WithSystemTracing()
 }
 
 // Fatal starts a new message with fatal level. The os.Exit(1) function
@@ -75,7 +76,11 @@ func (l *standardLogger) Error(event string, err error) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Fatal(event string, err error) *Property {
-	le := l.impl.Fatal().Err(err).Str("event", toSnakeCase(event))
+	le := l.impl.Fatal()
+	le.Dict("error", zerolog.Dict().
+		Stack().
+		Err(err),
+	).Str("event", toSnakeCase(event))
 	return newLoggerProperty(le).WithSystemTracing()
 }
 
@@ -84,6 +89,10 @@ func (l *standardLogger) Fatal(event string, err error) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Panic(event string, err error) *Property {
-	le := l.impl.Panic().Err(err).Str("event", toSnakeCase(event))
+	le := l.impl.Panic()
+	le.Dict("error", zerolog.Dict().
+		Stack().
+		Err(err),
+	).Str("event", toSnakeCase(event))
 	return newLoggerProperty(le).WithSystemTracing()
 }

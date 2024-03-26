@@ -2,8 +2,10 @@ package log
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
+	ge "github.com/go-errors/errors"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
@@ -120,4 +122,29 @@ func TestLoggerMethods(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLogError(t *testing.T) {
+	config := NewLoggerConfig()
+	logger := NewLogger(config)
+
+	standard_error := fmt.Errorf("standard err")
+	logger.Error("error_with_error_tracing_current_stack", standard_error).
+		Properties(Add().
+			Str("resource", "resource_id").
+			Int("test-number", 1),
+		).Details("logging should error tracing")
+
+	stacktraced_error := ge.Errorf("stack traced err")
+	logger.Error("error_with_error_tracing_with_error_stack", stacktraced_error).
+		Properties(Add().
+			Str("resource", "resource_id").
+			Int("test-number", 1),
+		).Details("logging should error tracing")
+
+	// error() adds WithSystemTracing() which will include "pid" "num_cpus" etc. which changes from run to run / machine to machine
+	// So we don't use a testable Example() for this
+
+	// Output:
+	//
 }

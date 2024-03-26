@@ -50,8 +50,3 @@ func (lf *Property) doc(key string, fields *Field) *Property {
 	lf.impl = lf.impl.Dict(key, fields.impl)
 	return lf
 }
-
-func (lf *Property) withFullStack() *Property {
-	lf.impl = lf.impl.Stack()
-	return lf
-}

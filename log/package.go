@@ -26,8 +26,10 @@ func getInstance() *standardLogger {
 func setGlobalLogger() {
 	zerolog.TimeFieldFormat = time.RFC3339
 	zerolog.MessageFieldName = "details"
+	zerolog.ErrorFieldName = "error_message"
 	zerolog.LevelFieldName = "severity"
 	zerolog.DurationFieldInteger = true
+	zerolog.ErrorStackMarshaler = logStackTracer
 }
 
 // Debug starts a new message with debug level.
