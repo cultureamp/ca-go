@@ -24,7 +24,12 @@ func Add() *Field {
 }
 
 // Str adds the property key with val as a string to the log.
+// Note: Empty string values will not be logged.
 func (lf *Field) Str(key string, val string) *Field {
+	if val == "" {
+		return lf
+	}
+
 	lf.impl = lf.impl.Str(key, val)
 	return lf
 }
