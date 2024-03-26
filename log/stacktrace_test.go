@@ -1,6 +1,8 @@
 package log
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -8,16 +10,39 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStackTrace(t *testing.T) {
-	standard_error := fmt.Errorf("standard err")
-	assert.NotNil(t, standard_error)
+func Test(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		err         error
+		errContains string
+	}{
+		{
+			desc:        "standard error",
+			err:         fmt.Errorf("standard err"),
+			errContains: "runtime/asm",
+		},
+		{
+			desc:        "library error",
+			err:         errors.Errorf("stack traced err"),
+			errContains: "ca-go/log/stacktrace_test.go",
+		},
+		{
+			desc:        "json escape",
+			err:         errors.Errorf("\"} {\" \"}\"}"),
+			errContains: "ca-go/log/stacktrace_test.go",
+		},
+	}
 
-	trace := stackTracer(standard_error)
-	assert.Contains(t, trace, "runtime/asm")
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			trace := stackTracer(tC.err)
+			assert.Contains(t, trace, tC.errContains)
 
-	stacktraced_error := errors.Errorf("stack traced err")
-	assert.NotNil(t, stacktraced_error)
+			encoded := bytes.NewBufferString("")
+			json.NewEncoder(encoded).Encode(trace)
 
-	trace = stackTracer(stacktraced_error)
-	assert.Contains(t, trace, "ca-go/log/stacktrace_test.go")
+			fmt.Printf("trace: %v\n", trace)
+			fmt.Printf("encoded: %v\n", encoded)
+		})
+	}
 }

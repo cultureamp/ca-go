@@ -42,9 +42,9 @@ func currentStack(skip int) string {
 func cleanStackTrace(stack string) string {
 	// since we log in JSON make sure that the stack trace does NOT have any "{", "}" or "\""
 	nr := strings.NewReplacer(
-		"{", "",
-		"}", "",
-		"\"", "",
+	// "{", "",
+	// "}", "",
+	// "\"", "",
 	)
 
 	return nr.Replace(stack)
