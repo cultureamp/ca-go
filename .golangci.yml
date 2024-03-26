@@ -254,6 +254,9 @@ issues:
     - path: log/logger.go
       linters:
         - zerologlint
+
+    - path: log/package.go
+      linters:
         - reassign
 
     - path: log/legacy_extensions.go
