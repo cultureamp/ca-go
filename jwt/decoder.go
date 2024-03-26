@@ -16,7 +16,6 @@ import (
 const (
 	kidHeaderKey                  = "kid"
 	algorithmHeaderKey            = "alg"
-	signatureHeaderKey            = "sig"
 	webGatewayKid                 = "web-gateway"
 	accountIDClaim                = "accountId"
 	realUserIDClaim               = "realUserId"
