@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strconv"
-	"strings"
 )
 
 const (
@@ -125,41 +124,4 @@ func (lf *Property) WithSystemTracing() *Property {
 		Str("go_version", buildInfo.GoVersion).
 		Str("loc", file+":"+strconv.Itoa(line)),
 	)
-}
-
-func redactString(s string) string {
-	const minStars = 10
-	const maxStars = 20
-
-	l := len(s)
-	if l == 0 {
-		return ""
-	}
-
-	var b strings.Builder
-	b.Grow(l + maxStars)
-
-	aQuarter := l / 4
-	stars := minStars
-	if stars < aQuarter {
-		stars = maxStars
-	}
-
-	// write first quater of the chars if greater than minimum number of stars
-	if l > minStars {
-		b.WriteString(s[:aQuarter])
-	}
-
-	// no matter how long the string, show at least 10 "*" in the middle
-	for i := 0; i < stars; i++ {
-		b.WriteString("*")
-	}
-
-	// write remaining 1 or 2 chars
-	if l > minStars {
-		i := l - aQuarter
-		b.WriteString(s[i:])
-	}
-
-	return b.String()
 }
