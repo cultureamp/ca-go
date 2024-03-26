@@ -8,14 +8,15 @@ import (
 	"github.com/go-errors/errors"
 )
 
-// logStackTracer implements the zerolog.ErrorStackMarshaler func signature
+// logStackTracer implements the zerolog.ErrorStackMarshaler func signature.
 func logStackTracer(err error) interface{} {
 	return stackTracer(err)
 }
 
 func stackTracer(err error) string {
 	// is it the standard google error type?
-	if e, ok := err.(*errors.Error); ok {
+	var e *errors.Error
+	if errors.As(err, &e) {
 		s := string(e.Stack())
 		return cleanStackTrace(s)
 	}
@@ -25,7 +26,7 @@ func stackTracer(err error) string {
 
 func currentStack(skip int) string {
 	stack := make([]uintptr, errors.MaxStackDepth)
-	length := runtime.Callers(skip, stack[:])
+	length := runtime.Callers(skip, stack)
 	stack = stack[:length]
 
 	buf := bytes.Buffer{}
