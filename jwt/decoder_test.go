@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // useful to create RS256 test tokens https://jwt.io/
@@ -14,7 +13,7 @@ import (
 
 func TestNewDecoder(t *testing.T) {
 	b, err := os.ReadFile(filepath.Clean(testAuthJwks))
-	require.NoError(t, err)
+	assert.Nil(t, err)
 	validJwks := string(b)
 
 	testCases := []struct {
@@ -45,7 +44,7 @@ func TestNewDecoder(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			decoder, err := NewJwtDecoder(tC.jwks)
+			decoder, err := NewJwtDecoder(func() string { return tC.jwks })
 			if tC.expectedErrMsg != "" {
 				assert.NotNil(t, err)
 				assert.ErrorContains(t, err, tC.expectedErrMsg)
@@ -60,7 +59,12 @@ func TestNewDecoder(t *testing.T) {
 
 func TestDecoderDecodeAllClaims(t *testing.T) {
 	b, err := os.ReadFile(filepath.Clean(testAuthJwks))
-	require.NoError(t, err)
+	assert.Nil(t, err)
+	testJWKS := string(b)
+
+	jwks := func() string {
+		return testJWKS
+	}
 
 	testCases := []struct {
 		desc            string
@@ -149,7 +153,7 @@ func TestDecoderDecodeAllClaims(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			decoder, err := NewJwtDecoder(string(b))
+			decoder, err := NewJwtDecoder(jwks)
 			assert.Nil(t, err)
 			assert.NotNil(t, decoder)
 

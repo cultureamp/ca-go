@@ -10,16 +10,47 @@ To use the package level methods `Encode` and `Decode` you MUST set these:
 - AUTH_PRIVATE_KEY = The private RSA PEM key used for Encoding a token.
 - AUTH_PRIVATE_KEY_ID = The "kid" (key_id) header to add to the token heading when Encoding.
 
+
+## Runtime Key Rotation
+
+We want to be able to easily rotate keys without having to stop/start all services. The simplest approach is that the JWT Encoder and Decoder take a func() that clients must implement to provide a refreshed key.
+
+If you are using the package level methods, then the `DefaultJwtEncoder` and `DefaultJwtDecoder` will check there environment variables every 60 minutes. So all you need to do is update them with `os.Setenv()` with new values if a key rotation occurs.
+
+If you are managing Encoders and Decoders yourself, then you can provide a func of type `EncoderKeyRetriever` to the `NewJwtEncoder` constructor, and a func of type `DecoderJwksRetriever` to the `NewJwtDecoder`:
+
+- type EncoderKeyRetriever func() (string, string)
+- type DecoderJwksRetriever func() string
+
+
 ## Managing Encoders and Decoders Yourself
 
 While we recommend using the package level methods for their ease of use, you may desire to create and manage encoders or decoers yourself, which you can do by calling:
 
 ```
-privKey := os.Getenv("AUTH_PRIVATE_KEY")
-encoder, err := NewJwtEncoder(tprivKey, "kid")
+func privateKeyRetriever() (string, string) {
+	// todo: check if keys have rotated (eg. re-read secrets manager)
 
-jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
-decoder, err := NewJwtDecoder(jwkKeys)
+	privKey := secrets.Get("my-private-key")
+	keyId := secrets.Get("my-private-key-id")
+	return privKey, keyId
+}
+
+func jwksRetriever() string {
+	// todo: check if keys have rotated (eg. call well-known URL)
+
+	resp, err := http.Get("http://well-known-example.com/list.jwks")
+	// todo: handle error (eg. retry)
+	defer resp.Body.Close()
+	jwkKeys, err := io.ReadAll(resp.Body)
+	return jwkKeys
+}
+
+func main() {
+
+encoder, err := NewJwtEncoder(privateKeyRetriever)
+decoder, err := NewJwtDecoder(jwksRetriever)
+}
 ```
 
 ## Claims
@@ -62,10 +93,9 @@ func BasicExamples() {
 }
 ```
 
-
 ## Testing and Mocks
 
-During tests you can override the package level `DefaultJwtEncoder` and/or `DefaultJwtDecoder` with a mock that supports 
+During tests you can override the package level `DefaultJwtEncoder` and/or `DefaultJwtDecoder` with a mock that supports
 the `Encoder` or `Decoder` interface.
 
 - Encode(claims *StandardClaims) (string, error)

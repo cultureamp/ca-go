@@ -43,13 +43,13 @@ func Example() {
 
 	// To create a specific instance of the encoder and decoder you can use the following
 	privateKeyBytes, err := os.ReadFile(filepath.Clean("./testKeys/jwt-rsa256-test-webgateway.key"))
-	encoder, err := jwt.NewJwtEncoder(string(privateKeyBytes), webGatewayKid)
+	encoder, err := jwt.NewJwtEncoder(func() (string, string) { return string(privateKeyBytes), webGatewayKid })
 
 	token, err = encoder.Encode(claims)
 	fmt.Printf("The encoded token is '%s' (err='%v')\n", token, err)
 
 	b, err := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
-	decoder, err := jwt.NewJwtDecoder(string(b))
+	decoder, err := jwt.NewJwtDecoder(func() string { return string(b) })
 
 	claim, err = decoder.Decode(token)
 	fmt.Printf(
