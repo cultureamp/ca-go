@@ -2,8 +2,6 @@ run:
   go: 1.21
   timeout: 5m
   tests: false
-  skip-dirs:
-    - kafkatest
 
 linters:
   disable-all: true
@@ -227,6 +225,9 @@ linters-settings:
         mode: strict
 
 issues:
+  exclude-dirs:
+    - kafkatest
+
   exclude-rules:
 
     # too hard to refactor
