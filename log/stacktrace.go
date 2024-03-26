@@ -14,13 +14,14 @@ func logStackTracer(err error) interface{} {
 }
 
 func stackTracer(err error) string {
-	// is it the standard google error type?
+	// is it the "github.com/go-errors/errors" error type? If so, it has a stack trace we can use
 	var e *errors.Error
 	if errors.As(err, &e) {
 		s := string(e.Stack())
 		return cleanStackTrace(s)
 	}
 
+	// Otherwise we just get the current stack trace (minus the ca-go calls)
 	return cleanStackTrace(currentStack(5))
 }
 
@@ -39,7 +40,12 @@ func currentStack(skip int) string {
 }
 
 func cleanStackTrace(stack string) string {
-	// since we log in JSON make sure that the stack trace does NOT have any "{" or "}"
-	stack = strings.ReplaceAll(stack, "{", "")
-	return strings.ReplaceAll(stack, "}", "")
+	// since we log in JSON make sure that the stack trace does NOT have any "{", "}" or "\""
+	nr := strings.NewReplacer(
+		"{", "",
+		"}", "",
+		"\"", "",
+	)
+
+	return nr.Replace(stack)
 }
