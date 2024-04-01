@@ -33,15 +33,15 @@ func WithGroupBalancers(groupBalancers ...kafka.GroupBalancer) Option {
 // WithHandlerBackOffRetry adds a back off retry policy on the consumer handler.
 func WithHandlerBackOffRetry(backOffConstructor HandlerRetryBackOffConstructor) Option {
 	return func(consumer *Consumer) {
-		consumer.handlerExecutor.BackOffConstructor = backOffConstructor
+		consumer.clientHandler.BackOffConstructor = backOffConstructor
 	}
 }
 
 // WithNotifyError adds the NotifyError function to the consumer for it to be invoked
 // on each consumer handler error.
-func WithNotifyError(notify NotifyError) Option {
+func WithNotifyError(notifier NotifyError) Option {
 	return func(consumer *Consumer) {
-		consumer.handlerExecutor.NotifyErr = notify
+		consumer.clientHandler.Notify = notifier
 	}
 }
 
@@ -68,7 +68,7 @@ func WithReaderErrorLogger(logger kafka.LoggerFunc) Option {
 // using tracer.SpanFromContext.
 func WithDataDogTracing() Option {
 	return func(consumer *Consumer) {
-		consumer.handlerExecutor.DataDogTracingEnabled = true
+		consumer.clientHandler.DataDogTracingEnabled = true
 	}
 }
 

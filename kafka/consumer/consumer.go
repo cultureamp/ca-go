@@ -3,12 +3,11 @@ package consumer
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"io"
 	"time"
 
 	"github.com/cultureamp/ca-go/log"
+	"github.com/go-errors/errors"
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 
@@ -65,7 +64,7 @@ type Consumer struct {
 	readerConfig       kafka.ReaderConfig
 	withExplicitCommit bool
 	stopCh             chan struct{}
-	handlerExecutor    *handlerExecutor
+	clientHandler      *readerMessageHandler
 }
 
 // NewConsumer returns a new Consumer configured with the provided dialer and config.
@@ -97,9 +96,10 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 			WatchPartitionChanges: true,
 			MaxBytes:              config.MaxBytes,
 		},
-		handlerExecutor: &handlerExecutor{
+		clientHandler: &readerMessageHandler{
 			ConsumerID: config.ID,
 			GroupID:    config.groupID,
+			Notify:     func(ctx context.Context, err error, msg Message) {}, // default to noop
 		},
 	}
 
@@ -109,7 +109,7 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 
 	// Set the reader unless one was injected via the WithKafkaReader option.
 	if c.reader == nil {
-		if c.handlerExecutor.DataDogTracingEnabled {
+		if c.clientHandler.DataDogTracingEnabled {
 			c.reader = kafkatrace.NewReader(c.readerConfig)
 		} else {
 			c.reader = kafka.NewReader(c.readerConfig)
@@ -144,7 +144,7 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 		}
 
 		if err := c.retreiveNextMessage(ctx, handler); err != nil {
-			return fmt.Errorf("consumer error: %w", err)
+			return errors.Errorf("consumer error: %w", err)
 		}
 	}
 }
@@ -155,7 +155,7 @@ func (c *Consumer) Run(ctx context.Context, handler Handler) error {
 func (c *Consumer) Stop() error {
 	close(c.stopCh)
 	if err := c.reader.Close(); err != nil {
-		return fmt.Errorf("unable to close consumer reader: %w", err)
+		return errors.Errorf("unable to close consumer reader: %w", err)
 	}
 
 	log.Debug("consumer_stop").
@@ -185,15 +185,15 @@ func (c *Consumer) fetchNextMessage(ctx context.Context, handler Handler) error 
 		if errors.Is(err, io.EOF) {
 			return nil
 		}
-		return fmt.Errorf("unable to fetch message: %w", err)
+		return errors.Errorf("unable to fetch message: %w", err)
 	}
 
-	if err = c.handlerExecutor.execute(ctx, msg, handler); err != nil {
-		return fmt.Errorf("unable to handle message: %w", err)
+	if err = c.clientHandler.execute(ctx, msg, handler); err != nil {
+		return errors.Errorf("unable to handle message: %w", err)
 	}
 
 	if err = c.reader.CommitMessages(ctx, msg); err != nil {
-		return fmt.Errorf("unable to commit message: %w", err)
+		return errors.Errorf("unable to commit message: %w", err)
 	}
 
 	return nil
@@ -208,11 +208,11 @@ func (c *Consumer) readNextMessage(ctx context.Context, handler Handler) error {
 		if errors.Is(err, io.EOF) {
 			return nil
 		}
-		return fmt.Errorf("unable to read message: %w", err)
+		return errors.Errorf("unable to read message: %w", err)
 	}
 
-	if err = c.handlerExecutor.execute(ctx, msg, handler); err != nil {
-		return fmt.Errorf("unable to handle message: %w", err)
+	if err = c.clientHandler.execute(ctx, msg, handler); err != nil {
+		return errors.Errorf("unable to handle message: %w", err)
 	}
 
 	return nil

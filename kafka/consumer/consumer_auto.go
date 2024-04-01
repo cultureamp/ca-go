@@ -2,12 +2,12 @@ package consumer
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/cultureamp/ca-go/log"
+	"github.com/go-errors/errors"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -27,13 +27,6 @@ func newAutoConsumer(topic string) *AutoConsumer {
 	if brokers == "" {
 		brokers = "test1,test2" // revisit with default values
 	}
-	log.Debug("kafka_auto_consumer").
-		WithSystemTracing().
-		Properties(log.SubDoc().
-			Str("brokers", brokers).
-			Str("topic", topic),
-		).Details("creating new auto consumer")
-
 	cfg := Config{
 		Brokers: strings.Split(brokers, ","),
 		Topic:   topic,

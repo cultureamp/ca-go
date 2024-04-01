@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/go-errors/errors"
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl/scram"
@@ -88,7 +89,7 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 		go func() {
 			defer wg.Done()
 			if err := c.Run(ctx, handler); err != nil {
-				errCh <- fmt.Errorf("consumer failed: %w", err)
+				errCh <- errors.Errorf("consumer failed: %w", err)
 			}
 		}()
 		g.stopChs = append(g.stopChs, c.stopCh)

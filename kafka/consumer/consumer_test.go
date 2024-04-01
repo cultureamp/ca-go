@@ -69,8 +69,8 @@ func TestNewConsumer(t *testing.T) {
 			assert.Equal(t, c.readerConfig.Dialer, dialer)
 			assert.NotNil(t, c.reader)
 			assert.Implements(t, (*Reader)(nil), c.reader)
-			assert.NotNil(t, c.handlerExecutor.BackOffConstructor)
-			assert.NotNil(t, c.handlerExecutor.BackOffConstructor)
+			assert.NotNil(t, c.clientHandler.BackOffConstructor)
+			assert.NotNil(t, c.clientHandler.BackOffConstructor)
 			assert.Equal(t, wantBalancers, c.readerConfig.GroupBalancers)
 
 			if tt.wantGenID {
@@ -138,12 +138,12 @@ func TestConsumer_Run_error(t *testing.T) {
 			shouldNotify: true,
 			numRetries:   3,
 			setup: func(t *testing.T, consumer *Consumer) {
-				consumer.handlerExecutor.BackOffConstructor = func() backoff.BackOff {
+				consumer.clientHandler.BackOffConstructor = func() backoff.BackOff {
 					return &testBackoff{
 						maxAttempts: 3,
 					}
 				}
-				consumer.handlerExecutor.NotifyErr = func(ctx context.Context, err error, msg Message) {
+				consumer.clientHandler.Notify = func(ctx context.Context, err error, msg Message) {
 					assert.Equal(t, gotAttempts, msg.Metadata.Attempt)
 					assert.Equal(t, wantHandlerErr, err)
 					didNotify = true
@@ -156,10 +156,10 @@ func TestConsumer_Run_error(t *testing.T) {
 			wantError:    nil,
 			shouldNotify: true,
 			setup: func(t *testing.T, consumer *Consumer) {
-				consumer.handlerExecutor.BackOffConstructor = func() backoff.BackOff {
+				consumer.clientHandler.BackOffConstructor = func() backoff.BackOff {
 					return &testBackoff{}
 				}
-				consumer.handlerExecutor.NotifyErr = func(ctx context.Context, err error, msg Message) {
+				consumer.clientHandler.Notify = func(ctx context.Context, err error, msg Message) {
 					assert.Equal(t, gotAttempts, msg.Metadata.Attempt)
 					if err != nil {
 						assert.Equal(t, wantHandlerErr, err)
