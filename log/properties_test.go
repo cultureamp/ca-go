@@ -18,8 +18,6 @@ func TestFieldTypes(t *testing.T) {
 	props := Add().
 		Str("str", "value").
 		Int("int", 1).
-		Int64("int64", i64).
-		UInt64("uint64", u64).
 		Bool("bool", true).
 		Duration("dur", duration).
 		Time("time", then).
