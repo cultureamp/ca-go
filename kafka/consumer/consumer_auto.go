@@ -2,30 +2,24 @@ package consumer
 
 import (
 	"context"
-	"os"
-	"strings"
 
 	"github.com/segmentio/kafka-go"
 )
 
-type AutoConsumer struct {
+type autoConsumer struct {
 	topic    string
 	consumer *Consumer
 	channel  chan Message
 }
 
-// AutoConsumers is a type that maps "topic name" to "consumer".
-type AutoConsumers map[string]*AutoConsumer
+// autoConsumers is a type that maps "topic name" to "consumer".
+type autoConsumers map[string]*autoConsumer
 
-func newAutoConsumer(topic string) *AutoConsumer {
+func newAutoConsumer(topic string, brokers []string) *autoConsumer {
 	var channel chan Message
 
-	brokers := os.Getenv("KAFKA_BROKERS")
-	if brokers == "" {
-		brokers = "test1,test2" // revisit with default values
-	}
 	cfg := Config{
-		Brokers: strings.Split(brokers, ","),
+		Brokers: brokers,
 		Topic:   topic,
 	}
 
@@ -57,34 +51,37 @@ func newAutoConsumer(topic string) *AutoConsumer {
 
 	channel = make(chan Message, consumer.conf.QueueCapacity)
 
-	dc := &AutoConsumer{
+	return &autoConsumer{
 		topic:    topic,
 		consumer: consumer,
 		channel:  channel,
 	}
-
-	return dc
 }
 
-func (dc *AutoConsumer) run(ctx context.Context) {
-	defer close(dc.channel)
+// Run method call blocks until the context is canceled, the consumer is closed, or an error occurs.
+func (ac *autoConsumer) run(ctx context.Context) {
+	defer close(ac.channel)
 
-	if err := dc.consumer.Run(ctx, dc.handleRetrievedMessage); err != nil {
-		dc.consumer.conf.ErrorLogger.Printf(
+	if err := ac.consumer.Run(ctx, ac.handleMessage); err != nil {
+		ac.consumer.conf.ErrorLogger.Printf(
 			"auto consumer(%s:%s): err: %v",
-			dc.topic,
-			dc.consumer.id,
+			ac.topic,
+			ac.consumer.id,
 			err,
 		)
 	}
 }
 
-func (dc *AutoConsumer) handleRetrievedMessage(ctx context.Context, msg Message) error {
-	dc.consumer.conf.Logger.Printf(
+func (ac *autoConsumer) stop() error {
+	return ac.consumer.Stop()
+}
+
+func (ac *autoConsumer) handleMessage(ctx context.Context, msg Message) error {
+	ac.consumer.conf.Logger.Printf(
 		"auto consumer(%s:%s): writing message to channel...",
-		dc.topic,
-		dc.consumer.id,
+		ac.topic,
+		ac.consumer.id,
 	)
-	dc.channel <- msg
+	ac.channel <- msg
 	return nil
 }

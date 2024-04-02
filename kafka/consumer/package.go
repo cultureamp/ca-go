@@ -7,30 +7,58 @@ import (
 	"strings"
 )
 
+var DefaultConsumers = getInstance()
+
+func getInstance() TopicConsumer {
+	def := newDefaultConsumer()
+	return def
+}
+
 type StopFunc func() error
 
-var TopicConsumers = getInstance()
-
-func getInstance() AutoConsumers {
-	auto := make(AutoConsumers)
-	return auto
+type TopicConsumer interface {
+	Consume(ctx context.Context, topic string) (<-chan Message, StopFunc)
 }
 
-// Consume reads messages from the topic until there is an error
-// or if the ctx deadline is reached.
+// Consume creates as new channel for the specified topic and starts sending Messages to it.
 func Consume(ctx context.Context, topic string) (<-chan Message, StopFunc) {
-	c := newAutoConsumer(topic)
-	TopicConsumers[topic] = c
-	go c.run(ctx)
-	return c.channel, func() error { return stop(topic) }
+	ch, stop := DefaultConsumers.Consume(ctx, topic)
+	return ch, stop
 }
 
-// stop sends a signal to the consumer to finish returning an error if it failed to do so.
-func stop(topic string) error {
-	c, found := TopicConsumers[topic]
+type topicConsumer struct {
+	brokers       []string
+	autoConsumers autoConsumers
+}
+
+func newDefaultConsumer() *topicConsumer {
+	topicConsumers := make(autoConsumers)
+
+	brokers := os.Getenv("KAFKA_BROKERS")
+	if brokers == "" {
+		brokers = "test1,test2" // revisit with default values
+	}
+
+	return &topicConsumer{
+		brokers:       strings.Split(brokers, ","),
+		autoConsumers: topicConsumers,
+	}
+}
+
+// Consume creates as new consumer for the specified topic.
+func (tc *topicConsumer) Consume(ctx context.Context, topic string) (<-chan Message, StopFunc) {
+	ac := newAutoConsumer(topic, tc.brokers)
+	tc.autoConsumers[topic] = ac
+	go ac.run(ctx)
+	return ac.channel, func() error { return tc.stop(topic) }
+}
+
+// stop sends a signal to the consumer to finish, returning an error if it failed to do so.
+func (tc *topicConsumer) stop(topic string) error {
+	ac, found := tc.autoConsumers[topic]
 	if found {
-		delete(TopicConsumers, topic)
-		return c.consumer.Stop()
+		delete(tc.autoConsumers, topic)
+		return ac.stop()
 	}
 	return nil
 }
@@ -41,6 +69,7 @@ func isTestMode() bool {
 
 	if strings.HasSuffix(argZero, ".test") ||
 		strings.Contains(argZero, "/_test/") ||
+		strings.Contains(argZero, "__debug_bin") || // vscode debug binary
 		flag.Lookup("test.v") != nil {
 		return true
 	}

@@ -20,7 +20,7 @@ func TestPackage(t *testing.T) {
 
 	// Read the next message from the topic
 	msg, ok := <-ch
-	fmt.Printf("Channel open=%t, message=%v\n", ok, msg)
+	fmt.Printf("Channel open=%t, topic=%s message_offset=%v\n", ok, msg.Topic, msg.Offset)
 }
 
 func TestPackageWithTimeout(t *testing.T) {
@@ -36,7 +36,7 @@ func TestPackageWithTimeout(t *testing.T) {
 
 	select {
 	case msg, ok := <-ch:
-		fmt.Printf("Channel open=%t, message=%v\n", ok, msg)
+		fmt.Printf("Channel open=%t, topic=%s message_offset=%v\n", ok, msg.Topic, msg.Offset)
 
 	case <-time.After(time.Duration(1) * time.Second):
 		fmt.Println("No message received before timeout")
@@ -61,7 +61,7 @@ func TestPackageWithDeadline(t *testing.T) {
 	for ok {
 		select {
 		case msg, ok := <-ch:
-			fmt.Printf("Channel open=%t, message=%v\n", ok, msg)
+			fmt.Printf("Channel open=%t, topic=%s message_offset=%v\n", ok, msg.Topic, msg.Offset)
 
 		case <-ctx.Done():
 			fmt.Println("Context deadline received. Stopping.")
