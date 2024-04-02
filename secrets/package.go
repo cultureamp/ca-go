@@ -3,11 +3,11 @@ package secrets
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/go-errors/errors"
 )
 
 // DefaultAWSSecretsManager is a public *AWSSecretsManager used for package level methods.
@@ -22,7 +22,7 @@ func getInstance() *AWSSecretsManager {
 		region := os.Getenv("AWS_REGION")
 		cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
 		if err != nil {
-			err := fmt.Errorf("error loading aws sdk config, err='%w'\n", err)
+			err := errors.Errorf("error loading default aws sdk config, err='%w'\n", err)
 			panic(err)
 		}
 

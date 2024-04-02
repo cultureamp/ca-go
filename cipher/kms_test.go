@@ -15,6 +15,14 @@ const (
 	testRegion = "us-west-1"
 )
 
+func TestNewKMSCipher(t *testing.T) {
+	cipher := NewKMSCipher("region")
+	assert.NotNil(t, cipher)
+
+	cipher = NewKMSCipherWithClient(&mockKMSClient{})
+	assert.NotNil(t, cipher)
+}
+
 func TestEncrypt(t *testing.T) {
 	strInput := "inputStr"
 	ctx := context.Background()
@@ -42,7 +50,7 @@ func TestEncrypt(t *testing.T) {
 		// arrange
 		mockKmsClient := &mockKMSClient{}
 		crypto := NewKMSCipherWithClient(mockKmsClient)
-		crypto.client = mockKmsClient
+		crypto.Client = mockKmsClient
 
 		mockKmsClient.On("Encrypt", ctx, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 
@@ -83,7 +91,7 @@ func TestDecrypt(t *testing.T) {
 		// arrange
 		mockKmsClient := &mockKMSClient{}
 		crypto := NewKMSCipherWithClient(mockKmsClient)
-		crypto.client = mockKmsClient
+		crypto.Client = mockKmsClient
 
 		mockKmsClient.On("Decrypt", ctx, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 

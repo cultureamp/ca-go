@@ -10,14 +10,14 @@ import (
 )
 
 const (
-	// TraceIDHeader = "X-amzn-Trace-ID".
-	TraceIDHeader = "X-amzn-Trace-ID"
-	// RequestIDHeader = "X-Request-ID".
-	RequestIDHeader = "X-Request-ID"
-	// CorrelationIDHeader = "X-Correlation-ID".
-	CorrelationIDHeader = "X-Correlation-ID"
-	// ErrorUUID = "00000000-0000-0000-0000-000000000000".
-	ErrorUUID = "00000000-0000-0000-0000-000000000000"
+	TraceIDHeader                        = "X-amzn-Trace-ID"
+	RequestIDHeader                      = "X-Request-ID"
+	CorrelationIDHeader                  = "X-Correlation-ID"
+	ErrorUUID                            = "00000000-0000-0000-0000-000000000000"
+	AuthorizationHeader                  = "Authorization"
+	XCAServiceGatewayAuthorizationHeader = "X-CA-SGW-Authorization"
+	UserAgentHeader                      = "User-Agent"
+	XForwardedForHeader                  = "X-Forwarded-For"
 )
 
 // AuthPayload contains the customer account_id, user_id and realuser_id uuids.
@@ -33,8 +33,8 @@ type AuthPayload struct {
 	RealUserID string
 }
 
-// WithRequestTracing added a "tracing" subdocument to the log that
-// include important trace, request and correlation headers.
+// WithRequestTracing adds a "tracing" subdocument to the log that
+// includes important trace, request and correlation fields.
 func (lf *Property) WithRequestTracing(req *http.Request) *Property {
 	if req == nil {
 		return lf
@@ -44,29 +44,69 @@ func (lf *Property) WithRequestTracing(req *http.Request) *Property {
 	requestID := req.Header.Get(RequestIDHeader)
 	correlationID := req.Header.Get(CorrelationIDHeader)
 
-	return lf.doc("tracing", SubDoc().
+	return lf.doc("tracing", Add().
 		Str("trace_id", traceID).
 		Str("request_id", requestID).
 		Str("correlation_id", correlationID),
 	)
 }
 
-// WithAuthenticatedUserTracing added a "authentication" subdocument to the log that
-// include important account, user and realuser fields.
+// WithRequestDiagnostics adds a "request" subdocument to the log that
+// includes important request fields.
+func (lf *Property) WithRequestDiagnostics(req *http.Request) *Property {
+	if req == nil {
+		return lf
+	}
+
+	url := req.URL
+
+	return lf.doc("request", Add().
+		Str("method", req.Method).
+		Str("proto", req.Proto).
+		Str("host", req.Host).
+		Str("scheme", url.Scheme).
+		Str("path", url.Path).
+		Str("query", url.RawQuery).
+		Str("fragment", url.Fragment),
+	)
+}
+
+// WithAuthenticatedUserTracing adds an "authentication" subdocument to the log that
+// includes important account, user and realuser fields.
 func (lf *Property) WithAuthenticatedUserTracing(auth *AuthPayload) *Property {
 	if auth == nil {
 		return lf
 	}
 
-	return lf.doc("authentication", SubDoc().
+	return lf.doc("authentication", Add().
 		Str("account_id", auth.CustomerAccountID).
 		Str("realuser_id", auth.RealUserID).
 		Str("user_id", auth.UserID),
 	)
 }
 
-// WithSystemTracing added a "system" subdocument to the log that
-// include important host, runtime, cpu and loc fields.
+// WithAuthorizationTracing adds an "authorization" subdocument to the log that
+// includes important authorization headers that are automatically redacted.
+func (lf *Property) WithAuthorizationTracing(req *http.Request) *Property {
+	if req == nil {
+		return lf
+	}
+
+	auth_token := req.Header.Get(AuthorizationHeader)
+	xca_auth_token := req.Header.Get(XCAServiceGatewayAuthorizationHeader)
+	user_agent := req.Header.Get(UserAgentHeader)
+	forward_for := req.Header.Get(XForwardedForHeader)
+
+	return lf.doc("authorization", Add().
+		Str("authorization_token", redactString(auth_token)).
+		Str("xca_service_authorization_token", redactString(xca_auth_token)).
+		Str("user_agent", user_agent).
+		Str("x_forwarded_for", forward_for),
+	)
+}
+
+// WithSystemTracing adds a "system" subdocument to the log that
+// includes important host, runtime, cpu and loc fields.
 func (lf *Property) WithSystemTracing() *Property {
 	host, _ := os.Hostname()
 	_, path, line, ok := runtime.Caller(1)
@@ -76,7 +116,7 @@ func (lf *Property) WithSystemTracing() *Property {
 	}
 	buildInfo, _ := debug.ReadBuildInfo()
 
-	return lf.doc("system", SubDoc().
+	return lf.doc("system", Add().
 		Str("os", runtime.GOOS).
 		Int("num_cpu", runtime.NumCPU()).
 		Str("host", host).

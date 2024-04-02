@@ -1,39 +1,62 @@
 package log
 
-var defaultLogger *Logger = getInstance()
+import (
+	"time"
 
-func getInstance() *Logger {
+	"github.com/rs/zerolog"
+)
+
+type Logger interface {
+	Debug(event string) *Property
+	Info(event string) *Property
+	Warn(event string) *Property
+	Error(event string, err error) *Property
+	Fatal(event string, err error) *Property
+	Panic(event string, err error) *Property
+}
+
+var DefaultLogger Logger = getInstance()
+
+func getInstance() *standardLogger {
 	setGlobalLogger()
 	config := NewLoggerConfig()
 	return NewLogger(config)
+}
+
+func setGlobalLogger() {
+	zerolog.TimeFieldFormat = time.RFC3339
+	zerolog.MessageFieldName = "details"
+	zerolog.LevelFieldName = "severity"
+	zerolog.DurationFieldInteger = true
+	zerolog.ErrorStackMarshaler = logStackTracer
 }
 
 // Debug starts a new message with debug level.
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
 func Debug(event string) *Property {
-	return defaultLogger.Debug(event)
+	return DefaultLogger.Debug(event)
 }
 
 // Info starts a new message with info level.
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
 func Info(event string) *Property {
-	return defaultLogger.Info(event)
+	return DefaultLogger.Info(event)
 }
 
 // Warn starts a new message with warn level.
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
 func Warn(event string) *Property {
-	return defaultLogger.Warn(event)
+	return DefaultLogger.Warn(event)
 }
 
 // Error starts a new message with error level.
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
 func Error(event string, err error) *Property {
-	return defaultLogger.Error(event, err)
+	return DefaultLogger.Error(event, err)
 }
 
 // Fatal starts a new message with fatal level. The os.Exit(1) function
@@ -41,7 +64,7 @@ func Error(event string, err error) *Property {
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
 func Fatal(event string, err error) *Property {
-	return defaultLogger.Fatal(event, err)
+	return DefaultLogger.Fatal(event, err)
 }
 
 // Panic starts a new message with panic level. The panic() function
@@ -49,5 +72,5 @@ func Fatal(event string, err error) *Property {
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
 func Panic(event string, err error) *Property {
-	return defaultLogger.Panic(event, err)
+	return DefaultLogger.Panic(event, err)
 }

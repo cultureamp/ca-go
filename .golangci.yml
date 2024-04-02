@@ -2,8 +2,6 @@ run:
   go: 1.21
   timeout: 5m
   tests: false
-  skip-dirs:
-    - kafkatest
 
 linters:
   disable-all: true
@@ -12,11 +10,11 @@ linters:
     - asciicheck
     - bidichk
     - bodyclose
-    #    - containedctx
-    #    - contextcheck
-    #    - cyclop
+    - containedctx
+    - contextcheck
+    - cyclop
     - decorder
-    #    - depguard
+    - depguard
     - dogsled
     - dupl
     - dupword
@@ -29,7 +27,7 @@ linters:
     #    - exhaustive
     #    - exhaustruct
     - exportloopref
-    #    - forbidigo
+    # - forbidigo
     - forcetypeassert
     - funlen
     - gci
@@ -45,9 +43,9 @@ linters:
     #    - godox
     #    - goerr113
     - gofmt
-    #    - gofumpt
+    - gofumpt
     - goheader
-    #    - goimports
+    - goimports
     #    - gomnd
     #    - gomoddirectives
     - gomodguard
@@ -68,14 +66,14 @@ linters:
     - mirror
     - misspell
     - musttag
-    #    - nakedret
+    - nakedret
     - nestif
     - nilerr
-    #    - nilnil
+    - nilnil
     #    - nlreturn
     - noctx
     - nolintlint
-    #    - nonamedreturns
+    - nonamedreturns
     - nosprintfhostport
     - paralleltest
     - prealloc
@@ -85,7 +83,7 @@ linters:
     #    - revive
     - rowserrcheck
     - sqlclosecheck
-    #    - staticcheck
+    - staticcheck
     #    - stylecheck
     - tagalign
     - tagliatelle
@@ -109,7 +107,87 @@ linters:
 linters-settings:
   funlen:
     lines: 120
-    statements: 50
+    statements: 60
+
+  depguard:
+    # Rules to apply.
+    #
+    # Variables:
+    # - File Variables
+    #   you can still use and exclamation mark ! in front of a variable to say not to use it.
+    #   Example !$test will match any file that is not a go test file.
+    #
+    #   `$all` - matches all go files
+    #   `$test` - matches all go test files
+    #
+    # - Package Variables
+    #
+    #  `$gostd` - matches all of go's standard library (Pulled from `GOROOT`)
+    #
+    # Default: Only allow $gostd in all files.
+    rules:
+      # Name of a rule.
+      main:
+        # Used to determine the package matching priority.
+        # There are three different modes: `original`, `strict`, and `lax`.
+        # Default: "original"
+        # Original:
+        # Is the original way that the package was written to use. It is not recommended to stay with this and is only here for backwards compatibility.
+        # Strict:
+        # Is everything is denied unless in allowed.
+        # Lax:
+        # Is everything is allowed unless it is denied.
+        list-mode: strict
+        # List of file globs that will match this list of settings to compare against.
+        # Default: $all
+        files:
+          - $all
+        # List of allowed packages.
+        allow:
+          - $gostd
+          - github.com/aws
+          - github.com/caarlos0/env/v10
+          - github.com/cultureamp
+          - github.com/golang-jwt
+          - github.com/getsentry
+          - github.com/google
+          - github.com/golang-jwt
+          - github.com/go-errors
+          - github.com/hashicorp
+          - github.com/launchdarkly
+          - github.com/lestrrat-go
+          - github.com/patrickmn/go-cache
+          - github.com/rs/zerolog
+          - github.com/segmentio
+          - github.com/stoewer/go-strcase
+          # not sure about these below
+          - github.com/cenkalti/backoff
+          - github.com/IBM/sarama
+          - github.com/kelseyhightower/envconfig
+          - github.com/xdg-go/scram
+        # Packages that are not allowed where the value is a suggestion.
+        deny:
+          - pkg: "github.com/sirupsen/logrus"
+            desc: not allowed
+          - pkg: "github.com/pkg/errors"
+            desc: Should be replaced by github.com/go-errors/errors package errors.Errorf("msg %v", err)
+
+  tagliatelle:
+    # Check the struct tag name case.
+    case:
+      # Use the struct field name to check the name of the struct tag.
+      # Default: false
+      use-field-name: false
+      rules:
+        # Any struct tag type can be used.
+        # Support string case: `camel`, `pascal`, `kebab`, `snake`, `upperSnake`, `goCamel`, `goPascal`, `goKebab`, `goSnake`, `upper`, `lower`, `header`.
+        #json: snake
+        #yaml: snake
+        #xml: snake
+        #toml: snake
+
+  cyclop:
+    max-complexity: 15 # the default of 10 was unnecessarily strict
 
   gci:
     # Section configuration to compare against.
@@ -143,48 +221,34 @@ linters-settings:
         # allow #nosec override comments
         nosec: enabled
         # disable potentially noisy stricter audit mode
-        audit: disabled
-      G101: # "Look for hard-coded credentials"
+        audit: enabled
+      G101: # "Look for hard coded credentials"
         mode: strict
 
-  cyclop:
-    max-complexity: 15 # the default of 10 was unnecessarily strict
-
 issues:
+  exclude-dirs:
+    - kafkatest
+
   exclude-rules:
 
-    # too hard to refactor
-    - path: x/log/helper.go
+    # too hard to refactor packges in the x/ folders
+    - path: x/
       linters:
         - nestif
-
-    # []string hard to initialize prealloc with default value
-    - path: x/vault/vault_decrypter.go
-      linters:
         - prealloc
 
-    # []string hard to initialize prealloc with default value
-    - path: x/vault/vault_encrypter.go
-      linters:
-        - prealloc
-
-    # too hard to refactor
-    - path: x/kafka/consumer/consumer.go
-      linters:
-        - nestif
-
-    # we need to reference a deprecated field in order to trace possible usage
+    # exluded rules from standard packages for reasons...
     - path: log/logger.go
       linters:
         - zerologlint
 
-    - path: log/helper.go
+    - path: log/package.go
       linters:
-        - nestif
+        - reassign
 
-    - path: log/strings.go
+    - path: log/legacy_extensions.go
       linters:
-        - nestif
+        - tagliatelle
 
     - path: env/settings.go
       linters:

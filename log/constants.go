@@ -19,4 +19,5 @@ const (
 	LogLevelEnv         = "LOG_LEVEL"
 	LogQuietModeEnv     = "QUIET_MODE"
 	LogConsoleWriterEnv = "CONSOLE_WRITER"
+	LogConsoleColourEnv = "CONSOLE_COLOUR"
 )

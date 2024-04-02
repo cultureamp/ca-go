@@ -16,14 +16,27 @@ You MUST set these:
 You can OPTIONALLY set these:
 - LOG_LEVEL = One of DEBUG, INFO, WARN, ERROR, defaults to "INFO"
 - AWS_ACCOUNT_ID = The AWS account Id this code is running in, defaults to  "development"
-- FARM = The name of the farm or where the code is running, defaults to "local" (eg. "production", "dolly") 
+- FARM = The name of the farm or where the code is running, defaults to "local" (eg. "production", "dolly")
 - APP_VERSION = The version of the application, defaults to "1.0.0"
 
 ## Use in Unit Tests
 
 By default the logger will not emit any output when running inside a test. You can override this behaviour by setting the `QUIET_MODE` environment variable to "false".
 
-When running localling you can also set the `CONSOLE_WRITER` to "true" to change from json to key-value colour coded output. Note: Never run with the `CONSOLE_WRITER` set to "true" in production.
+When running localling you can also set the `CONSOLE_WRITER` to "true" to change from json to key-value output. If you want coloured console output you can also set 'CONSOLE_COLOUR' to "true".
+
+__Note__: Never run with the `CONSOLE_WRITER` set to "true" in production.
+
+## Extensions
+
+The log package includes some extensions for common groups:
+- WithRequestTracing(req *http.Request)
+- WithAuthenticatedUserTracing(auth *AuthPayload)
+- WithAuthorizationTracing(req *http.Request)
+- WithSystemTracing()
+- WithGlamplifyRequestFieldsFromCtx(ctx context.Context)
+
+Each of these will create the correct sub-doc ("system", "tracing" etc.) and print a number of standard properties. The use of these extensions is highly encouraged.
 
 ## Managing Loggers Yourself
 
