@@ -61,12 +61,12 @@ func TestNewConsumer(t *testing.T) {
 				}),
 			)
 			require.NotNil(t, c)
-			assert.Equal(t, c.readerConfig.Dialer, dialer)
+			assert.Equal(t, c.conf.Dialer, dialer)
 			assert.NotNil(t, c.reader)
 			assert.Implements(t, (*Reader)(nil), c.reader)
 			assert.NotNil(t, c.clientHandler.BackOffConstructor)
 			assert.NotNil(t, c.clientHandler.BackOffConstructor)
-			assert.Equal(t, wantBalancers, c.readerConfig.GroupBalancers)
+			assert.Equal(t, wantBalancers, c.conf.GroupBalancers)
 
 			if tt.wantGenID {
 				assert.NotEmpty(t, c.id)
@@ -138,7 +138,7 @@ func TestConsumer_Run_error(t *testing.T) {
 						maxAttempts: 3,
 					}
 				}
-				consumer.clientHandler.Notify = func(ctx context.Context, err error, msg Message) {
+				consumer.clientHandler.clientNotify = func(ctx context.Context, err error, msg Message) {
 					assert.Equal(t, gotAttempts, msg.Metadata.Attempt)
 					assert.Equal(t, wantHandlerErr, err)
 					didNotify = true
@@ -154,7 +154,7 @@ func TestConsumer_Run_error(t *testing.T) {
 				consumer.clientHandler.BackOffConstructor = func() backoff.BackOff {
 					return &testBackoff{}
 				}
-				consumer.clientHandler.Notify = func(ctx context.Context, err error, msg Message) {
+				consumer.clientHandler.clientNotify = func(ctx context.Context, err error, msg Message) {
 					assert.Equal(t, gotAttempts, msg.Metadata.Attempt)
 					if err != nil {
 						assert.Equal(t, wantHandlerErr, err)

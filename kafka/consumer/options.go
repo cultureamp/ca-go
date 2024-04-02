@@ -26,7 +26,7 @@ func WithExplicitCommit() Option {
 // Only used by consumer group.
 func WithGroupBalancers(groupBalancers ...kafka.GroupBalancer) Option {
 	return func(consumer *Consumer) {
-		consumer.readerConfig.GroupBalancers = groupBalancers
+		consumer.conf.GroupBalancers = groupBalancers
 	}
 }
 
@@ -41,16 +41,16 @@ func WithHandlerBackOffRetry(backOffConstructor HandlerRetryBackOffConstructor) 
 // on each consumer handler error.
 func WithNotifyError(notifier NotifyError) Option {
 	return func(consumer *Consumer) {
-		consumer.clientHandler.Notify = notifier
+		consumer.clientHandler.clientNotify = notifier
 	}
 }
 
-// WithKafkaLogger specifies a logger used to report internal consumer reader
+// WithLogger specifies a logger used to report internal consumer reader
 // changes.
-func WithKafkaLogger(logger ClientLogger) Option {
+func WithLogger(logger ClientLogger) Option {
 	return func(consumer *Consumer) {
-		consumer.readerConfig.Logger = kafka.LoggerFunc(logger.Infof)
-		consumer.readerConfig.ErrorLogger = kafka.LoggerFunc(logger.Errorf)
+		consumer.conf.Logger = kafka.LoggerFunc(logger.Infof)
+		consumer.conf.ErrorLogger = kafka.LoggerFunc(logger.Errorf)
 	}
 }
 

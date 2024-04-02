@@ -6,7 +6,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/cultureamp/ca-go/log"
 	"github.com/go-errors/errors"
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
@@ -28,9 +27,6 @@ type Message struct {
 
 // Handler specifies how a consumer should handle a received Kafka message.
 type Handler func(ctx context.Context, msg Message) error
-
-// NotifyError is a notify-on-error function used to report consumer handler errors.
-type NotifyError func(ctx context.Context, err error, msg Message)
 
 // Reader fetches and commits messages from a Kafka topic.
 type Reader interface {
@@ -60,11 +56,11 @@ type Config struct {
 // not supported and instead would need to be included in your handler implementation.
 type Consumer struct {
 	id                 string
+	conf               kafka.ReaderConfig
 	reader             Reader
-	readerConfig       kafka.ReaderConfig
 	withExplicitCommit bool
 	stopCh             chan struct{}
-	clientHandler      *readerMessageHandler
+	clientHandler      *messageHandler
 }
 
 // NewConsumer returns a new Consumer configured with the provided dialer and config.
@@ -88,18 +84,20 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 	c := &Consumer{
 		id:     config.ID,
 		stopCh: make(chan struct{}),
-		readerConfig: kafka.ReaderConfig{
+		conf: kafka.ReaderConfig{
 			Brokers:               config.Brokers,
 			GroupID:               config.groupID,
 			Topic:                 config.Topic,
 			Dialer:                dialer,
 			WatchPartitionChanges: true,
 			MaxBytes:              config.MaxBytes,
+			Logger:                kafka.LoggerFunc(func(string, ...interface{}) {}), // default to noop
+			ErrorLogger:           kafka.LoggerFunc(func(string, ...interface{}) {}), // default to noop
 		},
-		clientHandler: &readerMessageHandler{
-			ConsumerID: config.ID,
-			GroupID:    config.groupID,
-			Notify:     func(ctx context.Context, err error, msg Message) {}, // default to noop
+		clientHandler: &messageHandler{
+			ConsumerID:   config.ID,
+			GroupID:      config.groupID,
+			clientNotify: func(ctx context.Context, err error, msg Message) {}, // default to noop
 		},
 	}
 
@@ -110,9 +108,9 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 	// Set the reader unless one was injected via the WithKafkaReader option.
 	if c.reader == nil {
 		if c.clientHandler.DataDogTracingEnabled {
-			c.reader = kafkatrace.NewReader(c.readerConfig)
+			c.reader = kafkatrace.NewReader(c.conf)
 		} else {
-			c.reader = kafka.NewReader(c.readerConfig)
+			c.reader = kafka.NewReader(c.conf)
 		}
 	}
 
@@ -122,23 +120,21 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 // Run consumes and handles messages from the topic. The method call blocks until
 // the context is canceled, the consumer is closed, or an error occurs.
 func (c *Consumer) Run(ctx context.Context, handler Handler) error {
-	log.Debug("consumer_run").
-		WithSystemTracing().
-		Properties(log.SubDoc().
-			Str("id", c.id).
-			Str("topic", c.readerConfig.Topic),
-		).Details("running until context is cancelled, or an error occurs, or the consumer is Stop()'ed")
+	c.conf.Logger.Printf(
+		"consumer(%s:%s): running until context is cancelled, an error occurs, or the consumer is stopped",
+		c.conf.Topic,
+		c.id,
+	)
 
 	// Run forever until we read from the stopCh or we have an error processing a message
 	for {
 		select {
 		case <-c.stopCh:
-			log.Info("consumer_run").
-				WithSystemTracing().
-				Properties(log.SubDoc().
-					Str("id", c.id).
-					Str("topic", c.readerConfig.Topic),
-				).Details("stopped signal received")
+			c.conf.Logger.Printf(
+				"consumer(%s:%s): stopped signal received",
+				c.conf.Topic,
+				c.id,
+			)
 			return nil
 		default:
 		}
@@ -158,13 +154,11 @@ func (c *Consumer) Stop() error {
 		return errors.Errorf("unable to close consumer reader: %w", err)
 	}
 
-	log.Debug("consumer_stop").
-		WithSystemTracing().
-		Properties(log.SubDoc().
-			Str("id", c.id).
-			Str("topic", c.readerConfig.Topic),
-		).Details("consumer has stopped")
-
+	c.conf.Logger.Printf(
+		"consumer(%s:%s): consumer has stopped",
+		c.conf.Topic,
+		c.id,
+	)
 	return nil
 }
 

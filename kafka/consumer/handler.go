@@ -11,15 +11,15 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
-type readerMessageHandler struct {
+type messageHandler struct {
 	ConsumerID            string
 	GroupID               string
 	DataDogTracingEnabled bool
 	BackOffConstructor    HandlerRetryBackOffConstructor
-	Notify                NotifyError
+	clientNotify          NotifyError
 }
 
-func (h *readerMessageHandler) execute(ctx context.Context, msg kafka.Message, handler Handler) error {
+func (h *messageHandler) execute(ctx context.Context, msg kafka.Message, handler Handler) error {
 	var err error
 	var backOff backoff.BackOff
 
@@ -68,7 +68,7 @@ func (h *readerMessageHandler) execute(ctx context.Context, msg kafka.Message, h
 		}
 
 		if err = handler(ctx, consumerMsg); err != nil {
-			h.Notify(ctx, err, consumerMsg)
+			h.clientNotify(ctx, err, consumerMsg)
 			continue
 		}
 
