@@ -17,11 +17,6 @@ type ClientLogger interface {
 	Errorf(string, ...interface{})
 }
 
-type noopClientLogger struct{}
-
-func (noop *noopClientLogger) Infof(string, ...interface{})  {}
-func (noop *noopClientLogger) Errorf(string, ...interface{}) {}
-
 type autoKafkaLogger struct{}
 
 func (l *autoKafkaLogger) Infof(msg string, args ...interface{}) {
