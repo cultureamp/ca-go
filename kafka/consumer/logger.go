@@ -38,7 +38,7 @@ func (l *autoKafkaLogger) Errorf(msg string, args ...interface{}) {
 func autoClientNotifyError(_ context.Context, err error, msg Message) {
 	log.Error("auto_consumer_notify_error", err).
 		WithSystemTracing().
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("topic", msg.Topic).
 			Str("key", string(msg.Key)).
 			Str("value", string(msg.Value)),
