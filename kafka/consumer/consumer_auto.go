@@ -2,12 +2,10 @@ package consumer
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strings"
 
 	"github.com/cultureamp/ca-go/log"
-	"github.com/go-errors/errors"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -34,36 +32,13 @@ func newAutoConsumer(topic string) *AutoConsumer {
 
 	autoBackOff := NonStopExponentialBackOff
 	autoBalancers := []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}}
-	autoNotify := func(ctx context.Context, err error, msg Message) {
-		log.Error("auto_consumer_notify_error", err).
-			WithSystemTracing().
-			Properties(log.SubDoc().
-				Str("topic", msg.Topic).
-				Str("key", string(msg.Key)).
-				Str("value", string(msg.Value)),
-			).Details("error consuming message")
-	}
-	autoReaderLogger := func(s string, i ...interface{}) {
-		msg := fmt.Sprintf(s, i...)
-		log.Debug("auto_consumer_reader").
-			WithSystemTracing().
-			Details(msg)
-	}
-	autoReaderErrorLogger := func(s string, i ...interface{}) {
-		msg := fmt.Sprintf(s, i...)
-		err := errors.New(msg)
-		log.Error("auto_consumer_reader_error", err).
-			WithSystemTracing().
-			Details(msg)
-	}
-
-	testRunnerKafkaReader := func() Reader {
-		return newTestRunnerReader(topic)
-	}
 
 	var consumer *Consumer
 	if isTestMode() {
 		// running inside a test, configure different options including a testRunnerKafkaReader
+		testRunnerKafkaReader := func() Reader {
+			return newTestRunnerReader(topic)
+		}
 		consumer = NewConsumer(kafka.DefaultDialer, cfg,
 			WithExplicitCommit(),
 			WithGroupBalancers(autoBalancers...),
@@ -71,13 +46,21 @@ func newAutoConsumer(topic string) *AutoConsumer {
 			WithKafkaReader(testRunnerKafkaReader),
 		)
 	} else {
+		autoNotify := func(ctx context.Context, err error, msg Message) {
+			log.Error("auto_consumer_notify_error", err).
+				WithSystemTracing().
+				Properties(log.SubDoc().
+					Str("topic", msg.Topic).
+					Str("key", string(msg.Key)).
+					Str("value", string(msg.Value)),
+				).Details("error consuming message")
+		}
 		consumer = NewConsumer(kafka.DefaultDialer, cfg,
 			WithExplicitCommit(),
 			WithGroupBalancers(autoBalancers...),
 			WithHandlerBackOffRetry(autoBackOff),
+			WithKafkaLogger(new(autoClientLogger)),
 			WithNotifyError(autoNotify),
-			WithReaderLogger(autoReaderLogger),
-			WithReaderErrorLogger(autoReaderErrorLogger),
 			WithDataDogTracing(),
 		)
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"sync"
 	"testing"
@@ -47,7 +46,6 @@ func TestNewConsumer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			wantBackOff := NonStopExponentialBackOff
-			wantNotify := func(ctx context.Context, err error, msg Message) {}
 			wantBalancers := []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}}
 
 			dialer, err := DialerSCRAM512("username", "password")
@@ -57,9 +55,6 @@ func TestNewConsumer(t *testing.T) {
 				WithExplicitCommit(),
 				WithGroupBalancers(wantBalancers...),
 				WithHandlerBackOffRetry(wantBackOff),
-				WithNotifyError(wantNotify),
-				WithReaderLogger(func(s string, i ...interface{}) { log.Println(s) }),
-				WithReaderErrorLogger(func(s string, i ...interface{}) { log.Println(s) }),
 				WithDataDogTracing(),
 				WithKafkaReader(func() Reader {
 					return &MockReader{}
@@ -251,8 +246,7 @@ func TestNewGroup(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			wantBackOff := NonStopExponentialBackOff
-			wantNotify := func(ctx context.Context, err error, msg Message) {}
-			wantOpts := []Option{WithHandlerBackOffRetry(wantBackOff), WithNotifyError(wantNotify)}
+			wantOpts := []Option{WithHandlerBackOffRetry(wantBackOff)}
 
 			g := NewGroup(&kafka.Dialer{}, tt.config, wantOpts...)
 			require.NotNil(t, g)

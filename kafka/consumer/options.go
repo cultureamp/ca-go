@@ -45,19 +45,12 @@ func WithNotifyError(notifier NotifyError) Option {
 	}
 }
 
-// WithReaderLogger specifies a logger used to report internal consumer reader
+// WithKafkaLogger specifies a logger used to report internal consumer reader
 // changes.
-func WithReaderLogger(logger kafka.LoggerFunc) Option {
+func WithKafkaLogger(logger ClientLogger) Option {
 	return func(consumer *Consumer) {
-		consumer.readerConfig.Logger = logger
-	}
-}
-
-// WithReaderErrorLogger specifies a logger used to report internal consumer
-// reader errors.
-func WithReaderErrorLogger(logger kafka.LoggerFunc) Option {
-	return func(consumer *Consumer) {
-		consumer.readerConfig.ErrorLogger = logger
+		consumer.readerConfig.Logger = kafka.LoggerFunc(logger.Infof)
+		consumer.readerConfig.ErrorLogger = kafka.LoggerFunc(logger.Errorf)
 	}
 }
 
