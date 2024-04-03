@@ -2,9 +2,10 @@ package consumer
 
 import (
 	"context"
-	"flag"
 	"os"
 	"strings"
+
+	"github.com/segmentio/kafka-go"
 )
 
 var DefaultConsumers = getInstance()
@@ -47,7 +48,18 @@ func newDefaultConsumer() *topicConsumer {
 
 // Consume creates as new consumer for the specified topic.
 func (tc *topicConsumer) Consume(ctx context.Context, topic string) (<-chan Message, StopFunc) {
-	ac := newAutoConsumer(topic, tc.brokers)
+	autoBackOff := NonStopExponentialBackOff
+	autoBalancers := []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}}
+
+	opts := []Option{
+		WithGroupBalancers(autoBalancers...),
+		WithHandlerBackOffRetry(autoBackOff),
+		WithLogger(new(autoKafkaLogger)),
+		WithNotifyError(autoClientNotifyError),
+		WithDataDogTracing(),
+	}
+
+	ac := newAutoConsumer(topic, tc.brokers, opts...)
 	tc.autoConsumers[topic] = ac
 	go ac.run(ctx)
 	return ac.channel, func() error { return tc.stop(topic) }
@@ -61,18 +73,4 @@ func (tc *topicConsumer) stop(topic string) error {
 		return ac.stop()
 	}
 	return nil
-}
-
-func isTestMode() bool {
-	// https://stackoverflow.com/questions/14249217/how-do-i-know-im-running-within-go-test
-	argZero := os.Args[0]
-
-	if strings.HasSuffix(argZero, ".test") ||
-		strings.Contains(argZero, "/_test/") ||
-		strings.Contains(argZero, "__debug_bin") || // vscode debug binary
-		flag.Lookup("test.v") != nil {
-		return true
-	}
-
-	return false
 }

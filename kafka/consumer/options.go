@@ -81,3 +81,11 @@ func WithKafkaReader(readerFn func() Reader) Option {
 		consumer.reader = readerFn()
 	}
 }
+
+// WithQueueCapacity sets the internal message queue capacity.
+// Defaults to 100 if none is set.
+func WithQueueCapacity(queueCapacity int) Option {
+	return func(consumer *Consumer) {
+		consumer.conf.QueueCapacity = queueCapacity
+	}
+}

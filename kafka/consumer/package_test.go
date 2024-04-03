@@ -9,25 +9,16 @@ import (
 
 	"github.com/cultureamp/ca-go/kafka/consumer"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestPackage(t *testing.T) {
-	ctx := context.Background()
-	ch, stop := consumer.Consume(ctx, "topic-name")
-	// when finished close it
+func TestPackageWithTimeout(t *testing.T) {
+	defConsumers := consumer.DefaultConsumers
+	consumer.DefaultConsumers = newPackageConsumerExampleMock(0)
 	defer func() {
-		err := stop()
-		if err != nil {
-			fmt.Printf("Error: %v", err)
-		}
+		consumer.DefaultConsumers = defConsumers
 	}()
 
-	// Read the next message from the topic
-	msg, ok := <-ch
-	fmt.Printf("Channel open=%t, topic=%s message_offset=%v\n", ok, msg.Topic, msg.Offset)
-}
-
-func TestPackageWithTimeout(t *testing.T) {
 	ctx := context.Background()
 	ch, stop := consumer.Consume(ctx, "topic-name-with-timeout")
 	// when finished close it
@@ -41,16 +32,23 @@ func TestPackageWithTimeout(t *testing.T) {
 	select {
 	case msg, ok := <-ch:
 		fmt.Printf("Channel open=%t, topic=%s message_offset=%v\n", ok, msg.Topic, msg.Offset)
+		assert.Fail(t, "should not have recieved any messages!")
 
-	case <-time.After(time.Duration(1) * time.Second):
-		fmt.Println("No message received before timeout")
+	case <-time.After(time.Millisecond * 100):
+		fmt.Println("Timeout recieved. Stopping.")
 	}
 }
 
 func TestPackageWithDeadline(t *testing.T) {
-	deadline := time.Duration(1) * time.Millisecond
+	deadline := time.Millisecond * 100
 	ctx, cancel := context.WithTimeout(context.Background(), deadline)
 	defer cancel()
+
+	defConsumers := consumer.DefaultConsumers
+	consumer.DefaultConsumers = newPackageConsumerExampleMock(0)
+	defer func() {
+		consumer.DefaultConsumers = defConsumers
+	}()
 
 	ch, stop := consumer.Consume(ctx, "topic-name-with-context-deadline")
 	// when finished close it
@@ -61,22 +59,21 @@ func TestPackageWithDeadline(t *testing.T) {
 		}
 	}()
 
-	ok := true
-	for ok {
-		select {
-		case msg, ok := <-ch:
-			fmt.Printf("Channel open=%t, topic=%s message_offset=%v\n", ok, msg.Topic, msg.Offset)
+	select {
+	case msg, ok := <-ch:
+		fmt.Printf("Channel open=%t, topic=%s message_offset=%v\n", ok, msg.Topic, msg.Offset)
+		assert.Fail(t, "should not have recieved any messages!")
 
-		case <-ctx.Done():
-			fmt.Println("Context deadline received. Stopping.")
-			ok = false
-		}
+	case <-ctx.Done():
+		fmt.Println("Context deadline received. Stopping.")
 	}
 }
 
 func TestPackageWithMock(t *testing.T) {
+	const queueSize = 5
+
 	defConsumers := consumer.DefaultConsumers
-	consumer.DefaultConsumers = new(packageConsumerExampleMock)
+	consumer.DefaultConsumers = newPackageConsumerExampleMock(queueSize)
 	defer func() {
 		consumer.DefaultConsumers = defConsumers
 	}()
@@ -91,27 +88,28 @@ func TestPackageWithMock(t *testing.T) {
 		}
 	}()
 
-	ok := true
-	for ok {
-		select {
-		// Read the messages from the topic
-		case msg, opened := <-ch:
-			if opened {
-				fmt.Printf("Channel open=%t, topic=%s message_offset=%v\n", opened, msg.Topic, msg.Offset)
-			} else {
-				// time to stop, channel is closed
-				ok = false
-			}
-		}
+	// Read ALL the messages from the channel until it is closed
+	i := 0
+	for range ch {
+		i++
 	}
+	assert.Equal(t, queueSize, i)
 }
 
-type packageConsumerExampleMock struct{}
+type packageConsumerExampleMock struct {
+	queueSize int
+}
+
+func newPackageConsumerExampleMock(qs int) *packageConsumerExampleMock {
+	return &packageConsumerExampleMock{
+		queueSize: qs,
+	}
+}
 
 func (c *packageConsumerExampleMock) Consume(ctx context.Context, topic string) (<-chan consumer.Message, consumer.StopFunc) {
 	var channel chan consumer.Message
 
-	channel = make(chan consumer.Message, 10)
+	channel = make(chan consumer.Message, c.queueSize)
 	go c.run(channel)
 	return channel, func() error { return nil }
 }
@@ -119,8 +117,12 @@ func (c *packageConsumerExampleMock) Consume(ctx context.Context, topic string) 
 func (c *packageConsumerExampleMock) run(channel chan consumer.Message) {
 	defer close(channel)
 
+	if c.queueSize == 0 {
+		time.Sleep(time.Millisecond * 500)
+	}
+
 	// generate some messages and then exit when done
-	for i := 0; i < 10; i++ {
+	for i := 0; i < c.queueSize; i++ {
 		m := c.newMessage()
 		channel <- m
 	}

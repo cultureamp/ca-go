@@ -38,9 +38,10 @@ type Reader interface {
 
 // Config is a configuration object used to create a new Consumer.
 type Config struct {
-	ID            string // Default: UUID
-	Brokers       []string
-	Topic         string
+	ID      string // Default: UUID
+	Brokers []string
+	Topic   string
+
 	MinBytes      int           // Default: 1MB
 	MaxBytes      int           // Default: 10MB
 	MaxWait       time.Duration // Default: 250ms

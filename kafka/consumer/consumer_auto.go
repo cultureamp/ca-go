@@ -2,8 +2,6 @@ package consumer
 
 import (
 	"context"
-
-	"github.com/segmentio/kafka-go"
 )
 
 type autoConsumer struct {
@@ -15,43 +13,13 @@ type autoConsumer struct {
 // autoConsumers is a type that maps "topic name" to "consumer".
 type autoConsumers map[string]*autoConsumer
 
-func newAutoConsumer(topic string, brokers []string) *autoConsumer {
-	var channel chan Message
-
+func newAutoConsumer(topic string, brokers []string, opts ...Option) *autoConsumer {
 	cfg := Config{
 		Brokers: brokers,
 		Topic:   topic,
 	}
-
-	autoBackOff := NonStopExponentialBackOff
-	autoBalancers := []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}}
-
-	var consumer *Consumer
-	if isTestMode() {
-		// running inside a test, configure different options including a testRunnerKafkaReader
-		testRunnerKafkaReader := func() Reader {
-			return newTestRunnerReader(topic)
-		}
-		consumer = NewConsumer(
-			cfg,
-			WithExplicitCommit(),
-			WithGroupBalancers(autoBalancers...),
-			WithHandlerBackOffRetry(autoBackOff),
-			WithKafkaReader(testRunnerKafkaReader),
-		)
-	} else {
-		consumer = NewConsumer(
-			cfg,
-			WithExplicitCommit(),
-			WithGroupBalancers(autoBalancers...),
-			WithHandlerBackOffRetry(autoBackOff),
-			WithLogger(new(autoKafkaLogger)),
-			WithNotifyError(autoClientNotifyError),
-			WithDataDogTracing(),
-		)
-	}
-
-	channel = make(chan Message, consumer.conf.QueueCapacity)
+	consumer := NewConsumer(cfg, opts...)
+	channel := make(chan Message, consumer.conf.QueueCapacity)
 
 	return &autoConsumer{
 		topic:    topic,

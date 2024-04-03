@@ -2,21 +2,37 @@
 
 The `kafka/consumer` package provides access to consume Kafka messages from a topic. The design of this package is to provide a simple system that can be used in a variety of situations without requiring high cognitive load.
 
-The package creates a default consumer that uses the `KAFKA_BROKERS` environment variable. For ease of use, it is recommended that you use the package level method Consume. However, if you need to support other configurations then you can create a `NewConsumer()` and manage the class life-cycle yourself.
+## Package Level Consumers
+The package creates a default consumer for each topic a client wishes to consume. The contract for the package level method is:
 
+- Consume(ctx context.Context, topic string) (<-chan Message, StopFunc)
 
-## Environment Variables
+Calling this will connect to Kafka using the `KAFKA_BROKERS` environment variable and start retrieving `Messages` and write them to a channel for you to consume. The `StopFunc` is also returned that should be called when you wish to stop the consumer from receiving any more messages.
 
-To use the package level methods `Consume` method you MUST set these:
+The channel will continue to be populated until either one of these conditions are met:
+- The context is cancelled (ie. deadline reached)
+- An error occurs
+- The `StopFunc` is called by the client
+
+Note: the channel has a default buffer of 100.
+
+### Environment Variables
+
+To use the package level method `Consume` method you MUST set these:
 
 - KAFKA_BROKERS = A comma seperate list of strings containing the kafka brokers.
+
+
+## Managing Consumers Yourself
+
+For ease of use, it is recommended that you use the package level method Consume. However, if you need to support other configurations then you can create a `NewConsumer()` directly and manage the class life-cycle yourself.
+
 
 ## Managing Consumers Yourself
 
 While we recommend using the package level methods for their ease of use, you may desire to create and manage consumers yourself, which you can do by calling:
 
 - NewConsumer(config Config, opts ...Option) *Consumer
-
 
 ## Examples
 
