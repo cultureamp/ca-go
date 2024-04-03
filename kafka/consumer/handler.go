@@ -19,7 +19,7 @@ type messageHandler struct {
 	clientNotify          NotifyError
 }
 
-func (h *messageHandler) execute(ctx context.Context, msg kafka.Message, handler Handler) error {
+func (h *messageHandler) dispatch(ctx context.Context, msg kafka.Message, handler Handler) error {
 	var err error
 	var backOff backoff.BackOff
 

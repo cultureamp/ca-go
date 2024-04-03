@@ -182,7 +182,7 @@ func (c *Consumer) fetchNextMessage(ctx context.Context, handler Handler) error 
 		return errors.Errorf("unable to fetch message: %w", err)
 	}
 
-	if err = c.clientHandler.execute(ctx, msg, handler); err != nil {
+	if err = c.clientHandler.dispatch(ctx, msg, handler); err != nil {
 		return errors.Errorf("unable to handle message: %w", err)
 	}
 
@@ -205,7 +205,7 @@ func (c *Consumer) readNextMessage(ctx context.Context, handler Handler) error {
 		return errors.Errorf("unable to read message: %w", err)
 	}
 
-	if err = c.clientHandler.execute(ctx, msg, handler); err != nil {
+	if err = c.clientHandler.dispatch(ctx, msg, handler); err != nil {
 		return errors.Errorf("unable to handle message: %w", err)
 	}
 
