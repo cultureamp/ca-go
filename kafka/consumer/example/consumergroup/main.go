@@ -11,7 +11,6 @@ import (
 	"syscall"
 
 	"github.com/cultureamp/ca-go/kafka/consumer"
-	"github.com/segmentio/kafka-go"
 )
 
 var (
@@ -30,7 +29,7 @@ func main() {
 		Topic:   topic,
 		GroupID: groupID,
 	}
-	consumerGroup := consumer.NewGroup(kafka.DefaultDialer, groupCfg)
+	consumerGroup := consumer.NewGroup(groupCfg)
 	defer consumerGroup.Stop()
 
 	log.Printf("consumer group %s started for topic %s\n", consumerGroup.ID, topic)

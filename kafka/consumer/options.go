@@ -6,6 +6,12 @@ import (
 
 type Option func(consumer *Consumer)
 
+func WithKafkaDialer(dialer *kafka.Dialer) Option {
+	return func(consumer *Consumer) {
+		consumer.conf.Dialer = dialer
+	}
+}
+
 // WithExplicitCommit enables offset commit only after a message is successfully
 // handled.
 //

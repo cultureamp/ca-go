@@ -38,10 +38,9 @@ type Reader interface {
 
 // Config is a configuration object used to create a new Consumer.
 type Config struct {
-	ID      string // Default: UUID
-	Brokers []string
-	Topic   string
-
+	ID            string // Default: UUID
+	Brokers       []string
+	Topic         string
 	MinBytes      int           // Default: 1MB
 	MaxBytes      int           // Default: 10MB
 	MaxWait       time.Duration // Default: 250ms
@@ -64,7 +63,7 @@ type Consumer struct {
 }
 
 // NewConsumer returns a new Consumer configured with the provided dialer and config.
-func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer {
+func NewConsumer(config Config, opts ...Option) *Consumer {
 	if config.ID == "" {
 		config.ID = uuid.New().String()
 	}
@@ -88,7 +87,7 @@ func NewConsumer(dialer *kafka.Dialer, config Config, opts ...Option) *Consumer 
 			Brokers:               config.Brokers,
 			GroupID:               config.groupID,
 			Topic:                 config.Topic,
-			Dialer:                dialer,
+			Dialer:                kafka.DefaultDialer,
 			WatchPartitionChanges: true,
 			MaxBytes:              config.MaxBytes,
 			Logger:                kafka.LoggerFunc(func(string, ...interface{}) {}), // default to noop

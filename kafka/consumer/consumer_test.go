@@ -51,7 +51,7 @@ func TestNewConsumer(t *testing.T) {
 			dialer, err := DialerSCRAM512("username", "password")
 			require.NoError(t, err)
 
-			c := NewConsumer(dialer, tt.config,
+			c := NewConsumer(tt.config,
 				WithExplicitCommit(),
 				WithGroupBalancers(wantBalancers...),
 				WithHandlerBackOffRetry(wantBackOff),
@@ -59,6 +59,7 @@ func TestNewConsumer(t *testing.T) {
 				WithKafkaReader(func() Reader {
 					return &MockReader{}
 				}),
+				WithKafkaDialer(dialer),
 			)
 			require.NotNil(t, c)
 			assert.Equal(t, c.conf.Dialer, dialer)
@@ -89,8 +90,9 @@ func TestConsumer_Run(t *testing.T) {
 		return currMsg, nil
 	}).Times(wantTimes)
 
-	consumer := NewConsumer(&kafka.Dialer{}, Config{},
+	consumer := NewConsumer(Config{},
 		WithKafkaReader(func() Reader { return reader }),
+		WithKafkaDialer(&kafka.Dialer{}),
 	)
 
 	i := 0
@@ -189,8 +191,9 @@ func TestConsumer_Run_error(t *testing.T) {
 			reader.EXPECT().Close().Return(nil).AnyTimes()
 			reader.EXPECT().ReadMessage(ctx).Return(randMsg(), nil).AnyTimes()
 
-			consumer := NewConsumer(&kafka.Dialer{}, Config{},
+			consumer := NewConsumer(Config{},
 				WithKafkaReader(func() Reader { return reader }),
+				WithKafkaDialer(&kafka.Dialer{}),
 			)
 
 			if tt.setup != nil {
@@ -246,9 +249,9 @@ func TestNewGroup(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			wantBackOff := NonStopExponentialBackOff
-			wantOpts := []Option{WithHandlerBackOffRetry(wantBackOff)}
+			wantOpts := []Option{WithHandlerBackOffRetry(wantBackOff), WithKafkaDialer(&kafka.Dialer{})}
 
-			g := NewGroup(&kafka.Dialer{}, tt.config, wantOpts...)
+			g := NewGroup(tt.config, wantOpts...)
 			require.NotNil(t, g)
 			assert.Empty(t, g.stopChs)
 			wantConfig := tt.config
@@ -273,8 +276,9 @@ func TestGroup_Run(t *testing.T) {
 	reader.EXPECT().Close().AnyTimes()
 	reader.EXPECT().ReadMessage(ctx).Return(randMsg(), nil).AnyTimes()
 
-	group := NewGroup(&kafka.Dialer{}, GroupConfig{Count: wantConsumers},
+	group := NewGroup(GroupConfig{Count: wantConsumers},
 		WithKafkaReader(func() Reader { return reader }),
+		WithKafkaDialer(&kafka.Dialer{}),
 	)
 
 	handlerInvocations := new(safeCounter)

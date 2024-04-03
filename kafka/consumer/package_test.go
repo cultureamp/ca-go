@@ -75,7 +75,11 @@ func TestPackageWithDeadline(t *testing.T) {
 }
 
 func TestPackageWithMock(t *testing.T) {
+	defConsumers := consumer.DefaultConsumers
 	consumer.DefaultConsumers = new(packageConsumerExampleMock)
+	defer func() {
+		consumer.DefaultConsumers = defConsumers
+	}()
 
 	ctx := context.Background()
 	ch, stop := consumer.Consume(ctx, "topic-name")

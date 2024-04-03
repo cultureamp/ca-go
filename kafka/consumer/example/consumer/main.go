@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/cultureamp/ca-go/kafka/consumer"
-	"github.com/segmentio/kafka-go"
 )
 
 var (
@@ -22,7 +21,7 @@ func main() {
 		Brokers: strings.Split(brokers, ","),
 		Topic:   topic,
 	}
-	c := consumer.NewConsumer(kafka.DefaultDialer, cfg)
+	c := consumer.NewConsumer(cfg)
 
 	log.Printf("consumer started for topic %s\n", topic)
 	if err := c.Run(context.Background(), handle); err != nil {

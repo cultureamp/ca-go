@@ -40,12 +40,11 @@ type Group struct {
 	ID      string
 	config  GroupConfig
 	opts    []Option
-	dialer  *kafka.Dialer
 	stopChs []chan struct{}
 }
 
 // NewGroup returns a new Group configured with the provided dialer and config.
-func NewGroup(dialer *kafka.Dialer, config GroupConfig, opts ...Option) *Group {
+func NewGroup(config GroupConfig, opts ...Option) *Group {
 	if config.Count <= 0 {
 		config.Count = 1
 	}
@@ -53,7 +52,6 @@ func NewGroup(dialer *kafka.Dialer, config GroupConfig, opts ...Option) *Group {
 	return &Group{
 		ID:     fmt.Sprintf("%s-%s", strings.ToLower(config.GroupID), uuid.New().String()[:7]), // semi-random slug
 		config: config,
-		dialer: dialer,
 		opts:   opts,
 	}
 }
@@ -84,7 +82,7 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 			QueueCapacity: g.config.QueueCapacity,
 			groupID:       g.config.GroupID,
 		}
-		c := NewConsumer(g.dialer, cfg, g.opts...)
+		c := NewConsumer(cfg, g.opts...)
 
 		go func() {
 			defer wg.Done()

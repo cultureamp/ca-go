@@ -32,14 +32,16 @@ func newAutoConsumer(topic string, brokers []string) *autoConsumer {
 		testRunnerKafkaReader := func() Reader {
 			return newTestRunnerReader(topic)
 		}
-		consumer = NewConsumer(kafka.DefaultDialer, cfg,
+		consumer = NewConsumer(
+			cfg,
 			WithExplicitCommit(),
 			WithGroupBalancers(autoBalancers...),
 			WithHandlerBackOffRetry(autoBackOff),
 			WithKafkaReader(testRunnerKafkaReader),
 		)
 	} else {
-		consumer = NewConsumer(kafka.DefaultDialer, cfg,
+		consumer = NewConsumer(
+			cfg,
 			WithExplicitCommit(),
 			WithGroupBalancers(autoBalancers...),
 			WithHandlerBackOffRetry(autoBackOff),
