@@ -3,18 +3,18 @@ module github.com/cultureamp/ca-go
 go 1.22.2
 
 require (
-	github.com/IBM/sarama v1.43.0
+	github.com/IBM/sarama v1.43.1
 	github.com/aws/aws-lambda-go v1.46.0
-	github.com/aws/aws-sdk-go v1.51.11
+	github.com/aws/aws-sdk-go v1.51.15
 	github.com/aws/aws-sdk-go-v2/service/kms v1.30.1
 	github.com/caarlos0/env/v10 v10.0.0
-	github.com/cenkalti/backoff/v4 v4.2.1
+	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/go-errors/errors v1.5.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
-	github.com/hashicorp/go-hclog v1.6.2
+	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/go-secure-stdlib/awsutil v0.3.0
 	github.com/hashicorp/vault v1.15.3
 	github.com/hashicorp/vault/api v1.12.2
@@ -23,7 +23,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/launchdarkly/go-sdk-common/v3 v3.1.0
 	github.com/launchdarkly/go-server-sdk-dynamodb/v4 v4.0.0
-	github.com/launchdarkly/go-server-sdk/v7 v7.1.1
+	github.com/launchdarkly/go-server-sdk/v7 v7.3.0
 	github.com/rs/zerolog v1.32.0
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.9.0
