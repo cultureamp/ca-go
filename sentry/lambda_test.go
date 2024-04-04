@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cultureamp/ca-go/x/sentry/errorreport"
+	"github.com/cultureamp/ca-go/sentry"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,7 +33,7 @@ func TestHandleError(t *testing.T) {
 			eventHandler := func(ctx context.Context, payload any) error {
 				return test.err
 			}
-			wrapped := errorreport.LambdaMiddleware(eventHandler)
+			wrapped := sentry.LambdaMiddleware(eventHandler)
 
 			err := wrapped(context.Background(), "random body")
 
@@ -46,7 +46,7 @@ func TestHandleError(t *testing.T) {
 			eventHandler := func(ctx context.Context, payload any) (any, error) {
 				return nil, test.err
 			}
-			wrapped := errorreport.LambdaWithOutputMiddleware(eventHandler)
+			wrapped := sentry.LambdaWithOutputMiddleware(eventHandler)
 
 			_, err := wrapped(context.Background(), "random body")
 
@@ -87,15 +87,15 @@ func TestPanic(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		options := []errorreport.LambdaOption{}
+		options := []sentry.LambdaOption{}
 
 		if test.repanic != nil {
-			options = append(options, errorreport.WithRepanic(*test.repanic))
+			options = append(options, sentry.WithRepanic(*test.repanic))
 		}
 
 		t.Run("LambdaMiddleware: "+test.name, func(t *testing.T) {
 			mockSentryTransport := setupMockSentryTransport(t)
-			wrapped := errorreport.LambdaMiddleware(unstableHandler, options...)
+			wrapped := sentry.LambdaMiddleware(unstableHandler, options...)
 
 			testFunc := func() {
 				_ = wrapped(context.Background(), "random body")
@@ -112,7 +112,7 @@ func TestPanic(t *testing.T) {
 
 		t.Run("LambdaWithOutputMiddleware: "+test.name, func(t *testing.T) {
 			mockSentryTransport := setupMockSentryTransport(t)
-			wrapped := errorreport.LambdaWithOutputMiddleware(unstableOutputHandler, options...)
+			wrapped := sentry.LambdaWithOutputMiddleware(unstableOutputHandler, options...)
 
 			testFunc := func() {
 				_, _ = wrapped(context.Background(), "random body")

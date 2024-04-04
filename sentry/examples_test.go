@@ -8,9 +8,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-
-	"github.com/cultureamp/ca-go/x/log"
-	"github.com/cultureamp/ca-go/x/sentry/errorreport"
+	"github.com/cultureamp/ca-go/sentry"
 )
 
 var (
@@ -45,24 +43,24 @@ func Example_lambda() {
 	settings := getSettings()
 
 	// configure error reporting settings
-	err := errorreport.Init(
-		errorreport.WithDSN(settings.SentryDSN),
-		errorreport.WithRelease(app, appVersion),
-		errorreport.WithEnvironment(settings.AppEnv),
-		errorreport.WithBuildDetails(settings.Farm, buildNumber, branch, commit),
-		errorreport.WithServerlessTransport(),
+	err := sentry.Init(
+		sentry.WithDSN(settings.SentryDSN),
+		sentry.WithRelease(app, appVersion),
+		sentry.WithEnvironment(settings.AppEnv),
+		sentry.WithBuildDetails(settings.Farm, buildNumber, branch, commit),
+		sentry.WithServerlessTransport(),
 
 		// optionally add a tag to every error report
-		errorreport.WithTag("animal", "gopher"),
+		sentry.WithTag("animal", "gopher"),
 
 		// or add multiple tags at once to be added to every error report
-		errorreport.WithTags(map[string]string{
+		sentry.WithTags(map[string]string{
 			"genus":   "phoenicoparrus",
 			"species": "jamesi",
 		}),
 
 		// optionally customise error title with the root cause message
-		errorreport.WithBeforeFilter(errorreport.RootCauseAsTitle),
+		sentry.WithBeforeFilter(sentry.RootCauseAsTitle),
 	)
 	if err != nil {
 		// FIX: write error to log
@@ -70,7 +68,7 @@ func Example_lambda() {
 	}
 
 	// wrap the lambda handler function with error reporting
-	handler := errorreport.LambdaMiddleware(Handler)
+	handler := sentry.LambdaMiddleware(Handler)
 
 	// start the lambda function
 	lambda.StartWithOptions(handler, lambda.WithContext(ctx))
@@ -92,7 +90,7 @@ func Handler(ctx context.Context, event events.KinesisEvent) error {
 func processRecord(ctx context.Context, record events.KinesisEventRecord) error {
 	// Decorate will add these details to any error report that is sent to
 	// Sentry in the context of this method. (Note the use of defer.)
-	defer errorreport.Decorate(map[string]string{
+	defer sentry.Decorate(map[string]string{
 		"event_id":        record.EventID,
 		"partition_key":   record.Kinesis.PartitionKey,
 		"sequence_number": record.Kinesis.SequenceNumber,
@@ -107,29 +105,27 @@ func Example_fargate() {
 	// function. The following is an example `main` function.
 
 	ctx := context.Background()
-	logger := log.NewFromCtx(ctx)
-
 	settings := getSettings()
 
 	// configure error reporting settings
-	err := errorreport.Init(
-		errorreport.WithDSN(settings.SentryDSN),
-		errorreport.WithRelease(app, appVersion),
-		errorreport.WithEnvironment(settings.AppEnv),
-		errorreport.WithBuildDetails(settings.Farm, buildNumber, branch, commit),
-		errorreport.WithTag("application_name", app),
+	err := sentry.Init(
+		sentry.WithDSN(settings.SentryDSN),
+		sentry.WithRelease(app, appVersion),
+		sentry.WithEnvironment(settings.AppEnv),
+		sentry.WithBuildDetails(settings.Farm, buildNumber, branch, commit),
+		sentry.WithTag("application_name", app),
 		// optionally add a tag to every error report
-		errorreport.WithTag("animal", "gopher"),
+		sentry.WithTag("animal", "gopher"),
 
 		// or add multiple tags at once to be added to every error report
-		errorreport.WithTags(map[string]string{
+		sentry.WithTags(map[string]string{
 			"genus":   "phoenicoparrus",
 			"species": "jamesi",
 		}),
-		errorreport.WithBeforeFilter(errorreport.RootCauseAsTitle),
+		sentry.WithBeforeFilter(sentry.RootCauseAsTitle),
 	)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("sentry init")
+		// log error
 	}
 
 	// handle core business logic here
@@ -138,7 +134,7 @@ func Example_fargate() {
 	// capture panic and report to sentry before the program exits
 	defer func() {
 		if err := recover(); err != nil {
-			errorreport.GracefullyShutdown(err, time.Second*5)
+			sentry.GracefullyShutdown(err, time.Second*5)
 		}
 	}()
 }
@@ -146,7 +142,7 @@ func Example_fargate() {
 func handleBusinessLogic(ctx context.Context) {
 	if _, err := doSomething(); err != nil {
 		// report a error to sentry
-		errorreport.ReportError(ctx, err)
+		sentry.ReportError(ctx, err)
 	}
 }
 

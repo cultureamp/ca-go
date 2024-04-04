@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cultureamp/ca-go/x/request"
-	"github.com/cultureamp/ca-go/x/sentry/errorreport"
+	"github.com/cultureamp/ca-go/sentry"
 )
 
 // setupContextForSentry returns a new context populated with sample
@@ -63,7 +63,7 @@ func TestHTTPMiddleware(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		panicHandlerCalled := false
-		mw := errorreport.NewHTTPMiddleware(func(c context.Context, w http.ResponseWriter, err error) {
+		mw := sentry.NewHTTPMiddleware(func(c context.Context, w http.ResponseWriter, err error) {
 			panicHandlerCalled = true
 		})
 
@@ -86,7 +86,7 @@ func TestHTTPMiddleware(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		panicHandlerCalled := false
-		mw := errorreport.NewHTTPMiddleware(func(c context.Context, w http.ResponseWriter, err error) {
+		mw := sentry.NewHTTPMiddleware(func(c context.Context, w http.ResponseWriter, err error) {
 			panicHandlerCalled = true
 		})
 
@@ -116,7 +116,7 @@ func TestHTTPMiddleware(t *testing.T) {
 		mockSentryTransport := setupMockSentryTransport(t)
 		w := httptest.NewRecorder()
 
-		mw := errorreport.NewHTTPMiddleware(nil)
+		mw := sentry.NewHTTPMiddleware(nil)
 
 		innerHandlerCalled := false
 		innerHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -153,7 +153,7 @@ func TestGoaEndpointMiddleware(t *testing.T) {
 			return "foobar", nil
 		}
 
-		mw := errorreport.NewGoaEndpointMiddleware()
+		mw := sentry.NewGoaEndpointMiddleware()
 
 		sut := mw(endpoint)
 		res, err := sut(ctx, nil)
@@ -174,7 +174,7 @@ func TestGoaEndpointMiddleware(t *testing.T) {
 			return nil, errors.New("boom")
 		}
 
-		mw := errorreport.NewGoaEndpointMiddleware()
+		mw := sentry.NewGoaEndpointMiddleware()
 
 		sut := mw(endpoint)
 		_, err := sut(ctx, nil)
