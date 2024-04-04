@@ -3,7 +3,6 @@ package sentry
 import (
 	"context"
 
-	"github.com/cultureamp/ca-go/x/lambdafunction"
 	"github.com/getsentry/sentry-go"
 )
 
@@ -33,7 +32,7 @@ func WithRepanic(repanic bool) LambdaOption {
 // LambdaMiddleware[TIn] provides error-handling middleware for a Lambda
 // function that has a payload type of TIn. This suits Lambda functions like
 // event processors, where the return has no payload.
-func LambdaMiddleware[TIn any](nextHandler lambdafunction.HandlerOf[TIn], config ...LambdaOption) lambdafunction.HandlerOf[TIn] {
+func LambdaMiddleware[TIn any](nextHandler HandlerOf[TIn], config ...LambdaOption) HandlerOf[TIn] {
 	options := configure(config)
 
 	return func(ctx context.Context, event TIn) error {
@@ -49,14 +48,14 @@ func LambdaMiddleware[TIn any](nextHandler lambdafunction.HandlerOf[TIn], config
 
 // LambdaWithOutputMiddleware[TIn, TOut] provides error-handling middleware for
 // a Lambda function that has a payload type of TIn and returns the tuple TOut,error.
-func LambdaWithOutputMiddleware[TIn any, TOut any](nextHandler lambdafunction.HandlerWithOutputOf[TIn, TOut], config ...LambdaOption) lambdafunction.HandlerWithOutputOf[TIn, TOut] {
+func LambdaWithOutputMiddleware[TIn any, TOut any](nextHandler HandlerWithOutputOf[TIn, TOut], config ...LambdaOption) HandlerWithOutputOf[TIn, TOut] {
 	options := configure(config)
 
 	return func(ctx context.Context, event TIn) (TOut, error) {
+		// This looks wrong, but is actually correct.
+		// The func() returned from the beforeHandler is deferred.
 		defer beforeHandler(ctx, options)()
-
 		out, err := nextHandler(ctx, event)
-
 		afterHandler(ctx, err)
 
 		return out, err

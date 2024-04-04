@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cultureamp/ca-go/x/request"
+	"github.com/cultureamp/ca-go/request"
 	"github.com/getsentry/sentry-go"
 	"github.com/go-errors/errors"
 )
