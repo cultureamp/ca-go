@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/cultureamp/ca-go/x/request"
+	"github.com/cultureamp/ca-go/request"
 	"github.com/google/uuid"
 	"github.com/launchdarkly/go-sdk-common/v3/ldcontext"
 )

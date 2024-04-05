@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/cultureamp/ca-go/launchdarkly/evaluationcontext"
-	"github.com/cultureamp/ca-go/x/request"
+	"github.com/cultureamp/ca-go/request"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
