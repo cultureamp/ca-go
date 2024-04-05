@@ -1,1 +1,0 @@
-export LAUNCHDARKLY_CONFIGURATION='{"sdkKey":"your-sdk-key-here"}'
