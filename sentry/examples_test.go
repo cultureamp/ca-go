@@ -8,8 +8,8 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/cultureamp/ca-go/sentry"
 	"github.com/cultureamp/ca-go/log"
+	"github.com/cultureamp/ca-go/sentry"
 )
 
 var (
@@ -64,7 +64,7 @@ func Example_lambda() {
 		sentry.WithBeforeFilter(sentry.RootCauseAsTitle),
 	)
 	if err != nil {
-		log.Panic("sentry_init",err).Send()
+		log.Panic("sentry_init", err).Send()
 	}
 
 	// wrap the lambda handler function with error reporting
@@ -125,7 +125,7 @@ func Example_fargate() {
 		sentry.WithBeforeFilter(sentry.RootCauseAsTitle),
 	)
 	if err != nil {
-		// log error
+		log.Panic("sentry_init", err).Send()
 	}
 
 	// handle core business logic here
