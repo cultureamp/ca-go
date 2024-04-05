@@ -53,7 +53,6 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		opt(c)
 	}
 
-
 	parsedConfig := configurationJSON{}
 	_, ok := os.LookupEnv(configurationEnvVar)
 	if ok {
