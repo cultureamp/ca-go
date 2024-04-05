@@ -52,7 +52,7 @@ functionality (given its purpose).
 
 ## Contributing
 
-To work on `ca-go`, you'll need a working Go installation. The project currently targets Go 1.21.
+To work on `ca-go`, you'll need a working Go installation. The project currently targets Go 1.22.
 
 ### Setting up your environment
 
