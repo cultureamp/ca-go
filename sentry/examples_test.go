@@ -64,7 +64,7 @@ func Example_lambda() {
 	)
 	if err != nil {
 		// FIX: write error to log
-		os.Exit(1)
+		log.Panic("sentry_init",err).Send()
 	}
 
 	// wrap the lambda handler function with error reporting
