@@ -21,7 +21,6 @@ type Client struct {
 	bigSegmentsEnabled bool
 	wrappedConfig      ld.Config
 	wrappedClient      *ld.LDClient
-	logger             log.Logger
 
 	testModeConfig *TestModeConfig
 
@@ -54,11 +53,6 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		opt(c)
 	}
 
-	// add a logger if one wasn't added through opts
-	if c.logger == nil {
-		config := log.NewLoggerConfig()
-		c.logger = log.NewLogger(config)
-	}
 
 	parsedConfig := configurationJSON{}
 	_, ok := os.LookupEnv(configurationEnvVar)
@@ -66,7 +60,7 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		config, err := configFromEnvironment()
 		if err != nil {
 			err = fmt.Errorf("could not configure from environment variable: %w", err)
-			c.logger.Error("flags_startup_error", err).Send()
+			log.Error("flags_startup_error", err).Send()
 			return nil, err
 		}
 		parsedConfig = config
@@ -81,7 +75,7 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		}
 		c.wrappedConfig = configForTestMode(c.testModeConfig)
 
-		c.logger.Info("flags_startup").Details("LaunchDarkly client configured for test mode")
+		log.Info("flags_startup").Details("LaunchDarkly client configured for test mode")
 		// Short-circuit the rest of the configuration.
 		return c, nil
 	}
@@ -90,12 +84,12 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 
 	if parsedConfig.Proxy != nil && c.mode == modeProxy {
 		c.wrappedConfig = configForProxyMode(parsedConfig, c.proxyModeConfig)
-		c.logger.Info("flags_startup").Details("LaunchDarkly client configured for proxy mode")
+		log.Info("flags_startup").Details("LaunchDarkly client configured for proxy mode")
 	}
 
 	if parsedConfig.Storage != nil && c.mode == modeLambda {
 		c.wrappedConfig = configForLambdaMode(parsedConfig, c.lambdaModeConfig)
-		c.logger.Info("flags_startup").Details("LaunchDarkly client configured for lambda mode")
+		log.Info("flags_startup").Details("LaunchDarkly client configured for lambda mode")
 	}
 
 	// Configure big segments if the storage table name is present
@@ -103,7 +97,7 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		parsedConfig.Storage != nil &&
 		parsedConfig.Storage.TableName != "" {
 		c.wrappedConfig.BigSegments = configForBigSegments(parsedConfig).BigSegments
-		c.logger.Info("flags_startup").Details("LaunchDarkly client configured for big segments")
+		log.Info("flags_startup").Details("LaunchDarkly client configured for big segments")
 	}
 
 	return c, nil
@@ -120,7 +114,7 @@ func (c *Client) Connect() error {
 	wrappedClient, err := ld.MakeCustomClient(c.sdkKey, c.wrappedConfig, c.initWait)
 	if err != nil {
 		err = fmt.Errorf("create LaunchDarkly client: %w", err)
-		c.logger.Error("launch_darkly_connect", err).Send()
+		log.Error("launch_darkly_connect", err).Send()
 		return err
 	}
 
@@ -136,7 +130,7 @@ func (c *Client) QueryBool(ctx context.Context, key FlagName, fallbackValue bool
 	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
 		err = fmt.Errorf("get user from context: %w", err)
-		c.logger.Error("launch_darkly_query", err).Send()
+		log.Error("launch_darkly_query", err).Send()
 		return fallbackValue, err
 	}
 
@@ -157,7 +151,7 @@ func (c *Client) QueryString(ctx context.Context, key FlagName, fallbackValue st
 	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
 		err = fmt.Errorf("get user from context: %w", err)
-		c.logger.Error("launch_darkly_query", err).Send()
+		log.Error("launch_darkly_query", err).Send()
 		return fallbackValue, err
 	}
 
@@ -178,7 +172,7 @@ func (c *Client) QueryInt(ctx context.Context, key FlagName, fallbackValue int) 
 	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
 		err := fmt.Errorf("get user from context: %w", err)
-		c.logger.Error("launch_darkly_query", err).Send()
+		log.Error("launch_darkly_query", err).Send()
 		return fallbackValue, err
 	}
 
@@ -214,7 +208,7 @@ func (c *Client) Shutdown() error {
 func (c *Client) TestDataSource() (*ldtestdata.TestDataSource, error) {
 	if c.testModeConfig == nil || c.testModeConfig.datasource == nil {
 		err := errors.New("LaunchDarkly client not initialised with dynamic test data source")
-		c.logger.Error("launch_darkly_test_datasource", err).Send()
+		log.Error("launch_darkly_test_datasource", err).Send()
 		return nil, err
 	}
 

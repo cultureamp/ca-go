@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/cultureamp/ca-go/log"
 	lddynamodb "github.com/launchdarkly/go-server-sdk-dynamodb/v4"
 	ld "github.com/launchdarkly/go-server-sdk/v7"
 	"github.com/launchdarkly/go-server-sdk/v7/ldcomponents"
@@ -58,14 +57,6 @@ type TestModeConfig struct {
 // ConfigOption are functions that can be supplied to Configure and NewClient to
 // configure the flags client.
 type ConfigOption func(c *Client)
-
-// WithLogger configures the client to use a supplied logger (using the ca-go log package),
-// without this configuration, a new logger from background context will be used instead.
-func WithLogger(logger log.Logger) ConfigOption {
-	return func(c *Client) {
-		c.logger = logger
-	}
-}
 
 // WithInitWait configures the client to wait for the given duration for the
 // LaunchDarkly client to connect.
