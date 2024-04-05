@@ -231,12 +231,6 @@ issues:
 
   exclude-rules:
 
-    # too hard to refactor packges in the x/ folders
-    - path: x/
-      linters:
-        - nestif
-        - prealloc
-
     # exluded rules from standard packages for reasons...
     - path: log/logger.go
       linters:
