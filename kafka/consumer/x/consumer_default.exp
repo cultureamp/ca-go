@@ -1,0 +1,63 @@
+package consumer
+
+import (
+	"context"
+	"os"
+	"strings"
+
+	"github.com/segmentio/kafka-go"
+)
+
+type StopFunc func() error
+
+type DefaultConsumer interface {
+	Consume(ctx context.Context, topic string) (<-chan Message, StopFunc)
+}
+
+type defaultConsumer struct {
+	brokers       []string
+	autoConsumers autoConsumers
+}
+
+func newDefaultConsumer() *defaultConsumer {
+	topicConsumers := make(autoConsumers)
+
+	brokers := os.Getenv("KAFKA_BROKERS")
+	if brokers == "" {
+		brokers = "test1,test2" // revisit with default values
+	}
+
+	return &defaultConsumer{
+		brokers:       strings.Split(brokers, ","),
+		autoConsumers: topicConsumers,
+	}
+}
+
+// Consume creates as new consumer for the specified topic.
+func (dc *defaultConsumer) Consume(ctx context.Context, topic string) (<-chan Message, StopFunc) {
+	autoBackOff := NonStopExponentialBackOff
+	autoBalancers := []kafka.GroupBalancer{kafka.RoundRobinGroupBalancer{}}
+
+	opts := []Option{
+		WithGroupBalancers(autoBalancers...),
+		WithHandlerBackOffRetry(autoBackOff),
+		WithLogger(new(autoKafkaLogger)),
+		WithNotifyError(autoClientNotifyError),
+		WithDataDogTracing(),
+	}
+
+	ac := newAutoConsumer(topic, dc.brokers, opts...)
+	dc.autoConsumers[topic] = ac
+	go ac.run(ctx)
+	return ac.channel, func() error { return dc.stop(topic) }
+}
+
+// stop sends a signal to the consumer to finish, returning an error if it failed to do so.
+func (dc *defaultConsumer) stop(topic string) error {
+	ac, found := dc.autoConsumers[topic]
+	if found {
+		delete(dc.autoConsumers, topic)
+		return ac.stop()
+	}
+	return nil
+}
