@@ -94,8 +94,6 @@ To uninstall / turn off for a repo:
 1. Document well. This means that:
    1. Any public API surface should clearly self-document its intent and behaviour
    1. We make liberal use of testable `Example()` methods to make it easier to understand the correct usage and context of the APIs.
-1. We release new packages in the `/x/` directory, moving them out when they're stable.
-1. Once a package is out of `/x`, we use semantic versioning to make upgrades by library consumers straightforward.
 1. Accept interfaces, return structs.
 
 The design of each package follows the [RFC: Design of Shared Golang packages](https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3522429030/RFC+Design+of+shared+Golang+packages)
