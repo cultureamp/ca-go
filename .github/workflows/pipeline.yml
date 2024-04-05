@@ -51,7 +51,6 @@ jobs:
         run: go vet ./...
 
   # this takes a long time to run, so we continue with go-build, go-test etc. in parallel
-  # should we exclude /x/... to speed up this steps?
   go-sec:
     needs: [go-setup]
     runs-on: ubuntu-latest
@@ -114,7 +113,7 @@ jobs:
 
       - name: Run coverage tests
         run: |
-          go test -race -json -v -coverprofile=coverage.json -covermode atomic `go list ./... | grep -v \/x\/` 2>&1 | tee gotest.log | gotestfmt
+          go test -race -json -v -coverprofile=coverage.json -covermode atomic ./... 2>&1 | tee gotest.log | gotestfmt
 
       - name: Convert go coverage to corbetura format
         run: gocover-cobertura -ignore-files test\*.go < coverage.json > coverage.xml
