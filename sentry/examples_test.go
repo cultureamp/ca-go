@@ -63,7 +63,6 @@ func Example_lambda() {
 		sentry.WithBeforeFilter(sentry.RootCauseAsTitle),
 	)
 	if err != nil {
-		// FIX: write error to log
 		log.Panic("sentry_init",err).Send()
 	}
 
