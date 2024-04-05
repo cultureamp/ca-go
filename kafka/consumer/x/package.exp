@@ -1,0 +1,16 @@
+package consumer
+
+var DefaultConsumers = getInstance()
+
+func getInstance() DefaultConsumer {
+	def := newDefaultConsumer()
+	return def
+}
+
+
+
+// Consume creates as new channel for the specified topic and starts sending Messages to it.
+func Consume(ctx context.Context, topic string) (<-chan Message, StopFunc) {
+	ch, stop := DefaultConsumers.Consume(ctx, topic)
+	return ch, stop
+}

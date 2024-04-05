@@ -1,17 +1,5 @@
 package consumer_test
 
-import (
-	"context"
-	"fmt"
-	"math/rand"
-	"testing"
-	"time"
-
-	"github.com/cultureamp/ca-go/kafka/consumer"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-)
-
 func TestPackageWithTimeout(t *testing.T) {
 	defConsumers := consumer.DefaultConsumers
 	consumer.DefaultConsumers = newPackageConsumerExampleMock(0)

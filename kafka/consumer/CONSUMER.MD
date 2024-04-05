@@ -2,126 +2,61 @@
 
 The `kafka/consumer` package provides access to consume Kafka messages from a topic. The design of this package is to provide a simple system that can be used in a variety of situations without requiring high cognitive load.
 
-## Package Level Consumers
-The package creates a default consumer for each topic a client wishes to consume. The contract for the package level method is:
 
-- Consume(ctx context.Context, topic string) (<-chan Message, StopFunc)
-
-Calling this will connect to Kafka using the `KAFKA_BROKERS` environment variable and start retrieving `Messages` and write them to a channel for you to consume. The `StopFunc` is also returned that should be called when you wish to stop the consumer from receiving any more messages.
-
-The channel will continue to be populated until either one of these conditions are met:
-- The context is cancelled (ie. deadline reached)
-- An error occurs
-- The `StopFunc` is called by the client
-
-Note: the channel has a default buffer of 100.
-
-### Environment Variables
-
-To use the package level method `Consume` method you MUST set these:
-
-- KAFKA_BROKERS = A comma seperate list of strings containing the kafka brokers.
-
-
-## Managing Consumers Yourself
-
-For ease of use, it is recommended that you use the package level method Consume. However, if you need to support other configurations then you can create a `NewConsumer()` directly and manage the class life-cycle yourself.
-
-
-## Managing Consumers Yourself
-
-While we recommend using the package level methods for their ease of use, you may desire to create and manage consumers yourself, which you can do by calling:
+For now, the recommendation is to create and manage consumers yourself, which you can do by calling:
 
 - NewConsumer(config Config, opts ...Option) *Consumer
 
 ## Examples
 
-### Package Level Consumer
-
-```
-func PackageConsumeTopic() {
-	ctx := context.Background()
-	ch, stop := consumer.Consume(ctx, "topic-name")
-	// when finished close it
-	defer func() {
-		err := stop()
-		if err != nil {
-			fmt.Printf("Error: %v", err)
-		}
-	}()
-
-	// Read the next message from the topic
-	msg, ok := <-ch
-	fmt.Printf("Channel open=%t, topic=%s message_offset=%v\n", ok, msg.Topic, msg.Offset)
-}
-
 ```
 
+import (
+	"context"
+	"flag"
+	"log"
+	"strings"
 
-## Testing and Mocks
+	"github.com/cultureamp/ca-go/kafka/consumer"
+)
 
+var (
+	brokers string
+	topic   string
+)
 
-```
-func MockedPackageExample() {
-    defConsumers := consumer.DefaultConsumers
-	consumer.DefaultConsumers = new(packageConsumerExampleMock)
-	defer func() {
-		consumer.DefaultConsumers = defConsumers
-	}()
+func main() {
+	parseFlags()
 
-	ctx := context.Background()
-	ch, stop := consumer.Consume(ctx, "topic-name")
-	// when finished close it
-	defer func() {
-		err := stop()
-		if err != nil {
-			fmt.Printf("Error: %v", err)
-		}
-	}()
+	cfg := consumer.Config{
+		Brokers: strings.Split(brokers, ","),
+		Topic:   topic,
+	}
+	c := consumer.NewConsumer(cfg)
 
-	ok := true
-	for ok {
-		select {
-		// Read the messages from the topic
-		case msg, opened := <-ch:
-			if opened {
-				fmt.Printf("Channel open=%t, topic=%s message_offset=%v\n", opened, msg.Topic, msg.Offset)
-			} else {
-				// time to stop, channel is closed
-				ok = false
-			}
-		}
+	log.Printf("consumer started for topic %s\n", topic)
+	if err := c.Run(context.Background(), handle); err != nil {
+		panic(err)
 	}
 }
 
-type packageConsumerExampleMock struct{}
-
-func (c *packageConsumerExampleMock) Consume(ctx context.Context, topic string) (<-chan consumer.Message, consumer.StopFunc) {
-	var channel chan consumer.Message
-
-	channel = make(chan consumer.Message, 10)
-	go c.run(channel)
-	return channel, func() error { return nil }
+func handle(ctx context.Context, msg consumer.Message) error {
+	log.Printf("message at consumer: %s topic:%v partition:%v offset:%v	%s = %s\n",
+		msg.Metadata.ConsumerID, msg.Topic, msg.Partition, msg.Offset, string(msg.Key), string(msg.Value),
+	)
+	return nil
 }
 
-func (c *packageConsumerExampleMock) run(channel chan consumer.Message) {
-	defer close(channel)
+func parseFlags() {
+	flag.StringVar(&brokers, "brokers", "", "Kafka bootstrap brokers to connect to, as a comma separated list")
+	flag.StringVar(&topic, "topic", "", "Kafka topic to be consumed")
+	flag.Parse()
 
-	// generate some messages and then exit when done
-	for i := 0; i < 10; i++ {
-		m := c.newMessage()
-		channel <- m
+	if brokers == "" {
+		panic("no Kafka bootstrap brokers defined, please set the -brokers flag")
+	}
+	if topic == "" {
+		panic("no topics given to be consumed, please set the -topic flag")
 	}
 }
-
-func (c *packageConsumerExampleMock) newMessage() consumer.Message {
-	msg := consumer.Message{}
-
-	msg.Topic = "topic-name"
-	msg.Offset = rand.Int63()           //#nosec G404 -- This for the test runner reader, not used in production.
-	msg.Partition = rand.Intn(20-1) + 1 //#nosec G404 -- This for the test runner reader, not used in production.
-	msg.Value = []byte(uuid.New().String())
-	return msg
-}
-
 ```
