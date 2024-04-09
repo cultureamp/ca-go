@@ -11,7 +11,10 @@ type standardLogger struct {
 	config *Config
 }
 
+// NewLogger creates a new standardLogger using the supplied config.
 func NewLogger(config *Config) *standardLogger {
+	config.mustProcess() // panics in production if missing mandatory env_vars
+
 	lvl := config.severityToLevel()
 	writer := config.getWriter()
 

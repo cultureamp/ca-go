@@ -6,6 +6,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// Logger interface used for mock testing.
 type Logger interface {
 	Debug(event string) *Property
 	Info(event string) *Property
@@ -15,6 +16,11 @@ type Logger interface {
 	Panic(event string, err error) *Property
 }
 
+// DefaultLogger is the package level default implementation used by all package level methods.
+// Package level methods are provided for ease of use.
+// For testing you can replace the DefaultLogger with your own mock:
+//
+// DefaultLogger = newmockLogger().
 var DefaultLogger Logger = getInstance()
 
 func getInstance() *standardLogger {
