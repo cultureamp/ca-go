@@ -23,7 +23,7 @@ var (
 	// DefaultJwtEncoder used to package level methods.
 	// This can be mocked during tests if required by supporting the Encoder interface.
 	DefaultJwtEncoder Encoder = getEncoderInstance()
-	// DefaultJwtDecoder used for package leel methods.
+	// DefaultJwtDecoder used for package level methods.
 	// This can be mocked during tests if required by supporting the Decoder interface.
 	DefaultJwtDecoder Decoder = getDecoderInstance()
 )
