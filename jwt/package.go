@@ -39,16 +39,17 @@ func getDecoderInstance() *JwtDecoder {
 }
 
 func jwksFromEnvVarRetriever() string {
-	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
-
-	if isTestMode() {
+	jwkKeys, ok := os.LookupEnv("AUTH_PUBLIC_JWK_KEYS")
+	if !ok || jwkKeys == "" {
+		if !isTestMode() {
+			err := errors.Errorf("missing AUTH_PUBLIC_JWK_KEYS environment variable - this should be set to a JWKS json string.")
+			panic(err)
+		}
 		// If we are running inside a test, the make sure the DefaultJwtDecoder package level
 		// instance doesn't panic with missing values.
-		if jwkKeys == "" {
-			// test key only, not the production keys
-			b, _ := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
-			jwkKeys = string(b)
-		}
+		// test key only, not the production keys
+		b, _ := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
+		jwkKeys = string(b)
 	}
 
 	return jwkKeys
@@ -65,21 +66,27 @@ func getEncoderInstance() *JwtEncoder {
 }
 
 func privateKeyFromEnvVarRetriever() (string, string) {
-	privKey := os.Getenv("AUTH_PRIVATE_KEY")
-	keyId := os.Getenv("AUTH_PRIVATE_KEY_ID")
-
-	if isTestMode() {
+	privKey, ok := os.LookupEnv("AUTH_PRIVATE_KEY")
+	if !ok || privKey == "" {
+		if !isTestMode() {
+			err := errors.Errorf("missing AUTH_PRIVATE_KEY environment variable - this should be set to a private PEM key for this service.")
+			panic(err)
+		}
 		// If we are running inside a test, the make sure the DefaultJwtEncoder package level
 		// instance doesn't panic with missing values.
-		if privKey == "" {
-			// test key only, not the production key
-			b, _ := os.ReadFile(filepath.Clean("./testKeys/jwt-rsa256-test-webgateway.key"))
-			privKey = string(b)
-		}
+		// test key only, not the production key
+		b, _ := os.ReadFile(filepath.Clean("./testKeys/jwt-rsa256-test-webgateway.key"))
+		privKey = string(b)
+	}
 
-		if keyId == "" {
-			keyId = webGatewayKid
+	keyId, ok := os.LookupEnv("AUTH_PRIVATE_KEY_ID")
+	if !ok || keyId == "" {
+		if !isTestMode() {
+			err := errors.Errorf("missing AUTH_PRIVATE_KEY_ID environment variable - this should be set key_id for this service.")
+			panic(err)
 		}
+		// test key_id to web-gateway only, not the production key_id
+		keyId = webGatewayKid
 	}
 
 	return privKey, keyId

@@ -10,6 +10,7 @@ To use the package level methods `Encode` and `Decode` you MUST set these:
 - AUTH_PRIVATE_KEY = The private RSA PEM key used for Encoding a token.
 - AUTH_PRIVATE_KEY_ID = The "kid" (key_id) header to add to the token heading when Encoding.
 
+Failure to set these will result in a panic() at start up.
 
 ## Runtime Key Rotation
 
