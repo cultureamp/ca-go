@@ -13,6 +13,8 @@ You MUST set these:
 - AWS_REGION = The AWS region this code is running in (eg. "us-west-1")
 - PRODUCT = The product suite the service belongs to (eg. "engagement")
 
+Failure to set these will result in a panic() at start up and when missing from a Logger Config.
+
 You can OPTIONALLY set these:
 - LOG_LEVEL = One of DEBUG, INFO, WARN, ERROR, defaults to "INFO"
 - AWS_ACCOUNT_ID = The AWS account Id this code is running in, defaults to  "development"
