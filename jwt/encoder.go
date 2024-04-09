@@ -22,10 +22,11 @@ const (
 	ecdsaKey256
 )
 
-type (
-	privateKey          interface{} // Only ECDSA (perferred) and RSA public keys allowed
-	EncoderKeyRetriever func() (string, string)
-)
+// Only ECDSA (perferred) and RSA public keys allowed.
+type privateKey interface{}
+
+// EncoderKeyRetriever defines the function signature required to retrieve private PEM key.
+type EncoderKeyRetriever func() (string, string)
 
 type encoderPrivateKey struct {
 	privateSigningKey privateKey
