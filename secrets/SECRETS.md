@@ -7,6 +7,8 @@ The `secrets` package wraps the AWS SecretManager in a simple to use sington pat
 You MUST set these:
 - AWS_REGION = The AWS region this code is running in (eg. "us-west-1")
 
+Failure to set these will result in a panic() at start up.
+
 ## FAQ
 
 Question: I need to load secrets from another region? How do I do that?

@@ -20,6 +20,11 @@ func getInstance() *AWSSecretsManager {
 		client = newTestRunnerClient()
 	} else {
 		region := os.Getenv("AWS_REGION")
+		if region == "" {
+			err := errors.Errorf("missing AWS_REGION environment variable")
+			panic(err)
+		}
+
 		cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
 		if err != nil {
 			err := errors.Errorf("error loading default aws sdk config, err='%w'\n", err)
