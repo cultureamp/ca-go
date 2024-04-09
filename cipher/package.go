@@ -2,7 +2,9 @@ package cipher
 
 import (
 	"context"
+	"flag"
 	"os"
+	"strings"
 
 	"github.com/go-errors/errors"
 )
@@ -19,8 +21,15 @@ func getInstance() *kmsCipher {
 
 	region, ok := os.LookupEnv("AWS_REGION")
 	if !ok || region == "" {
-		err := errors.Errorf("missing AWS_REGION environment variable")
-		panic(err)
+		if !isTestMode() {
+			err := errors.Errorf("missing AWS_REGION environment variable")
+			panic(err)
+		}
+
+		err := os.Setenv("AWS_REGION", "dev")
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	client = newAWSKMSClient(region)
@@ -35,4 +44,18 @@ func Encrypt(ctx context.Context, keyId string, plainStr string) (string, error)
 // Decrpyt will use env var AWS_REGION and the KMS keyId and the base64 encoded encryptedStr and return it decrypted as a plain string.
 func Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error) {
 	return DefaultKMSCipher.Decrypt(ctx, keyId, encryptedStr)
+}
+
+func isTestMode() bool {
+	// https://stackoverflow.com/questions/14249217/how-do-i-know-im-running-within-go-test
+	argZero := os.Args[0]
+
+	if strings.HasSuffix(argZero, ".test") ||
+		strings.Contains(argZero, "/_test/") ||
+		strings.Contains(argZero, "__debug_bin") || // vscode debug binary
+		flag.Lookup("test.v") != nil {
+		return true
+	}
+
+	return false
 }
