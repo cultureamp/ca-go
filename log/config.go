@@ -1,14 +1,13 @@
 package log
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
+	"github.com/cultureamp/ca-go/runtime"
 	"github.com/rs/zerolog"
 )
 
@@ -74,9 +73,9 @@ func NewLoggerConfig() *Config {
 		logLevel = LogLevelDefault
 	}
 
-	quiet := getEnvBool(LogQuietModeEnv, isTestMode())
-	consoleWriter := getEnvBool(LogConsoleWriterEnv, isTestMode())
-	consoleColour := getEnvBool(LogConsoleWriterEnv, isTestMode())
+	quiet := getEnvBool(LogQuietModeEnv, runtime.IsRunningTests())
+	consoleWriter := getEnvBool(LogConsoleWriterEnv, runtime.IsRunningTests())
+	consoleColour := getEnvBool(LogConsoleWriterEnv, runtime.IsRunningTests())
 
 	return &Config{
 		LogLevel:      logLevel,
@@ -155,19 +154,6 @@ func (c *Config) formatTimestamp(i interface{}) string {
 		return "nil"
 	}
 	return timeString
-}
-
-func isTestMode() bool {
-	// https://stackoverflow.com/questions/14249217/how-do-i-know-im-running-within-go-test
-	argZero := os.Args[0]
-
-	if strings.HasSuffix(argZero, ".test") ||
-		strings.Contains(argZero, "/_test/") ||
-		flag.Lookup("test.v") != nil {
-		return true
-	}
-
-	return false
 }
 
 // GetBool gets the environment variable for 'key' if present, otherwise returns 'fallback'.

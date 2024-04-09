@@ -1,11 +1,10 @@
 package jwt
 
 import (
-	"flag"
 	"os"
 	"path/filepath"
-	"strings"
 
+	"github.com/cultureamp/ca-go/runtime"
 	"github.com/go-errors/errors"
 )
 
@@ -37,7 +36,7 @@ func getDecoderInstance() *JwtDecoder {
 func jwksFromEnvVarRetriever() string {
 	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
 
-	if isTestMode() {
+	if runtime.IsRunningTests() {
 		// If we are running inside a test, the make sure the DefaultJwtDecoder package level
 		// instance doesn't panic with missing values.
 		if jwkKeys == "" {
@@ -64,7 +63,7 @@ func privateKeyFromEnvVarRetriever() (string, string) {
 	privKey := os.Getenv("AUTH_PRIVATE_KEY")
 	keyId := os.Getenv("AUTH_PRIVATE_KEY_ID")
 
-	if isTestMode() {
+	if runtime.IsRunningTests() {
 		// If we are running inside a test, the make sure the DefaultJwtEncoder package level
 		// instance doesn't panic with missing values.
 		if privKey == "" {
@@ -89,18 +88,4 @@ func Decode(tokenString string) (*StandardClaims, error) {
 // Encode the Standard Culture Amp Claims in a jwt token string.
 func Encode(claims *StandardClaims) (string, error) {
 	return DefaultJwtEncoder.Encode(claims)
-}
-
-func isTestMode() bool {
-	// https://stackoverflow.com/questions/14249217/how-do-i-know-im-running-within-go-test
-	argZero := os.Args[0]
-
-	if strings.HasSuffix(argZero, ".test") ||
-		strings.Contains(argZero, "/_test/") ||
-		strings.Contains(argZero, "__debug_bin") || // vscode debug binary
-		flag.Lookup("test.v") != nil {
-		return true
-	}
-
-	return false
 }
