@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-errors/errors"
 	"github.com/rs/zerolog"
 )
 
@@ -157,12 +158,33 @@ func (c *Config) formatTimestamp(i interface{}) string {
 	return timeString
 }
 
+func (c *Config) mustProcess() {
+	// panics in production if mandatory env vars are not set
+	if !isTestMode() {
+		if c.AppName == "" {
+			err := errors.Errorf("missing APP environment variable")
+			panic(err)
+		}
+
+		if c.AwsRegion == "" {
+			err := errors.Errorf("missing AWS_REGION environment variable")
+			panic(err)
+		}
+
+		if c.Product == "" {
+			err := errors.Errorf("missing PRODUCT environment variable")
+			panic(err)
+		}
+	}
+}
+
 func isTestMode() bool {
 	// https://stackoverflow.com/questions/14249217/how-do-i-know-im-running-within-go-test
 	argZero := os.Args[0]
 
 	if strings.HasSuffix(argZero, ".test") ||
 		strings.Contains(argZero, "/_test/") ||
+		strings.Contains(argZero, "__debug_bin") || // vscode debug binary
 		flag.Lookup("test.v") != nil {
 		return true
 	}

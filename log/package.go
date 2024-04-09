@@ -20,6 +20,7 @@ var DefaultLogger Logger = getInstance()
 func getInstance() *standardLogger {
 	setGlobalLogger()
 	config := NewLoggerConfig()
+	config.mustProcess() // panics in production if missing mandatory env_vars
 	return NewLogger(config)
 }
 
