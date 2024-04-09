@@ -26,6 +26,7 @@ const (
 
 type publicKey interface{} // Only ECDSA (perferred) and RSA public keys allowed
 
+// DecoderJwksRetriever defines the function signature required to retrieve JWKS json.
 type DecoderJwksRetriever func() string
 
 // JwtDecoder can decode a jwt token string.
