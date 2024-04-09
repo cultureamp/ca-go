@@ -10,8 +10,10 @@ The encrypted string will be a base64 string and look something like: `AQICAHgk4
 
 ## Environment Variables
 
-Here is the list of supported environment variables currently supported:
+Here is the list of mandatory environment variables that MUST be set for this package:
 - AwsRegionEnv    = "AWS_REGION"
+
+Failure to set these will result in a panic() at start up.
 
 ## Methods
 
