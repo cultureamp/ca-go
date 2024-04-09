@@ -44,9 +44,9 @@ func ExampleLogger_Info_withRequestTracing() {
 		).Details("logging should contain request tracing")
 
 	// Output:
-	// 2020-11-14T11:30:32Z INF event="logging should not contain request tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_nil_request_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
-	// 2020-11-14T11:30:32Z INF event="logging should log empty request tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_missing_headers_request_tracing farm=local product= properties={"resource":"resource_id","test-number":1} tracing={}
-	// 2020-11-14T11:30:32Z INF event="logging should contain request tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_request_tracing farm=local product= properties={"resource":"resource_id","test-number":1} tracing={"correlation_id":"correlation_789_id","request_id":"request_456_id","trace_id":"trace_123_id"}
+	// 2020-11-14T11:30:32Z INF event="logging should not contain request tracing" app=test-app app_version=1.0.0 aws_account_id=development aws_region=dev event=info_with_nil_request_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
+	// 2020-11-14T11:30:32Z INF event="logging should log empty request tracing" app=test-app app_version=1.0.0 aws_account_id=development aws_region=dev event=info_with_missing_headers_request_tracing farm=local product= properties={"resource":"resource_id","test-number":1} tracing={}
+	// 2020-11-14T11:30:32Z INF event="logging should contain request tracing" app=test-app app_version=1.0.0 aws_account_id=development aws_region=dev event=info_with_request_tracing farm=local product= properties={"resource":"resource_id","test-number":1} tracing={"correlation_id":"correlation_789_id","request_id":"request_456_id","trace_id":"trace_123_id"}
 }
 
 func ExampleLogger_Info_withRequestDiagnostics() {
@@ -82,9 +82,9 @@ func ExampleLogger_Info_withRequestDiagnostics() {
 		).Details("logging should contain request diagnostics")
 
 	// Output:
-	// 2020-11-14T11:30:32Z INF event="logging should not contain request diagnostics" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_nil_request_diagnostics farm=local product= properties={"resource":"resource_id","test-number":1}
-	// 2020-11-14T11:30:32Z INF event="logging should log minimal request diagnostics" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_minimal_url_request_diagnostics farm=local product= properties={"resource":"resource_id","test-number":1} request={"host":"example.com","method":"GET","proto":"HTTP/1.1","scheme":"http"}
-	// 2020-11-14T11:30:32Z INF event="logging should contain request diagnostics" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_request_diagnostics farm=local product= properties={"resource":"resource_id","test-number":1} request={"host":"example.com","method":"GET","path":"/foo","proto":"HTTP/1.1","query":"arg=value#fragment-1","scheme":"https"}
+	// 2020-11-14T11:30:32Z INF event="logging should not contain request diagnostics" app=test-app app_version=1.0.0 aws_account_id=development aws_region=dev event=info_with_nil_request_diagnostics farm=local product= properties={"resource":"resource_id","test-number":1}
+	// 2020-11-14T11:30:32Z INF event="logging should log minimal request diagnostics" app=test-app app_version=1.0.0 aws_account_id=development aws_region=dev event=info_with_minimal_url_request_diagnostics farm=local product= properties={"resource":"resource_id","test-number":1} request={"host":"example.com","method":"GET","proto":"HTTP/1.1","scheme":"http"}
+	// 2020-11-14T11:30:32Z INF event="logging should contain request diagnostics" app=test-app app_version=1.0.0 aws_account_id=development aws_region=dev event=info_with_request_diagnostics farm=local product= properties={"resource":"resource_id","test-number":1} request={"host":"example.com","method":"GET","path":"/foo","proto":"HTTP/1.1","query":"arg=value#fragment-1","scheme":"https"}
 }
 
 func ExampleLogger_Info_withAuthenticationUserTracing() {
@@ -124,9 +124,9 @@ func ExampleLogger_Info_withAuthenticationUserTracing() {
 		).Details("logging should contain authN tracing")
 
 	// Output:
-	// 2020-11-14T11:30:32Z INF event="logging should not contain authN tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_nil_auth_n_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
-	// 2020-11-14T11:30:32Z INF event="logging should log empty authN tracing" app= app_version=1.0.0 authentication={} aws_account_id=development aws_region= event=info_with_missing_auth_n_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
-	// 2020-11-14T11:30:32Z INF event="logging should contain authN tracing" app= app_version=1.0.0 authentication={"account_id":"account_123_id","realuser_id":"real_456_id","user_id":"user_789_id"} aws_account_id=development aws_region= event=info_with_auth_n_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
+	// 2020-11-14T11:30:32Z INF event="logging should not contain authN tracing" app=test-app app_version=1.0.0 aws_account_id=development aws_region=dev event=info_with_nil_auth_n_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
+	// 2020-11-14T11:30:32Z INF event="logging should log empty authN tracing" app=test-app app_version=1.0.0 authentication={} aws_account_id=development aws_region=dev event=info_with_missing_auth_n_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
+	// 2020-11-14T11:30:32Z INF event="logging should contain authN tracing" app=test-app app_version=1.0.0 authentication={"account_id":"account_123_id","realuser_id":"real_456_id","user_id":"user_789_id"} aws_account_id=development aws_region=dev event=info_with_auth_n_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
 }
 
 func ExampleLogger_Info_withAuthorizationTracing() {
@@ -165,9 +165,9 @@ func ExampleLogger_Info_withAuthorizationTracing() {
 		).Details("logging should contain authZ tracing")
 
 	// Output:
-	// 2020-11-14T11:30:32Z INF event="logging should not contain authZ tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_nil_auth_z_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
-	// 2020-11-14T11:30:32Z INF event="logging should log empty authZ tracing" app= app_version=1.0.0 authorization={} aws_account_id=development aws_region= event=info_with_missing_headers_auth_z_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
-	// 2020-11-14T11:30:32Z INF event="logging should contain authZ tracing" app= app_version=1.0.0 authorization={"authorization_token":"AWS**********ken","user_agent":"node","x_forwarded_for":"123.123.123","xca_service_authorization_token":"Bear**********oken"} aws_account_id=development aws_region= event=info_with_auth_z_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
+	// 2020-11-14T11:30:32Z INF event="logging should not contain authZ tracing" app=test-app app_version=1.0.0 aws_account_id=development aws_region=dev event=info_with_nil_auth_z_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
+	// 2020-11-14T11:30:32Z INF event="logging should log empty authZ tracing" app=test-app app_version=1.0.0 authorization={} aws_account_id=development aws_region=dev event=info_with_missing_headers_auth_z_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
+	// 2020-11-14T11:30:32Z INF event="logging should contain authZ tracing" app=test-app app_version=1.0.0 authorization={"authorization_token":"AWS**********ken","user_agent":"node","x_forwarded_for":"123.123.123","xca_service_authorization_token":"Bear**********oken"} aws_account_id=development aws_region=dev event=info_with_auth_z_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
 }
 
 func TestExtensionWithSystemTracing(t *testing.T) {

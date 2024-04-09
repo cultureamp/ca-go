@@ -1,6 +1,10 @@
 package env
 
 import (
+	"flag"
+	"os"
+	"strings"
+
 	senv "github.com/caarlos0/env/v10"
 )
 
@@ -15,6 +19,7 @@ type CommonSettings interface {
 	IsProduction() bool
 	IsRunningInAWS() bool
 	IsRunningLocal() bool
+	IsRunningViaTest() bool
 }
 
 // commonSettings that drive behavior used by at least 90% of apps.
@@ -78,4 +83,23 @@ func (s *commonSettings) IsRunningInAWS() bool {
 // IsRunningLocal returns true if FARM" == "local".
 func (s *commonSettings) IsRunningLocal() bool {
 	return s.Farm_Name == "local"
+}
+
+// IsRunningViaTest returns true if the current code is running from within a test.
+func (s *commonSettings) IsRunningViaTest() bool {
+	return isRunningViaTest()
+}
+
+func isRunningViaTest() bool {
+	// https://stackoverflow.com/questions/14249217/how-do-i-know-im-running-within-go-test
+	argZero := os.Args[0]
+
+	if strings.HasSuffix(argZero, ".test") ||
+		strings.Contains(argZero, "/_test/") ||
+		strings.Contains(argZero, "__debug_bin") || // vscode debug binary
+		flag.Lookup("test.v") != nil {
+		return true
+	}
+
+	return false
 }

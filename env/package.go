@@ -2,18 +2,19 @@ package env
 
 import (
 	"os"
-
-	"github.com/cultureamp/ca-go/runtime"
 )
 
 // DefaultCommonSettings is the package level instance of CommonSettings.
 var DefaultCommonSettings CommonSettings = getCommonInstance()
 
 func getCommonInstance() *commonSettings {
-	if runtime.IsRunningTests() {
-		err := os.Setenv(AppNameEnv, "test-app")
-		if err != nil {
-			panic(err)
+	if isRunningViaTest() {
+		app := os.Getenv(AppNameEnv)
+		if app == "" {
+			err := os.Setenv(AppNameEnv, "test-app")
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 	return newCommonSettings()
@@ -63,14 +64,22 @@ func IsRunningLocal() bool {
 	return DefaultCommonSettings.IsRunningLocal()
 }
 
+// IsRunningViaTest returns true if the current code is running from within a test.
+func IsRunningViaTest() bool {
+	return DefaultCommonSettings.IsRunningViaTest()
+}
+
 // DefaultAWSSettings is the package level instance of AWSSettings.
 var DefaultAWSSettings AWSSettings = getAWSInstance()
 
 func getAWSInstance() *awsSettings {
-	if runtime.IsRunningTests() {
-		err := os.Setenv(AwsRegionEnv, "dev")
-		if err != nil {
-			panic(err)
+	if isRunningViaTest() {
+		region := os.Getenv(AwsRegionEnv)
+		if region == "" {
+			err := os.Setenv(AwsRegionEnv, "dev")
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 	return newAWSSettings()

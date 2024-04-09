@@ -85,6 +85,9 @@ func TestIsHelpers(t *testing.T) {
 
 	isLocal := env.IsRunningLocal()
 	assert.Equal(t, true, isLocal)
+
+	isViaTest := env.IsRunningViaTest()
+	assert.Equal(t, true, isViaTest)
 }
 
 func TestMockPackageLevelMethods(t *testing.T) {
@@ -252,6 +255,12 @@ func (_m *mockSettings) IsRunningInAWS() bool {
 }
 
 func (_m *mockSettings) IsRunningLocal() bool {
+	args := _m.Called()
+	output, _ := args.Get(0).(bool)
+	return output
+}
+
+func (_m *mockSettings) IsRunningViaTest() bool {
 	args := _m.Called()
 	output, _ := args.Get(0).(bool)
 	return output

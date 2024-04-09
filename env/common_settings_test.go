@@ -60,3 +60,9 @@ func Test_Settings_Env_IsAws_IsLocal(t *testing.T) {
 	assert.False(t, settings.IsRunningLocal())
 	assert.True(t, settings.IsRunningInAWS())
 }
+
+func Test_Settings_Env_IsRunningViaTest(t *testing.T) {
+	settings := newCommonSettings()
+	assert.NotNil(t, settings)
+	assert.True(t, settings.IsRunningViaTest())
+}

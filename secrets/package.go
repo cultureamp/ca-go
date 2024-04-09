@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/cultureamp/ca-go/runtime"
+	"github.com/cultureamp/ca-go/env"
 	"github.com/go-errors/errors"
 )
 
@@ -15,7 +15,7 @@ var DefaultAWSSecretsManager = getInstance()
 func getInstance() *AWSSecretsManager {
 	var client AWSSecretsManagerClient
 
-	if runtime.IsRunningTests() {
+	if env.IsRunningViaTest() {
 		client = newTestRunnerClient()
 	} else {
 		region := os.Getenv("AWS_REGION")

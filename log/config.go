@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cultureamp/ca-go/runtime"
+	"github.com/cultureamp/ca-go/env"
 	"github.com/rs/zerolog"
 )
 
@@ -73,9 +73,9 @@ func NewLoggerConfig() *Config {
 		logLevel = LogLevelDefault
 	}
 
-	quiet := getEnvBool(LogQuietModeEnv, runtime.IsRunningTests())
-	consoleWriter := getEnvBool(LogConsoleWriterEnv, runtime.IsRunningTests())
-	consoleColour := getEnvBool(LogConsoleWriterEnv, runtime.IsRunningTests())
+	quiet := getEnvBool(LogQuietModeEnv, env.IsRunningViaTest())
+	consoleWriter := getEnvBool(LogConsoleWriterEnv, env.IsRunningViaTest())
+	consoleColour := getEnvBool(LogConsoleWriterEnv, env.IsRunningViaTest())
 
 	return &Config{
 		LogLevel:      logLevel,

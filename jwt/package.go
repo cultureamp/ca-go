@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cultureamp/ca-go/runtime"
+	"github.com/cultureamp/ca-go/env"
 	"github.com/go-errors/errors"
 )
 
@@ -36,7 +36,7 @@ func getDecoderInstance() *JwtDecoder {
 func jwksFromEnvVarRetriever() string {
 	jwkKeys := os.Getenv("AUTH_PUBLIC_JWK_KEYS")
 
-	if runtime.IsRunningTests() {
+	if env.IsRunningViaTest() {
 		// If we are running inside a test, the make sure the DefaultJwtDecoder package level
 		// instance doesn't panic with missing values.
 		if jwkKeys == "" {
@@ -63,7 +63,7 @@ func privateKeyFromEnvVarRetriever() (string, string) {
 	privKey := os.Getenv("AUTH_PRIVATE_KEY")
 	keyId := os.Getenv("AUTH_PRIVATE_KEY_ID")
 
-	if runtime.IsRunningTests() {
+	if env.IsRunningViaTest() {
 		// If we are running inside a test, the make sure the DefaultJwtEncoder package level
 		// instance doesn't panic with missing values.
 		if privKey == "" {

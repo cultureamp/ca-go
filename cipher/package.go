@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/cultureamp/ca-go/runtime"
+	"github.com/cultureamp/ca-go/env"
 	"github.com/go-errors/errors"
 )
 
@@ -20,7 +20,7 @@ func getInstance() *kmsCipher {
 
 	region, ok := os.LookupEnv("AWS_REGION")
 	if !ok || region == "" {
-		if !runtime.IsRunningTests() {
+		if !env.IsRunningViaTest() {
 			err := errors.Errorf("missing AWS_REGION environment variable")
 			panic(err)
 		}
