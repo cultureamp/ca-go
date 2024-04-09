@@ -3,6 +3,8 @@ package cipher
 import (
 	"context"
 	"os"
+
+	"github.com/go-errors/errors"
 )
 
 // DefaultKMSCipher is the package level default implementation used by all package level methods.
@@ -15,7 +17,12 @@ var DefaultKMSCipher KMSCipher = getInstance()
 func getInstance() *kmsCipher {
 	var client KMSCipher
 
-	region := os.Getenv("AWS_REGION")
+	region, ok := os.LookupEnv("AWS_REGION")
+	if !ok || region == "" {
+		err := errors.Errorf("missing AWS_REGION environment variable")
+		panic(err)
+	}
+
 	client = newAWSKMSClient(region)
 	return NewKMSCipherWithClient(client)
 }
