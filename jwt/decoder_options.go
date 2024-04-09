@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// JwtDecoderOption function signature for added JWT Decoder options.
 type JwtDecoderOption func(*JwtDecoder)
 
 // WithDecoderCacheExpiry sets the JwtDecoder JWKs cache expiry time.
