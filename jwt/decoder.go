@@ -64,17 +64,16 @@ func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) 
 
 // Decode a jwt token string and return the Standard Culture Amp Claims.
 func (d *JwtDecoder) Decode(tokenString string) (*StandardClaims, error) {
-	payload := &StandardClaims{}
-
-	claims, err := d.decodeClaims(tokenString)
+	claims := jwt.MapClaims{}
+	err := d.DecodeWithCustomClaims(tokenString, claims)
 	if err != nil {
-		return payload, err
+		return nil, err
 	}
-
 	return newStandardClaims(claims), nil
 }
 
-func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwt.MapClaims, error) {
+// DecodeWithCustomClaims takes a jwt token string and populate the customClaims.
+func (d *JwtDecoder) DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims) error {
 	// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
 	validAlgs := []string{"RS256", "RS384", "RS512", "ES256", "ES384", "ES512"}
 
@@ -89,25 +88,21 @@ func (decoder *JwtDecoder) decodeClaims(tokenString string) (jwt.MapClaims, erro
 	// Nbf
 	// NotBefore claim is currently MANDATORY, but until all producing services are reliably settings the NotBEfore claim,
 	// we MAY still accept verificed JWT's with no NotBefore claim.
-	token, err := jwt.Parse(
+	token, err := jwt.ParseWithClaims(
 		tokenString,
+		customClaims,
 		func(token *jwt.Token) (interface{}, error) {
-			return decoder.useCorrectPublicKey(token)
+			return d.useCorrectPublicKey(token)
 		},
 		jwt.WithValidMethods(validAlgs), // only keys with these "alg's" will be considered
 		jwt.WithLeeway(10*time.Second),  // as per the JWT eng std: clock skew set to 10 seconds
 		// jwt.WithExpirationRequired(),	// add this if we want to enforce that tokens MUST have an expiry
 	)
 	if err != nil || !token.Valid {
-		return nil, err
+		return err
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil, errors.New("missing claims in jwt token")
-	}
-
-	return claims, nil
+	return nil
 }
 
 func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {

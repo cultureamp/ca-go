@@ -18,7 +18,7 @@ type StandardClaims struct {
 	Issuer string
 	// the `sub` (Subject) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2
 	Subject string
-	// the `sub` (Subject) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3
+	// the `aud` (Audience) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3
 	Audience []string
 	// the `exp` (Expiration Time) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4
 	ExpiresAt time.Time // default on Encode is +1 hour from now
