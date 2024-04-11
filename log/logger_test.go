@@ -3,6 +3,7 @@ package log
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -120,4 +121,28 @@ func TestLoggerMethods(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Example_Duplicated_Properties() {
+	config := NewLoggerConfig()
+	config.LogLevel = "DEBUG"
+	config.Quiet = false
+	config.ConsoleWriter = true
+	config.ConsoleColour = false
+	config.TimeNow = func() time.Time {
+		return time.Date(2020, 11, 14, 11, 30, 32, 0, time.UTC)
+	}
+
+	logger := NewLogger(config)
+
+	props1 := Add().Str("str1", "value1")
+	props2 := Add().Str("str2", "value2")
+
+	logger.Debug("dup_properties_should_be_combined").
+		Properties(props1).
+		Properties(props2). // only this one get printed out
+		Send()
+
+	// Output:
+	// 2020-11-14T11:30:32Z DBG app= app_version=1.0.0 aws_account_id=development aws_region= event=dup_properties_should_be_combined farm=local product= properties={"str2":"value2"}
 }
