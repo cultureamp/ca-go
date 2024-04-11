@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cultureamp/ca-go/jwt"
+	gojwt "github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -154,4 +155,9 @@ func (m *mockedEncoderDecoder) Decode(tokenString string) (*jwt.StandardClaims, 
 	args := m.Called(tokenString)
 	output, _ := args.Get(0).(*jwt.StandardClaims)
 	return output, args.Error(1)
+}
+
+func (m *mockedEncoderDecoder) DecodeWithCustomClaims(tokenString string, customClaims gojwt.Claims) error {
+	args := m.Called(tokenString, customClaims)
+	return args.Error(0)
 }
