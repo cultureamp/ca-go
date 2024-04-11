@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-errors/errors"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // Encoder interface allows for mocking of the Encoder.
@@ -17,6 +18,7 @@ type Encoder interface {
 // Decoder interface allows for mocking of the Decoder.
 type Decoder interface {
 	Decode(tokenString string) (*StandardClaims, error)
+	DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims) error
 }
 
 var (
@@ -95,6 +97,11 @@ func privateKeyFromEnvVarRetriever() (string, string) {
 // Decode a jwt token string and return the Standard Culture Amp Claims.
 func Decode(tokenString string) (*StandardClaims, error) {
 	return DefaultJwtDecoder.Decode(tokenString)
+}
+
+// DecodeWithCustomClaims takes a jwt token string and populate the customClaims.
+func DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims) error {
+	return DefaultJwtDecoder.DecodeWithCustomClaims(tokenString, customClaims)
 }
 
 // Encode the Standard Culture Amp Claims in a jwt token string.

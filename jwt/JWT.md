@@ -177,4 +177,9 @@ func (m *mockedEncoderDecoder) Decode(tokenString string) (*jwt.StandardClaims, 
 	output, _ := args.Get(0).(*jwt.StandardClaims)
 	return output, args.Error(1)
 }
+
+func (m *mockedEncoderDecoder) DecodeWithCustomClaims(tokenString string, customClaims gojwt.Claims) error {
+	args := m.Called(tokenString, customClaims)
+	return args.Error(0)
+}
 ```
