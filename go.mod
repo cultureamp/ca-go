@@ -12,7 +12,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
-	github.com/heetch/avro v0.4.4
+	github.com/heetch/avro v0.4.5
 	github.com/launchdarkly/go-sdk-common/v3 v3.1.0
 	github.com/launchdarkly/go-server-sdk-dynamodb/v4 v4.0.0
 	github.com/launchdarkly/go-server-sdk/v7 v7.3.0
