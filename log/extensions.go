@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/aws/aws-xray-sdk-go/xray"
+	"github.com/segmentio/kafka-go"
 
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
@@ -110,7 +111,7 @@ func (lf *Property) WithAuthorizationTracing(req *http.Request) *Property {
 	)
 }
 
-// WithDatadogTracing adds an "datadog" subdocument to the log that
+// WithDatadogTracing adds a "datadog" subdocument to the log that
 // includes the spans dd.trace_id and dd.span_id. If Xray is configured it also
 // adds xray.trace_id and xray.seg_id fields.
 func (lf *Property) WithDatadogTracing(ctx context.Context) *Property {
@@ -139,6 +140,20 @@ func (lf *Property) WithDatadogTracing(ctx context.Context) *Property {
 	}
 
 	return lf.doc("datadog", props)
+}
+
+// WithKafkaTracing adds a "kafka" subdocument to the log that
+// includes topic, partition and offset.
+func (lf *Property) WithKafkaTracing(msg *kafka.Message) *Property {
+	if msg == nil {
+		return lf
+	}
+
+	return lf.doc("kafka", Add().
+		Str("topic", msg.Topic).
+		Int("partition", msg.Partition).
+		Int64("offset", msg.Offset),
+	)
 }
 
 // WithSystemTracing adds a "system" subdocument to the log that

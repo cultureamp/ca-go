@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cultureamp/ca-go/log"
+	"github.com/segmentio/kafka-go"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
@@ -208,6 +209,36 @@ func ExampleLogger_Info_withDatadogTracing() {
 	// 2020-11-14T11:30:32Z INF event="logging should not contain datadog tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_nil_datadog_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
 	// 2020-11-14T11:30:32Z INF event="logging should not contain datadog tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_empty_datadog_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
 	// 2020-11-14T11:30:32Z INF event="logging should contain datadog tracing" app= app_version=1.0.0 aws_account_id=development aws_region= datadog={"dd.span_id":0,"dd.trace_id":0} event=info_with_datadog_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
+}
+
+func ExampleLogger_Info_withKafkaTracing() {
+	config := getExampleLoggerConfig("INFO")
+	logger := log.NewLogger(config)
+
+	// First test nil Request
+	logger.Info("info_with_nil_kafka_message_tracing").
+		WithKafkaTracing(nil).
+		Properties(log.Add().
+			Str("resource", "resource_id").
+			Int("test-number", 1),
+		).Details("logging should not contain kafka tracing")
+
+	// Next with message
+	msg := &kafka.Message{
+		Topic:     "test_topic",
+		Partition: 9,
+		Offset:    123,
+	}
+	logger.Info("info_with_datadog_tracing").
+		WithKafkaTracing(msg).
+		Properties(log.Add().
+			Str("resource", "resource_id").
+			Int("test-number", 1),
+		).Details("logging should contain kafka tracing")
+
+	// Output:
+	// 2020-11-14T11:30:32Z INF event="logging should not contain kafka tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_nil_kafka_message_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
+	// 2020-11-14T11:30:32Z INF event="logging should contain kafka tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_datadog_tracing farm=local kafka={"offset":123,"partition":9,"topic":"test_topic"} product= properties={"resource":"resource_id","test-number":1}
 }
 
 func TestExtensionWithSystemTracing(t *testing.T) {

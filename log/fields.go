@@ -40,6 +40,12 @@ func (lf *Field) Int(key string, val int) *Field {
 	return lf
 }
 
+// Int64 adds the property key with val as an int64 to the log.
+func (lf *Field) Int64(key string, val int64) *Field {
+	lf.impl = lf.impl.Int64(key, val)
+	return lf
+}
+
 // UInt64 adds the property key with val as an uint64 to the log.
 func (lf *Field) UInt64(key string, val uint64) *Field {
 	lf.impl = lf.impl.Uint64(key, val)
