@@ -82,3 +82,9 @@ func (lf *Field) UUID(key string, uuid uuid.UUID) *Field {
 	lf.impl = lf.impl.Str(key, uuid.String())
 	return lf
 }
+
+// Func allows an anonymous func to run for the accumulated event.
+func (lf *Field) Func(f func(e *zerolog.Event)) *Field {
+	lf.impl = lf.impl.Func(f)
+	return lf
+}
