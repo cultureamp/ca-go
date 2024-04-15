@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 )
 
 func TestFieldTypes(t *testing.T) {
@@ -14,6 +15,7 @@ func TestFieldTypes(t *testing.T) {
 	then := time.Now()
 	u := uuid.New()
 	duration := time.Since(then)
+	f := func(e *zerolog.Event) { e.Str("func", "val") }
 
 	props := Add().
 		Str("str", "value").
@@ -22,7 +24,8 @@ func TestFieldTypes(t *testing.T) {
 		Duration("dur", duration).
 		Time("time", then).
 		IPAddr("ipaddr", ipv4).
-		UUID("uuid", u)
+		UUID("uuid", u).
+		Func(f)
 
 	Debug("debug_with_all_field_types").
 		WithRequestTracing(nil).

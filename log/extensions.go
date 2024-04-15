@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	"github.com/aws/aws-xray-sdk-go/xray"
-	"github.com/segmentio/kafka-go"
 
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
@@ -142,6 +141,9 @@ func (lf *Property) WithDatadogTracing(ctx context.Context) *Property {
 	return lf.doc("datadog", props)
 }
 
+/*
+ * NEED TO DECIDE ON KAFKA GO LIBRARY FOR CA
+ *
 // WithKafkaTracing adds a "kafka" subdocument to the log that
 // includes topic, partition and offset.
 func (lf *Property) WithKafkaTracing(msg *kafka.Message) *Property {
@@ -155,6 +157,7 @@ func (lf *Property) WithKafkaTracing(msg *kafka.Message) *Property {
 		Int64("offset", msg.Offset),
 	)
 }
+*/
 
 // WithSystemTracing adds a "system" subdocument to the log that
 // includes important host, runtime, cpu and loc fields.
