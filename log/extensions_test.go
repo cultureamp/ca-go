@@ -1,12 +1,14 @@
 package log_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/cultureamp/ca-go/log"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 func ExampleLogger_Info_withRequestTracing() {
@@ -168,6 +170,44 @@ func ExampleLogger_Info_withAuthorizationTracing() {
 	// 2020-11-14T11:30:32Z INF event="logging should not contain authZ tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_nil_auth_z_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
 	// 2020-11-14T11:30:32Z INF event="logging should log empty authZ tracing" app= app_version=1.0.0 authorization={} aws_account_id=development aws_region= event=info_with_missing_headers_auth_z_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
 	// 2020-11-14T11:30:32Z INF event="logging should contain authZ tracing" app= app_version=1.0.0 authorization={"authorization_token":"AWS**********ken","user_agent":"node","x_forwarded_for":"123.123.123","xca_service_authorization_token":"Bear**********oken"} aws_account_id=development aws_region= event=info_with_auth_z_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
+}
+
+func ExampleLogger_Info_withDatadogTracing() {
+	config := getExampleLoggerConfig("INFO")
+	logger := log.NewLogger(config)
+
+	// First test nil Request
+	logger.Info("info_with_nil_datadog_tracing").
+		WithDatadogTracing(nil).
+		Properties(log.Add().
+			Str("resource", "resource_id").
+			Int("test-number", 1),
+		).Details("logging should not contain datadog tracing")
+
+	// Next with context
+	ctx := context.Background()
+	logger.Info("info_with_empty_datadog_tracing").
+		WithDatadogTracing(ctx).
+		Properties(log.Add().
+			Str("resource", "resource_id").
+			Int("test-number", 1),
+		).Details("logging should not contain datadog tracing")
+
+	// create a DD span
+	span, spanCtx := tracer.StartSpanFromContext(ctx, "test_span")
+	defer span.Finish()
+
+	logger.Info("info_with_datadog_tracing").
+		WithDatadogTracing(spanCtx).
+		Properties(log.Add().
+			Str("resource", "resource_id").
+			Int("test-number", 1),
+		).Details("logging should contain datadog tracing")
+
+	// Output:
+	// 2020-11-14T11:30:32Z INF event="logging should not contain datadog tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_nil_datadog_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
+	// 2020-11-14T11:30:32Z INF event="logging should not contain datadog tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_empty_datadog_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
+	// 2020-11-14T11:30:32Z INF event="logging should contain datadog tracing" app= app_version=1.0.0 aws_account_id=development aws_region= dd.span_id=0 dd.trace_id=0 event=info_with_datadog_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
 }
 
 func TestExtensionWithSystemTracing(t *testing.T) {

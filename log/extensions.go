@@ -1,12 +1,17 @@
 package log
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
 	"strconv"
+
+	"github.com/aws/aws-xray-sdk-go/xray"
+
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 const (
@@ -103,6 +108,31 @@ func (lf *Property) WithAuthorizationTracing(req *http.Request) *Property {
 		Str("user_agent", user_agent).
 		Str("x_forwarded_for", forward_for),
 	)
+}
+
+// WithDatadogTracing adds a "datadog" subdocument to the log that
+// includes the fields dd.trace_id and dd.span_id. If Xray is configured it also
+// adds xray.trace_id and xray.seg_id fields.
+func (lf *Property) WithDatadogTracing(ctx context.Context) *Property {
+	if ctx == nil {
+		return lf
+	}
+
+	span, ok := tracer.SpanFromContext(ctx)
+	if ok {
+		lf.impl = lf.impl.
+			Uint64("dd.trace_id", span.Context().TraceID()).
+			Uint64("dd.span_id", span.Context().SpanID())
+	}
+
+	seg := xray.GetSegment(ctx)
+	if seg != nil {
+		lf.impl = lf.impl.
+			Str("xray.trace_id", seg.TraceID).
+			Str("xray.seg_id", seg.ID)
+	}
+
+	return lf
 }
 
 // WithSystemTracing adds a "system" subdocument to the log that
