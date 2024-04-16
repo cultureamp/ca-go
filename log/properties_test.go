@@ -16,10 +16,17 @@ func TestFieldTypes(t *testing.T) {
 	u := uuid.New()
 	duration := time.Since(then)
 	f := func(e *zerolog.Event) { e.Str("func", "val") }
+	var i64 int64
+	var ui64 uint64
+
+	i64 = 123
+	ui64 = 123
 
 	props := Add().
 		Str("str", "value").
 		Int("int", 1).
+		Int64("int64", i64).
+		UInt64("uint64", ui64).
 		Bool("bool", true).
 		Duration("dur", duration).
 		Time("time", then).
