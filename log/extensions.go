@@ -135,24 +135,6 @@ func (lf *Property) WithDatadogTracing(ctx context.Context) *Property {
 	return lf
 }
 
-/*
- * NEED TO DECIDE ON KAFKA GO LIBRARY FOR CA
- *
-// WithKafkaTracing adds a "kafka" subdocument to the log that
-// includes topic, partition and offset.
-func (lf *Property) WithKafkaTracing(msg *kafka.Message) *Property {
-	if msg == nil {
-		return lf
-	}
-
-	return lf.doc("kafka", Add().
-		Str("topic", msg.Topic).
-		Int("partition", msg.Partition).
-		Int64("offset", msg.Offset),
-	)
-}
-*/
-
 // WithSystemTracing adds a "system" subdocument to the log that
 // includes important host, runtime, cpu and loc fields.
 func (lf *Property) WithSystemTracing() *Property {
