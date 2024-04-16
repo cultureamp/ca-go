@@ -1,6 +1,6 @@
 # ca-go/jwt
 
-The `jwt` package wraps JWT & JWKs `Encode` and `Decode` in a simple to use sington pattern that you can call directly. Only ECDSA and RSA public and private keys are currently supported (but this can easily be updated if needed in the future).
+The `jwt` package wraps JWT & JWKs `Encode` and `Decode` in a simple to use singleton pattern that you can call directly. Only ECDSA and RSA public and private keys are currently supported (but this can easily be updated if needed in the future).
 
 ## Environment Variables
 
@@ -56,7 +56,7 @@ decoder, err := NewJwtDecoder(jwksRetriever)
 
 ## Claims
 
-You MUST set the `Issuer`, `Subject`, and `Audience` claims along with the standard authentication values of `AccountId`, `RealUserId`, and `EffectiveUserId`.
+You MUST set the `Issuer`, `Subject`, and `Audience` claims along with the standard authentication claim `AccountId`. If the JWT is for authenticaton other than to the Public API, it MUST also include the `RealUserId`, and `EffectiveUserId` claims.
 
 - [Issuer](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1) `iss` claim.
 - [Subject](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2) `sub` claim.
