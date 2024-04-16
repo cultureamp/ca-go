@@ -111,7 +111,7 @@ func (lf *Property) WithAuthorizationTracing(req *http.Request) *Property {
 }
 
 // WithDatadogTracing adds a "datadog" subdocument to the log that
-// includes the spans dd.trace_id and dd.span_id. If Xray is configured it also
+// includes the fields dd.trace_id and dd.span_id. If Xray is configured it also
 // adds xray.trace_id and xray.seg_id fields.
 func (lf *Property) WithDatadogTracing(ctx context.Context) *Property {
 	if ctx == nil {
@@ -131,32 +131,8 @@ func (lf *Property) WithDatadogTracing(ctx context.Context) *Property {
 			Str("xray.trace_id", seg.TraceID).
 			Str("xray.seg_id", seg.ID)
 	}
+
 	return lf
-	/*
-	   props := Add()
-
-	   span, ok := tracer.SpanFromContext(ctx)
-
-	   	if ok {
-	   		props = props.
-	   			UInt64("dd.trace_id", span.Context().TraceID()).
-	   			UInt64("dd.span_id", span.Context().SpanID())
-	   	}
-
-	   seg := xray.GetSegment(ctx)
-
-	   	if seg != nil {
-	   		props = props.
-	   			Str("xray.trace_id", seg.TraceID).
-	   			Str("xray.seg_id", seg.ID)
-	   	}
-
-	   	if !ok && seg == nil {
-	   		return lf
-	   	}
-
-	   return lf.doc("datadog", props)
-	*/
 }
 
 /*
