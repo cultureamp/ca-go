@@ -118,27 +118,45 @@ func (lf *Property) WithDatadogTracing(ctx context.Context) *Property {
 		return lf
 	}
 
-	props := Add()
-
 	span, ok := tracer.SpanFromContext(ctx)
 	if ok {
-		props = props.
-			UInt64("dd.trace_id", span.Context().TraceID()).
-			UInt64("dd.span_id", span.Context().SpanID())
+		lf.impl = lf.impl.
+			Uint64("dd.trace_id", span.Context().TraceID()).
+			Uint64("dd.span_id", span.Context().SpanID())
 	}
 
 	seg := xray.GetSegment(ctx)
 	if seg != nil {
-		props = props.
+		lf.impl = lf.impl.
 			Str("xray.trace_id", seg.TraceID).
 			Str("xray.seg_id", seg.ID)
 	}
+	return lf
+	/*
+	   props := Add()
 
-	if !ok && seg == nil {
-		return lf
-	}
+	   span, ok := tracer.SpanFromContext(ctx)
 
-	return lf.doc("datadog", props)
+	   	if ok {
+	   		props = props.
+	   			UInt64("dd.trace_id", span.Context().TraceID()).
+	   			UInt64("dd.span_id", span.Context().SpanID())
+	   	}
+
+	   seg := xray.GetSegment(ctx)
+
+	   	if seg != nil {
+	   		props = props.
+	   			Str("xray.trace_id", seg.TraceID).
+	   			Str("xray.seg_id", seg.ID)
+	   	}
+
+	   	if !ok && seg == nil {
+	   		return lf
+	   	}
+
+	   return lf.doc("datadog", props)
+	*/
 }
 
 /*

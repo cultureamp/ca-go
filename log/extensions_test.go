@@ -207,7 +207,7 @@ func ExampleLogger_Info_withDatadogTracing() {
 	// Output:
 	// 2020-11-14T11:30:32Z INF event="logging should not contain datadog tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_nil_datadog_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
 	// 2020-11-14T11:30:32Z INF event="logging should not contain datadog tracing" app= app_version=1.0.0 aws_account_id=development aws_region= event=info_with_empty_datadog_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
-	// 2020-11-14T11:30:32Z INF event="logging should contain datadog tracing" app= app_version=1.0.0 aws_account_id=development aws_region= datadog={"dd.span_id":0,"dd.trace_id":0} event=info_with_datadog_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
+	// 2020-11-14T11:30:32Z INF event="logging should contain datadog tracing" app= app_version=1.0.0 aws_account_id=development aws_region= dd.span_id=0 dd.trace_id=0 event=info_with_datadog_tracing farm=local product= properties={"resource":"resource_id","test-number":1}
 }
 
 /*
