@@ -10,8 +10,6 @@ To use the package level methods `Encode` and `Decode` you MUST set these:
 - AUTH_PRIVATE_KEY = The private RSA PEM key used for Encoding a token.
 - AUTH_PRIVATE_KEY_ID = The "kid" (key_id) header to add to the token heading when Encoding.
 
-Failure to set these will result in a panic() at start up.
-
 ## Runtime Key Rotation
 
 We want to be able to easily rotate keys without having to stop/start all services. The simplest approach is that the JWT Encoder and Decoder take a func() that clients must implement to provide a refreshed key.
@@ -20,8 +18,8 @@ If you are using the package level methods, then the `DefaultJwtEncoder` and `De
 
 If you are managing Encoders and Decoders yourself, then you can provide a func of type `EncoderKeyRetriever` to the `NewJwtEncoder` constructor, and a func of type `DecoderJwksRetriever` to the `NewJwtDecoder`:
 
-- type EncoderKeyRetriever func() (string, string)
-- type DecoderJwksRetriever func() string
+- type EncoderKeyRetriever func() (string, string)  // return your private PEM key + key_id
+- type DecoderJwksRetriever func() string // return your JSON JWKs
 
 
 ## Managing Encoders and Decoders Yourself
@@ -56,6 +54,7 @@ decoder, err := NewJwtDecoder(jwksRetriever)
 
 ## Claims
 
+
 You MUST set the `Issuer`, `Subject`, and `Audience` claims along with the standard authentication claim `AccountId`. If the JWT is for authenticaton other than to the Public API, it MUST also include the `RealUserId`, and `EffectiveUserId` claims.
 
 - [Issuer](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1) `iss` claim.
@@ -63,6 +62,47 @@ You MUST set the `Issuer`, `Subject`, and `Audience` claims along with the stand
 - [Audience](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3) `aud`claim.
 
 Please read the [JWT Engineering Standard](https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3253240053/JWT+Authentication) for more information and details.
+
+### Standard Claims
+
+`Encode` and `Decode` use the in-built `StandardClaims` struct:
+
+```
+type StandardClaims struct {
+	AccountId       string // uuid
+	RealUserId      string // uuid
+	EffectiveUserId string // uuid
+
+	// Optional claims
+
+	// the `iss` (Issuer) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
+	Issuer string
+	// the `sub` (Subject) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2
+	Subject string
+	// the `aud` (Audience) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3
+	Audience []string
+	// the `exp` (Expiration Time) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4
+	ExpiresAt time.Time // default on Encode is +1 hour from now
+	// the `nbf` (Not Before) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.5
+	NotBefore time.Time // default on Encode is "now"
+	// the `iat` (Issued At) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6
+	IssuedAt time.Time // default on Encode is "now"
+}
+```
+
+However, if you have wish to have customer claims then you can use the `EncodeWithCustomClaims` and `DecodeWithCustomClaims` methods.
+Just create a struct that supports the `jwt.Claims` interface:
+
+```
+type Claims interface {
+	GetExpirationTime() (*NumericDate, error)
+	GetIssuedAt() (*NumericDate, error)
+	GetNotBefore() (*NumericDate, error)
+	GetIssuer() (string, error)
+	GetSubject() (string, error)
+	GetAudience() (ClaimStrings, error)
+}
+```
 
 ## Examples
 ```
@@ -100,7 +140,9 @@ During tests you can override the package level `DefaultJwtEncoder` and/or `Defa
 the `Encoder` or `Decoder` interface.
 
 - Encode(claims *StandardClaims) (string, error)
+- EncodeWithCustomClaims(customClaims jwt.Claims) (string, error)
 - Decode(tokenString string) (*StandardClaims, error)
+- DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims) error
 
 ```
 import (
