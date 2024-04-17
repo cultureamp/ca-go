@@ -69,9 +69,14 @@ func NewJwtEncoder(fetchPrivateKey EncoderKeyRetriever, options ...JwtEncoderOpt
 
 // Encode the Standard Culture Amp Claims in a jwt token string.
 func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
-	var token *jwt.Token
-
 	registerClaims := newEncoderClaims(claims)
+
+	return e.EncodeWithCustomClaims(registerClaims)
+}
+
+// EncodeWithCustomClaims encodes the Custom Claims in a jwt token string.
+func (e *JwtEncoder) EncodeWithCustomClaims(customClaims jwt.Claims) (string, error) {
+	var token *jwt.Token
 
 	// Will check cache and re-fetch if expired
 	encodingKey, err := e.loadPrivateKey()
@@ -81,13 +86,13 @@ func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
 
 	switch encodingKey.keyType {
 	case ecdsaKey512:
-		token = jwt.NewWithClaims(jwt.SigningMethodES512, registerClaims)
+		token = jwt.NewWithClaims(jwt.SigningMethodES512, customClaims)
 	case ecdsaKey384:
-		token = jwt.NewWithClaims(jwt.SigningMethodES384, registerClaims)
+		token = jwt.NewWithClaims(jwt.SigningMethodES384, customClaims)
 	case ecdsaKey256:
-		token = jwt.NewWithClaims(jwt.SigningMethodES256, registerClaims)
+		token = jwt.NewWithClaims(jwt.SigningMethodES256, customClaims)
 	case rsaKey:
-		token = jwt.NewWithClaims(jwt.SigningMethodRS512, registerClaims)
+		token = jwt.NewWithClaims(jwt.SigningMethodRS512, customClaims)
 	default:
 		return "", errors.Errorf("Only ECDSA and RSA private keys are supported")
 	}

@@ -13,6 +13,7 @@ import (
 // Encoder interface allows for mocking of the Encoder.
 type Encoder interface {
 	Encode(claims *StandardClaims) (string, error)
+	EncodeWithCustomClaims(customClaims jwt.Claims) (string, error)
 }
 
 // Decoder interface allows for mocking of the Decoder.
@@ -107,6 +108,11 @@ func DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims) error {
 // Encode the Standard Culture Amp Claims in a jwt token string.
 func Encode(claims *StandardClaims) (string, error) {
 	return DefaultJwtEncoder.Encode(claims)
+}
+
+// EncodeWithCustomClaims encodes the Custom Claims in a jwt token string.
+func EncodeWithCustomClaims(customClaims jwt.Claims) (string, error) {
+	return DefaultJwtEncoder.EncodeWithCustomClaims(customClaims)
 }
 
 func isTestMode() bool {

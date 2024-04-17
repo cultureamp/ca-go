@@ -150,7 +150,12 @@ func (m *mockedEncoderDecoder) Encode(claims *jwt.StandardClaims) (string, error
 	return output, args.Error(1)
 }
 
-// Decrypt on the test runner just returns the "encryptedStr" as the decrypted plainstr.
+func (m *mockedEncoderDecoder) EncodeWithCustomClaims(customClaims gojwt.Claims) (string, error) {
+	args := m.Called(customClaims)
+	output, _ := args.Get(0).(string)
+	return output, args.Error(1)
+}
+
 func (m *mockedEncoderDecoder) Decode(tokenString string) (*jwt.StandardClaims, error) {
 	args := m.Called(tokenString)
 	output, _ := args.Get(0).(*jwt.StandardClaims)
