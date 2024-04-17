@@ -58,6 +58,18 @@ func (lf *Field) UInt64(key string, val uint64) *Field {
 	return lf
 }
 
+// Float32 adds the property key with val as an float32 to the log.
+func (lf *Field) Float32(key string, val float32) *Field {
+	lf.impl = lf.impl.Float32(key, val)
+	return lf
+}
+
+// Float64 adds the property key with val as an float64 to the log.
+func (lf *Field) Float64(key string, val float64) *Field {
+	lf.impl = lf.impl.Float64(key, val)
+	return lf
+}
+
 // Bool adds the property key with b as an bool to the log.
 func (lf *Field) Bool(key string, b bool) *Field {
 	lf.impl = lf.impl.Bool(key, b)
