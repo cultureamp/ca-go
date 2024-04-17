@@ -15,7 +15,7 @@ type standardLogger struct {
 func NewLogger(config *Config) *standardLogger {
 	config.mustProcess() // panics in production if missing mandatory env_vars
 
-	lvl := config.severityToLevel()
+	lvl := config.Level()
 	writer := config.getWriter()
 
 	impl := zerolog.
@@ -36,6 +36,27 @@ func NewLogger(config *Config) *standardLogger {
 	return &standardLogger{
 		impl:   impl,
 		config: config,
+	}
+}
+
+// Enabled return false if the log is going to be filtered out by log level.
+func (l *standardLogger) Enabled(logLevel string) bool {
+	lvl := l.config.ToLevel(logLevel)
+	switch lvl {
+	case zerolog.DebugLevel:
+		return l.impl.Debug().Enabled()
+	case zerolog.InfoLevel:
+		return l.impl.Info().Enabled()
+	case zerolog.WarnLevel:
+		return l.impl.Warn().Enabled()
+	case zerolog.ErrorLevel:
+		return l.impl.Error().Enabled()
+	case zerolog.FatalLevel:
+		return l.impl.Fatal().Enabled()
+	case zerolog.PanicLevel:
+		return l.impl.Panic().Enabled()
+	default:
+		return false
 	}
 }
 

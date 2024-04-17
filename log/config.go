@@ -98,18 +98,22 @@ func (c *Config) isLocal() bool {
 	return c.Farm == AppFarmDefault && c.AwsAccountID == AwsAccountIDDefault
 }
 
-func (c *Config) severityToLevel() zerolog.Level {
+func (c *Config) Level() zerolog.Level {
+	return c.ToLevel(c.LogLevel)
+}
+
+func (c *Config) ToLevel(logLevel string) zerolog.Level {
 	var lvl zerolog.Level
-	switch c.LogLevel {
-	case "DEBUG":
+	switch logLevel {
+	case "DEBUG", "Debug", "debug":
 		lvl = zerolog.DebugLevel
-	case "WARN":
+	case "WARN", "Warn", "warn":
 		lvl = zerolog.WarnLevel
-	case "ERROR":
+	case "ERROR", "Error", "error":
 		lvl = zerolog.ErrorLevel
-	case "FATAL":
+	case "FATAL", "Fatal", "fatal":
 		lvl = zerolog.FatalLevel
-	case "PANIC":
+	case "PANIC", "Panic", "panic":
 		lvl = zerolog.PanicLevel
 	default:
 		lvl = zerolog.InfoLevel
