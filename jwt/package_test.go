@@ -19,7 +19,14 @@ func TestPackageEncodeDecode(t *testing.T) {
 		Audience:        []string{"decoder-name"},
 	}
 
+	defer func() {
+		// Force re-create of defaults when test finished
+		DefaultJwtEncoder = nil
+		DefaultJwtDecoder = nil
+	}()
+
 	// Encode this claim
+	setupEncodeDecodeForTests()
 	token, err := Encode(claims)
 	assert.Nil(t, err)
 
@@ -75,6 +82,12 @@ func TestPackageEncodeDecodeNotBeforeExpiryChecks(t *testing.T) {
 		NotBefore:       notBefore,
 	}
 
+	defer func() {
+		// Force re-create of defaults when test finished
+		DefaultJwtEncoder = nil
+		DefaultJwtDecoder = nil
+	}()
+
 	testCases := []struct {
 		desc                  string
 		claims                *StandardClaims
@@ -99,6 +112,7 @@ func TestPackageEncodeDecodeNotBeforeExpiryChecks(t *testing.T) {
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			// Encode this claim
+			setupEncodeDecodeForTests()
 			token, err := Encode(tC.claims)
 			assert.Nil(t, err)
 
@@ -131,6 +145,12 @@ func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 		Audience:        []string{"decoder-name"},
 	}
 
+	defer func() {
+		// Force re-create of defaults when test finished
+		DefaultJwtEncoder = nil
+		DefaultJwtDecoder = nil
+	}()
+
 	testCases := []struct {
 		desc                  string
 		encodedKeyId          string
@@ -139,14 +159,14 @@ func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 		expectedDecoderErrMsg string
 	}{
 		{
-			desc:                  "Success 1: missing env vars defaults to test values",
+			desc:                  "Error 1: missing env vars",
 			encodedKeyId:          "",
 			privateKey:            "",
-			expectedEncoderErrMsg: "",
-			expectedDecoderErrMsg: "",
+			expectedEncoderErrMsg: "error loading jwk encoder, maybe missing env vars",
+			expectedDecoderErrMsg: "token is malformed: token contains an invalid number of segments",
 		},
 		{
-			desc:                  "Error 1: missing decoder kid",
+			desc:                  "Error 2: missing decoder kid",
 			encodedKeyId:          "missing-kid",
 			privateKey:            testECDSA521PrivateKey,
 			expectedEncoderErrMsg: "",
@@ -174,10 +194,7 @@ func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 				assert.ErrorContains(t, err, tC.expectedEncoderErrMsg)
 			}
 
-			t.Setenv("AUTH_PUBLIC_JWK_KEYS", "")
-
 			// Decode it back again
-			DefaultJwtDecoder = nil // force re-create
 			sc, err := Decode(token)
 			if tC.expectedDecoderErrMsg == "" {
 				assert.Nil(t, err)
@@ -194,7 +211,17 @@ func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 			}
 		})
 	}
+}
 
-	DefaultJwtEncoder = nil // force re-create for next test
-	DefaultJwtDecoder = nil // force re-create for next test
+func setupEncodeDecodeForTests() {
+	DefaultJwtEncoder = nil
+	wb, _ := os.ReadFile(filepath.Clean("./testKeys/jwt-rsa256-test-webgateway.key"))
+	privKey := string(wb)
+	os.Setenv("AUTH_PRIVATE_KEY", privKey)
+	os.Setenv("AUTH_PRIVATE_KEY_ID", webGatewayKid)
+
+	DefaultJwtDecoder = nil
+	db, _ := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
+	jwkKeys := string(db)
+	os.Setenv("AUTH_PUBLIC_JWK_KEYS", jwkKeys)
 }

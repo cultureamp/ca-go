@@ -1,10 +1,7 @@
 package jwt
 
 import (
-	"flag"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/go-errors/errors"
 	"github.com/golang-jwt/jwt/v5"
@@ -72,7 +69,7 @@ func mustHaveDefaultJwtDecoder() error {
 		return nil // its set so we are good to go
 	}
 
-	decoder, err := NewJwtDecoder(jwksFromEnvVarRetriever)
+	decoder, err := NewJwtDecoder(func() string { return os.Getenv("AUTH_PUBLIC_JWK_KEYS") })
 	if err != nil {
 		return errors.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
 	}
@@ -81,66 +78,20 @@ func mustHaveDefaultJwtDecoder() error {
 	return nil
 }
 
-func jwksFromEnvVarRetriever() string {
-	jwkKeys, ok := os.LookupEnv("AUTH_PUBLIC_JWK_KEYS")
-	if !ok || jwkKeys == "" {
-		if isTestMode() {
-			// If we are running inside a test, the make sure the DefaultJwtDecoder package level
-			// instance loads these test keys be default.
-			b, _ := os.ReadFile(filepath.Clean("./testKeys/development.jwks"))
-			jwkKeys = string(b)
-		}
-	}
-
-	return jwkKeys
-}
-
 func mustHaveDefaultJwtEncoder() error {
 	if DefaultJwtEncoder != nil {
 		return nil // its set so we are good to go
 	}
 
-	encoder, err := NewJwtEncoder(privateKeyFromEnvVarRetriever)
+	encoder, err := NewJwtEncoder(func() (string, string) {
+		privKey := os.Getenv("AUTH_PRIVATE_KEY")
+		keyId := os.Getenv("AUTH_PRIVATE_KEY_ID")
+		return privKey, keyId
+	})
 	if err != nil {
 		return errors.Errorf("error loading jwk encoder, maybe missing env vars: err='%w'\n", err)
 	}
 
 	DefaultJwtEncoder = encoder
 	return nil
-}
-
-func privateKeyFromEnvVarRetriever() (string, string) {
-	privKey, ok := os.LookupEnv("AUTH_PRIVATE_KEY")
-	if !ok || privKey == "" {
-		if isTestMode() {
-			// If we are running inside a test, the make sure the DefaultJwtEncoder package level
-			// instance loads this test key by default.
-			b, _ := os.ReadFile(filepath.Clean("./testKeys/jwt-rsa256-test-webgateway.key"))
-			privKey = string(b)
-		}
-	}
-
-	keyId, ok := os.LookupEnv("AUTH_PRIVATE_KEY_ID")
-	if !ok || keyId == "" {
-		if isTestMode() {
-			// test key_id to web-gateway only, not the production key_id
-			keyId = webGatewayKid
-		}
-	}
-
-	return privKey, keyId
-}
-
-func isTestMode() bool {
-	// https://stackoverflow.com/questions/14249217/how-do-i-know-im-running-within-go-test
-	argZero := os.Args[0]
-
-	if strings.HasSuffix(argZero, ".test") ||
-		strings.Contains(argZero, "/_test/") ||
-		strings.Contains(argZero, "__debug_bin") || // vscode debug binary
-		flag.Lookup("test.v") != nil {
-		return true
-	}
-
-	return false
 }
