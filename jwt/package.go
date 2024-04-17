@@ -110,7 +110,7 @@ func Encode(claims *StandardClaims) (string, error) {
 	return DefaultJwtEncoder.Encode(claims)
 }
 
-// Encode the custom Claims in a jwt token string.
+// EncodeWithCustomClaims encodes the Custom Claims in a jwt token string.
 func EncodeWithCustomClaims(customClaims jwt.Claims) (string, error) {
 	return DefaultJwtEncoder.EncodeWithCustomClaims(customClaims)
 }
