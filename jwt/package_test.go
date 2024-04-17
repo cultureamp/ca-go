@@ -165,8 +165,8 @@ func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 			t.Setenv("AUTH_PRIVATE_KEY", privateKeys)
 
 			// Encode this claim
-			encoder := getEncoderInstance()
-			token, err := encoder.Encode(claims)
+			DefaultJwtEncoder = nil // force re-create
+			token, err := Encode(claims)
 			if tC.expectedEncoderErrMsg == "" {
 				assert.Nil(t, err)
 			} else {
@@ -177,8 +177,8 @@ func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 			t.Setenv("AUTH_PUBLIC_JWK_KEYS", "")
 
 			// Decode it back again
-			decoder := getDecoderInstance()
-			sc, err := decoder.Decode(token)
+			DefaultJwtDecoder = nil // force re-create
+			sc, err := Decode(token)
 			if tC.expectedDecoderErrMsg == "" {
 				assert.Nil(t, err)
 				// check it matches
@@ -194,4 +194,7 @@ func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 			}
 		})
 	}
+
+	DefaultJwtEncoder = nil // force re-create for next test
+	DefaultJwtDecoder = nil // force re-create for next test
 }
