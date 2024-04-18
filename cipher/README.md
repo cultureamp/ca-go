@@ -13,8 +13,6 @@ The encrypted string will be a base64 string and look something like: `AQICAHgk4
 Here is the list of mandatory environment variables that MUST be set for this package:
 - AwsRegionEnv    = "AWS_REGION"
 
-Failure to set these will result in a panic() at start up.
-
 ## Methods
 
 - func Encrypt(ctx context.Context, keyId string, plainStr string) (string, error)
