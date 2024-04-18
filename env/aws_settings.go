@@ -16,10 +16,10 @@ type AWSSettings interface {
 // awsSettings that drive behavior.
 type awsSettings struct {
 	// These have to be public so that "github.com/caarlos0/env/v10" can populate them
-	Aws_Profile   string `env:"AWS_PROFILE"                  envDefault:"default"`
-	Aws_Region    string `env:"AWS_REGION,required,notEmpty"`
-	Aws_AccountID string `env:"AWS_ACCOUNT_ID"`
-	Xray_Logging  bool   `env:"XRAY_LOGGING"                 envDefault:"true"`
+	Aws_Profile   string `env:"AWS_PROFILE"    envDefault:"default"`
+	Aws_Region    string `env:"AWS_REGION"     envDefault:"dev"`
+	Aws_AccountID string `env:"AWS_ACCOUNT_ID" envDefault:"<unknown>"`
+	Xray_Logging  bool   `env:"XRAY_LOGGING"   envDefault:"true"`
 }
 
 func newAWSSettings() *awsSettings {

@@ -1,21 +1,9 @@
 package env
 
-import (
-	"flag"
-	"os"
-	"strings"
-)
-
 // DefaultCommonSettings is the package level instance of CommonSettings.
 var DefaultCommonSettings CommonSettings = getCommonInstance()
 
 func getCommonInstance() *commonSettings {
-	if isTestMode() {
-		err := os.Setenv(AppNameEnv, "test-app")
-		if err != nil {
-			panic(err)
-		}
-	}
 	return newCommonSettings()
 }
 
@@ -67,12 +55,6 @@ func IsRunningLocal() bool {
 var DefaultAWSSettings AWSSettings = getAWSInstance()
 
 func getAWSInstance() *awsSettings {
-	if isTestMode() {
-		err := os.Setenv(AwsRegionEnv, "dev")
-		if err != nil {
-			panic(err)
-		}
-	}
 	return newAWSSettings()
 }
 
@@ -188,17 +170,4 @@ func SentryDSN() string {
 // Default: 100.
 func SentryFlushTimeoutInMs() int {
 	return DefaultSentrySettings.SentryFlushTimeoutInMs()
-}
-
-func isTestMode() bool {
-	// https://stackoverflow.com/questions/14249217/how-do-i-know-im-running-within-go-test
-	argZero := os.Args[0]
-
-	if strings.HasSuffix(argZero, ".test") ||
-		strings.Contains(argZero, "/_test/") ||
-		flag.Lookup("test.v") != nil {
-		return true
-	}
-
-	return false
 }
