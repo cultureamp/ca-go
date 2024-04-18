@@ -25,7 +25,7 @@ func TestNewLoggerConfigWithNoEnvVarSet(t *testing.T) {
 	assert.Equal(t, "development", config.AwsAccountID)
 	assert.Equal(t, "local", config.Farm)
 	assert.Equal(t, "", config.Product)
-	assert.Equal(t, true, config.Quiet)
+	assert.Equal(t, false, config.Quiet)
 }
 
 func TestNewLoggerConfigWithEnvVarSet(t *testing.T) {
@@ -36,7 +36,7 @@ func TestNewLoggerConfigWithEnvVarSet(t *testing.T) {
 	t.Setenv(AwsAccountIDEnv, "abc123")
 	t.Setenv(AppFarmEnv, "production")
 	t.Setenv(ProductEnv, "performance")
-	t.Setenv(LogQuietModeEnv, "false")
+	t.Setenv(LogQuietModeEnv, "true")
 
 	config := NewLoggerConfig()
 	assert.NotNil(t, config)
@@ -47,5 +47,5 @@ func TestNewLoggerConfigWithEnvVarSet(t *testing.T) {
 	assert.Equal(t, "abc123", config.AwsAccountID)
 	assert.Equal(t, "production", config.Farm)
 	assert.Equal(t, "performance", config.Product)
-	assert.Equal(t, false, config.Quiet)
+	assert.Equal(t, true, config.Quiet)
 }

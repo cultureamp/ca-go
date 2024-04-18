@@ -23,7 +23,7 @@ See [consumer](kafka/consumer/CONSUMER.MD) for further details.
 - `launchdarkly`: eases the implementation and usage of LaunchDarkly for feature flags, encapsulating usage patterns in
 Culture Amp.See [launchdarkly](launchdarkly/LAUNCHDARKLY.md) for further details.
 - `log`: easy and simple logging that confirms to the logging engineer standard.
-See [logger](log/LOGGER.md) for further details.
+See [logger](log/README.md) for further details.
 - `ref`: simple methods to create pointers from literals
 - `request`: encapsulates the availability of request information on the request context.
 - `secrets`: provides methods for fetching secrets from AWS secret manager.
