@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/cultureamp/ca-go/secrets"
 )
 
@@ -20,18 +22,25 @@ func BasicExamples() {
 	fmt.Printf("The answer to the secret2 is '%s' (err='%v')\n", answer, err)
 
 	// of if you want to have a custom client that
-	// supports the AWSSecretsManagerClient interface
-	// myClient := newMyCustomClient()
-	// secrets := NewAWSSecretsManagerWithClient(myClient)
-	// or overwrite the default package implementation with
-	// DefaultAWSSecrets.Client = myClient
+	cfg, _ := config.LoadDefaultConfig(ctx, config.WithRegion("us-west-2"))
+	smc := secretsmanager.NewFromConfig(cfg)
+	sm = secrets.NewAWSSecretsManagerWithClient(smc)
 
 	// or if you want to be able to mock the behavior
-	// create a mock that supports the AWSSecretsManagerClient interface
-	// mockedClient := new(mockedAWSSecretsManagerClient)
-	// mockedClient.On("GetSecretValue", mock.Anything).Return(expectedOutput, nil)
-	// re-assign the client
-	// secrets := NewAWSSecretsManagerWithClient(mockedClient)
-	// or overwrite the default package implementation with
-	// DefaultAWSSecrets.Client = mockedClient
+	mockSM := newTestRunner()
+	oldSM := secrets.DefaultAWSSecretsManager
+	defer func() { secrets.DefaultAWSSecretsManager = oldSM }()
+	secrets.DefaultAWSSecretsManager = mockSM
+}
+
+type testRunner struct{}
+
+func newTestRunner() *testRunner {
+	return &testRunner{}
+}
+
+// Get on the test runner returns the key as the secret.
+func (c *testRunner) Get(_ context.Context, key string) (string, error) {
+	// do whatever you want here
+	return key, nil
 }

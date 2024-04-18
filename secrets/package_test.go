@@ -8,33 +8,34 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestPackageLevelMethods(t *testing.T) {
-	// Example when running in a test, the default client returns key as secret (no AWS call)
-	ctx := context.Background()
-
-	// 1. call the package methods which will call you mock
-	result, err := Get(ctx, "my-secret")
-	assert.Nil(t, err)
-	assert.Equal(t, "my-secret", result)
-}
-
 func TestMockPackageLevelMethods(t *testing.T) {
 	// Example if you want to be able to mock package level calls
 	ctx := context.Background()
 
 	// 1. set up your mock
 	expectedOutput := "my-super-secret-value"
-	mockedClient := new(mockedAWSSecretsManagerClient)
-	mockedClient.On("GetSecretValue", mock.Anything, mock.Anything).Return(expectedOutput, nil)
+	mockSM := new(mockedAWSSecretsManager)
+	mockSM.On("Get", mock.Anything, mock.Anything).Return(expectedOutput, nil)
 
 	// 2. override the package level DefaultAWSSecrets.Client with your mock
-	oldClient := DefaultAWSSecretsManager.Client
-	defer func() { DefaultAWSSecretsManager.Client = oldClient }()
-	DefaultAWSSecretsManager.Client = mockedClient
+	oldSM := DefaultAWSSecretsManager
+	defer func() { DefaultAWSSecretsManager = oldSM }()
+	DefaultAWSSecretsManager = mockSM
 
 	// 3. call the package methods which will call you mock
 	result, err := Get(ctx, "my-secret")
 	assert.Nil(t, err)
 	assert.Equal(t, "my-super-secret-value", result)
-	mockedClient.AssertExpectations(t)
+	mockSM.AssertExpectations(t)
+}
+
+type mockedAWSSecretsManager struct {
+	mock.Mock
+}
+
+func (m *mockedAWSSecretsManager) Get(ctx context.Context, secretKey string) (string, error) {
+	args := m.Called(ctx, secretKey)
+	argZero, _ := args.Get(0).(string)
+	argOne, _ := args.Get(1).(error)
+	return argZero, argOne
 }
