@@ -74,7 +74,6 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		}
 		c.wrappedConfig = configForTestMode(c.testModeConfig)
 
-		log.Info("flags_startup").Details("LaunchDarkly client configured for test mode")
 		// Short-circuit the rest of the configuration.
 		return c, nil
 	}
@@ -83,12 +82,10 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 
 	if parsedConfig.Proxy != nil && c.mode == modeProxy {
 		c.wrappedConfig = configForProxyMode(parsedConfig, c.proxyModeConfig)
-		log.Info("flags_startup").Details("LaunchDarkly client configured for proxy mode")
 	}
 
 	if parsedConfig.Storage != nil && c.mode == modeLambda {
 		c.wrappedConfig = configForLambdaMode(parsedConfig, c.lambdaModeConfig)
-		log.Info("flags_startup").Details("LaunchDarkly client configured for lambda mode")
 	}
 
 	// Configure big segments if the storage table name is present
@@ -96,7 +93,6 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		parsedConfig.Storage != nil &&
 		parsedConfig.Storage.TableName != "" {
 		c.wrappedConfig.BigSegments = configForBigSegments(parsedConfig).BigSegments
-		log.Info("flags_startup").Details("LaunchDarkly client configured for big segments")
 	}
 
 	return c, nil
@@ -113,7 +109,6 @@ func (c *Client) Connect() error {
 	wrappedClient, err := ld.MakeCustomClient(c.sdkKey, c.wrappedConfig, c.initWait)
 	if err != nil {
 		err = fmt.Errorf("create LaunchDarkly client: %w", err)
-		log.Error("launch_darkly_connect", err).Send()
 		return err
 	}
 
@@ -129,7 +124,6 @@ func (c *Client) QueryBool(ctx context.Context, key FlagName, fallbackValue bool
 	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
 		err = fmt.Errorf("get user from context: %w", err)
-		log.Error("launch_darkly_query", err).Send()
 		return fallbackValue, err
 	}
 
@@ -150,7 +144,6 @@ func (c *Client) QueryString(ctx context.Context, key FlagName, fallbackValue st
 	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
 		err = fmt.Errorf("get user from context: %w", err)
-		log.Error("launch_darkly_query", err).Send()
 		return fallbackValue, err
 	}
 
@@ -171,7 +164,6 @@ func (c *Client) QueryInt(ctx context.Context, key FlagName, fallbackValue int) 
 	user, err := evaluationcontext.EvaluationContextFromContext(ctx)
 	if err != nil {
 		err := fmt.Errorf("get user from context: %w", err)
-		log.Error("launch_darkly_query", err).Send()
 		return fallbackValue, err
 	}
 
@@ -207,7 +199,6 @@ func (c *Client) Shutdown() error {
 func (c *Client) TestDataSource() (*ldtestdata.TestDataSource, error) {
 	if c.testModeConfig == nil || c.testModeConfig.datasource == nil {
 		err := errors.New("LaunchDarkly client not initialised with dynamic test data source")
-		log.Error("launch_darkly_test_datasource", err).Send()
 		return nil, err
 	}
 
