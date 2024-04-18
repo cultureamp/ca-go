@@ -25,7 +25,7 @@ func Example() {
 	fmt.Printf("The decrypted string is '%s' (err='%v')\n", decrypted, err)
 
 	// or if you need cipher for another region or keyID then use
-	crypto := cipher.NewKMSCipher("region")
+	crypto := cipher.NewKMSClient("region")
 	encrypted, err = crypto.Encrypt(ctx, keyId, "plain-string")
 	fmt.Printf("The encrypted string is '%s' (err='%v')\n", encrypted, err)
 

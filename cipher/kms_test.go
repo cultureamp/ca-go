@@ -2,107 +2,128 @@ package cipher
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"strings"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
-const (
-	testKeyID  = "inputStr"
-	testRegion = "us-west-1"
-)
-
-func TestNewKMSCipher(t *testing.T) {
-	cipher := NewKMSCipher("region")
-	assert.NotNil(t, cipher)
-
-	cipher = NewKMSCipherWithClient(&mockKMSClient{})
-	assert.NotNil(t, cipher)
-}
-
-func TestEncrypt(t *testing.T) {
-	strInput := "inputStr"
+func TestClientEncrypt(t *testing.T) {
 	ctx := context.Background()
 	keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+	region := "region"
 
-	t.Run("Green Path - Should encrypt", func(t *testing.T) {
-		// arrange
-		mockKmsClient := &mockKMSClient{}
-		crypto := NewKMSCipherWithClient(mockKmsClient)
+	t.Run("Success: With Mocked HTTP Client", func(t *testing.T) {
+		bodyReader := io.NopCloser(strings.NewReader(`{
+			"CiphertextBlob": "SGVsbG8sIHBsYXlncm91bmQ=",
+			"EncryptionAlgorithm": "SYMMETRIC_DEFAULT",
+			"KeyId": "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+		}`))
 
-		expectedOutput := "SGVsbG8sIHBsYXlncm91bmQ="
-		mockKmsClient.On("Encrypt", ctx, mock.Anything, mock.Anything).Return(expectedOutput, nil)
+		expectedResp := &http.Response{
+			StatusCode: 200,
+			Header:     http.Header{},
+			Body:       bodyReader,
+		}
+		mockHTTPClient := mockKMSClient{}
+		mockHTTPClient.On("Do", mock.Anything).Return(expectedResp, nil)
 
-		// act
-		output, err := crypto.Encrypt(ctx, keyId, strInput)
+		client := NewKMSClient(region, func(opt *kms.Options) { opt.HTTPClient = &mockHTTPClient })
 
-		// assert
-		require.NoError(t, err)
-		assert.NotNil(t, output)
-		assert.Equal(t, expectedOutput, output)
-		mockKmsClient.AssertExpectations(t)
+		cipherText, err := client.Encrypt(ctx, keyId, "Hello, playground")
+		assert.Nil(t, err)
+		assert.Equal(t, "SGVsbG8sIHBsYXlncm91bmQ=", cipherText)
 	})
 
-	t.Run("When unable to encrypt should error", func(t *testing.T) {
-		// arrange
-		mockKmsClient := &mockKMSClient{}
-		crypto := NewKMSCipherWithClient(mockKmsClient)
-		crypto.Client = mockKmsClient
+	t.Run("Error: Mocked HTTP Client returns error", func(t *testing.T) {
+		mockHTTPClient := mockKMSClient{}
+		mockHTTPClient.On("Do", mock.Anything).Return(nil, fmt.Errorf("expected error"))
 
-		mockKmsClient.On("Encrypt", ctx, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
+		client := NewKMSClient(region, func(opt *kms.Options) {
+			opt.HTTPClient = &mockHTTPClient
+			opt.Retryer = &aws.NopRetryer{}
+		})
 
-		// act
-		output, err := crypto.Encrypt(ctx, keyId, strInput)
-
-		// assert
-		require.Error(t, err)
-		assert.Equal(t, "", output)
-		mockKmsClient.AssertExpectations(t)
+		cipherText, err := client.Encrypt(ctx, keyId, "Hello, playground")
+		assert.NotNil(t, err)
+		assert.ErrorContains(t, err, "expected error")
+		assert.Equal(t, "", cipherText)
 	})
 }
 
-func TestDecrypt(t *testing.T) {
-	strInput := "inputStr"
+func TestClientDecrypt(t *testing.T) {
 	ctx := context.Background()
 	keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+	region := "region"
 
-	t.Run("Green Path - Should decrypt", func(t *testing.T) {
-		// arrange
-		mockKmsClient := &mockKMSClient{}
-		crypto := NewKMSCipherWithClient(mockKmsClient)
+	t.Run("Success: With Mocked HTTP Client", func(t *testing.T) {
+		bodyReader := io.NopCloser(strings.NewReader(`{
+			"CiphertextForRecipient": "SGVsbG8sIHBsYXlncm91bmQ=",
+			"EncryptionAlgorithm": "SYMMETRIC_DEFAULT",
+			"KeyId": "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab",
+			"Plaintext": "SGVsbG8sIHBsYXlncm91bmQ="
+		}`))
 
-		expectedOutput := "Decrypted"
-		mockKmsClient.On("Decrypt", ctx, mock.Anything, mock.Anything).Return(expectedOutput, nil)
+		expectedResp := &http.Response{
+			StatusCode: 200,
+			Header:     http.Header{},
+			Body:       bodyReader,
+		}
+		mockHTTPClient := mockKMSClient{}
+		mockHTTPClient.On("Do", mock.Anything).Return(expectedResp, nil)
 
-		// act
-		output, err := crypto.Decrypt(ctx, keyId, strInput)
+		client := NewKMSClient(region, func(opt *kms.Options) { opt.HTTPClient = &mockHTTPClient })
 
-		// assert
-		require.NoError(t, err)
-		assert.NotNil(t, output)
-		assert.Equal(t, expectedOutput, output)
-		mockKmsClient.AssertExpectations(t)
+		plainText, err := client.Decrypt(ctx, keyId, "SGVsbG8sIHBsYXlncm91bmQ=")
+		assert.Nil(t, err)
+		assert.Equal(t, "Hello, playground", plainText)
 	})
 
-	t.Run("When unable to decrypt should error", func(t *testing.T) {
-		// arrange
-		mockKmsClient := &mockKMSClient{}
-		crypto := NewKMSCipherWithClient(mockKmsClient)
-		crypto.Client = mockKmsClient
+	t.Run("Error: Mocked HTTP Client returns error", func(t *testing.T) {
+		mockHTTPClient := mockKMSClient{}
+		mockHTTPClient.On("Do", mock.Anything).Return(nil, fmt.Errorf("expected error"))
 
-		mockKmsClient.On("Decrypt", ctx, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
+		client := NewKMSClient(region, func(opt *kms.Options) {
+			opt.HTTPClient = &mockHTTPClient
+			opt.Retryer = &aws.NopRetryer{}
+		})
 
-		// act
-		output, err := crypto.Decrypt(ctx, keyId, strInput)
-
-		// assert
-		require.Error(t, err)
-		assert.Equal(t, "", output)
-		mockKmsClient.AssertExpectations(t)
+		plainText, err := client.Decrypt(ctx, keyId, "SGVsbG8sIHBsYXlncm91bmQ=")
+		assert.NotNil(t, err)
+		assert.ErrorContains(t, err, "expected error")
+		assert.Equal(t, "", plainText)
 	})
+
+	t.Run("Error: Bad Base64 CipherText", func(t *testing.T) {
+		mockHTTPClient := mockKMSClient{}
+		mockHTTPClient.On("Do", mock.Anything).Return(nil, nil)
+
+		client := NewKMSClient(region, func(opt *kms.Options) {
+			opt.HTTPClient = &mockHTTPClient
+			opt.Retryer = &aws.NopRetryer{}
+		})
+
+		plainText, err := client.Decrypt(ctx, keyId, "%^&*()")
+		assert.NotNil(t, err)
+		assert.ErrorContains(t, err, "illegal base64 data")
+		assert.Equal(t, "", plainText)
+	})
+}
+
+type mockHTTPClient struct {
+	mock.Mock
+}
+
+func (_m *mockKMSClient) Do(req *http.Request) (*http.Response, error) {
+	args := _m.Called(req)
+	output, _ := args.Get(0).(*http.Response)
+	return output, args.Error(1)
 }
 
 type mockKMSClient struct {
