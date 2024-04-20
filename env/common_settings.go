@@ -1,7 +1,7 @@
 package env
 
 import (
-	senv "github.com/caarlos0/env/v10"
+	senv "github.com/caarlos0/env/v11"
 )
 
 // CommonSettings implements common settings used in 90% of all our apps.
