@@ -1,7 +1,7 @@
 package env
 
 import (
-	senv "github.com/caarlos0/env/v10"
+	senv "github.com/caarlos0/env/v11"
 )
 
 // LogSettings implements Logging settings.
