@@ -57,7 +57,7 @@ directory. This works locally and via [GitHub Codespaces](https://github.com/fea
 
 This is optional but is recommended for engineers working with highly sensitive secrets or data.
 
-Config for what is checked is stored in `.pre-commit-config.yaml`
+The pre-commit config is stored in `.pre-commit-config.yaml`.
 
 Download:
 1. brew install pre-commit
