@@ -15,7 +15,7 @@ require (
 	github.com/heetch/avro v0.4.5
 	github.com/launchdarkly/go-sdk-common/v3 v3.1.0
 	github.com/launchdarkly/go-server-sdk-dynamodb/v4 v4.0.0
-	github.com/launchdarkly/go-server-sdk/v7 v7.3.0
+	github.com/launchdarkly/go-server-sdk/v7 v7.4.0
 	github.com/rs/zerolog v1.32.0
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.9.0
