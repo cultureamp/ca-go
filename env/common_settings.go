@@ -20,11 +20,11 @@ type CommonSettings interface {
 // commonSettings that drive behavior used by at least 90% of apps.
 type commonSettings struct {
 	// These have to be public so that "github.com/caarlos0/env/v10" can populate them
-	App_Name      string `env:"APP,required,notEmpty"`
-	App_Version   string `env:"APP_VERSION"           envDefault:"1.0.0"`
-	App_Env       string `env:"APP_ENV"               envDefault:"development"`
-	Farm_Name     string `env:"FARM"                  envDefault:"local"`
-	Product_Suite string `env:"PRODUCT"`
+	App_Name      string `env:"APP"         envDefault:"<unknown>"`
+	App_Version   string `env:"APP_VERSION" envDefault:"1.0.0"`
+	App_Env       string `env:"APP_ENV"     envDefault:"development"`
+	Farm_Name     string `env:"FARM"        envDefault:"local"`
+	Product_Suite string `env:"PRODUCT"     envDefault:"<unknown>"`
 }
 
 func newCommonSettings() *commonSettings {
