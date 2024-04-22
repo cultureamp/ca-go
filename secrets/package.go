@@ -2,54 +2,38 @@ package secrets
 
 import (
 	"context"
-	"flag"
 	"os"
-	"strings"
-
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/go-errors/errors"
 )
 
-// DefaultAWSSecretsManager is a public *AWSSecretsManager used for package level methods.
-var DefaultAWSSecretsManager = getInstance()
-
-func getInstance() *AWSSecretsManager {
-	var client AWSSecretsManagerClient
-
-	if isTestMode() {
-		client = newTestRunnerClient()
-	} else {
-		region := os.Getenv("AWS_REGION")
-		if region == "" {
-			err := errors.Errorf("missing AWS_REGION environment variable")
-			panic(err)
-		}
-
-		cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
-		if err != nil {
-			err := errors.Errorf("error loading default aws sdk config, err='%w'\n", err)
-			panic(err)
-		}
-
-		client = newSecretManagerClient(cfg)
-	}
-	return NewAWSSecretsManagerWithClient(client)
+// Secrets can be mocked by clients for testing purposes.
+type Secrets interface {
+	Get(ctx context.Context, secretKey string) (string, error)
 }
+
+// DefaultAWSSecretsManager is a public *AWSSecretsManager used for package level methods.
+var DefaultAWSSecretsManager Secrets = nil
 
 // Get retrives the secret from AWS SecretsManager.
 func Get(ctx context.Context, secretKey string) (string, error) {
+	err := mustHaveSecretsManager(ctx)
+	if err != nil {
+		return "", err
+	}
+
 	return DefaultAWSSecretsManager.Get(ctx, secretKey)
 }
 
-func isTestMode() bool {
-	// https://stackoverflow.com/questions/14249217/how-do-i-know-im-running-within-go-test
-	argZero := os.Args[0]
-
-	if strings.HasSuffix(argZero, ".test") ||
-		strings.Contains(argZero, "/_test/") ||
-		flag.Lookup("test.v") != nil {
-		return true
+func mustHaveSecretsManager(ctx context.Context) error {
+	if DefaultAWSSecretsManager != nil {
+		return nil // its set so we are good to go
 	}
 
-	return false
+	region := os.Getenv("AWS_REGION")
+	sm, err := NewAWSSecretsManager(ctx, region)
+	if err != nil {
+		return err
+	}
+
+	DefaultAWSSecretsManager = sm
+	return nil
 }

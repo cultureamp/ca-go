@@ -27,7 +27,7 @@ See [logger](log/README.md) for further details.
 - `ref`: simple methods to create pointers from literals
 - `request`: encapsulates the availability of request information on the request context.
 - `secrets`: provides methods for fetching secrets from AWS secret manager.
-See [secrets](secrets/SECRETS.md) for further details.
+See [secrets](secrets/README.md) for further details.
 - `sentry`: eases the implementation and usage of Sentry for error reporting.
 See [sentry](sentry/SENTRY.md) for further details.
 
