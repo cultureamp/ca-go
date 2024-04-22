@@ -3,6 +3,8 @@ package cipher
 import (
 	"context"
 	"os"
+
+	"github.com/go-errors/errors"
 )
 
 // KMSCipher used for mock testing.
@@ -20,25 +22,34 @@ var DefaultKMSCipher KMSCipher = nil
 
 // Encrypt will use env var AWS_REGION and the KMS keyId to encrypt the plainStr and return it as a base64 encoded string.
 func Encrypt(ctx context.Context, keyId string, plainStr string) (string, error) {
-	mustHaveDefaultKMSCipher()
+	err := mustHaveDefaultKMSCipher()
+	if err != nil {
+		return "", err
+	}
 
 	return DefaultKMSCipher.Encrypt(ctx, keyId, plainStr)
 }
 
 // Decrpyt will use env var AWS_REGION and the KMS keyId and the base64 encoded encryptedStr and return it decrypted as a plain string.
 func Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error) {
-	mustHaveDefaultKMSCipher()
+	err := mustHaveDefaultKMSCipher()
+	if err != nil {
+		return "", err
+	}
 
 	return DefaultKMSCipher.Decrypt(ctx, keyId, encryptedStr)
 }
 
-func mustHaveDefaultKMSCipher() {
+func mustHaveDefaultKMSCipher() error {
 	if DefaultKMSCipher != nil {
-		return // its set so we are good to go
+		return nil // its set so we are good to go
 	}
 
 	region := os.Getenv("AWS_REGION")
-	kmsClient := NewKMSClient(region)
+	if region == "" {
+		return errors.Errorf("missing value for environment variable 'AWS_REGION'")
+	}
 
-	DefaultKMSCipher = kmsClient
+	DefaultKMSCipher = NewKMSClient(region)
+	return nil
 }
