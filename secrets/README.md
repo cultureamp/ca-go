@@ -34,7 +34,7 @@ func BasicExamples() {
 	answer, err = sm.Get(ctx, "my-test-secret2")
 	fmt.Printf("The answer to the secret2 is '%s' (err='%v')\n", answer, err)
 
-	// of if you want to have a custom client that
+	// of if you want to have a custom client that requires a different region
 	cfg, _ := config.LoadDefaultConfig(ctx, config.WithRegion("us-west-2"))
 	smc := secretsmanager.NewFromConfig(cfg)
 	sm = secrets.NewAWSSecretsManagerWithClient(smc)

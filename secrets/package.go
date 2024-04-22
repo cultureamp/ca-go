@@ -15,21 +15,25 @@ var DefaultAWSSecretsManager Secrets = nil
 
 // Get retrives the secret from AWS SecretsManager.
 func Get(ctx context.Context, secretKey string) (string, error) {
-	mustHaveSecretsManager(ctx)
+	err := mustHaveSecretsManager(ctx)
+	if err != nil {
+		return "", err
+	}
 
 	return DefaultAWSSecretsManager.Get(ctx, secretKey)
 }
 
-func mustHaveSecretsManager(ctx context.Context) {
+func mustHaveSecretsManager(ctx context.Context) error {
 	if DefaultAWSSecretsManager != nil {
-		return // its set so we are good to go
+		return nil // its set so we are good to go
 	}
 
 	region := os.Getenv("AWS_REGION")
 	sm, err := NewAWSSecretsManager(ctx, region)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	DefaultAWSSecretsManager = sm
+	return nil
 }
