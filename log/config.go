@@ -1,12 +1,10 @@
 package log
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-errors/errors"
@@ -75,9 +73,9 @@ func NewLoggerConfig() *Config {
 		logLevel = LogLevelDefault
 	}
 
-	quiet := getEnvBool(LogQuietModeEnv, isTestMode())
-	consoleWriter := getEnvBool(LogConsoleWriterEnv, isTestMode())
-	consoleColour := getEnvBool(LogConsoleWriterEnv, isTestMode())
+	quiet := getEnvBool(LogQuietModeEnv, false)
+	consoleWriter := getEnvBool(LogConsoleWriterEnv, false)
+	consoleColour := getEnvBool(LogConsoleWriterEnv, false)
 
 	return &Config{
 		LogLevel:      logLevel,
@@ -162,38 +160,28 @@ func (c *Config) formatTimestamp(i interface{}) string {
 	return timeString
 }
 
-func (c *Config) mustProcess() {
-	// panics in production if mandatory env vars are not set
-	if !isTestMode() {
-		if c.AppName == "" {
-			err := errors.Errorf("missing APP environment variable")
-			panic(err)
-		}
-
-		if c.AwsRegion == "" {
-			err := errors.Errorf("missing AWS_REGION environment variable")
-			panic(err)
-		}
-
-		if c.Product == "" {
-			err := errors.Errorf("missing PRODUCT environment variable")
-			panic(err)
-		}
+func (c *Config) shouldProcess() error {
+	if c.AppName == "" {
+		return errors.Errorf("config.AppName is empty - missing APP or APP_NAME environment variable?")
 	}
+
+	if c.AwsRegion == "" {
+		return errors.Errorf("config.AwsRegion is empty - missing AWS_REGION environment variable?")
+	}
+
+	if c.Product == "" {
+		return errors.Errorf("config.Product is empty - missing PRODUCT environment variable?")
+	}
+
+	return nil
 }
 
-func isTestMode() bool {
-	// https://stackoverflow.com/questions/14249217/how-do-i-know-im-running-within-go-test
-	argZero := os.Args[0]
-
-	if strings.HasSuffix(argZero, ".test") ||
-		strings.Contains(argZero, "/_test/") ||
-		strings.Contains(argZero, "__debug_bin") || // vscode debug binary
-		flag.Lookup("test.v") != nil {
-		return true
+func (c *Config) mustProcess() {
+	err := c.shouldProcess()
+	if err != nil {
+		// panics if mandatory env vars are not set
+		panic(err)
 	}
-
-	return false
 }
 
 // GetBool gets the environment variable for 'key' if present, otherwise returns 'fallback'.

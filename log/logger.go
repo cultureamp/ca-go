@@ -13,8 +13,6 @@ type standardLogger struct {
 
 // NewLogger creates a new standardLogger using the supplied config.
 func NewLogger(config *Config) *standardLogger {
-	config.mustProcess() // panics in production if missing mandatory env_vars
-
 	lvl := config.Level()
 	writer := config.getWriter()
 
@@ -64,6 +62,8 @@ func (l *standardLogger) Enabled(logLevel string) bool {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Debug(event string) *Property {
+	l.config.mustProcess() // make sure mandatory config values are set
+
 	le := l.impl.Debug().Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le)
 }
@@ -72,6 +72,8 @@ func (l *standardLogger) Debug(event string) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Info(event string) *Property {
+	l.config.mustProcess() // make sure mandatory config values are set
+
 	le := l.impl.Info().Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le)
 }
@@ -80,6 +82,8 @@ func (l *standardLogger) Info(event string) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Warn(event string) *Property {
+	l.config.mustProcess() // make sure mandatory config values are set
+
 	le := l.impl.Warn().Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le)
 }
@@ -88,6 +92,8 @@ func (l *standardLogger) Warn(event string) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Error(event string, err error) *Property {
+	l.config.mustProcess() // make sure mandatory config values are set
+
 	le := l.impl.Error()
 	le.Dict("error", zerolog.Dict().
 		Stack().
@@ -101,6 +107,8 @@ func (l *standardLogger) Error(event string, err error) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Fatal(event string, err error) *Property {
+	l.config.mustProcess() // make sure mandatory config values are set
+
 	le := l.impl.Fatal()
 	le.Dict("error", zerolog.Dict().
 		Stack().
@@ -114,6 +122,8 @@ func (l *standardLogger) Fatal(event string, err error) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Panic(event string, err error) *Property {
+	l.config.mustProcess() // make sure mandatory config values are set
+
 	le := l.impl.Panic()
 	le.Dict("error", zerolog.Dict().
 		Stack().

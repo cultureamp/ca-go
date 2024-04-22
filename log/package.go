@@ -21,26 +21,14 @@ type Logger interface {
 // For testing you can replace the DefaultLogger with your own mock:
 //
 // DefaultLogger = newmockLogger().
-var DefaultLogger Logger = getInstance()
-
-func getInstance() *standardLogger {
-	setGlobalLogger()
-	config := NewLoggerConfig()
-	return NewLogger(config)
-}
-
-func setGlobalLogger() {
-	zerolog.TimeFieldFormat = time.RFC3339
-	zerolog.MessageFieldName = "details"
-	zerolog.LevelFieldName = "severity"
-	zerolog.DurationFieldInteger = true
-	zerolog.ErrorStackMarshaler = logStackTracer
-}
+var DefaultLogger Logger = nil
 
 // Debug starts a new message with debug level.
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
 func Debug(event string) *Property {
+	mustHaveDefaultLogger()
+
 	return DefaultLogger.Debug(event)
 }
 
@@ -48,6 +36,8 @@ func Debug(event string) *Property {
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
 func Info(event string) *Property {
+	mustHaveDefaultLogger()
+
 	return DefaultLogger.Info(event)
 }
 
@@ -55,6 +45,8 @@ func Info(event string) *Property {
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
 func Warn(event string) *Property {
+	mustHaveDefaultLogger()
+
 	return DefaultLogger.Warn(event)
 }
 
@@ -62,6 +54,8 @@ func Warn(event string) *Property {
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
 func Error(event string, err error) *Property {
+	mustHaveDefaultLogger()
+
 	return DefaultLogger.Error(event, err)
 }
 
@@ -70,6 +64,8 @@ func Error(event string, err error) *Property {
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
 func Fatal(event string, err error) *Property {
+	mustHaveDefaultLogger()
+
 	return DefaultLogger.Fatal(event, err)
 }
 
@@ -78,5 +74,23 @@ func Fatal(event string, err error) *Property {
 //
 // You must call Details, Detailsf or Send on the returned event in order to send the event to the output.
 func Panic(event string, err error) *Property {
+	mustHaveDefaultLogger()
+
 	return DefaultLogger.Panic(event, err)
+}
+
+func mustHaveDefaultLogger() {
+	if DefaultLogger == nil {
+		setGlobalLogger()
+		config := NewLoggerConfig()
+		DefaultLogger = NewLogger(config)
+	}
+}
+
+func setGlobalLogger() {
+	zerolog.TimeFieldFormat = time.RFC3339
+	zerolog.MessageFieldName = "details"
+	zerolog.LevelFieldName = "severity"
+	zerolog.DurationFieldInteger = true
+	zerolog.ErrorStackMarshaler = logStackTracer
 }
