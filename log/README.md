@@ -13,8 +13,6 @@ You MUST set these:
 - AWS_REGION = The AWS region this code is running in (eg. "us-west-1")
 - PRODUCT = The product suite the service belongs to (eg. "engagement")
 
-Failure to set these will result in a panic() at start up and when missing from a Logger Config.
-
 You can OPTIONALLY set these:
 - LOG_LEVEL = One of DEBUG, INFO, WARN, ERROR, defaults to "INFO"
 - AWS_ACCOUNT_ID = The AWS account Id this code is running in, defaults to  "development"
@@ -23,9 +21,9 @@ You can OPTIONALLY set these:
 
 ## Use in Unit Tests
 
-By default the logger will not emit any output when running inside a test. You can override this behaviour by setting the `QUIET_MODE` environment variable to "false".
+By default the logger will emit messages when running inside a test. You can override this behaviour by setting the `QUIET_MODE` environment variable to "true".
 
-When running localling you can also set the `CONSOLE_WRITER` to "true" to change from json to key-value output. If you want coloured console output you can also set 'CONSOLE_COLOUR' to "true".
+When running localling you can also set the `CONSOLE_WRITER` to "true" to change from json to key-value output. If you want coloured console output you can also set `CONSOLE_COLOUR` to "true".
 
 __Note__: Never run with the `CONSOLE_WRITER` set to "true" in production.
 
@@ -35,6 +33,7 @@ The log package includes some extensions for common groups:
 - WithRequestTracing(req *http.Request)
 - WithAuthenticatedUserTracing(auth *AuthPayload)
 - WithAuthorizationTracing(req *http.Request)
+- WithDatadogTracing(ctx context.Context)
 - WithSystemTracing()
 - WithGlamplifyRequestFieldsFromCtx(ctx context.Context)
 

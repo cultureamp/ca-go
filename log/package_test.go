@@ -33,6 +33,17 @@ func TestMockedPackageLogger(t *testing.T) {
 }
 
 func TestCommonExamples(t *testing.T) {
+	defer func() {
+		// Force re-create of defaults when test finished
+		log.DefaultLogger = nil
+	}()
+
+	t.Setenv("APP", "logger-test")
+	t.Setenv("AWS_REGION", "dev")
+	t.Setenv("PRODUCT", "cago")
+
+	log.DefaultLogger = nil // force re-create
+
 	log.Debug("hander_added").
 		Properties(log.Add().
 			Str("resource", "resource_id").
@@ -80,6 +91,17 @@ func TestCommonExamples(t *testing.T) {
 }
 
 func TestRequestExample(t *testing.T) {
+	defer func() {
+		// Force re-create of defaults when test finished
+		log.DefaultLogger = nil
+	}()
+
+	t.Setenv("APP", "logger-test")
+	t.Setenv("AWS_REGION", "dev")
+	t.Setenv("PRODUCT", "cago")
+
+	log.DefaultLogger = nil // force re-create
+
 	// create a dummy request
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/foo", nil)
 	req.Header.Add(log.TraceIDHeader, "trace_123_id")
@@ -99,6 +121,17 @@ func TestRequestExample(t *testing.T) {
 }
 
 func TestAuthPayloadExample(t *testing.T) {
+	defer func() {
+		// Force re-create of defaults when test finished
+		log.DefaultLogger = nil
+	}()
+
+	t.Setenv("APP", "logger-test")
+	t.Setenv("AWS_REGION", "dev")
+	t.Setenv("PRODUCT", "cago")
+
+	log.DefaultLogger = nil // force re-create
+
 	// create a jwt payload
 	auth := &log.AuthPayload{
 		CustomerAccountID: "account_123_id",

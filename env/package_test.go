@@ -10,7 +10,7 @@ import (
 
 func TestDefaultSettings(t *testing.T) {
 	appName := env.AppName()
-	assert.Equal(t, "test-app", appName)
+	assert.Equal(t, "<unknown>", appName)
 
 	appVer := env.AppVersion()
 	assert.Equal(t, "1.0.0", appVer)
@@ -22,7 +22,7 @@ func TestDefaultSettings(t *testing.T) {
 	assert.Equal(t, "local", farm)
 
 	product := env.ProductSuite()
-	assert.Equal(t, "", product)
+	assert.Equal(t, "<unknown>", product)
 
 	awsProfile := env.AwsProfile()
 	assert.Equal(t, "default", awsProfile)
@@ -31,7 +31,7 @@ func TestDefaultSettings(t *testing.T) {
 	assert.Equal(t, "dev", awsRegion)
 
 	awsAccountID := env.AwsAccountID()
-	assert.Equal(t, "", awsAccountID)
+	assert.Equal(t, "<unknown>", awsAccountID)
 
 	xrayEnabled := env.IsXrayTracingEnabled()
 	assert.Equal(t, true, xrayEnabled)
