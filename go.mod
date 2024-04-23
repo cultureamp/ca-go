@@ -6,7 +6,6 @@ require (
 	github.com/aws/aws-lambda-go v1.47.0
 	github.com/aws/aws-sdk-go-v2/service/kms v1.35.3
 	github.com/caarlos0/env/v11 v11.1.0
-	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/go-errors/errors v1.5.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
@@ -15,7 +14,6 @@ require (
 	github.com/launchdarkly/go-server-sdk-dynamodb/v4 v4.0.0
 	github.com/launchdarkly/go-server-sdk/v7 v7.5.0
 	github.com/rs/zerolog v1.33.0
-	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.9.0
 	goa.design/goa/v3 v3.17.2
 	gopkg.in/DataDog/dd-trace-go.v1 v1.65.1
@@ -39,6 +37,13 @@ require (
 	github.com/jcmturner/gofork v1.7.6 // indirect
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
+	github.com/hashicorp/go-uuid v1.0.3 // indirect
+	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
+	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
+	github.com/jcmturner/gofork v1.7.6 // indirect
+	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
+	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.5 // indirect
@@ -52,7 +57,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.52.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
-	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
 	google.golang.org/grpc v1.65.0 // indirect
@@ -67,7 +71,6 @@ require (
 	github.com/DataDog/sketches-go v1.4.5 // indirect
 	github.com/IBM/sarama v1.43.1
 	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/actgardner/gogen-avro/v10 v10.2.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.30.3
 	github.com/aws/aws-sdk-go-v2/config v1.27.26
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.26 // indirect

@@ -29,12 +29,6 @@ See [secrets](secrets/README.md) for further details.
 - `sentry`: eases the implementation and usage of Sentry for error reporting.
 See [sentry](sentry/SENTRY.md) for further details.
 
-### Deprecating packages
-
-These packages are going to be changed in the near future.
-
-- `kafka`: simplified implementation of kafka consumer and consumer group using segment-io to make kafka in go projects easier. Future change is to move to Sarama. See [consumer](kafka/consumer/CONSUMER.MD) for further details.
-
 ## Contributing
 
 ### Installation and running with Devbox
