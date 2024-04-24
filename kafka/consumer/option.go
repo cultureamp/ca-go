@@ -50,3 +50,15 @@ func WithHandler(handler Handler) Option {
 		consumer.conf.handler = handler
 	}
 }
+
+func WithGroupId(id string) Option {
+	return func(consumer *Consumer) {
+		consumer.conf.groupId = id
+	}
+}
+
+func WithAssignor(assignor string) Option {
+	return func(consumer *Consumer) {
+		consumer.conf.assignor = assignor
+	}
+}

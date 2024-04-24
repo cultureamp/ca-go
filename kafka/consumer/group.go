@@ -25,7 +25,7 @@ func newGroupConsumer(conf *Config) (*groupConsumer, error) {
 	}, nil
 }
 
-func (gc *groupConsumer) consume(ctx context.Context) {
+func (gc *groupConsumer) consume(ctx context.Context) error {
 	// `Consume` should be called inside an infinite loop, when a
 	// server-side rebalance happens, the consumer session will need to be
 	// recreated to get the new claims
@@ -33,13 +33,13 @@ func (gc *groupConsumer) consume(ctx context.Context) {
 		receiver := newReceiver(gc.conf.handler)
 		if err := gc.groupClient.Consume(ctx, []string{gc.conf.topic}, receiver); err != nil {
 			if errors.Is(err, sarama.ErrClosedConsumerGroup) {
-				return
+				return err
 			}
 			sarama.Logger.Printf("error from consumer: %w", err)
 		}
 		// check if context was cancelled, signaling that the consumer should stop
 		if ctx.Err() != nil {
-			return
+			return ctx.Err()
 		}
 	}
 }
