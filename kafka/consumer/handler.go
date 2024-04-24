@@ -1,0 +1,34 @@
+package consumer
+
+import (
+	"context"
+
+	"github.com/IBM/sarama"
+)
+
+type ConsumerMessage struct {
+	*sarama.ConsumerMessage
+}
+
+type Handler func(ctx context.Context, msg *ConsumerMessage) error
+
+type messageHandler struct {
+	dispatchMessage Handler
+}
+
+func newMessageHandler(handler Handler) *messageHandler {
+	return &messageHandler{
+		dispatchMessage: handler,
+	}
+}
+
+func (h *messageHandler) dispatch(ctx context.Context, msg *sarama.ConsumerMessage) error {
+	// todo: add datadog, retries, etc.
+
+	message := &ConsumerMessage{msg}
+	if err := h.dispatchMessage(ctx, message); err != nil {
+		return err
+	}
+
+	return nil
+}
