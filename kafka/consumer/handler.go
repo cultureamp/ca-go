@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/IBM/sarama"
+
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 type ConsumerMessage struct {
@@ -23,7 +25,10 @@ func newMessageHandler(handler Handler) *messageHandler {
 }
 
 func (h *messageHandler) dispatch(ctx context.Context, msg *sarama.ConsumerMessage) error {
-	// todo: add datadog, retries, etc.
+	// todo: add retries, etc.
+
+	span, ctx := tracer.StartSpanFromContext(ctx, "kafka.consumer.handle", tracer.ResourceName(msg.Topic))
+	defer span.Finish()
 
 	message := &ConsumerMessage{msg}
 	if err := h.dispatchMessage(ctx, message); err != nil {
