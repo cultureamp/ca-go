@@ -6,6 +6,10 @@ import (
 	"github.com/go-errors/errors"
 )
 
+type KafkaConsumer interface {
+	Consume(ctx context.Context) error
+}
+
 // Consumer provides a high level API for consuming and handling messages from
 // a Kafka topic.
 type Consumer struct {
@@ -30,7 +34,7 @@ func NewConsumer(opts ...Option) (*Consumer, error) {
 }
 
 func (c *Consumer) Consume(ctx context.Context) error {
-	group, err := newGroupConsumer(c.conf)
+	group, err := newGroupConsumer(c.conf.client, c.conf)
 	if err != nil {
 		return errors.Errorf("failed to create kafka consumer: %w", err)
 	}

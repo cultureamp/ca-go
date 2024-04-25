@@ -5,11 +5,13 @@ import (
 )
 
 type receiver struct {
+	client  kafkaClient
 	handler messageHandler
 }
 
-func newReceiver(handler Handler) *receiver {
+func newReceiver(client kafkaClient, handler Handler) *receiver {
 	return &receiver{
+		client:  client,
 		handler: *newMessageHandler(handler),
 	}
 }
@@ -48,7 +50,7 @@ func (r *receiver) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 			}
 
 			// otherwise, we can commit this message now
-			session.MarkMessage(msg, "")
+			r.client.commitMessage(session, msg)
 
 		case <-session.Context().Done():
 			// Should return when `session.Context()` is done.

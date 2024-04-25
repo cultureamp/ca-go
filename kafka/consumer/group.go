@@ -8,20 +8,21 @@ import (
 )
 
 type groupConsumer struct {
-	conf        *Config
-	groupClient sarama.ConsumerGroup
+	conf   *Config
+	client kafkaClient
+	group  sarama.ConsumerGroup
 }
 
-func newGroupConsumer(conf *Config) (*groupConsumer, error) {
-	client, err := sarama.NewConsumerGroup(conf.brokers, conf.groupId, conf.saramaConfig)
+func newGroupConsumer(client kafkaClient, conf *Config) (*groupConsumer, error) {
+	group, err := client.newConsumerGroup(conf.brokers, conf.groupId, conf.saramaConfig)
 	if err != nil {
 		return nil, errors.Errorf("error creating consumer: %w", err)
 	}
 
-	client.Errors()
 	return &groupConsumer{
-		conf:        conf,
-		groupClient: client,
+		conf:   conf,
+		client: client,
+		group:  group,
 	}, nil
 }
 
@@ -30,8 +31,8 @@ func (gc *groupConsumer) consume(ctx context.Context) error {
 	// server-side rebalance happens, the consumer session will need to be
 	// recreated to get the new claims
 	for {
-		receiver := newReceiver(gc.conf.handler)
-		if err := gc.groupClient.Consume(ctx, []string{gc.conf.topic}, receiver); err != nil {
+		receiver := newReceiver(gc.client, gc.conf.handler)
+		if err := gc.group.Consume(ctx, gc.conf.topics, receiver); err != nil {
 			if errors.Is(err, sarama.ErrClosedConsumerGroup) {
 				return err
 			}

@@ -19,9 +19,9 @@ func WithVersion(version string) Option {
 	}
 }
 
-func WithTopics(topic string) Option {
+func WithTopics(topics []string) Option {
 	return func(consumer *Consumer) {
-		consumer.conf.topic = topic
+		consumer.conf.topics = topics
 	}
 }
 
@@ -38,8 +38,8 @@ func WithLogging(logger sarama.StdLogger) Option {
 	}
 }
 
-// WithClientID sets the consumer id (Default new uiid).
-func WithClientID(id string) Option {
+// WithConsumerID sets the consumer id (Default new uiid).
+func WithConsumerID(id string) Option {
 	return func(consumer *Consumer) {
 		consumer.conf.id = id
 	}
@@ -60,5 +60,11 @@ func WithGroupId(id string) Option {
 func WithAssignor(assignor string) Option {
 	return func(consumer *Consumer) {
 		consumer.conf.assignor = assignor
+	}
+}
+
+func WithKafkaClient(client kafkaClient) Option {
+	return func(consumer *Consumer) {
+		consumer.conf.client = client
 	}
 }
