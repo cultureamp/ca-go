@@ -8,16 +8,17 @@ import (
 
 // Config is a configuration object used to create a new Consumer.
 type Config struct {
-	id       string           // Default: UUID
-	brokers  []string         // Kafka bootstrap brokers to connect to
-	version  string           // Kafka cluster version (Default )
-	topics   []string         // Kafka topics to be consumed
-	groupId  string           // Kafka consumer group definition
-	assignor string           // Consumer group partition assignment strategy (range, roundrobin, sticky)
-	oldest   bool             // Kafka consumer consume initial offset from oldest (Default true)
-	handler  Handler          // The client handler to receive and process messages
-	logger   sarama.StdLogger // Sarama logging (Default false)
-	client   kafkaClient      // Kafka client interfaces (Default Sarama if nil)
+	id          string           // Default: UUID
+	brokers     []string         // Kafka bootstrap brokers to connect to
+	version     string           // Kafka cluster version (Default )
+	topics      []string         // Kafka topics to be consumed
+	groupId     string           // Kafka consumer group definition
+	assignor    string           // Consumer group partition assignment strategy (range, roundrobin, sticky)
+	oldest      bool             // Kafka consumer consume initial offset from oldest (Default true)
+	handler     Handler          // The client handler to receive and process messages
+	stdLogger   sarama.StdLogger // Consumer logging (Default nil)
+	debugLogger sarama.StdLogger // Sarama logger (Default nil)
+	client      kafkaClient      // Kafka client interfaces (Default Sarama if nil)
 
 	saramaConfig *sarama.Config
 }
@@ -26,7 +27,8 @@ func newConfig() *Config {
 	// set defaults
 	conf := &Config{
 		id:           uuid.New().String(),
-		logger:       nil,
+		stdLogger:    nil,
+		debugLogger:  nil,
 		handler:      nil,
 		version:      sarama.DefaultVersion.String(),
 		client:       newSaramaClient(),
@@ -47,8 +49,12 @@ func newConfig() *Config {
 func (conf *Config) mustProcess() error {
 	conf.saramaConfig.ClientID = conf.id
 
-	if conf.logger != nil {
-		sarama.Logger = conf.logger
+	if conf.stdLogger != nil {
+		sarama.Logger = conf.stdLogger
+	}
+
+	if conf.debugLogger != nil {
+		sarama.DebugLogger = conf.debugLogger
 	}
 
 	if len(conf.brokers) == 0 {

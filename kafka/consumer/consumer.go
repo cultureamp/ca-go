@@ -39,5 +39,7 @@ func (c *Consumer) Consume(ctx context.Context) error {
 		return errors.Errorf("failed to create kafka consumer: %w", err)
 	}
 
+	// todo - should this be called in its own go-routine? I think so...
+	// go group.consume(ctx)
 	return group.consume(ctx)
 }

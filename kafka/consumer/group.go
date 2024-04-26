@@ -27,6 +27,9 @@ func newGroupConsumer(client kafkaClient, conf *Config) (*groupConsumer, error) 
 }
 
 func (gc *groupConsumer) consume(ctx context.Context) error {
+	// todo need to close this groupConsumer, is this defer ok?
+	defer gc.group.Close()
+
 	// `Consume` should be called inside an infinite loop, when a
 	// server-side rebalance happens, the consumer session will need to be
 	// recreated to get the new claims
@@ -36,7 +39,7 @@ func (gc *groupConsumer) consume(ctx context.Context) error {
 			if errors.Is(err, sarama.ErrClosedConsumerGroup) {
 				return err
 			}
-			sarama.Logger.Printf("error from consumer: %w", err)
+			sarama.Logger.Printf("error from consumer: '%s'", err.Error())
 		}
 		// check if context was cancelled, signaling that the consumer should stop
 		if ctx.Err() != nil {

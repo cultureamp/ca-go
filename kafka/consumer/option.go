@@ -34,7 +34,13 @@ func WithOldest(oldest bool) Option {
 
 func WithLogging(logger sarama.StdLogger) Option {
 	return func(consumer *Consumer) {
-		consumer.conf.logger = logger
+		consumer.conf.stdLogger = logger
+	}
+}
+
+func WithDebugLogger(logger sarama.StdLogger) Option {
+	return func(consumer *Consumer) {
+		consumer.conf.debugLogger = logger
 	}
 }
 
