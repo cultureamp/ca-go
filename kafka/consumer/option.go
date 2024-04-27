@@ -74,3 +74,9 @@ func WithKafkaClient(client kafkaClient) Option {
 		consumer.conf.client = client
 	}
 }
+
+func WithReturnOnError(returnOnError bool) Option {
+	return func(consumer *Consumer) {
+		consumer.conf.returnOnError = returnOnError
+	}
+}

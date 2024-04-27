@@ -8,9 +8,9 @@ import (
 )
 
 type groupConsumer struct {
-	conf   *Config
-	client kafkaClient
-	group  sarama.ConsumerGroup
+	conf        *Config
+	kafka       kafkaClient
+	groupClient sarama.ConsumerGroup
 }
 
 func newGroupConsumer(client kafkaClient, conf *Config) (*groupConsumer, error) {
@@ -20,23 +20,27 @@ func newGroupConsumer(client kafkaClient, conf *Config) (*groupConsumer, error) 
 	}
 
 	return &groupConsumer{
-		conf:   conf,
-		client: client,
-		group:  group,
+		conf:        conf,
+		kafka:       client,
+		groupClient: group,
 	}, nil
 }
 
 func (gc *groupConsumer) consume(ctx context.Context) error {
 	// todo need to close this groupConsumer, is this defer ok?
-	defer gc.group.Close()
+	defer gc.groupClient.Close()
 
 	// `Consume` should be called inside an infinite loop, when a
 	// server-side rebalance happens, the consumer session will need to be
 	// recreated to get the new claims
 	for {
-		receiver := newReceiver(gc.client, gc.conf.handler)
-		if err := gc.group.Consume(ctx, gc.conf.topics, receiver); err != nil {
+		receiver := newReceiver(gc.kafka, gc.conf.handler)
+		if err := gc.groupClient.Consume(ctx, gc.conf.topics, receiver); err != nil {
 			if errors.Is(err, sarama.ErrClosedConsumerGroup) {
+				return err
+			}
+			if gc.conf.returnOnError {
+				sarama.Logger.Printf("error from consumer. Exiting consume: '%s'", err.Error())
 				return err
 			}
 			sarama.Logger.Printf("error from consumer: '%s'", err.Error())

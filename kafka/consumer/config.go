@@ -8,17 +8,18 @@ import (
 
 // Config is a configuration object used to create a new Consumer.
 type Config struct {
-	id          string           // Default: UUID
-	brokers     []string         // Kafka bootstrap brokers to connect to
-	version     string           // Kafka cluster version (Default )
-	topics      []string         // Kafka topics to be consumed
-	groupId     string           // Kafka consumer group definition
-	assignor    string           // Consumer group partition assignment strategy (range, roundrobin, sticky)
-	oldest      bool             // Kafka consumer consume initial offset from oldest (Default true)
-	handler     Handler          // The client handler to receive and process messages
-	stdLogger   sarama.StdLogger // Consumer logging (Default nil)
-	debugLogger sarama.StdLogger // Sarama logger (Default nil)
-	client      kafkaClient      // Kafka client interfaces (Default Sarama if nil)
+	id            string           // Default: UUID
+	brokers       []string         // Kafka bootstrap brokers to connect to
+	version       string           // Kafka cluster version (Default )
+	topics        []string         // Kafka topics to be consumed
+	groupId       string           // Kafka consumer group definition
+	assignor      string           // Consumer group partition assignment strategy (range, roundrobin, sticky)
+	handler       Handler          // The client handler to receive and process messages
+	oldest        bool             // Kafka consumer consume initial offset from oldest (Default true)
+	returnOnError bool             // If the receiver.dispatch returns error, then exit consume (Default false)
+	stdLogger     sarama.StdLogger // Consumer logging (Default nil)
+	debugLogger   sarama.StdLogger // Sarama logger (Default nil)
+	client        kafkaClient      // Kafka client interfaces (Default Sarama if nil)
 
 	saramaConfig *sarama.Config
 }
@@ -26,13 +27,15 @@ type Config struct {
 func newConfig() *Config {
 	// set defaults
 	conf := &Config{
-		id:           uuid.New().String(),
-		stdLogger:    nil,
-		debugLogger:  nil,
-		handler:      nil,
-		version:      sarama.DefaultVersion.String(),
-		client:       newSaramaClient(),
-		saramaConfig: sarama.NewConfig(),
+		id:            uuid.New().String(),
+		stdLogger:     nil,
+		debugLogger:   nil,
+		handler:       nil,
+		oldest:        true,
+		returnOnError: false,
+		version:       sarama.DefaultVersion.String(),
+		client:        newSaramaClient(),
+		saramaConfig:  sarama.NewConfig(),
 	}
 
 	// ConsumerGroup <- Errors returns a read channel of errors that occurred during the consumer life-cycle.
