@@ -176,14 +176,6 @@ func (c *Config) shouldProcess() error {
 	return nil
 }
 
-func (c *Config) mustProcess() {
-	err := c.shouldProcess()
-	if err != nil {
-		// panics if mandatory env vars are not set
-		panic(err)
-	}
-}
-
 // GetBool gets the environment variable for 'key' if present, otherwise returns 'fallback'.
 func getEnvBool(key string, defaultValue bool) bool {
 	value, ok := os.LookupEnv(key)
