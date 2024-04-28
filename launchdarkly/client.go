@@ -59,7 +59,7 @@ func NewClient(opts ...ConfigOption) (*Client, error) {
 		config, err := configFromEnvironment()
 		if err != nil {
 			err = fmt.Errorf("could not configure from environment variable: %w", err)
-			log.Error("flags_startup_error", err).Send()
+			log.Error("flags_startup_error", err).Send() //nolint:errcheck
 			return nil, err
 		}
 		parsedConfig = config
