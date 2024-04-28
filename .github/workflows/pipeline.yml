@@ -45,7 +45,7 @@ jobs:
         with:
           version: "latest"
           args: --verbose --timeout=5m
-          skip-pkg-cache: true
+          skip-cache: false
 
       - name: GoVet
         run: go vet ./...
