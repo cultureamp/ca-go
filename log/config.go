@@ -160,6 +160,8 @@ func (c *Config) formatTimestamp(i interface{}) string {
 	return timeString
 }
 
+// isValid returns nil if all the mandatory env_vars are correctly set,
+// otherwise an error indicating the issue.
 func (c *Config) isValid() error {
 	if c.AppName == "" {
 		return errors.Errorf("config.AppName is empty - missing APP or APP_NAME environment variable?")
