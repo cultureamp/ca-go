@@ -159,7 +159,7 @@ linters-settings:
           - github.com/rs/zerolog
           - github.com/stoewer/go-strcase
           - github.com/IBM/sarama
-          # not sure about these below
+          # these will be retired soon
           - github.com/cenkalti/backoff
           - github.com/xdg-go/scram
           - github.com/segmentio
@@ -171,8 +171,6 @@ linters-settings:
             desc: Should be replaced by github.com/go-errors/errors package errors.Errorf("msg %v", err)
           - pkg: "github.com/hashicorp"
             desc: not allowed
-          #- pkg: "github.com/segmentio"
-          #  desc: not allowed, instead use github.com/IBM/sarama for Kafka
           - pkg: "github.com/kelseyhightower/envconfig"
             desc: not allowed, instead use github.com/caarlos0/env/v11 for environment to struct
 

@@ -160,7 +160,7 @@ func (c *Config) formatTimestamp(i interface{}) string {
 	return timeString
 }
 
-func (c *Config) shouldProcess() error {
+func (c *Config) isValid() error {
 	if c.AppName == "" {
 		return errors.Errorf("config.AppName is empty - missing APP or APP_NAME environment variable?")
 	}

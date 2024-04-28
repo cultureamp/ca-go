@@ -1,6 +1,7 @@
 package log
 
 import (
+	"github.com/go-errors/errors"
 	"github.com/rs/zerolog"
 )
 
@@ -10,10 +11,15 @@ type Property struct {
 	configErr error
 }
 
-func newLoggerProperty(impl *zerolog.Event, configError error) *Property {
+func newLoggerProperty(impl *zerolog.Event, config *Config) *Property {
+	var err error = errors.Errorf("invalid logger config")
+	if config != nil {
+		err = config.isValid()
+	}
+
 	return &Property{
 		impl:      impl,
-		configErr: configError,
+		configErr: err,
 	}
 }
 
