@@ -162,6 +162,7 @@ linters-settings:
           # not sure about these below
           - github.com/cenkalti/backoff
           - github.com/xdg-go/scram
+          - github.com/segmentio
         # Packages that are not allowed where the value is a suggestion.
         deny:
           - pkg: "github.com/sirupsen/logrus"
@@ -170,8 +171,8 @@ linters-settings:
             desc: Should be replaced by github.com/go-errors/errors package errors.Errorf("msg %v", err)
           - pkg: "github.com/hashicorp"
             desc: not allowed
-          - pkg: "github.com/segmentio"
-            desc: not allowed, instead use github.com/IBM/sarama for Kafka
+          #- pkg: "github.com/segmentio"
+          #  desc: not allowed, instead use github.com/IBM/sarama for Kafka
           - pkg: "github.com/kelseyhightower/envconfig"
             desc: not allowed, instead use github.com/caarlos0/env/v11 for environment to struct
 
