@@ -159,6 +159,7 @@ linters-settings:
           - github.com/patrickmn/go-cache
           - github.com/rs/zerolog
           - github.com/segmentio
+          - github.com/sosodev/duration
           - github.com/stoewer/go-strcase
           # not sure about these below
           - github.com/cenkalti/backoff

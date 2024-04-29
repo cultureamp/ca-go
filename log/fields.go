@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	iso8601 "github.com/sosodev/duration"
 )
 
 // Field contains an element of the log, usually a key-value pair.
@@ -84,7 +85,10 @@ func (lf *Field) Bytes(key string, val []byte) *Field {
 
 // Duration adds the property key with val as an time.Duration to the log.
 func (lf *Field) Duration(key string, d time.Duration) *Field {
-	lf.impl = lf.impl.Dur(key, d)
+	// Logging Std https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3114598406/Logging+Standard#Custom-fields
+	// time durations use ISO8601 Duration format.
+	s := iso8601.Format(d)
+	lf.impl = lf.impl.Str(key, s)
 	return lf
 }
 
