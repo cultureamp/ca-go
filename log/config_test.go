@@ -26,6 +26,7 @@ func TestNewLoggerConfigWithNoEnvVarSet(t *testing.T) {
 	assert.Equal(t, "local", config.Farm)
 	assert.Equal(t, "", config.Product)
 	assert.Equal(t, false, config.Quiet)
+	assert.ErrorContains(t, config.isValid(), "config.AppName is empty")
 }
 
 func TestNewLoggerConfigWithEnvVarSet(t *testing.T) {
@@ -48,4 +49,5 @@ func TestNewLoggerConfigWithEnvVarSet(t *testing.T) {
 	assert.Equal(t, "production", config.Farm)
 	assert.Equal(t, "performance", config.Product)
 	assert.Equal(t, true, config.Quiet)
+	assert.Nil(t, config.isValid())
 }

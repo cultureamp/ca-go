@@ -40,7 +40,7 @@ func Example_lambda() {
 
 	ctx := context.Background()
 
-	// in a real application, use something like "github.com/kelseyhightower/envconfig"
+	// in a real application, use something like "github.com/caarlos0/env/v11"
 	settings := getSettings()
 
 	// configure error reporting settings
