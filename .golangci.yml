@@ -157,6 +157,7 @@ linters-settings:
           - github.com/lestrrat-go
           - github.com/patrickmn/go-cache
           - github.com/rs/zerolog
+          - github.com/sosodev/duration
           - github.com/stoewer/go-strcase
           - github.com/IBM/sarama
           # these will be retired soon
