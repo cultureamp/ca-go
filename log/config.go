@@ -160,7 +160,9 @@ func (c *Config) formatTimestamp(i interface{}) string {
 	return timeString
 }
 
-func (c *Config) shouldProcess() error {
+// isValid returns nil if all the mandatory env_vars are correctly set,
+// otherwise an error indicating the issue.
+func (c *Config) isValid() error {
 	if c.AppName == "" {
 		return errors.Errorf("config.AppName is empty - missing APP or APP_NAME environment variable?")
 	}
@@ -174,14 +176,6 @@ func (c *Config) shouldProcess() error {
 	}
 
 	return nil
-}
-
-func (c *Config) mustProcess() {
-	err := c.shouldProcess()
-	if err != nil {
-		// panics if mandatory env vars are not set
-		panic(err)
-	}
 }
 
 // GetBool gets the environment variable for 'key' if present, otherwise returns 'fallback'.

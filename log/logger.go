@@ -62,44 +62,36 @@ func (l *standardLogger) Enabled(logLevel string) bool {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Debug(event string) *Property {
-	l.config.mustProcess() // make sure mandatory config values are set
-
 	le := l.impl.Debug().Str("event", strcase.SnakeCase(event))
-	return newLoggerProperty(le)
+	return newLoggerProperty(le, l.config)
 }
 
 // Info starts a new message with info level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Info(event string) *Property {
-	l.config.mustProcess() // make sure mandatory config values are set
-
 	le := l.impl.Info().Str("event", strcase.SnakeCase(event))
-	return newLoggerProperty(le)
+	return newLoggerProperty(le, l.config)
 }
 
 // Warn starts a new message with warn level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Warn(event string) *Property {
-	l.config.mustProcess() // make sure mandatory config values are set
-
 	le := l.impl.Warn().Str("event", strcase.SnakeCase(event))
-	return newLoggerProperty(le)
+	return newLoggerProperty(le, l.config)
 }
 
 // Error starts a new message with error level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Error(event string, err error) *Property {
-	l.config.mustProcess() // make sure mandatory config values are set
-
 	le := l.impl.Error()
 	le.Dict("error", zerolog.Dict().
 		Stack().
 		Err(err),
 	).Str("event", strcase.SnakeCase(event))
-	return newLoggerProperty(le).WithSystemTracing()
+	return newLoggerProperty(le, l.config).WithSystemTracing()
 }
 
 // Fatal starts a new message with fatal level. The os.Exit(1) function
@@ -107,14 +99,12 @@ func (l *standardLogger) Error(event string, err error) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Fatal(event string, err error) *Property {
-	l.config.mustProcess() // make sure mandatory config values are set
-
 	le := l.impl.Fatal()
 	le.Dict("error", zerolog.Dict().
 		Stack().
 		Err(err),
 	).Str("event", strcase.SnakeCase(event))
-	return newLoggerProperty(le).WithSystemTracing()
+	return newLoggerProperty(le, l.config).WithSystemTracing()
 }
 
 // Panic starts a new message with panic level. The panic() function
@@ -122,12 +112,10 @@ func (l *standardLogger) Fatal(event string, err error) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Panic(event string, err error) *Property {
-	l.config.mustProcess() // make sure mandatory config values are set
-
 	le := l.impl.Panic()
 	le.Dict("error", zerolog.Dict().
 		Stack().
 		Err(err),
 	).Str("event", strcase.SnakeCase(event))
-	return newLoggerProperty(le).WithSystemTracing()
+	return newLoggerProperty(le, l.config).WithSystemTracing()
 }
