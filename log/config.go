@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"time"
 
 	senv "github.com/caarlos0/env/v11"
@@ -116,19 +115,4 @@ func (c *Config) formatTimestamp(i interface{}) string {
 		return "nil"
 	}
 	return timeString
-}
-
-// GetBool gets the environment variable for 'key' if present, otherwise returns 'fallback'.
-func getEnvBool(key string, defaultValue bool) bool {
-	value, ok := os.LookupEnv(key)
-	if !ok {
-		return defaultValue
-	}
-
-	b, err := strconv.ParseBool(value)
-	if err != nil {
-		return defaultValue
-	}
-
-	return b
 }
