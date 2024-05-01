@@ -12,11 +12,11 @@ type standardLogger struct {
 }
 
 // NewLogger creates a new standardLogger using the supplied config.
-func NewLogger(config *Config) *standardLogger {
+func NewLogger(config *Config, options ...LoggerOption) *standardLogger {
 	lvl := config.Level()
 	writer := config.getWriter()
 
-	impl := zerolog.
+	lc := zerolog.
 		New(writer).
 		Level(lvl).
 		With().
@@ -25,10 +25,17 @@ func NewLogger(config *Config) *standardLogger {
 		Str("aws_region", config.AwsRegion).
 		Str("aws_account_id", config.AwsAccountID).
 		Str("farm", config.Farm).
-		Str("product", config.Product).
+		Str("product", config.Product)
+
+	// Loop through our Decoder options and apply them
+	for _, option := range options {
+		lc = option(lc)
+	}
+
+	impl := lc.
 		Logger()
 
-	// We have our own Timestamp hook so that we can mock in tests
+	// We have our own Timestamp hook so that we can mock "time" in tests
 	impl = impl.Hook(&timestampHook{config: config})
 
 	return &standardLogger{
