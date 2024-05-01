@@ -15,13 +15,13 @@ func TestDecoderOptions(t *testing.T) {
 	validJwks := string(b)
 
 	i := 0
-// This will be called each time the cache is refreshed and they we can assert i has been incremented the correct number of times below.
+	// This will be called each time the cache is refreshed and they we can assert i has been incremented the correct number of times below.
 	jwks := func() string {
 		i++
 		return validJwks
 	}
 
-	decoder, err := NewJwtDecoder(jwks, WithDecoderCacheExpiry(100*time.Millisecond, 50*time.Millisecond))
+	decoder, err := NewJwtDecoder(jwks, WithDecoderJwksExpiry(100*time.Millisecond))
 	assert.Nil(t, err)
 	assert.NotNil(t, decoder)
 

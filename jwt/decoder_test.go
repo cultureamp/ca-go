@@ -4,8 +4,10 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // useful to create RS256 test tokens https://jwt.io/
@@ -173,4 +175,57 @@ func TestDecoderDecodeAllClaims(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDecoderRotateKeys(t *testing.T) {
+	b, err := os.ReadFile(filepath.Clean(testAuthJwks))
+	assert.Nil(t, err)
+	testJWKS := string(b)
+
+	attempt := 0
+	jwks := func() string {
+		attempt++
+		if attempt == 1 {
+			// first time return just 1 key
+			return `{"keys" : [{
+      "alg":"RS256",
+      "kty":"RSA",
+      "e":"AQAB",
+      "kid":"web-gateway",
+      "n":"zkzpPa8QB5JwYWJI1W3WmxnMwusvFZb-0EVY4Sko3C1zwBcY8P6NucHo1epXTO-rFQy8JPiSMyTBINkmDP0d1jfvJF_RDL8Gzi1_aM2mScsPxmXA7ftqHdvcaqP0aobuYNJSEk_3erM6iddBJwsKY5BNkzS-R9szsfCgnDdfN-9JvChpfrTvoOwI-vtsqpkgIgGB4uCeQ0CPvqZzsRMJyWouEt0Jj7huKXBOvDBuoZdInuh-2kzNpm9KEkdbB0wzhC57MnyA3ap0I-ES374utQGM1EbZfW68T0QU3t--Q7L7yQ4D8WjRLZw_WTS8amcLRYf0urb3yTmvQFA4ryhc25dBUF68xPrC2kETljf6SLtig2bWvr-TGqGiyLnqiPloSxeBtpZhWSBgH8KJ7iHjwCyT2dSMEhf-ouivT2rEn5wEP3joDPywBqywKs-hbJrOB_x9cg4dGqERuljvW02tMGHu1JTK8tb23wWl8_5RSPHGetM526G3MW8r8hJ4mPHASPzQ2jWM_XhHtvLOg4_0V3CczMe93e6ilWkxala1hnZA180lOFoOOscdQmcH7LbOjkH6Iwb_9lc0Ez6n2tcfuY9p1aujcsJ5uQNBJtoX4kOSTM7LfUJa88ZbUkOeJ9AHhCe9xqaAS-W0LJYR00-JZcsaZz31F2DSFMmOWLUCVZ8",
+      "use":"sig"
+    }]}	`
+		}
+
+		// for subsequent calls return all the keys to simulate a new key being added
+		return testJWKS
+	}
+
+	decoder, err := NewJwtDecoder(jwks,
+		WithDecoderJwksExpiry(time.Millisecond*500),
+		WithDecoderRotateWindow(time.Millisecond*100),
+	)
+	assert.Nil(t, err)
+	assert.NotNil(t, decoder)
+
+	// try and decode is straight away - should fail as the kid isn't in the jwks
+	token := "eyJhbGciOiJFUzI1NiIsImtpZCI6ImVjZHNhLTI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiZW5jb2Rlci1uYW1lIiwic3ViIjoidGVzdCIsImF1ZCI6WyJkZWNvZGVyLW5hbWUiXSwiZXhwIjoyMjExNzk3NTMyLCJuYmYiOjE1ODA2MDg5MjIsImlhdCI6MTU4MDYwODkyMn0.tuevuDAPABxVW8_SqD6T8SeCrFucXxyBEIk3Yk8xKsfqYSNv1nW0HPNPE_a-E02fKYAsXJY8yn1R8u1idj9Z5Q"
+	claim, err := decoder.Decode(token)
+	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "no matching key_id (kid) header")
+
+	// sleep so now the JWKS is within the rotation window
+	time.Sleep(110 * time.Millisecond)
+	claim, err = decoder.Decode(token)
+	assert.Equal(t, 2, attempt)
+	assert.Nil(t, err)
+
+	require.NotNil(t, claim)
+	assert.Equal(t, "abc123", claim.AccountId)
+	assert.Equal(t, "xyz234", claim.RealUserId)
+	assert.Equal(t, "xyz345", claim.EffectiveUserId)
+	assert.Equal(t, "encoder-name", claim.Issuer)
+	assert.Equal(t, "test", claim.Subject)
+	assert.Equal(t, []string{"decoder-name"}, claim.Audience)
+	assert.Equal(t, 2040, claim.ExpiresAt.Year())
 }
