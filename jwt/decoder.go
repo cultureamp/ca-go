@@ -18,7 +18,6 @@ const (
 	effectiveUserIDClaim           = "effectiveUserId"
 	defaultDecoderExpiration       = 60 * time.Minute
 	defaultDecoderRotationDuration = 60 * time.Second
-	defaultDecoderCleanupInterval  = 1 * time.Minute
 	defaultDecoderLeeway           = 10 * time.Second
 )
 
