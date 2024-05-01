@@ -12,16 +12,15 @@ import (
 )
 
 const (
-	kidHeaderKey                  = "kid"
-	algorithmHeaderKey            = "alg"
-	webGatewayKid                 = "web-gateway"
-	accountIDClaim                = "accountId"
-	realUserIDClaim               = "realUserId"
-	effectiveUserIDClaim          = "effectiveUserId"
-	jwksCacheKey                  = "decoder_jwks_key"
-	defaultDecoderExpiration      = 60 * time.Minute
-	defaultDecoderCleanupInterval = 1 * time.Minute
-	minimumRotateKeyDuration      = 30 * time.Second
+	kidHeaderKey                   = "kid"
+	algorithmHeaderKey             = "alg"
+	webGatewayKid                  = "web-gateway"
+	accountIDClaim                 = "accountId"
+	realUserIDClaim                = "realUserId"
+	effectiveUserIDClaim           = "effectiveUserId"
+	defaultDecoderExpiration       = 60 * time.Minute
+	defaultDecoderCleanupInterval  = 1 * time.Minute
+	DefaultDecoderRotationDuration = 30 * time.Second
 )
 
 type publicKey interface{} // Only ECDSA (perferred) and RSA public keys allowed
@@ -46,7 +45,7 @@ func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) 
 		fetchJwkKeys:   fetchJWKS,
 		jwks:           nil,
 		expiresWithin:  defaultDecoderExpiration,
-		rotationWindow: minimumRotateKeyDuration,
+		rotationWindow: DefaultDecoderRotationDuration,
 	}
 
 	// Loop through our Decoder options and apply them
@@ -134,9 +133,9 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	// check if kid exists in the JWK Set
 	key, err := d.lookupKeyID(kid)
 	if err != nil {
-		// try retrieving new JWKS if we haven't done so in the last 30 seconds
+		// if the JWKS is at least d.rotationWindow (default is 30 seconds) old
 		if d.safeRefreshJWKs() {
-			// if we rotated the keys, then try again
+			// then its safe to refresh the JWKS to check if a new key has been added/rotated
 			key, err = d.lookupKeyID(kid)
 		}
 	}
@@ -144,6 +143,7 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	return key, err
 }
 
+// lookupKeyID returns the public key in the JWKS that matches the "kid".
 func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) {
 	// check cache and possibly fetch new JWKS if cache has expired
 	jwkSet, err := d.getCurrentJWKs()
@@ -177,6 +177,9 @@ func (d *JwtDecoder) safeRefreshJWKs() bool {
 	return false
 }
 
+// getCurrentJWKs will check if the JWKS have expired.
+// If not, then it returns it.
+// Otherwise, it re-fetches, parses, and updates the decoder.
 func (d *JwtDecoder) getCurrentJWKs() (jwk.Set, error) {
 	// Only allow one thread to update the jwks
 	d.mu.Lock()
@@ -196,6 +199,7 @@ func (d *JwtDecoder) getCurrentJWKs() (jwk.Set, error) {
 		return nil, err
 	}
 
+	// update with latest values
 	d.jwksAddedAt = time.Now()
 	d.jwks = jwkSet
 	return d.jwks, nil
