@@ -55,7 +55,7 @@ func ExampleLogger_Debug() {
 }
 
 func getExampleLoggerConfig(sev string) *Config {
-	config := NewLoggerConfig()
+	config, _ := NewLoggerConfig()
 	config.AppName = "logger-test"
 	config.AwsRegion = "def"
 	config.Product = "cago"

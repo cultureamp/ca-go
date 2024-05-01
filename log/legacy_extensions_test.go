@@ -54,7 +54,7 @@ func ExampleLogger_Info_withGlamplifyRequestFieldsFromCtx() {
 }
 
 func getLegacyExtensionExampleLoggerConfig(sev string) *log.Config {
-	config := log.NewLoggerConfig()
+	config, _ := log.NewLoggerConfig()
 	config.AppName = "logger-test"
 	config.AwsRegion = "def"
 	config.Product = "cago"

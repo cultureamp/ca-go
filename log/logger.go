@@ -63,7 +63,7 @@ func (l *standardLogger) Enabled(logLevel string) bool {
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Debug(event string) *Property {
 	le := l.impl.Debug().Str("event", strcase.SnakeCase(event))
-	return newLoggerProperty(le, l.config)
+	return newLoggerProperty(le)
 }
 
 // Info starts a new message with info level.
@@ -71,7 +71,7 @@ func (l *standardLogger) Debug(event string) *Property {
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Info(event string) *Property {
 	le := l.impl.Info().Str("event", strcase.SnakeCase(event))
-	return newLoggerProperty(le, l.config)
+	return newLoggerProperty(le)
 }
 
 // Warn starts a new message with warn level.
@@ -79,7 +79,7 @@ func (l *standardLogger) Info(event string) *Property {
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Warn(event string) *Property {
 	le := l.impl.Warn().Str("event", strcase.SnakeCase(event))
-	return newLoggerProperty(le, l.config)
+	return newLoggerProperty(le)
 }
 
 // Error starts a new message with error level.
@@ -91,7 +91,7 @@ func (l *standardLogger) Error(event string, err error) *Property {
 		Stack().
 		Err(err),
 	).Str("event", strcase.SnakeCase(event))
-	return newLoggerProperty(le, l.config).WithSystemTracing()
+	return newLoggerProperty(le).WithSystemTracing()
 }
 
 // Fatal starts a new message with fatal level. The os.Exit(1) function
@@ -104,7 +104,7 @@ func (l *standardLogger) Fatal(event string, err error) *Property {
 		Stack().
 		Err(err),
 	).Str("event", strcase.SnakeCase(event))
-	return newLoggerProperty(le, l.config).WithSystemTracing()
+	return newLoggerProperty(le).WithSystemTracing()
 }
 
 // Panic starts a new message with panic level. The panic() function
@@ -117,5 +117,5 @@ func (l *standardLogger) Panic(event string, err error) *Property {
 		Stack().
 		Err(err),
 	).Str("event", strcase.SnakeCase(event))
-	return newLoggerProperty(le, l.config).WithSystemTracing()
+	return newLoggerProperty(le).WithSystemTracing()
 }

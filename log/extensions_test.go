@@ -227,7 +227,7 @@ func TestExtensionWithSystemTracing(t *testing.T) {
 }
 
 func getExampleLoggerConfig(sev string) *log.Config {
-	config := log.NewLoggerConfig()
+	config, _ := log.NewLoggerConfig()
 	config.AppName = "logger-test"
 	config.AwsRegion = "def"
 	config.Product = "cago"

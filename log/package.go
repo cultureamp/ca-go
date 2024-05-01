@@ -82,7 +82,7 @@ func Panic(event string, err error) *Property {
 func mustHaveDefaultLogger() {
 	if DefaultLogger == nil {
 		setGlobalLogger()
-		config := NewLoggerConfig()
+		config, _ := NewLoggerConfig()
 		DefaultLogger = NewLogger(config)
 	}
 }

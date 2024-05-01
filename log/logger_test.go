@@ -107,7 +107,8 @@ func TestLoggerLevels(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			config := NewLoggerConfig()
+			config, err := NewLoggerConfig()
+			assert.Nil(t, err)
 			assert.NotNil(t, config)
 
 			config.LogLevel = tC.logLevel
@@ -160,13 +161,13 @@ func TestLoggerMethods(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			config := NewLoggerConfig()
+			config, err := NewLoggerConfig()
+			assert.Nil(t, err)
+			assert.NotNil(t, config)
+
 			config.AppName = "logger-test"
 			config.AwsRegion = "def"
 			config.Product = "cago"
-
-			assert.NotNil(t, config)
-
 			config.LogLevel = tC.logLevel
 			config.Quiet = true
 			logger := NewLogger(config)
