@@ -1,7 +1,6 @@
 package log
 
 import (
-	"context"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -78,39 +77,6 @@ func Panic(event string, err error) *Property {
 	mustHaveDefaultLogger()
 
 	return DefaultLogger.Panic(event, err)
-}
-
-type ctxLoggerKey struct{}
-
-func FromContext(ctx context.Context) (Logger, error) {
-	// zerolog.Ctx()
-	if l, ok := ctx.Value(ctxLoggerKey{}).(Logger); ok {
-		return l, nil
-	}
-
-	config, err := NewLoggerConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	ctxLogger := NewLogger(config)
-	return ctxLogger, err
-}
-
-func (l *standardLogger) WithContext(ctx context.Context) context.Context {
-	if _, ok := ctx.Value(ctxLoggerKey{}).(Logger); ok {
-		return ctx
-	}
-	return context.WithValue(ctx, ctxLoggerKey{}, l)
-}
-
-func (l *standardLogger) UpdateGlobals() {
-	//  l.UpdateContext(func(c Context) Context {
-	//         return c.Str("bar", "baz")
-	//     })
-	//
-
-	// l.impl.With().
 }
 
 func mustHaveDefaultLogger() {
