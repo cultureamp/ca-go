@@ -20,7 +20,7 @@ const (
 	effectiveUserIDClaim           = "effectiveUserId"
 	defaultDecoderExpiration       = 60 * time.Minute
 	defaultDecoderCleanupInterval  = 1 * time.Minute
-	DefaultDecoderRotationDuration = 30 * time.Second
+	defaultDecoderRotationDuration = 30 * time.Second
 )
 
 type publicKey interface{} // Only ECDSA (perferred) and RSA public keys allowed
@@ -45,7 +45,7 @@ func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) 
 		fetchJwkKeys:   fetchJWKS,
 		jwks:           nil,
 		expiresWithin:  defaultDecoderExpiration,
-		rotationWindow: DefaultDecoderRotationDuration,
+		rotationWindow: defaultDecoderRotationDuration,
 	}
 
 	// Loop through our Decoder options and apply them
