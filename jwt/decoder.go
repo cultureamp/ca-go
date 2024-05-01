@@ -14,7 +14,6 @@ import (
 const (
 	kidHeaderKey                   = "kid"
 	algorithmHeaderKey             = "alg"
-	webGatewayKid                  = "web-gateway"
 	accountIDClaim                 = "accountId"
 	realUserIDClaim                = "realUserId"
 	effectiveUserIDClaim           = "effectiveUserId"
