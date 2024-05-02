@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/cultureamp/ca-go/log"
 	"github.com/stretchr/testify/mock"
@@ -42,7 +43,10 @@ func TestCommonExamples(t *testing.T) {
 	t.Setenv("AWS_REGION", "dev")
 	t.Setenv("PRODUCT", "cago")
 
-	log.DefaultLogger = nil // force re-create
+	log.DefaultOptions(
+		log.WithBool("global_bool", true),
+		log.WithDuration("global_dur", 42*time.Second),
+	)
 
 	log.Debug("hander_added").
 		Properties(log.Add().
@@ -169,36 +173,35 @@ type mockLogger struct {
 
 func (ml *mockLogger) Debug(event string) *log.Property {
 	args := ml.Called(event)
-	output, _ := args.Get(0).(*log.Property)
-	return output
+	return args.Get(0).(*log.Property)
 }
 
 func (ml *mockLogger) Info(event string) *log.Property {
 	args := ml.Called(event)
-	output, _ := args.Get(0).(*log.Property)
-	return output
+	return args.Get(0).(*log.Property)
 }
 
 func (ml *mockLogger) Warn(event string) *log.Property {
 	args := ml.Called(event)
-	output, _ := args.Get(0).(*log.Property)
-	return output
+	return args.Get(0).(*log.Property)
 }
 
 func (ml *mockLogger) Error(event string, err error) *log.Property {
 	args := ml.Called(event)
-	output, _ := args.Get(0).(*log.Property)
-	return output
+	return args.Get(0).(*log.Property)
 }
 
 func (ml *mockLogger) Fatal(event string, err error) *log.Property {
 	args := ml.Called(event)
-	output, _ := args.Get(0).(*log.Property)
-	return output
+	return args.Get(0).(*log.Property)
 }
 
 func (ml *mockLogger) Panic(event string, err error) *log.Property {
 	args := ml.Called(event)
-	output, _ := args.Get(0).(*log.Property)
-	return output
+	return args.Get(0).(*log.Property)
+}
+
+func (ml *mockLogger) Child(options ...log.LoggerOption) log.Logger {
+	args := ml.Called(options)
+	return args.Get(0).(log.Logger)
 }

@@ -27,13 +27,12 @@ func NewLogger(config *Config, options ...LoggerOption) *standardLogger {
 		Str("farm", config.Farm).
 		Str("product", config.Product)
 
-	// Loop through our Decoder options and apply them
+	// Loop through our Logger options and apply them
 	for _, option := range options {
 		lc = option(lc)
 	}
 
-	impl := lc.
-		Logger()
+	impl := lc.Logger()
 
 	// We have our own Timestamp hook so that we can mock "time" in tests
 	impl = impl.Hook(&timestampHook{config: config})
@@ -125,4 +124,19 @@ func (l *standardLogger) Panic(event string, err error) *Property {
 		Err(err),
 	).Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le).WithSystemTracing()
+}
+
+// Child returns a new logger that inherits all the properties of the parent.
+func (l *standardLogger) Child(options ...LoggerOption) Logger {
+	lc := l.impl.With()
+
+	// Loop through our Logger options and apply them
+	for _, option := range options {
+		lc = option(lc)
+	}
+
+	return &standardLogger{
+		impl:   lc.Logger(),
+		config: l.config,
+	}
 }
