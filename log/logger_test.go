@@ -187,3 +187,16 @@ func TestLoggerMethods(t *testing.T) {
 		})
 	}
 }
+
+func ExampleLogger_Debug_withChild() {
+	config := getExampleLoggerConfig("debug")
+	logger := NewLogger(config, WithInt("parent_int", 42))
+	logger.Debug("test_parent_debug_event").Send()
+
+	child := logger.Child(WithInt("child_int", 21))
+	child.Debug("test_child_debug_event").Send()
+
+	// Output:
+	// 2020-11-14T11:30:32Z DBG app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def event=test_parent_debug_event farm=local parent_int=42 product=cago
+	// 2020-11-14T11:30:32Z DBG app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def child_int=21 event=test_child_debug_event farm=local parent_int=42 product=cago
+}
