@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -88,6 +89,22 @@ func DefaultOptions(options ...LoggerOption) {
 
 	// Update the DefaultLogger - not thread safe, but should be ok
 	DefaultLogger = DefaultLogger.Child(options...)
+}
+
+// FromContext returns the Logger associated with the ctx. If not logger
+// is associated, then a new logger is created and added to the context.
+func FromContext(ctx context.Context) (context.Context, Logger, error) {
+	if l, ok := ctx.Value(ctxLoggerKey{}).(Logger); ok {
+		return ctx, l, nil
+	}
+
+	config, err := NewLoggerConfig()
+	if err != nil {
+		return ctx, nil, err
+	}
+	l := NewLogger(config)
+	ctx = l.WithContext(ctx)
+	return ctx, l, nil
 }
 
 func mustHaveDefaultLogger() {

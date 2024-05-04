@@ -1,6 +1,8 @@
 package log
 
 import (
+	"context"
+
 	"github.com/rs/zerolog"
 	strcase "github.com/stoewer/go-strcase"
 )
@@ -139,4 +141,14 @@ func (l *standardLogger) Child(options ...LoggerOption) Logger {
 		impl:   lc.Logger(),
 		config: l.config,
 	}
+}
+
+type ctxLoggerKey struct{}
+
+// WithContext returns a context with an associated logger attached.
+func (l *standardLogger) WithContext(ctx context.Context) context.Context {
+	if _, ok := ctx.Value(ctxLoggerKey{}).(Logger); !ok {
+		return ctx
+	}
+	return context.WithValue(ctx, ctxLoggerKey{}, &l)
 }
