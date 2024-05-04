@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -186,6 +187,32 @@ func TestLoggerMethods(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLoggerContexts(t *testing.T) {
+	origCtx := context.Background()
+	config := getExampleLoggerConfig("debug")
+	origLogger := NewLogger(config)
+
+	// check we get back a new context
+	ctx2 := origLogger.WithContext(origCtx)
+	assert.NotEqual(t, origCtx, ctx2)
+
+	// check we get back the same context - logger already in ctx2
+	ctx3 := origLogger.WithContext(ctx2)
+	assert.Equal(t, ctx2, ctx3)
+
+	// check no logger in the original ctx
+	ctx4, l, err := FromContext(origCtx)
+	assert.Nil(t, err)
+	assert.NotEqual(t, origLogger, l) // a new logger was returned
+	assert.NotEqual(t, origCtx, ctx4)
+
+	// check that the origLogger is returned
+	ctx5, l2, err := FromContext(ctx2)
+	assert.Nil(t, err)
+	assert.Equal(t, origLogger, l2) // l2 is NOT a new logger
+	assert.NotEqual(t, origCtx, ctx5)
 }
 
 func ExampleLogger_Debug_withChild() {

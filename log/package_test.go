@@ -1,6 +1,7 @@
 package log_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -45,6 +46,7 @@ func TestCommonExamples(t *testing.T) {
 
 	log.DefaultOptions(
 		log.WithBool("global_bool", true),
+		log.WithInt("global_int", 42),
 		log.WithDuration("global_dur", 42*time.Second),
 	)
 
@@ -204,4 +206,9 @@ func (ml *mockLogger) Panic(event string, err error) *log.Property {
 func (ml *mockLogger) Child(options ...log.LoggerOption) log.Logger {
 	args := ml.Called(options)
 	return args.Get(0).(log.Logger)
+}
+
+func (ml *mockLogger) WithContext(ctx context.Context) context.Context {
+	args := ml.Called(ctx)
+	return args.Get(0).(context.Context)
 }

@@ -147,8 +147,8 @@ type ctxLoggerKey struct{}
 
 // WithContext returns a context with an associated logger attached.
 func (l *standardLogger) WithContext(ctx context.Context) context.Context {
-	if _, ok := ctx.Value(ctxLoggerKey{}).(Logger); !ok {
+	if _, ok := ctx.Value(ctxLoggerKey{}).(Logger); ok {
 		return ctx
 	}
-	return context.WithValue(ctx, ctxLoggerKey{}, &l)
+	return context.WithValue(ctx, ctxLoggerKey{}, l)
 }

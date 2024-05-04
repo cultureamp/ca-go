@@ -17,6 +17,7 @@ type Logger interface {
 	Panic(event string, err error) *Property
 
 	Child(options ...LoggerOption) Logger
+	WithContext(ctx context.Context) context.Context
 }
 
 // DefaultLogger is the package level default implementation used by all package level methods.
