@@ -14,7 +14,9 @@ type LoggerOption func(zerolog.Context) zerolog.Context
 
 func WithProperties(fields *Field) LoggerOption {
 	return func(lc zerolog.Context) zerolog.Context {
-		return lc.Dict("properties", fields.impl)
+		// note: we can't use the dict "properties" here as a local log will overwrite it
+		// this is a limitation of zerolog!
+		return lc.Dict("default_properties", fields.impl)
 	}
 }
 

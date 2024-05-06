@@ -232,8 +232,8 @@ func ExampleLogger_Debug_withChild() {
 	child.Debug("test_child_debug_event").Send()
 
 	// Output:
-	// 2020-11-14T11:30:32Z DBG app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def event=test_parent_debug_event farm=local product=cago properties={"parent_int":42}
-	// 2020-11-14T11:30:32Z DBG app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def event=test_child_debug_event farm=local product=cago properties={"child_int":21}
+	// 2020-11-14T11:30:32Z DBG app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def default_properties={"parent_int":42} event=test_parent_debug_event farm=local product=cago
+	// 2020-11-14T11:30:32Z DBG app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def default_properties={"child_int":21} event=test_child_debug_event farm=local product=cago
 }
 
 func getExampleLogger(sev string) Logger {

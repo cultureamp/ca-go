@@ -128,9 +128,29 @@ func ExampleLogger_Warn_withAllGlobalProperties() {
 		WithProperties(props),
 	)
 
-	logger.Debug("debug_with_all_global_field_types").
+	logger.Warn("debug_with_all_global_field_types").
 		Detailsf("logging should contain all types: %s", "ok")
 
 	// Output:
-	// 2020-11-14T11:30:32Z DBG event="logging should contain all types: ok" app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def event=debug_with_all_global_field_types farm=local product=cago properties={"bool":true,"bytes":"some bytes","dur":"PT42S","float32":32.32,"float64":64.64,"func":"val","int":1,"int64":123,"ipaddr":"255.255.255.255","str":"value","time":"2023-11-14T11:30:32Z","uint":234,"uint64":123,"uuid":"e5fa7acf-1846-41b4-a2ee-80ecd86fb060"}
+	// 2020-11-14T11:30:32Z WRN event="logging should contain all types: ok" app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def default_properties={"bool":true,"bytes":"some bytes","dur":"PT42S","float32":32.32,"float64":64.64,"func":"val","int":1,"int64":123,"ipaddr":"255.255.255.255","str":"value","time":"2023-11-14T11:30:32Z","uint":234,"uint64":123,"uuid":"e5fa7acf-1846-41b4-a2ee-80ecd86fb060"} event=debug_with_all_global_field_types farm=local product=cago
+}
+
+func ExampleLogger_Warn_withDupicatePropertiesDocs() {
+	global_props := Add().
+		Str("global_str", "value").
+		Int("global_int", 1)
+
+	local_props := Add().
+		Str("local_str", "value").
+		Int("local_int", 1)
+
+	config := getExampleLoggerConfig("DEBUG")
+	logger := NewLogger(config, WithProperties(global_props))
+
+	logger.Warn("debug_with_all_global_field_types").
+		Properties(local_props).
+		Detailsf("logging should contain all types: %s", "ok")
+
+	// Output:
+	// 2020-11-14T11:30:32Z WRN event="logging should contain all types: ok" app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def default_properties={"global_int":1,"global_str":"value"} event=debug_with_all_global_field_types farm=local product=cago properties={"local_int":1,"local_str":"value"}
 }
