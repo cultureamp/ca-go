@@ -8,7 +8,7 @@ The `log` package wraps [zerolog](https://github.com/rs/zerolog) and therefore r
 
 ## Environment Variables
 
-You MUST set these:
+You SHOULD set these:
 - APP = The application name (eg. "employee-tasks-service")
 - AWS_REGION = The AWS region this code is running in (eg. "us-west-1")
 - PRODUCT = The product suite the service belongs to (eg. "engagement")
@@ -49,9 +49,16 @@ config := NewLoggerConfig()
 return NewLogger(config)
 ```
 
+If you want to set default values that will always appear for this logger use:
+```
+config := NewLoggerConfig()
+// optionally override default properties on the config
+return NewLogger(config, WithRequestTracing(req), WithProperties(props), WithDataDogTracing(ctx), etc.)
+```
+
 ## Log Examples
 ```
-package cagoexample
+package cago_log_example
 
 import (
 	"github.com/cultureamp/ca-go/log"
@@ -64,7 +71,14 @@ func basic_example() {
 	u := uuid.New()
 	duration := time.Since(then)
 
-	props := SubDoc().
+	default_props := log.Add().
+		Str("global_str", "logged every time by this logger")
+
+	log.DefaultOptions(
+		log.WithProperties(default_props)
+	)
+
+	props := log.Add().
 		Str("str", "value").
 		Int("int", 1).
 		Bool("bool", true).
@@ -72,17 +86,17 @@ func basic_example() {
 		IPAddr("ipaddr", ipv4).
 		UUID("uuid", u)
 
-	Debug("debug_with_all_field_types").
+	log.Debug("debug_with_all_field_types").
 		WithSystemTracing().
 		Properties(props).
 		Details("logging should contain all types")
 
-	Debug("debug_with_all_field_types").
+	log.Debug("debug_with_all_field_types").
 		WithSystemTracing().
 		Properties(props).
 		Detailsf("logging should contain all types: %s", "ok")
 
-	Debug("debug_with_all_field_types").
+	log.Debug("debug_with_all_field_types").
 		WithSystemTracing().
 		Properties(props).
 		Send()
@@ -95,10 +109,10 @@ func http_request_example() {
 	req.Header.Add(log.RequestHeader, "request_456_id")
 	req.Header.Add(log.CorrelationHeader, "correlation_789_id")
 
-	Debug("debug_with_request_and_system_tracing").
+	log.Debug("debug_with_request_and_system_tracing").
 		WithSystemTracing().
 		WithRequestTracing(req).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should contain both")
@@ -115,7 +129,7 @@ func jwtauth_payload_example() {
 	log.Info("info_with_auth_and_system_tracing").
 		WithSystemTracing().
 		WithAuthenticatedUserTracing(auth).
-		Properties(log.SubDoc().
+		Properties(log.Add().
 			Str("resource", "resource_id").
 			Int("test-number", 1),
 		).Details("logging should contain both")
