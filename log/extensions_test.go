@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/cultureamp/ca-go/log"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
@@ -224,19 +223,4 @@ func TestExtensionWithSystemTracing(t *testing.T) {
 
 	// System tracing add a "pid" "num_cpus" etc. which changes from run to run / machine to machine
 	// So we don't use a testable Example()
-}
-
-func getExampleLoggerConfig(sev string) *log.Config {
-	config, _ := log.NewLoggerConfig()
-	config.AppName = "logger-test"
-	config.AwsRegion = "def"
-	config.Product = "cago"
-	config.LogLevel = sev
-	config.Quiet = false
-	config.ConsoleWriter = true
-	config.ConsoleColour = false
-	config.TimeNow = func() time.Time {
-		return time.Date(2020, 11, 14, 11, 30, 32, 0, time.UTC)
-	}
-	return config
 }

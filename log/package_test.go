@@ -45,9 +45,11 @@ func TestCommonExamples(t *testing.T) {
 	t.Setenv("PRODUCT", "cago")
 
 	log.DefaultOptions(
-		log.WithBool("global_bool", true),
-		log.WithInt("global_int", 42),
-		log.WithDuration("global_dur", 42*time.Second),
+		log.WithProperties(log.Add().
+			Bool("global_bool", true).
+			Int("global_int", 42).
+			Duration("global_dur", 42*time.Second),
+		),
 	)
 
 	log.Debug("hander_added").
@@ -211,4 +213,24 @@ func (ml *mockLogger) Child(options ...log.LoggerOption) log.Logger {
 func (ml *mockLogger) WithContext(ctx context.Context) context.Context {
 	args := ml.Called(ctx)
 	return args.Get(0).(context.Context)
+}
+
+func getExampleLogger(sev string) log.Logger {
+	config := getExampleLoggerConfig(sev)
+	return log.NewLogger(config)
+}
+
+func getExampleLoggerConfig(sev string) *log.Config {
+	config, _ := log.NewLoggerConfig()
+	config.AppName = "logger-test"
+	config.AwsRegion = "def"
+	config.Product = "cago"
+	config.LogLevel = sev
+	config.Quiet = false
+	config.ConsoleWriter = true
+	config.ConsoleColour = false
+	config.TimeNow = func() time.Time {
+		return time.Date(2020, 11, 14, 11, 30, 32, 0, time.UTC)
+	}
+	return config
 }

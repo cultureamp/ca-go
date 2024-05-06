@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -191,8 +192,7 @@ func TestLoggerMethods(t *testing.T) {
 
 func TestLoggerContexts(t *testing.T) {
 	origCtx := context.Background()
-	config := getExampleLoggerConfig("debug")
-	origLogger := NewLogger(config)
+	origLogger := getExampleLogger("debug")
 
 	// check we get back a new context
 	ctx2 := origLogger.WithContext(origCtx)
@@ -217,13 +217,41 @@ func TestLoggerContexts(t *testing.T) {
 
 func ExampleLogger_Debug_withChild() {
 	config := getExampleLoggerConfig("debug")
-	logger := NewLogger(config, WithInt("parent_int", 42))
+	logger := NewLogger(config,
+		WithProperties(Add().
+			Int("parent_int", 42),
+		),
+	)
 	logger.Debug("test_parent_debug_event").Send()
 
-	child := logger.Child(WithInt("child_int", 21))
+	child := logger.Child(
+		WithProperties(Add().
+			Int("child_int", 21),
+		),
+	)
 	child.Debug("test_child_debug_event").Send()
 
 	// Output:
-	// 2020-11-14T11:30:32Z DBG app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def event=test_parent_debug_event farm=local parent_int=42 product=cago
-	// 2020-11-14T11:30:32Z DBG app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def child_int=21 event=test_child_debug_event farm=local parent_int=42 product=cago
+	// 2020-11-14T11:30:32Z DBG app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def event=test_parent_debug_event farm=local product=cago properties={"parent_int":42}
+	// 2020-11-14T11:30:32Z DBG app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def event=test_child_debug_event farm=local product=cago properties={"child_int":21}
+}
+
+func getExampleLogger(sev string) Logger {
+	config := getExampleLoggerConfig(sev)
+	return NewLogger(config)
+}
+
+func getExampleLoggerConfig(sev string) *Config {
+	config, _ := NewLoggerConfig()
+	config.AppName = "logger-test"
+	config.AwsRegion = "def"
+	config.Product = "cago"
+	config.LogLevel = sev
+	config.Quiet = false
+	config.ConsoleWriter = true
+	config.ConsoleColour = false
+	config.TimeNow = func() time.Time {
+		return time.Date(2020, 11, 14, 11, 30, 32, 0, time.UTC)
+	}
+	return config
 }

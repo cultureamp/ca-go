@@ -2,116 +2,19 @@ package log
 
 import (
 	"context"
-	"net"
 	"net/http"
-	"time"
 
 	"github.com/aws/aws-xray-sdk-go/xray"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	iso8601 "github.com/sosodev/duration"
 
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 type LoggerOption func(zerolog.Context) zerolog.Context
 
-// Str adds the property key with val as a string to the log.
-// Note: Empty string values will not be logged.
-func WithStr(key string, val string) LoggerOption {
+func WithProperties(fields *Field) LoggerOption {
 	return func(lc zerolog.Context) zerolog.Context {
-		if val == "" {
-			return lc
-		}
-		return lc.Str(key, val)
-	}
-}
-
-// Int adds the property key with val as an int to the log.
-func WithInt(key string, val int) LoggerOption {
-	return func(lc zerolog.Context) zerolog.Context {
-		return lc.Int(key, val)
-	}
-}
-
-// UInt adds the property key with val as an int to the log.
-func WithUInt(key string, val uint) LoggerOption {
-	return func(lc zerolog.Context) zerolog.Context {
-		return lc.Uint(key, val)
-	}
-}
-
-// Int64 adds the property key with val as an int64 to the log.
-func WithInt64(key string, val int64) LoggerOption {
-	return func(lc zerolog.Context) zerolog.Context {
-		return lc.Int64(key, val)
-	}
-}
-
-// UInt64 adds the property key with val as an uint64 to the log.
-func WithUInt64(key string, val uint64) LoggerOption {
-	return func(lc zerolog.Context) zerolog.Context {
-		return lc.Uint64(key, val)
-	}
-}
-
-// Float32 adds the property key with val as an float32 to the log.
-func WithFloat32(key string, val float32) LoggerOption {
-	return func(lc zerolog.Context) zerolog.Context {
-		return lc.Float32(key, val)
-	}
-}
-
-// Float64 adds the property key with val as an float64 to the log.
-func WithFloat64(key string, val float64) LoggerOption {
-	return func(lc zerolog.Context) zerolog.Context {
-		return lc.Float64(key, val)
-	}
-}
-
-// Bool adds the property key with b as an bool to the log.
-func WithBool(key string, b bool) LoggerOption {
-	return func(lc zerolog.Context) zerolog.Context {
-		return lc.Bool(key, b)
-	}
-}
-
-// Bytes adds the property key with val as an []byte to the log.
-func WithBytes(key string, val []byte) LoggerOption {
-	return func(lc zerolog.Context) zerolog.Context {
-		return lc.Bytes(key, val)
-	}
-}
-
-// Duration adds the property key with val as an time.Duration to the log.
-func WithDuration(key string, d time.Duration) LoggerOption {
-	return func(lc zerolog.Context) zerolog.Context {
-		// Logging Std https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3114598406/Logging+Standard#Custom-fields
-		// time durations use ISO8601 Duration format.
-		s := iso8601.Format(d)
-		return lc.Str(key, s)
-	}
-}
-
-// Time adds the property key with val as an uuid.UUID to the log.
-func WithTime(key string, t time.Time) LoggerOption {
-	return func(lc zerolog.Context) zerolog.Context {
-		// uses zerolog.TimeFieldFormat which we set to time.RFC3339
-		return lc.Time(key, t)
-	}
-}
-
-// IPAddr adds the property key with val as an net.IP to the log.
-func WithIPAddr(key string, ip net.IP) LoggerOption {
-	return func(lc zerolog.Context) zerolog.Context {
-		return lc.IPAddr(key, ip)
-	}
-}
-
-// UUID adds the property key with val as an uuid.UUID to the log.
-func WithUUID(key string, uuid uuid.UUID) LoggerOption {
-	return func(lc zerolog.Context) zerolog.Context {
-		return lc.Str(key, uuid.String())
+		return lc.Dict("properties", fields.impl)
 	}
 }
 

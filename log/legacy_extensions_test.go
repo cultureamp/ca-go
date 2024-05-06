@@ -2,14 +2,12 @@ package log_test
 
 import (
 	"context"
-	"time"
 
 	"github.com/cultureamp/ca-go/log"
 )
 
 func ExampleLogger_Info_withGlamplifyRequestFieldsFromCtx() {
-	config := getLegacyExtensionExampleLoggerConfig("INFO")
-	logger := log.NewLogger(config)
+	logger := getExampleLogger("INFO")
 
 	// Log with no context
 	logger.Info("info_with_glampify_request_field_tracing_no_ctx").
@@ -51,19 +49,4 @@ func ExampleLogger_Info_withGlamplifyRequestFieldsFromCtx() {
 	// 2020-11-14T11:30:32Z INF event="logging should contain glamplify request fields tracing" app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def event=info_with_glampify_request_field_tracing_no_ctx farm=local product=cago properties={"resource":"resource_id","test-number":1}
 	// 2020-11-14T11:30:32Z INF event="logging should contain glamplify request fields tracing" app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def event=info_with_glampify_request_field_tracing_no_request_fields farm=local product=cago properties={"resource":"resource_id","test-number":1}
 	// 2020-11-14T11:30:32Z INF event="logging should contain glamplify request fields tracing" app=logger-test app_version=1.0.0 authentication={"account_id":"account-123-id","user_id":"user-123-id"} aws_account_id=development aws_region=def event=info_with_glampify_request_field_tracing farm=local product=cago properties={"resource":"resource_id","test-number":1} tracing={"correlation_id":"correlation-123-id","request_id":"request-123-id","trace_id":"trace-123-id"}
-}
-
-func getLegacyExtensionExampleLoggerConfig(sev string) *log.Config {
-	config, _ := log.NewLoggerConfig()
-	config.AppName = "logger-test"
-	config.AwsRegion = "def"
-	config.Product = "cago"
-	config.LogLevel = sev
-	config.Quiet = false
-	config.ConsoleWriter = true
-	config.ConsoleColour = false
-	config.TimeNow = func() time.Time {
-		return time.Date(2020, 11, 14, 11, 30, 32, 0, time.UTC)
-	}
-	return config
 }
