@@ -7,25 +7,25 @@
 # %> pre-commit install
 # %> pre-commit run --all-files
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0  # Use the ref you want to point at
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0 # Use the ref you want to point at
     hooks:
-    -   id: check-json
-    -   id: check-yaml
-    -   id: check-added-large-files
+      - id: check-json
+      - id: check-yaml
+      - id: check-added-large-files
         args: [--maxkb=100]
-    -   id: detect-aws-credentials
+      - id: detect-aws-credentials
         args: [--allow-missing-credentials]
-    -   id: detect-private-key
+      - id: detect-private-key
         exclude: testKeys\/jwt.*\.key
-    -   id: end-of-file-fixer
-    -   id: mixed-line-ending
-    -   id: trailing-whitespace
--   repo: https://github.com/golangci/golangci-lint
-    rev: v1.57.2
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.58.0
     hooks:
-    -   id: golangci-lint
--   repo: local
+      - id: golangci-lint
+  - repo: local
     hooks:
       - id: trufflehog
         name: TruffleHog
@@ -33,7 +33,7 @@ repos:
         entry: bash -c 'trufflehog git file://. --since-commit HEAD --only-verified --fail --no-update'
         language: system
         stages: ["commit", "push"]
--   repo: local
+  - repo: local
     hooks:
       - id: snyk
         name: Snyk
