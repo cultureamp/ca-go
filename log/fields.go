@@ -2,6 +2,12 @@ package log
 
 import (
 	"net"
+	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
+	"runtime/debug"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -115,4 +121,66 @@ func (lf *Field) UUID(key string, uuid uuid.UUID) *Field {
 func (lf *Field) Func(f func(e *zerolog.Event)) *Field {
 	lf.impl = lf.impl.Func(f)
 	return lf
+}
+
+func requestTracingFields(req *http.Request) *Field {
+	traceID := req.Header.Get(TraceIDHeader)
+	requestID := req.Header.Get(RequestIDHeader)
+	correlationID := req.Header.Get(CorrelationIDHeader)
+
+	return Add().
+		Str("trace_id", traceID).
+		Str("request_id", requestID).
+		Str("correlation_id", correlationID)
+}
+
+func requestDiagnosticsFields(req *http.Request) *Field {
+	url := req.URL
+
+	return Add().
+		Str("method", req.Method).
+		Str("proto", req.Proto).
+		Str("host", req.Host).
+		Str("scheme", url.Scheme).
+		Str("path", url.Path).
+		Str("query", url.RawQuery).
+		Str("fragment", url.Fragment)
+}
+
+func authenticatedUserTracingFields(auth *AuthPayload) *Field {
+	return Add().
+		Str("account_id", auth.CustomerAccountID).
+		Str("realuser_id", auth.RealUserID).
+		Str("user_id", auth.UserID)
+}
+
+func authorizationTracingFields(req *http.Request) *Field {
+	auth_token := req.Header.Get(AuthorizationHeader)
+	xca_auth_token := req.Header.Get(XCAServiceGatewayAuthorizationHeader)
+	user_agent := req.Header.Get(UserAgentHeader)
+	forward_for := req.Header.Get(XForwardedForHeader)
+
+	return Add().
+		Str("authorization_token", redactString(auth_token)).
+		Str("xca_service_authorization_token", redactString(xca_auth_token)).
+		Str("user_agent", user_agent).
+		Str("x_forwarded_for", forward_for)
+}
+
+func systemTracingFields() *Field {
+	host, _ := os.Hostname()
+	_, path, line, ok := runtime.Caller(1)
+	file := "unknown"
+	if ok {
+		file = filepath.Base(path)
+	}
+	buildInfo, _ := debug.ReadBuildInfo()
+
+	return Add().
+		Str("os", runtime.GOOS).
+		Int("num_cpu", runtime.NumCPU()).
+		Str("host", host).
+		Int("pid", os.Getpid()).
+		Str("go_version", buildInfo.GoVersion).
+		Str("loc", file+":"+strconv.Itoa(line))
 }

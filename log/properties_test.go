@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func ExampleLogger_Debug() {
+func ExampleLogger_Debug_withAllProperties() {
 	then := time.Date(2023, 11, 14, 11, 30, 32, 0, time.UTC)
 	u := uuid.MustParse("e5fa7acf-1846-41b4-a2ee-80ecd86fb060")
 	duration := time.Second * 42
@@ -27,9 +27,6 @@ func ExampleLogger_Debug() {
 	f32 = 32.32
 	f64 = 64.64
 
-	config := getExampleLoggerConfig("DEBUG")
-	logger := NewLogger(config)
-
 	props := Add().
 		Str("str", "value").
 		Int("int", 1).
@@ -46,25 +43,13 @@ func ExampleLogger_Debug() {
 		UUID("uuid", u).
 		Func(f)
 
+	config := getExampleLoggerConfig("DEBUG")
+	logger := NewLogger(config)
+
 	logger.Debug("debug_with_all_field_types").
 		Properties(props).
 		Detailsf("logging should contain all types: %s", "ok")
 
 	// Output:
 	// 2020-11-14T11:30:32Z DBG event="logging should contain all types: ok" app=logger-test app_version=1.0.0 aws_account_id=development aws_region=def event=debug_with_all_field_types farm=local product=cago properties={"bool":true,"bytes":"some bytes","dur":"PT42S","float32":32.32,"float64":64.64,"func":"val","int":1,"int64":123,"ipaddr":"255.255.255.255","str":"value","time":"2023-11-14T11:30:32Z","uint":234,"uint64":123,"uuid":"e5fa7acf-1846-41b4-a2ee-80ecd86fb060"}
-}
-
-func getExampleLoggerConfig(sev string) *Config {
-	config := NewLoggerConfig()
-	config.AppName = "logger-test"
-	config.AwsRegion = "def"
-	config.Product = "cago"
-	config.LogLevel = sev
-	config.Quiet = false
-	config.ConsoleWriter = true
-	config.ConsoleColour = false
-	config.TimeNow = func() time.Time {
-		return time.Date(2020, 11, 14, 11, 30, 32, 0, time.UTC)
-	}
-	return config
 }
