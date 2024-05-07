@@ -65,7 +65,7 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 	var wg sync.WaitGroup
 	errCh := make(chan error, g.config.Count)
 
-	for i := 0; i < g.config.Count; i++ {
+	for i := range g.config.Count {
 		wg.Add(1)
 
 		// Consumers must be created and run in sequential order so that Kafka can

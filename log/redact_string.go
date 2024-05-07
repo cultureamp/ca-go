@@ -26,7 +26,7 @@ func redactString(s string) string {
 	}
 
 	// write the middles "*"
-	for i := 0; i < numStars; i++ {
+	for range numStars {
 		b.WriteString("*")
 	}
 

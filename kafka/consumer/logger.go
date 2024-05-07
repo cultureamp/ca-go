@@ -9,6 +9,6 @@ type NotifyError func(ctx context.Context, err error, msg Message)
 
 type ClientLogger interface {
 	// Kafka-go Logger interface
-	Infof(string, ...interface{})
-	Errorf(string, ...interface{})
+	Infof(fmt string, params ...interface{})
+	Errorf(fmt string, params ...interface{})
 }
