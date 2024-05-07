@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"time"
 
-	"github.com/go-errors/errors"
+	senv "github.com/caarlos0/env/v11"
 	"github.com/rs/zerolog"
 )
 
@@ -16,6 +15,7 @@ const (
 	AwsAccountIDDefault = "development"
 	AppFarmDefault      = "local"
 	LogLevelDefault     = "INFO"
+	MissingDefault      = "<missing>"
 )
 
 type timeNowFunc = func() time.Time
@@ -23,73 +23,30 @@ type timeNowFunc = func() time.Time
 // Config contains logging configuration values.
 type Config struct {
 	// Mandatory fields listed in https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3114598406/Logging+Standard
-	AppName    string // The name of the application the log was generated from
-	AppVersion string // The version of the application
+	AppName    string `env:"APP"         envDefault:"<unknown>"` // The name of the application the log was generated from
+	AppVersion string `env:"APP_VERSION" envDefault:"1.0.0"`     // The version of the application
 
-	AwsRegion    string // the AWS region this code is running in
-	AwsAccountID string // the AWS account ID this code is running in
-	Product      string // performance, engagmentment, etc.
-	Farm         string // The name of the farm or where the code is running
+	AwsRegion    string `env:"AWS_REGION"     envDefault:"dev"`         // the AWS region this code is running in
+	AwsAccountID string `env:"AWS_ACCOUNT_ID" envDefault:"development"` // the AWS account ID this code is running in
+	Product      string `env:"PRODUCT"        envDefault:"<unknown>"`   // performance, engagmentment, etc.
+	Farm         string `env:"FARM"           envDefault:"local"`       // The name of the farm or where the code is running
 
-	LogLevel      string // The logging level
-	Quiet         bool   // Are we running inside tests and we should be quiet?
-	ConsoleWriter bool   // If Farm=local use key-value colour console logging
-	ConsoleColour bool   // If ConsoleWriter=true then enable/disable colour
+	LogLevel      string `env:"LOG_LEVEL"      envDefault:"INFO"`  // The logging level
+	Quiet         bool   `env:"QUIET_MODE"     envDefault:"false"` // Are we running inside tests and we should be quiet?
+	ConsoleWriter bool   `env:"CONSOLE_WRITER" envDefault:"false"` // If ConsoleWriter=true then key-value pair output
+	ConsoleColour bool   `env:"CONSOLE_COLOUR" envDefault:"false"` // If ConsoleWriter=true then enable/disable colour
 
 	TimeNow timeNowFunc // Defaults to "time.Now" but useful to set in tests
 }
 
 // NewLoggerConfig creates a new configuration based on environment variables
 // which can easily be reset before passing to NewLogger().
-func NewLoggerConfig() *Config {
-	appName := os.Getenv(AppNameEnv)
-	if appName == "" {
-		appName = os.Getenv(AppNameLeagcyEnv)
+func NewLoggerConfig() (*Config, error) {
+	c := Config{
+		TimeNow: time.Now,
 	}
-
-	appVersion := os.Getenv(AppVerEnv)
-	if appVersion == "" {
-		appVersion = AppVerDefault
-	}
-
-	awsRegion := os.Getenv(AwsRegionEnv)
-	product := os.Getenv(ProductEnv)
-
-	awsAccountID := os.Getenv(AwsAccountIDEnv)
-	if awsAccountID == "" {
-		awsAccountID = AwsAccountIDDefault
-	}
-
-	farm := os.Getenv(AppFarmEnv)
-	if farm == "" {
-		farm = os.Getenv(AppFarmLegacyEnv)
-		if farm == "" {
-			farm = AppFarmDefault
-		}
-	}
-
-	logLevel := os.Getenv(LogLevelEnv)
-	if logLevel == "" {
-		logLevel = LogLevelDefault
-	}
-
-	quiet := getEnvBool(LogQuietModeEnv, false)
-	consoleWriter := getEnvBool(LogConsoleWriterEnv, false)
-	consoleColour := getEnvBool(LogConsoleWriterEnv, false)
-
-	return &Config{
-		LogLevel:      logLevel,
-		AppName:       appName,
-		AppVersion:    appVersion,
-		AwsRegion:     awsRegion,
-		AwsAccountID:  awsAccountID,
-		Product:       product,
-		Farm:          farm,
-		Quiet:         quiet,
-		ConsoleWriter: consoleWriter,
-		ConsoleColour: consoleColour,
-		TimeNow:       time.Now,
-	}
+	err := senv.Parse(&c)
+	return &c, err
 }
 
 func (c *Config) isLocal() bool {
@@ -158,37 +115,4 @@ func (c *Config) formatTimestamp(i interface{}) string {
 		return "nil"
 	}
 	return timeString
-}
-
-// isValid returns nil if all the mandatory env_vars are correctly set,
-// otherwise an error indicating the issue.
-func (c *Config) isValid() error {
-	if c.AppName == "" {
-		return errors.Errorf("config.AppName is empty - missing APP or APP_NAME environment variable?")
-	}
-
-	if c.AwsRegion == "" {
-		return errors.Errorf("config.AwsRegion is empty - missing AWS_REGION environment variable?")
-	}
-
-	if c.Product == "" {
-		return errors.Errorf("config.Product is empty - missing PRODUCT environment variable?")
-	}
-
-	return nil
-}
-
-// GetBool gets the environment variable for 'key' if present, otherwise returns 'fallback'.
-func getEnvBool(key string, defaultValue bool) bool {
-	value, ok := os.LookupEnv(key)
-	if !ok {
-		return defaultValue
-	}
-
-	b, err := strconv.ParseBool(value)
-	if err != nil {
-		return defaultValue
-	}
-
-	return b
 }
