@@ -6,6 +6,7 @@ func redactString(s string) string {
 	const minChars = 10
 	const showChars = 10
 	const numStars = 10
+	const chunks = 4
 
 	l := len(s)
 	if l == 0 {
@@ -15,7 +16,7 @@ func redactString(s string) string {
 	var b strings.Builder
 	b.Grow(l)
 
-	aQuarter := l / 4
+	aQuarter := l / chunks
 	if aQuarter > showChars {
 		aQuarter = showChars
 	}

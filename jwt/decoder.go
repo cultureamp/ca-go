@@ -22,6 +22,7 @@ const (
 	jwksCacheKey                  = "decoder_jwks_key"
 	defaultDecoderExpiration      = 60 * time.Minute
 	defaultDecoderCleanupInterval = 1 * time.Minute
+	defaultDecoderLeeway          = 10 * time.Second
 )
 
 type publicKey interface{} // Only ECDSA (perferred) and RSA public keys allowed
@@ -94,9 +95,9 @@ func (d *JwtDecoder) DecodeWithCustomClaims(tokenString string, customClaims jwt
 		func(token *jwt.Token) (interface{}, error) {
 			return d.useCorrectPublicKey(token)
 		},
-		jwt.WithValidMethods(validAlgs), // only keys with these "alg's" will be considered
-		jwt.WithLeeway(10*time.Second),  // as per the JWT eng std: clock skew set to 10 seconds
-		// jwt.WithExpirationRequired(),	// add this if we want to enforce that tokens MUST have an expiry
+		jwt.WithValidMethods(validAlgs),      // only keys with these "alg's" will be considered
+		jwt.WithLeeway(defaultDecoderLeeway), // as per the JWT eng std: clock skew set to 10 seconds
+		// jwt.WithExpirationRequired(),	  // add this if we want to enforce that tokens MUST have an expiry
 	)
 	if err != nil || !token.Valid {
 		return err

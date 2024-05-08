@@ -6,12 +6,12 @@ run:
 linters:
   enable-all: true
   disable:
-    - execinquery
+    - execinquery # deprecated
     - exhaustive
     - exhaustruct
     - gochecknoglobals
-    - gomnd
-    - mnd
+    - gomnd # renamed to "mnd"
+    - mnd # need to turn this on one day...
     - nlreturn
     - revive # need to turn this on one day...
     - stylecheck # need to turn this on way day...
