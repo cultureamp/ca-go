@@ -21,7 +21,7 @@ type Logger interface {
 // For testing you can replace the DefaultLogger with your own mock:
 //
 // DefaultLogger = newmockLogger().
-var DefaultLogger Logger = nil
+var DefaultLogger Logger = nil //nolint:revive
 
 // Debug starts a new message with debug level.
 //

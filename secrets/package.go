@@ -11,7 +11,7 @@ type Secrets interface {
 }
 
 // DefaultAWSSecretsManager is a public *AWSSecretsManager used for package level methods.
-var DefaultAWSSecretsManager Secrets = nil
+var DefaultAWSSecretsManager Secrets = nil //nolint:revive
 
 // Get retrives the secret from AWS SecretsManager.
 func Get(ctx context.Context, secretKey string) (string, error) {

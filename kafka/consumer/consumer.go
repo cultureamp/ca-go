@@ -97,7 +97,7 @@ func NewConsumer(config Config, opts ...Option) *Consumer {
 		clientHandler: &messageHandler{
 			ConsumerID:   config.ID,
 			GroupID:      config.groupID,
-			clientNotify: func(ctx context.Context, err error, msg Message) {}, // default to noop
+			clientNotify: func(_ context.Context, _ error, _ Message) {}, // default to noop
 		},
 	}
 

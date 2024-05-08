@@ -9,8 +9,8 @@ import (
 
 // KMSCipher used for mock testing.
 type KMSCipher interface {
-	Encrypt(ctx context.Context, keyId string, plainStr string) (string, error)
-	Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error)
+	Encrypt(ctx context.Context, keyID string, plainStr string) (string, error)
+	Decrypt(ctx context.Context, keyID string, encryptedStr string) (string, error)
 }
 
 // DefaultKMSCipher is the package level default implementation used by all package level methods.
@@ -18,26 +18,26 @@ type KMSCipher interface {
 // For testing you can replace the DefaultKMSCipher client with your own mock:
 //
 //	DefaultKMSCipher = newMockedClient()
-var DefaultKMSCipher KMSCipher = nil
+var DefaultKMSCipher KMSCipher = nil //nolint:revive
 
 // Encrypt will use env var AWS_REGION and the KMS keyId to encrypt the plainStr and return it as a base64 encoded string.
-func Encrypt(ctx context.Context, keyId string, plainStr string) (string, error) {
+func Encrypt(ctx context.Context, keyID string, plainStr string) (string, error) {
 	err := mustHaveDefaultKMSCipher()
 	if err != nil {
 		return "", err
 	}
 
-	return DefaultKMSCipher.Encrypt(ctx, keyId, plainStr)
+	return DefaultKMSCipher.Encrypt(ctx, keyID, plainStr)
 }
 
 // Decrpyt will use env var AWS_REGION and the KMS keyId and the base64 encoded encryptedStr and return it decrypted as a plain string.
-func Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error) {
+func Decrypt(ctx context.Context, keyID string, encryptedStr string) (string, error) {
 	err := mustHaveDefaultKMSCipher()
 	if err != nil {
 		return "", err
 	}
 
-	return DefaultKMSCipher.Decrypt(ctx, keyId, encryptedStr)
+	return DefaultKMSCipher.Decrypt(ctx, keyID, encryptedStr)
 }
 
 func mustHaveDefaultKMSCipher() error {

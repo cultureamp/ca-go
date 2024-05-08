@@ -20,9 +20,9 @@ func NewKMSClient(region string, optFns ...func(*kms.Options)) *awsKMSClient {
 }
 
 // Encrypt will use the KMS keyId to encrypt the plainStr and return it as a base64 encoded string.
-func (c *awsKMSClient) Encrypt(ctx context.Context, keyId string, plainStr string) (string, error) {
+func (c *awsKMSClient) Encrypt(ctx context.Context, keyID string, plainStr string) (string, error) {
 	input := &kms.EncryptInput{
-		KeyId:     &keyId,
+		KeyId:     &keyID,
 		Plaintext: []byte(plainStr),
 	}
 
@@ -36,14 +36,14 @@ func (c *awsKMSClient) Encrypt(ctx context.Context, keyId string, plainStr strin
 }
 
 // Decrpyt will use the KMS keyId and the base64 encoded encryptedStr and return it decrypted as a plain string.
-func (c *awsKMSClient) Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error) {
+func (c *awsKMSClient) Decrypt(ctx context.Context, keyID string, encryptedStr string) (string, error) {
 	blob, err := b64.StdEncoding.DecodeString(encryptedStr)
 	if err != nil {
 		return "", errors.Errorf("failed to decode: %w", err)
 	}
 
 	input := &kms.DecryptInput{
-		KeyId:          &keyId,
+		KeyId:          &keyID,
 		CiphertextBlob: blob,
 	}
 

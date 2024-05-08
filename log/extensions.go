@@ -97,16 +97,16 @@ func (lf *Property) WithAuthorizationTracing(req *http.Request) *Property {
 		return lf
 	}
 
-	auth_token := req.Header.Get(AuthorizationHeader)
-	xca_auth_token := req.Header.Get(XCAServiceGatewayAuthorizationHeader)
-	user_agent := req.Header.Get(UserAgentHeader)
-	forward_for := req.Header.Get(XForwardedForHeader)
+	authToken := req.Header.Get(AuthorizationHeader)
+	xcaAuthToken := req.Header.Get(XCAServiceGatewayAuthorizationHeader)
+	userAgent := req.Header.Get(UserAgentHeader)
+	forwardFor := req.Header.Get(XForwardedForHeader)
 
 	return lf.doc("authorization", Add().
-		Str("authorization_token", redactString(auth_token)).
-		Str("xca_service_authorization_token", redactString(xca_auth_token)).
-		Str("user_agent", user_agent).
-		Str("x_forwarded_for", forward_for),
+		Str("authorization_token", redactString(authToken)).
+		Str("xca_service_authorization_token", redactString(xcaAuthToken)).
+		Str("user_agent", userAgent).
+		Str("x_forwarded_for", forwardFor),
 	)
 }
 

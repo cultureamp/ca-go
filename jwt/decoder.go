@@ -200,7 +200,7 @@ func (d *JwtDecoder) getCachedJWKSet() (jwk.Set, bool) {
 	return jwks, ok
 }
 
-func (decoder *JwtDecoder) parseJWKs(jwks string) (jwk.Set, error) {
+func (d *JwtDecoder) parseJWKs(jwks string) (jwk.Set, error) {
 	if jwks == "" {
 		// If no jwks json, then returm empty map
 		return nil, errors.Errorf("missing jwks")
