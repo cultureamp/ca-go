@@ -94,7 +94,7 @@ func DefaultOptions(options ...LoggerOption) {
 
 // FromContext returns the Logger associated with the ctx. If not logger
 // is associated, then a new logger is created and added to the context.
-func FromContext(ctx context.Context) (context.Context, Logger, error) {
+func FromContext(ctx context.Context) (context.Context, Logger, error) { //nolint:ireturn
 	if l, ok := ctx.Value(ctxLoggerKey{}).(Logger); ok {
 		return ctx, l, nil
 	}
