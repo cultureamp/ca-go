@@ -18,8 +18,6 @@ These packages are stable and there use is actively encouraged.
 - `cipher`: easy access to kms Encrypt/Decrpyt. See [cipher](cipher/README.md) for further details.
 - `env`: easy access to common environment settings. See [env](env/README.md) for further details.
 - `jwt`: encode and decode the Culture Amp authentication payload. See [jwt](jwt/README.md) for further details.
-- `kafka`: simplified implementation of kafka consumer and consumer group to make kafka in go projects easier.
-See [consumer](kafka/consumer/CONSUMER.MD) for further details.
 - `launchdarkly`: eases the implementation and usage of LaunchDarkly for feature flags, encapsulating usage patterns in
 Culture Amp.See [launchdarkly](launchdarkly/LAUNCHDARKLY.md) for further details.
 - `log`: easy and simple logging that confirms to the logging engineer standard.
@@ -31,6 +29,11 @@ See [secrets](secrets/README.md) for further details.
 - `sentry`: eases the implementation and usage of Sentry for error reporting.
 See [sentry](sentry/SENTRY.md) for further details.
 
+### Deprecating packages
+
+These packages are going to be changed in the near future.
+
+- `kafka`: simplified implementation of kafka consumer and consumer group using segment-io to make kafka in go projects easier. Future change is to move to Sarama. See [consumer](kafka/consumer/CONSUMER.MD) for further details.
 
 ## Contributing
 
