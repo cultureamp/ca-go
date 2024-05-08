@@ -3,11 +3,6 @@ package log
 import (
 	"context"
 	"net/http"
-	"os"
-	"path/filepath"
-	"runtime"
-	"runtime/debug"
-	"strconv"
 
 	"github.com/aws/aws-xray-sdk-go/xray"
 
@@ -45,15 +40,8 @@ func (lf *Property) WithRequestTracing(req *http.Request) *Property {
 		return lf
 	}
 
-	traceID := req.Header.Get(TraceIDHeader)
-	requestID := req.Header.Get(RequestIDHeader)
-	correlationID := req.Header.Get(CorrelationIDHeader)
-
-	return lf.doc("tracing", Add().
-		Str("trace_id", traceID).
-		Str("request_id", requestID).
-		Str("correlation_id", correlationID),
-	)
+	props := requestTracingFields(req)
+	return lf.doc("tracing", props)
 }
 
 // WithRequestDiagnostics adds a "request" subdocument to the log that
@@ -63,17 +51,8 @@ func (lf *Property) WithRequestDiagnostics(req *http.Request) *Property {
 		return lf
 	}
 
-	url := req.URL
-
-	return lf.doc("request", Add().
-		Str("method", req.Method).
-		Str("proto", req.Proto).
-		Str("host", req.Host).
-		Str("scheme", url.Scheme).
-		Str("path", url.Path).
-		Str("query", url.RawQuery).
-		Str("fragment", url.Fragment),
-	)
+	props := requestDiagnosticsFields(req)
+	return lf.doc("request", props)
 }
 
 // WithAuthenticatedUserTracing adds an "authentication" subdocument to the log that
@@ -83,11 +62,8 @@ func (lf *Property) WithAuthenticatedUserTracing(auth *AuthPayload) *Property {
 		return lf
 	}
 
-	return lf.doc("authentication", Add().
-		Str("account_id", auth.CustomerAccountID).
-		Str("realuser_id", auth.RealUserID).
-		Str("user_id", auth.UserID),
-	)
+	props := authenticatedUserTracingFields(auth)
+	return lf.doc("authentication", props)
 }
 
 // WithAuthorizationTracing adds an "authorization" subdocument to the log that
@@ -97,17 +73,8 @@ func (lf *Property) WithAuthorizationTracing(req *http.Request) *Property {
 		return lf
 	}
 
-	authToken := req.Header.Get(AuthorizationHeader)
-	xcaAuthToken := req.Header.Get(XCAServiceGatewayAuthorizationHeader)
-	userAgent := req.Header.Get(UserAgentHeader)
-	forwardFor := req.Header.Get(XForwardedForHeader)
-
-	return lf.doc("authorization", Add().
-		Str("authorization_token", redactString(authToken)).
-		Str("xca_service_authorization_token", redactString(xcaAuthToken)).
-		Str("user_agent", userAgent).
-		Str("x_forwarded_for", forwardFor),
-	)
+	props := authorizationTracingFields(req)
+	return lf.doc("authorization", props)
 }
 
 // WithDatadogTracing adds a "datadog" subdocument to the log that
@@ -138,20 +105,6 @@ func (lf *Property) WithDatadogTracing(ctx context.Context) *Property {
 // WithSystemTracing adds a "system" subdocument to the log that
 // includes important host, runtime, cpu and loc fields.
 func (lf *Property) WithSystemTracing() *Property {
-	host, _ := os.Hostname()
-	_, path, line, ok := runtime.Caller(1)
-	file := "unknown"
-	if ok {
-		file = filepath.Base(path)
-	}
-	buildInfo, _ := debug.ReadBuildInfo()
-
-	return lf.doc("system", Add().
-		Str("os", runtime.GOOS).
-		Int("num_cpu", runtime.NumCPU()).
-		Str("host", host).
-		Int("pid", os.Getpid()).
-		Str("go_version", buildInfo.GoVersion).
-		Str("loc", file+":"+strconv.Itoa(line)),
-	)
+	props := systemTracingFields()
+	return lf.doc("system", props)
 }
