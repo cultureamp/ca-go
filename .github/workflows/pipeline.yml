@@ -8,7 +8,7 @@ on:
 
 env:
   GO_VERSION: 1.22
-  GOTOOLCHAIN: go1.22.2
+  GOTOOLCHAIN: go1.22.3
 
 jobs:
   go-setup:
@@ -129,7 +129,7 @@ jobs:
           hide_complexity: true
           indicators: true
           output: both
-          thresholds: '60 80'
+          thresholds: "60 80"
 
       - name: Add Coverage PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
