@@ -92,5 +92,5 @@ func setGlobalLogger() {
 	zerolog.MessageFieldName = "details"
 	zerolog.LevelFieldName = "severity"
 	zerolog.DurationFieldInteger = true
-	zerolog.ErrorStackMarshaler = logStackTracer
+	zerolog.ErrorStackMarshaler = logStackTracer //nolint:reassign
 }
