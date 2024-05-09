@@ -13,6 +13,13 @@ import (
 	kafkatrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/segmentio/kafka.go.v0"
 )
 
+const (
+	consumerMinBytes      = 1e6  // 1 MB
+	consumerMaxBytes      = 10e6 // 10 MB
+	consumerMaxWait       = 250 * time.Millisecond
+	consumerQueueCapacity = 100
+)
+
 // Metadata contains relevant handler metadata for received Kafka messages.
 type Metadata struct {
 	GroupID    string
@@ -68,17 +75,17 @@ func NewConsumer(config Config, opts ...Option) *Consumer {
 	if config.ID == "" {
 		config.ID = uuid.New().String()
 	}
-	if config.MaxBytes == 0 {
-		config.MaxBytes = 1e6 // 1 MB
+	if config.MinBytes == 0 {
+		config.MinBytes = consumerMinBytes // 1 MB
 	}
 	if config.MaxBytes == 0 {
-		config.MaxBytes = 10e6 // 10 MB
+		config.MaxBytes = consumerMaxBytes // 10 MB
 	}
 	if config.MaxWait == 0 {
-		config.MaxWait = 250 * time.Millisecond
+		config.MaxWait = consumerMaxWait // 250ms
 	}
 	if config.QueueCapacity < 1 {
-		config.QueueCapacity = 100
+		config.QueueCapacity = consumerQueueCapacity // 100
 	}
 
 	c := &Consumer{
@@ -97,7 +104,7 @@ func NewConsumer(config Config, opts ...Option) *Consumer {
 		clientHandler: &messageHandler{
 			ConsumerID:   config.ID,
 			GroupID:      config.groupID,
-			clientNotify: func(ctx context.Context, err error, msg Message) {}, // default to noop
+			clientNotify: func(_ context.Context, _ error, _ Message) {}, // default to noop
 		},
 	}
 

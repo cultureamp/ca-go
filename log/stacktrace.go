@@ -7,6 +7,10 @@ import (
 	"github.com/go-errors/errors"
 )
 
+const (
+	defaultSkipStackTrace = 5
+)
+
 // logStackTracer implements the zerolog.ErrorStackMarshaler func signature.
 func logStackTracer(err error) interface{} {
 	return stackTracer(err)
@@ -20,7 +24,7 @@ func stackTracer(err error) string {
 	}
 
 	// Otherwise we just get the current stack trace (minus the ca-go calls)
-	return currentStack(5)
+	return currentStack(defaultSkipStackTrace)
 }
 
 func currentStack(skip int) string {

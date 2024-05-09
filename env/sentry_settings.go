@@ -14,8 +14,8 @@ type SentrySettings interface {
 // sentrySettings that drive behavior.
 type sentrySettings struct {
 	// These have to be public so that "github.com/caarlos0/env/v10" can populate them
-	Sentry_DSN       string `env:"SENTRY_DSN"`
-	Sentry_FlushInMs int    `env:"SENTRY_FLUSH_TIMEOUT_IN_MS" envDefault:"100"`
+	SentryDSNEnv       string `env:"SENTRY_DSN"`
+	SentryFlushInMsEnv int    `env:"SENTRY_FLUSH_TIMEOUT_IN_MS" envDefault:"100"`
 }
 
 func newSentrySettings() *sentrySettings {
@@ -29,11 +29,11 @@ func newSentrySettings() *sentrySettings {
 
 // SentryDSN returns the "SENTRY_DSN" environment variable.
 func (s *sentrySettings) SentryDSN() string {
-	return s.Sentry_DSN
+	return s.SentryDSNEnv
 }
 
 // SentryFlushTimeoutInMs returns the "SENTRY_FLUSH_TIMEOUT_IN_MS" environment variable.
 // Default: 100.
 func (s *sentrySettings) SentryFlushTimeoutInMs() int {
-	return s.Sentry_FlushInMs
+	return s.SentryFlushInMsEnv
 }

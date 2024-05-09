@@ -16,6 +16,14 @@ import (
 	"github.com/segmentio/kafka-go/sasl/scram"
 )
 
+const (
+	defaultDialerTimeout              = 10 * time.Second
+	defaultBackoffRandomizationFactor = 0
+	defaultBackoffMaxInterval         = 5 * time.Hour
+	defaultBackoffMultiplier          = 8
+	defaultBackoffMaxElapsedTime      = 0
+)
+
 // GroupConfig is a configuration object used to create a new Group. The default
 // consumer count in a group is 1 unless specified otherwise.
 type GroupConfig struct {
@@ -65,7 +73,7 @@ func (g *Group) Run(ctx context.Context, handler Handler) <-chan error {
 	var wg sync.WaitGroup
 	errCh := make(chan error, g.config.Count)
 
-	for i := 0; i < g.config.Count; i++ {
+	for i := range g.config.Count {
 		wg.Add(1)
 
 		// Consumers must be created and run in sequential order so that Kafka can
@@ -119,7 +127,7 @@ func DialerSCRAM512(username string, password string) (*kafka.Dialer, error) {
 	}
 
 	return &kafka.Dialer{
-		Timeout:       10 * time.Second,
+		Timeout:       defaultDialerTimeout,
 		DualStack:     true,
 		SASLMechanism: mechanism,
 		TLS:           &tls.Config{MinVersion: tls.VersionTLS12},
@@ -139,9 +147,9 @@ type HandlerRetryBackOffConstructor func() backoff.BackOff
 // intervention if necessary.
 func NonStopExponentialBackOff() backoff.BackOff { //nolint:ireturn
 	bo := backoff.NewExponentialBackOff()
-	bo.RandomizationFactor = 0
-	bo.MaxInterval = 5 * time.Hour
-	bo.Multiplier = 8
-	bo.MaxElapsedTime = 0
+	bo.RandomizationFactor = defaultBackoffRandomizationFactor
+	bo.MaxInterval = defaultBackoffMaxInterval
+	bo.Multiplier = defaultBackoffMultiplier
+	bo.MaxElapsedTime = defaultBackoffMaxElapsedTime
 	return bo
 }

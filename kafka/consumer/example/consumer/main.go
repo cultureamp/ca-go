@@ -29,7 +29,7 @@ func main() {
 	}
 }
 
-func handle(ctx context.Context, msg consumer.Message) error {
+func handle(_ context.Context, msg consumer.Message) error {
 	log.Printf("message at consumer: %s topic:%v partition:%v offset:%v	%s = %s\n",
 		msg.Metadata.ConsumerID, msg.Topic, msg.Partition, msg.Offset, string(msg.Key), string(msg.Value),
 	)

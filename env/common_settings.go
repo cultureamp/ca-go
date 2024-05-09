@@ -20,11 +20,11 @@ type CommonSettings interface {
 // commonSettings that drive behavior used by at least 90% of apps.
 type commonSettings struct {
 	// These have to be public so that "github.com/caarlos0/env/v10" can populate them
-	App_Name      string `env:"APP"         envDefault:"<unknown>"`
-	App_Version   string `env:"APP_VERSION" envDefault:"1.0.0"`
-	App_Env       string `env:"APP_ENV"     envDefault:"development"`
-	Farm_Name     string `env:"FARM"        envDefault:"local"`
-	Product_Suite string `env:"PRODUCT"     envDefault:"<unknown>"`
+	AppNameEnv      string `env:"APP"         envDefault:"<unknown>"`
+	AppVersionEnv   string `env:"APP_VERSION" envDefault:"1.0.0"`
+	AppTypeEnv      string `env:"APP_ENV"     envDefault:"development"`
+	FarmNameEnv     string `env:"FARM"        envDefault:"local"`
+	ProductSuiteEnv string `env:"PRODUCT"     envDefault:"<unknown>"`
 }
 
 func newCommonSettings() *commonSettings {
@@ -38,36 +38,36 @@ func newCommonSettings() *commonSettings {
 
 // GetAppName returns the application name from the "APP" environment variable.
 func (s *commonSettings) AppName() string {
-	return s.App_Name
+	return s.AppNameEnv
 }
 
 // tAppVersion returns the application version from the "APP_VER" environment variable.
 // Default: "1.0.0".
 func (s *commonSettings) AppVersion() string {
-	return s.App_Version
+	return s.AppVersionEnv
 }
 
 // AppEnv returns the application environment from the "APP_ENV" environment variable.
 // Examples: "development", "production".
 func (s *commonSettings) AppEnv() string {
-	return s.App_Env
+	return s.AppTypeEnv
 }
 
 // Farm returns the farm running the application from the "FARM" environment variable.
 // Examples: "local", "dolly", "production".
 func (s *commonSettings) Farm() string {
-	return s.Farm_Name
+	return s.FarmNameEnv
 }
 
 // ProductSuite returns the product suite this application belongs to from the "PRODUCT" environment variable.
 // Examples: "engagement", "performance".
 func (s *commonSettings) ProductSuite() string {
-	return s.Product_Suite
+	return s.ProductSuiteEnv
 }
 
 // IsProduction returns true if "APP_ENV" == "production".
 func (s *commonSettings) IsProduction() bool {
-	return s.App_Env == "production"
+	return s.AppTypeEnv == "production"
 }
 
 // IsRunningInAWS returns true if "APP_ENV" != "local".
@@ -77,5 +77,5 @@ func (s *commonSettings) IsRunningInAWS() bool {
 
 // IsRunningLocal returns true if FARM" == "local".
 func (s *commonSettings) IsRunningLocal() bool {
-	return s.Farm_Name == "local"
+	return s.FarmNameEnv == "local"
 }
