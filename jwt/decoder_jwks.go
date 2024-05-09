@@ -29,7 +29,7 @@ func newJWKSet(dispatcher DecoderJwksRetriever, expiresWithin time.Duration, rot
 	}
 }
 
-func (c *jwkSet) get() (jwk.Set, error) {
+func (c *jwkSet) get() (jwk.Set, error) { //nolint:ireturn
 	if !c.expired() {
 		// we have jwks and it hasn't expired yet, so all good!
 		return c.jwks, nil
@@ -38,7 +38,7 @@ func (c *jwkSet) get() (jwk.Set, error) {
 	return c.fetch()
 }
 
-func (c *jwkSet) refresh() (jwk.Set, error) {
+func (c *jwkSet) refresh() (jwk.Set, error) { //nolint:ireturn
 	if !c.canRefresh() {
 		// we can't refresh (ie. get new jwks yet)
 		return c.jwks, nil
@@ -72,7 +72,7 @@ func (c *jwkSet) canRefresh() bool {
 	return freshness > c.rotationWindow
 }
 
-func (c *jwkSet) fetch() (jwk.Set, error) {
+func (c *jwkSet) fetch() (jwk.Set, error) { //nolint:ireturn
 	// Only allow one thread to update the jwks
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -92,7 +92,7 @@ func (c *jwkSet) fetch() (jwk.Set, error) {
 	return c.jwks, nil
 }
 
-func (c *jwkSet) parse(jwks string) (jwk.Set, error) {
+func (c *jwkSet) parse(jwks string) (jwk.Set, error) { //nolint:ireturn
 	if jwks == "" {
 		// If no jwks json, then returm empty map
 		return nil, errors.Errorf("missing jwks")

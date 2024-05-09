@@ -132,7 +132,7 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) { 
 }
 
 // lookupKeyID returns the public key in the JWKS that matches the "kid".
-func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) {
+func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) { //nolint:ireturn
 	// check cache and possibly fetch new JWKS if cache has expired
 	jwkSet, err := d.jwks.get()
 	if err != nil {
@@ -168,7 +168,7 @@ func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) {
 	return nil, errors.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)
 }
 
-func (d *JwtDecoder) getPublicKey(key jwk.Key) (publicKey, error) {
+func (d *JwtDecoder) getPublicKey(key jwk.Key) (publicKey, error) { //nolint:ireturn
 	var rawkey interface{}
 	err := key.Raw(&rawkey)
 	if err != nil {
