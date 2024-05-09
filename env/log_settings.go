@@ -13,7 +13,7 @@ type LogSettings interface {
 // logSettings that drive behavior.
 type logSettings struct {
 	// These have to be public so that "github.com/caarlos0/env/v10" can populate them
-	Log_Level string `env:"LOG_LEVEL" envDefault:"INFO"`
+	LogLevelEnv string `env:"LOG_LEVEL" envDefault:"INFO"`
 }
 
 func newLogSettings() *logSettings {
@@ -28,5 +28,5 @@ func newLogSettings() *logSettings {
 // LogLevel returns the "LOG_LEVEL" environment variable.
 // Examples: "DEBUG, "INFO", "WARN", "ERROR".
 func (s *logSettings) LogLevel() string {
-	return s.Log_Level
+	return s.LogLevelEnv
 }

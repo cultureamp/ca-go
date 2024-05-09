@@ -22,10 +22,10 @@ type Decoder interface {
 var (
 	// DefaultJwtEncoder used to package level methods.
 	// This can be mocked during tests if required by supporting the Encoder interface.
-	DefaultJwtEncoder Encoder = nil
+	DefaultJwtEncoder Encoder = nil //nolint:revive
 	// DefaultJwtDecoder used for package level methods.
 	// This can be mocked during tests if required by supporting the Decoder interface.
-	DefaultJwtDecoder Decoder = nil
+	DefaultJwtDecoder Decoder = nil //nolint:revive
 )
 
 // Decode a jwt token string and return the Standard Culture Amp Claims.
@@ -71,7 +71,7 @@ func mustHaveDefaultJwtDecoder() error {
 
 	decoder, err := NewJwtDecoder(func() string { return os.Getenv("AUTH_PUBLIC_JWK_KEYS") })
 	if err != nil {
-		return errors.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'\n", err)
+		return errors.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'", err)
 	}
 
 	DefaultJwtDecoder = decoder
@@ -85,11 +85,11 @@ func mustHaveDefaultJwtEncoder() error {
 
 	encoder, err := NewJwtEncoder(func() (string, string) {
 		privKey := os.Getenv("AUTH_PRIVATE_KEY")
-		keyId := os.Getenv("AUTH_PRIVATE_KEY_ID")
-		return privKey, keyId
+		keyID := os.Getenv("AUTH_PRIVATE_KEY_ID")
+		return privKey, keyID
 	})
 	if err != nil {
-		return errors.Errorf("error loading jwk encoder, maybe missing env vars: err='%w'\n", err)
+		return errors.Errorf("error loading jwk encoder, maybe missing env vars: err='%w'", err)
 	}
 
 	DefaultJwtEncoder = encoder

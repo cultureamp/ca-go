@@ -10,7 +10,7 @@ type timestampHook struct {
 }
 
 // Run implemented the Hook interface.
-func (t *timestampHook) Run(e *zerolog.Event, level zerolog.Level, message string) {
+func (t *timestampHook) Run(e *zerolog.Event, _ zerolog.Level, _ string) {
 	// Uses zerolog.TimeFieldFormat which we set to time.RFC3339
 	e.Time(zerolog.TimestampFieldName, t.config.TimeNow())
 }
