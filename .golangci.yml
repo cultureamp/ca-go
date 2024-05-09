@@ -23,7 +23,7 @@ linters:
     - errchkjson
     - errname
     - errorlint
-    - execinquery
+    #    - execinquery
     #    - exhaustive
     #    - exhaustruct
     - exportloopref
@@ -175,7 +175,6 @@ linters-settings:
           - pkg: "github.com/kelseyhightower/envconfig"
             desc: not allowed, instead use github.com/caarlos0/env/v11 for environment to struct
 
-
   tagliatelle:
     # Check the struct tag name case.
     case:
@@ -234,7 +233,6 @@ issues:
     - kafkatest
 
   exclude-rules:
-
     # exluded rules from standard packages for reasons...
     - path: log/logger.go
       linters:

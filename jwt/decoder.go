@@ -3,7 +3,6 @@ package jwt
 import (
 	"crypto/ecdsa"
 	"crypto/rsa"
-	"sync"
 	"time"
 
 	"github.com/go-errors/errors"
@@ -29,19 +28,16 @@ type DecoderJwksRetriever func() string
 
 // JwtDecoder can decode a jwt token string.
 type JwtDecoder struct {
-	fetchJwkKeys   DecoderJwksRetriever // func provided by clients of this library to supply a refreshed JWKS
+	dispatcher     DecoderJwksRetriever // func provided by clients of this library to supply the current JWKS
 	expiresWithin  time.Duration        // default is 60 minutes
 	rotationWindow time.Duration        // default is 30 seconds
-
-	mu          sync.Mutex // mutex to protect race conditions on jwks and jwksAddedAt
-	jwks        jwk.Set    // the current JWK Set of jwt public keys
-	jwksAddedAt time.Time  // the time when we fetched these keys (so we can refresh)
+	jwks           *jwkSet
 }
 
 // NewJwtDecoder creates a new JwtDecoder with the set ECDSA and RSA public keys in the JWK string.
 func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) (*JwtDecoder, error) {
 	decoder := &JwtDecoder{
-		fetchJwkKeys:   fetchJWKS,
+		dispatcher:     fetchJWKS,
 		jwks:           nil,
 		expiresWithin:  defaultDecoderExpiration,
 		rotationWindow: defaultDecoderRotationDuration,
@@ -52,8 +48,10 @@ func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) 
 		option(decoder)
 	}
 
-	// call the getJWKS func to make sure its valid and we can parse the JWKS
-	_, err := decoder.getCurrentJWKs()
+	decoder.jwks = newJWKSet(fetchJWKS, decoder.expiresWithin, decoder.rotationWindow)
+
+	// call the get to make sure its valid and we can parse the JWKS
+	_, err := decoder.jwks.get()
 	if err != nil {
 		return nil, errors.Errorf("failed to load jwks: %w", err)
 	}
@@ -130,88 +128,44 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	}
 
 	// check if kid exists in the JWK Set
-	key, err := d.lookupKeyID(kid)
-	if err != nil {
-		// if the JWKS is at least d.rotationWindow (default is 30 seconds) old
-		if d.safeRefreshJWKs() {
-			// then its safe to refresh the JWKS to check if a new key has been added/rotated
-			key, err = d.lookupKeyID(kid)
-		}
-	}
-
-	return key, err
+	return d.lookupKeyID(kid)
 }
 
 // lookupKeyID returns the public key in the JWKS that matches the "kid".
 func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) {
 	// check cache and possibly fetch new JWKS if cache has expired
-	jwkSet, err := d.getCurrentJWKs()
+	jwkSet, err := d.jwks.get()
 	if err != nil {
 		return nil, errors.Errorf("failed to load jwks: %w", err)
 	}
 
+	// set if the kid exists in the set
 	key, found := jwkSet.LookupKeyID(kid)
 	if found {
-		// Found a match, so use this key
+		// Found a match, so use this key!
 		return d.getPublicKey(key)
 	}
+
+	// If the jwks aren't "fresh" and we are being asked for a kid we don't have
+	// then get a new jwks and try again. This can occur when a new key has been
+	// added or rotated and we haven't got the latest copy.
+	// The "canRefresh" check is important here, as for bad kid's we don't want
+	// blast the client (which in turn might blast Secrets Manager or FushionAuth)
+	// with a huge number of requests over and over again.
+	if d.jwks.canRefresh() {
+		jwkSet, err := d.jwks.refresh()
+		if err != nil {
+			return nil, errors.Errorf("failed to load jwks: %w", err)
+		}
+
+		key, found := jwkSet.LookupKeyID(kid)
+		if found {
+			// Found a match, so use this key
+			return d.getPublicKey(key)
+		}
+	}
+
 	return nil, errors.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)
-}
-
-// safeRefreshJWKs is ONLY called when a "kid" is missing from the JWK Set.
-// The purpose of this method is to remove the JWK Set IF it is older than 30 secs.
-func (d *JwtDecoder) safeRefreshJWKs() bool {
-	// Only allow one thread to update the jwks
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	freshness := time.Since(d.jwksAddedAt)
-	if freshness > d.rotationWindow {
-		// only rotate keys if we haven't updated in the last 30 secs to stop a bunch of requests heading to
-		// FushionAuth if key is missing
-		d.jwks = nil
-		return true
-	}
-
-	return false
-}
-
-// getCurrentJWKs will check if the JWKS have expired.
-// If not, then it returns it.
-// Otherwise, it re-fetches, parses, and updates the decoder.
-func (d *JwtDecoder) getCurrentJWKs() (jwk.Set, error) {
-	// Only allow one thread to update the jwks
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	if d.jwks != nil && time.Now().Before(d.jwksAddedAt.Add(d.expiresWithin)) {
-		// we have jwks and it hasn't expired yet, so all good!
-		return d.jwks, nil
-	}
-
-	// Call client retriever func
-	jwkKeys := d.fetchJwkKeys()
-
-	// Parse all new JWKs JSON keys and make sure its valid
-	jwkSet, err := d.parseJWKs(jwkKeys)
-	if err != nil {
-		return nil, err
-	}
-
-	// update with latest values
-	d.jwksAddedAt = time.Now()
-	d.jwks = jwkSet
-	return d.jwks, nil
-}
-
-func (decoder *JwtDecoder) parseJWKs(jwks string) (jwk.Set, error) {
-	if jwks == "" {
-		// If no jwks json, then returm empty map
-		return nil, errors.Errorf("missing jwks")
-	}
-
-	// 1. Parse the jwks JSON string to an iterable set
-	return jwk.ParseString(jwks)
 }
 
 func (d *JwtDecoder) getPublicKey(key jwk.Key) (publicKey, error) {
