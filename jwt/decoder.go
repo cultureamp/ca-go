@@ -31,7 +31,7 @@ type JwtDecoder struct {
 	dispatcher     DecoderJwksRetriever // func provided by clients of this library to supply the current JWKS
 	expiresWithin  time.Duration        // default is 60 minutes
 	rotationWindow time.Duration        // default is 30 seconds
-	jwks           *jwkSet
+	jwks           *jwkFetcher          // manages the life cycle of a JWK Set
 }
 
 // NewJwtDecoder creates a new JwtDecoder with the set ECDSA and RSA public keys in the JWK string.
@@ -146,18 +146,23 @@ func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) {
 		return d.getPublicKey(key)
 	}
 
+	return d.tryRefreshedLookupKeyID(kid)
+}
+
+func (d *JwtDecoder) tryRefreshedLookupKeyID(kid string) (publicKey, error) {
 	// If the jwks aren't "fresh" and we are being asked for a kid we don't have
 	// then get a new jwks and try again. This can occur when a new key has been
 	// added or rotated and we haven't got the latest copy.
 	// The "canRefresh" check is important here, as for bad kid's we don't want
 	// blast the client (which in turn might blast Secrets Manager or FushionAuth)
 	// with a huge number of requests over and over again.
-	jwkSet, err = d.jwks.Refresh()
+	jwkSet, err := d.jwks.Refresh()
 	if err != nil {
-		return nil, errors.Errorf("failed to refresh jwks: %w", err)
+		// we didn't refresh, or we did but we failed to parse it
+		return nil, errors.Errorf("failed to decode: no matching key_id (kid) header for: %s. err: %w", kid, err)
 	}
 
-	key, found = jwkSet.LookupKeyID(kid)
+	key, found := jwkSet.LookupKeyID(kid)
 	if found {
 		// Found a match, so use this key
 		return d.getPublicKey(key)

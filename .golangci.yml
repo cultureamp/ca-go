@@ -193,6 +193,10 @@ issues:
       linters:
         - ireturn
 
+    - path: jwt/decoder_jwks.go
+      linters:
+        - ireturn
+
     - path: sentry/*
       linters:
         - lll

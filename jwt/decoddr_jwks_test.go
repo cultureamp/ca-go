@@ -34,15 +34,18 @@ func TestJwkSet(t *testing.T) {
 	assert.Equal(t, 1, count)
 
 	// 3. check refresh returns the current set
-	_, err = jwk.Refresh()
-	assert.Nil(t, err)
+	set, err = jwk.Refresh()
+	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "failed to refresh jwks as just recently updated")
+	assert.NotNil(t, set)
 	assert.Equal(t, 1, count)
 
+	// Now wait so that the refresh window is reached
 	time.Sleep(100 * time.Millisecond)
 
 	// 4. check refresh returns new set
-	newJwks, err := jwk.Refresh()
+	set, err = jwk.Refresh()
 	assert.Nil(t, err)
-	assert.NotNil(t, newJwks)
+	assert.NotNil(t, set)
 	assert.Equal(t, 2, count)
 }

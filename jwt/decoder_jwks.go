@@ -8,8 +8,8 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwk"
 )
 
-// jwkSet manages the life-cycle of a jwk.Set().
-type jwkSet struct {
+// jwkFetcher manages the life-cycle of a jwk.Set().
+type jwkFetcher struct {
 	dispatcher     DecoderJwksRetriever // func provided by clients of this library to supply a refreshed JWKS
 	expiresWithin  time.Duration
 	rotationWindow time.Duration
@@ -20,8 +20,8 @@ type jwkSet struct {
 }
 
 // newJWKSet creates a new jwkSet.
-func newJWKSet(dispatcher DecoderJwksRetriever, expiresWithin time.Duration, rotationWindow time.Duration) *jwkSet {
-	return &jwkSet{
+func newJWKSet(dispatcher DecoderJwksRetriever, expiresWithin time.Duration, rotationWindow time.Duration) *jwkFetcher {
+	return &jwkFetcher{
 		dispatcher:     dispatcher,
 		expiresWithin:  expiresWithin,
 		rotationWindow: rotationWindow,
@@ -29,73 +29,73 @@ func newJWKSet(dispatcher DecoderJwksRetriever, expiresWithin time.Duration, rot
 	}
 }
 
-func (c *jwkSet) Get() (jwk.Set, error) { //nolint:ireturn
-	if !c.expired() {
+func (f *jwkFetcher) Get() (jwk.Set, error) {
+	if !f.expired() {
 		// we have jwks and it hasn't expired yet, so all good!
-		return c.jwks, nil
+		return f.jwks, nil
 	}
 
-	jwks, err := c.fetch()
+	jwks, err := f.fetch()
 	if err != nil {
-		return c.jwks, err
+		return f.jwks, err
 	}
 
-	c.jwksAddedAt = time.Now()
-	c.jwks = jwks
+	f.jwksAddedAt = time.Now()
+	f.jwks = jwks
 	return jwks, nil
 }
 
-func (c *jwkSet) Refresh() (jwk.Set, error) { //nolint:ireturn
-	if !c.canRefresh() {
-		// we can't refresh (ie. get new jwks yet)
-		return c.jwks, nil
+func (f *jwkFetcher) Refresh() (jwk.Set, error) {
+	if !f.canRefresh() {
+		// we can't refresh (ie. get new jwks yet) as we just updated recently
+		return f.jwks, errors.Errorf("failed to refresh jwks as just recently updated")
 	}
 
-	jwks, err := c.fetch()
+	jwks, err := f.fetch()
 	if err != nil {
-		return c.jwks, err
+		return f.jwks, err
 	}
 
-	c.jwksAddedAt = time.Now()
-	c.jwks = jwks
+	f.jwksAddedAt = time.Now()
+	f.jwks = jwks
 	return jwks, nil
 }
 
-func (c *jwkSet) expired() bool {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+func (f *jwkFetcher) expired() bool {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
 
-	if c.jwks == nil {
+	if f.jwks == nil {
 		return true
 	}
 
 	now := time.Now()
-	expiresAt := c.jwksAddedAt.Add(c.expiresWithin)
+	expiresAt := f.jwksAddedAt.Add(f.expiresWithin)
 	return now.After(expiresAt)
 }
 
-func (c *jwkSet) canRefresh() bool {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+func (f *jwkFetcher) canRefresh() bool {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
 
-	if c.jwks == nil {
+	if f.jwks == nil {
 		return true
 	}
 
-	freshness := time.Since(c.jwksAddedAt)
-	return freshness > c.rotationWindow
+	freshness := time.Since(f.jwksAddedAt)
+	return freshness > f.rotationWindow
 }
 
-func (c *jwkSet) fetch() (jwk.Set, error) { //nolint:ireturn
+func (f *jwkFetcher) fetch() (jwk.Set, error) {
 	// Only allow one thread to update the jwks
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	f.mu.Lock()
+	defer f.mu.Unlock()
 
 	// Call client retriever func
-	jwkKeys := c.dispatcher()
+	jwkKeys := f.dispatcher()
 
 	// Parse all new JWKs JSON keys and make sure its valid
-	jwkSet, err := c.parse(jwkKeys)
+	jwkSet, err := f.parse(jwkKeys)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (c *jwkSet) fetch() (jwk.Set, error) { //nolint:ireturn
 	return jwkSet, nil
 }
 
-func (c *jwkSet) parse(jwks string) (jwk.Set, error) { //nolint:ireturn
+func (f *jwkFetcher) parse(jwks string) (jwk.Set, error) {
 	if jwks == "" {
 		// If no jwks json, then returm empty map
 		return nil, errors.Errorf("missing jwks")
