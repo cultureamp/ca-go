@@ -189,6 +189,10 @@ issues:
         - lll
         - tagliatelle
 
+    - path: jwt/decoder.go
+      linters:
+        - ireturn
+
     - path: sentry/*
       linters:
         - lll

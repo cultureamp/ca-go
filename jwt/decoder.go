@@ -102,7 +102,7 @@ func (d *JwtDecoder) DecodeWithCustomClaims(tokenString string, customClaims jwt
 	return nil
 }
 
-func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) { //nolint:ireturn
+func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	if token == nil {
 		return nil, errors.Errorf("failed to decode: missing token")
 	}
@@ -132,7 +132,7 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) { 
 }
 
 // lookupKeyID returns the public key in the JWKS that matches the "kid".
-func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) { //nolint:ireturn
+func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) {
 	// check cache and possibly fetch new JWKS if cache has expired
 	jwkSet, err := d.jwks.Get()
 	if err != nil {
@@ -166,7 +166,7 @@ func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) { //nolint:iretu
 	return nil, errors.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)
 }
 
-func (d *JwtDecoder) getPublicKey(key jwk.Key) (publicKey, error) { //nolint:ireturn
+func (d *JwtDecoder) getPublicKey(key jwk.Key) (publicKey, error) {
 	var rawkey interface{}
 	err := key.Raw(&rawkey)
 	if err != nil {
