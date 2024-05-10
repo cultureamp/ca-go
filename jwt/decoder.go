@@ -51,7 +51,7 @@ func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) 
 	decoder.jwks = newJWKSet(fetchJWKS, decoder.expiresWithin, decoder.rotationWindow)
 
 	// call the get to make sure its valid and we can parse the JWKS
-	_, err := decoder.jwks.get()
+	_, err := decoder.jwks.Get()
 	if err != nil {
 		return nil, errors.Errorf("failed to load jwks: %w", err)
 	}
@@ -134,7 +134,7 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) { 
 // lookupKeyID returns the public key in the JWKS that matches the "kid".
 func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) { //nolint:ireturn
 	// check cache and possibly fetch new JWKS if cache has expired
-	jwkSet, err := d.jwks.get()
+	jwkSet, err := d.jwks.Get()
 	if err != nil {
 		return nil, errors.Errorf("failed to load jwks: %w", err)
 	}
@@ -152,17 +152,15 @@ func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) { //nolint:iretu
 	// The "canRefresh" check is important here, as for bad kid's we don't want
 	// blast the client (which in turn might blast Secrets Manager or FushionAuth)
 	// with a huge number of requests over and over again.
-	if d.jwks.canRefresh() {
-		jwkSet, err := d.jwks.refresh()
-		if err != nil {
-			return nil, errors.Errorf("failed to load jwks: %w", err)
-		}
+	jwkSet, err = d.jwks.Refresh()
+	if err != nil {
+		return nil, errors.Errorf("failed to refresh jwks: %w", err)
+	}
 
-		key, found := jwkSet.LookupKeyID(kid)
-		if found {
-			// Found a match, so use this key
-			return d.getPublicKey(key)
-		}
+	key, found = jwkSet.LookupKeyID(kid)
+	if found {
+		// Found a match, so use this key
+		return d.getPublicKey(key)
 	}
 
 	return nil, errors.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)

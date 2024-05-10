@@ -29,22 +29,36 @@ func newJWKSet(dispatcher DecoderJwksRetriever, expiresWithin time.Duration, rot
 	}
 }
 
-func (c *jwkSet) get() (jwk.Set, error) { //nolint:ireturn
+func (c *jwkSet) Get() (jwk.Set, error) { //nolint:ireturn
 	if !c.expired() {
 		// we have jwks and it hasn't expired yet, so all good!
 		return c.jwks, nil
 	}
 
-	return c.fetch()
+	jwks, err := c.fetch()
+	if err != nil {
+		return c.jwks, err
+	}
+
+	c.jwksAddedAt = time.Now()
+	c.jwks = jwks
+	return jwks, nil
 }
 
-func (c *jwkSet) refresh() (jwk.Set, error) { //nolint:ireturn
+func (c *jwkSet) Refresh() (jwk.Set, error) { //nolint:ireturn
 	if !c.canRefresh() {
 		// we can't refresh (ie. get new jwks yet)
 		return c.jwks, nil
 	}
 
-	return c.fetch()
+	jwks, err := c.fetch()
+	if err != nil {
+		return c.jwks, err
+	}
+
+	c.jwksAddedAt = time.Now()
+	c.jwks = jwks
+	return jwks, nil
 }
 
 func (c *jwkSet) expired() bool {
@@ -86,10 +100,7 @@ func (c *jwkSet) fetch() (jwk.Set, error) { //nolint:ireturn
 		return nil, err
 	}
 
-	// update with latest values
-	c.jwksAddedAt = time.Now()
-	c.jwks = jwkSet
-	return c.jwks, nil
+	return jwkSet, nil
 }
 
 func (c *jwkSet) parse(jwks string) (jwk.Set, error) { //nolint:ireturn
