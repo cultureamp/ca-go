@@ -116,7 +116,7 @@ jobs:
           go test -json -v -coverprofile=coverage.json -covermode atomic ./... 2>&1 | tee gotest.log | gotestfmt
 
       - name: Convert go coverage to corbetura format
-        run: gocover-cobertura -ignore-dirs '(example|kafaktest)' -ignore-files 'test\*.go' -ignore-gen-files < coverage.json > coverage.xml
+        run: gocover-cobertura -ignore-dirs '(example|kafkatest)' -ignore-files 'test\*.go' -ignore-gen-files < coverage.json > coverage.xml
 
       - name: Generate code coverage report
         uses: irongut/CodeCoverageSummary@v1.3.0
