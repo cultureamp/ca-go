@@ -134,7 +134,7 @@ func (d *JwtDecoder) parsingOptions(options ...DecoderParserOption) []jwt.Parser
 	return opts
 }
 
-func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) { //nolint:ireturn
+func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	if token == nil {
 		return nil, errors.Errorf("failed to decode: missing token")
 	}
@@ -190,7 +190,7 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) { 
 	return nil, errors.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)
 }
 
-func (d *JwtDecoder) loadJWKSet() (jwk.Set, error) { //nolint:ireturn
+func (d *JwtDecoder) loadJWKSet() (jwk.Set, error) {
 	// First check cache, if its there then great, use it!
 	if jwks, ok := d.getCachedJWKSet(); ok {
 		return jwks, nil
@@ -219,7 +219,7 @@ func (d *JwtDecoder) loadJWKSet() (jwk.Set, error) { //nolint:ireturn
 	return jwkSet, err
 }
 
-func (d *JwtDecoder) getCachedJWKSet() (jwk.Set, bool) { //nolint:ireturn
+func (d *JwtDecoder) getCachedJWKSet() (jwk.Set, bool) {
 	obj, found := d.cache.Get(jwksCacheKey)
 	if !found {
 		return nil, false
@@ -229,7 +229,7 @@ func (d *JwtDecoder) getCachedJWKSet() (jwk.Set, bool) { //nolint:ireturn
 	return jwks, ok
 }
 
-func (d *JwtDecoder) parseJWKs(jwks string) (jwk.Set, error) { //nolint:ireturn
+func (d *JwtDecoder) parseJWKs(jwks string) (jwk.Set, error) {
 	if jwks == "" {
 		// If no jwks json, then returm empty map
 		return nil, errors.Errorf("missing jwks")
