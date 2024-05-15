@@ -113,7 +113,7 @@ func ExampleDefaultJwtDecoder() {
 	}
 
 	mockEncDec := newMockedEncoderDecoder()
-	mockEncDec.On("Decode", mock.Anything).Return(claims, nil)
+	mockEncDec.On("Decode", mock.Anything, mock.Anything).Return(claims, nil)
 
 	// Overwrite the Default package level encoder and decoder
 	oldDecoder := jwt.DefaultJwtDecoder
@@ -156,13 +156,13 @@ func (m *mockedEncoderDecoder) EncodeWithCustomClaims(customClaims gojwt.Claims)
 	return output, args.Error(1)
 }
 
-func (m *mockedEncoderDecoder) Decode(tokenString string) (*jwt.StandardClaims, error) {
-	args := m.Called(tokenString)
+func (m *mockedEncoderDecoder) Decode(tokenString string, options ...jwt.DecoderParserOption) (*jwt.StandardClaims, error) {
+	args := m.Called(tokenString, options)
 	output, _ := args.Get(0).(*jwt.StandardClaims)
 	return output, args.Error(1)
 }
 
-func (m *mockedEncoderDecoder) DecodeWithCustomClaims(tokenString string, customClaims gojwt.Claims) error {
-	args := m.Called(tokenString, customClaims)
+func (m *mockedEncoderDecoder) DecodeWithCustomClaims(tokenString string, customClaims gojwt.Claims, options ...jwt.DecoderParserOption) error {
+	args := m.Called(tokenString, customClaims, options)
 	return args.Error(0)
 }

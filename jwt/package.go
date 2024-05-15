@@ -15,8 +15,8 @@ type Encoder interface {
 
 // Decoder interface allows for mocking of the Decoder.
 type Decoder interface {
-	Decode(tokenString string) (*StandardClaims, error)
-	DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims) error
+	Decode(tokenString string, options ...DecoderParserOption) (*StandardClaims, error)
+	DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims, options ...DecoderParserOption) error
 }
 
 var (
@@ -29,21 +29,21 @@ var (
 )
 
 // Decode a jwt token string and return the Standard Culture Amp Claims.
-func Decode(tokenString string) (*StandardClaims, error) {
+func Decode(tokenString string, options ...DecoderParserOption) (*StandardClaims, error) {
 	err := mustHaveDefaultJwtDecoder()
 	if err != nil {
 		return nil, err
 	}
-	return DefaultJwtDecoder.Decode(tokenString)
+	return DefaultJwtDecoder.Decode(tokenString, options...)
 }
 
 // DecodeWithCustomClaims takes a jwt token string and populate the customClaims.
-func DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims) error {
+func DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims, options ...DecoderParserOption) error {
 	err := mustHaveDefaultJwtDecoder()
 	if err != nil {
 		return err
 	}
-	return DefaultJwtDecoder.DecodeWithCustomClaims(tokenString, customClaims)
+	return DefaultJwtDecoder.DecodeWithCustomClaims(tokenString, customClaims, options...)
 }
 
 // Encode the Standard Culture Amp Claims in a jwt token string.
