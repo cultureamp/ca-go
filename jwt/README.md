@@ -21,7 +21,6 @@ If you are managing Encoders and Decoders yourself, then you can provide a func 
 - type EncoderKeyRetriever func() (string, string)  // return your private PEM key + key_id
 - type DecoderJwksRetriever func() string // return your JSON JWKs
 
-
 ## Managing Encoders and Decoders Yourself
 
 While we recommend using the package level methods for their ease of use, you may desire to create and manage encoders or decoers yourself, which you can do by calling:
@@ -53,7 +52,6 @@ decoder, err := NewJwtDecoder(jwksRetriever)
 ```
 
 ## Claims
-
 
 You MUST set the `Issuer`, `Subject`, and `Audience` claims along with the standard authentication claim `AccountId`. If the JWT is for authenticaton other than to the Public API, it MUST also include the `RealUserId`, and `EffectiveUserId` claims.
 
@@ -104,6 +102,15 @@ type Claims interface {
 }
 ```
 
+### Enforcing Audience, Subject and Issuer
+
+When Decoding you should enforce that the jwt matches the expect Audience (`aud` claim), Subject (`sub` claim) and Issuer (`iss` claim).
+To do this you can pass option `MustMatch` to `Decode` and `DecodeWithCustomClaims` methods:
+
+- func MustMatchAudience(aud string)
+- func MustMatchIssuer(iss string)
+- func MustMatchSubject(sub string)
+
 ## Examples
 ```
 package cago
@@ -128,8 +135,8 @@ func BasicExamples() {
 	token, err := jwt.Encode(claims)
 	fmt.Printf("The encoded token is '%s' (err='%v')\n", token, err)
 
-	// Decode it back again using the key that matches the kid header using the default JWKS JSON keys
-	sc, err := jwt.Decode(token)
+	// Decode it back again using the key that matches the kid header using the default JWKS JSON keys and matching on aud, sub and iss.
+	sc, err := jwt.Decode(token, MustMatchAudience("who-i-am"), MustMatchIssuer("webgateway"), MustMatchSubject("user-auth"))
 	fmt.Printf("The decode token is '%v' (err='%+v')\n", sc, err)
 }
 ```
@@ -141,8 +148,8 @@ the `Encoder` or `Decoder` interface.
 
 - Encode(claims *StandardClaims) (string, error)
 - EncodeWithCustomClaims(customClaims jwt.Claims) (string, error)
-- Decode(tokenString string) (*StandardClaims, error)
-- DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims) error
+- Decode(tokenString string, options ...DecoderParserOption) (*StandardClaims, error)
+- DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims, options ...DecoderParserOption) error
 
 ```
 import (
@@ -214,14 +221,14 @@ func (m *mockedEncoderDecoder) Encode(claims *jwt.StandardClaims) (string, error
 }
 
 // Decrypt on the test runner just returns the "encryptedStr" as the decrypted plainstr.
-func (m *mockedEncoderDecoder) Decode(tokenString string) (*jwt.StandardClaims, error) {
-	args := m.Called(tokenString)
+func (m *mockedEncoderDecoder) Decode(tokenString string, options ...DecoderParserOption) (*jwt.StandardClaims, error) {
+	args := m.Called(tokenString, options)
 	output, _ := args.Get(0).(*jwt.StandardClaims)
 	return output, args.Error(1)
 }
 
-func (m *mockedEncoderDecoder) DecodeWithCustomClaims(tokenString string, customClaims gojwt.Claims) error {
-	args := m.Called(tokenString, customClaims)
+func (m *mockedEncoderDecoder) DecodeWithCustomClaims(tokenString string, customClaims gojwt.Claims, options ...DecoderParserOption) error {
+	args := m.Called(tokenString, customClaims, options)
 	return args.Error(0)
 }
 ```
