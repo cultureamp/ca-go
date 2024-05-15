@@ -102,17 +102,19 @@ func (d *JwtDecoder) parsingOptions(options ...DecoderParserOption) []jwt.Parser
 	opts = append(opts,
 		jwt.WithValidMethods(validAlgs),      // only keys with these "alg's" will be considered
 		jwt.WithLeeway(defaultDecoderLeeway), // as per the JWT eng std: clock skew set to 10 seconds
+
 		// Exp
 		// Expiry claim is currently MANDATORY, but until all producing services are reliably setting the Expiry claim,
 		// we MAY still accept verified JWTs with no Expiry claim.
 		// jwt.WithExpirationRequired(),
+
 		// Nbf
-		// NotBefore claim is currently MANDATORY, but until all producing services are reliably settings the NotBefore claim,
-		// we MAY still accept verificed JWT's with no NotBefore claim.
+		// If the NotBefore claim is set it will automatically be enforced.
+		// Note: There is no parsing option for this.
 	)
 
+	// Loop through any client provided parsing options and apply them
 	parserOptions := newDecoderParser()
-	// Loop through our parsing options and apply them
 	for _, option := range options {
 		option(parserOptions)
 	}
