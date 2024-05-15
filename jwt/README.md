@@ -105,7 +105,7 @@ type Claims interface {
 ### Enforcing Audience, Subject and Issuer
 
 When Decoding you should enforce that the jwt matches the expect Audience (`aud` claim), Subject (`sub` claim) and Issuer (`iss` claim).
-To do this you can pass option `MustMatch` to `Decode` and `DecodeWithCustomClaims` methods:
+To do this you can pass `MustMatch<Type>` to the `Decode` and `DecodeWithCustomClaims` methods:
 
 - func MustMatchAudience(aud string)
 - func MustMatchIssuer(iss string)

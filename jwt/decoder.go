@@ -84,7 +84,7 @@ func (d *JwtDecoder) DecodeWithCustomClaims(tokenString string, customClaims jwt
 		func(token *jwt.Token) (interface{}, error) {
 			return d.useCorrectPublicKey(token)
 		},
-		d.parsingOptions(options...)...,
+		d.enforceParsingOptions(options...)...,
 	)
 	if err != nil || !token.Valid {
 		return err
@@ -93,7 +93,7 @@ func (d *JwtDecoder) DecodeWithCustomClaims(tokenString string, customClaims jwt
 	return nil
 }
 
-func (d *JwtDecoder) parsingOptions(options ...DecoderParserOption) []jwt.ParserOption {
+func (d *JwtDecoder) enforceParsingOptions(options ...DecoderParserOption) []jwt.ParserOption {
 	// Eng Std: https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3253240053/JWT+Authentication
 	var opts []jwt.ParserOption
 
