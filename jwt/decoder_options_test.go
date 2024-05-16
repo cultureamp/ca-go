@@ -21,7 +21,7 @@ func TestDecoderOptions(t *testing.T) {
 		return validJwks
 	}
 
-	decoder, err := NewJwtDecoder(jwks, WithDecoderCacheExpiry(100*time.Millisecond, 50*time.Millisecond))
+	decoder, err := NewJwtDecoder(jwks, WithDecoderJwksExpiry(100*time.Millisecond))
 	assert.Nil(t, err)
 	assert.NotNil(t, decoder)
 
