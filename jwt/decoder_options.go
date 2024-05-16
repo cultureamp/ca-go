@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// JwtDecoderOption function signature for added JWT Decoder options.
+// JwtDecoderOption function signature for adding JWT Decoder options.
 type JwtDecoderOption func(*JwtDecoder)
 
 // WithDecoderJwksExpiry sets the JwtDecoder JWKs expiry time.Duration
@@ -19,5 +19,45 @@ func WithDecoderJwksExpiry(expiry time.Duration) JwtDecoderOption {
 func WithDecoderRotateWindow(rotate time.Duration) JwtDecoderOption {
 	return func(decoder *JwtDecoder) {
 		decoder.rotationWindow = rotate
+	}
+}
+
+// DecoderParserOption function signature for adding JWT Decoder Parsing options.
+type DecoderParserOption func(*decoderParser)
+
+type decoderParser struct {
+	expectedAud string
+	expectedIss string
+	expectedSub string
+}
+
+func newDecoderParser() *decoderParser {
+	return &decoderParser{}
+}
+
+// MustMatchAudience configures the jwt parser to require the specified audience in
+// the `aud` claim. Validation will fail if the audience is not listed in the
+// token or the `aud` claim is missing.
+func MustMatchAudience(aud string) DecoderParserOption {
+	return func(p *decoderParser) {
+		p.expectedAud = aud
+	}
+}
+
+// MustMatchIssuer configures the jwt parser to require the specified issuer in the
+// `iss` claim. Validation will fail if a different issuer is specified in the
+// token or the `iss` claim is missing.
+func MustMatchIssuer(iss string) DecoderParserOption {
+	return func(p *decoderParser) {
+		p.expectedIss = iss
+	}
+}
+
+// MustMatchSubject configures the jwt parser to require the specified subject in the
+// `sub` claim. Validation will fail if a different subject is specified in the
+// token or the `sub` claim is missing.
+func MustMatchSubject(sub string) DecoderParserOption {
+	return func(p *decoderParser) {
+		p.expectedSub = sub
 	}
 }

@@ -183,6 +183,10 @@ issues:
         - lll
         - tagliatelle
 
+    - path: jwt/decoder.go
+      linters:
+        - ireturn
+
     - path: launchdarkly/*
       linters:
         - err113

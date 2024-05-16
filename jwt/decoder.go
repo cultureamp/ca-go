@@ -60,9 +60,9 @@ func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) 
 }
 
 // Decode a jwt token string and return the Standard Culture Amp Claims.
-func (d *JwtDecoder) Decode(tokenString string) (*StandardClaims, error) {
+func (d *JwtDecoder) Decode(tokenString string, options ...DecoderParserOption) (*StandardClaims, error) {
 	claims := jwt.MapClaims{}
-	err := d.DecodeWithCustomClaims(tokenString, claims)
+	err := d.DecodeWithCustomClaims(tokenString, claims, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -70,36 +70,64 @@ func (d *JwtDecoder) Decode(tokenString string) (*StandardClaims, error) {
 }
 
 // DecodeWithCustomClaims takes a jwt token string and populate the customClaims.
-func (d *JwtDecoder) DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims) error {
-	// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
-	validAlgs := []string{"RS256", "RS384", "RS512", "ES256", "ES384", "ES512"}
-
+func (d *JwtDecoder) DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims, options ...DecoderParserOption) error {
 	// sample token string in the form "header.payload.signature"
 	// eg. "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIiLCJuYmYiOjE0NDQ0Nzg0MDB9.u1riaD1rW97opCoAuRCTy4w58Br-Zk-bh7vLiRIsrpU"
 
-	// Eng Std: https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3253240053/JWT+Authentication
-
-	// Exp
-	// Expiry claim is currently MANDATORY, but until all producing services are reliably setting the Expiry claim,
-	// we MAY still accept verified JWTs with no Expiry claim.
-	// Nbf
-	// NotBefore claim is currently MANDATORY, but until all producing services are reliably settings the NotBEfore claim,
-	// we MAY still accept verificed JWT's with no NotBefore claim.
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		customClaims,
 		func(token *jwt.Token) (interface{}, error) {
 			return d.useCorrectPublicKey(token)
 		},
-		jwt.WithValidMethods(validAlgs),      // only keys with these "alg's" will be considered
-		jwt.WithLeeway(defaultDecoderLeeway), // as per the JWT eng std: clock skew set to 10 seconds
-		// jwt.WithExpirationRequired(),	  // add this if we want to enforce that tokens MUST have an expiry
+		d.enforceParsingOptions(options...)...,
 	)
 	if err != nil || !token.Valid {
 		return err
 	}
 
 	return nil
+}
+
+func (d *JwtDecoder) enforceParsingOptions(options ...DecoderParserOption) []jwt.ParserOption {
+	// Eng Std: https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3253240053/JWT+Authentication
+	var opts []jwt.ParserOption
+
+	// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
+	validAlgs := []string{"RS256", "RS384", "RS512", "ES256", "ES384", "ES512"}
+	opts = append(opts,
+		jwt.WithValidMethods(validAlgs),      // only keys with these "alg's" will be considered
+		jwt.WithLeeway(defaultDecoderLeeway), // as per the JWT eng std: clock skew set to 10 seconds
+
+		// Exp
+		// Expiry claim is currently MANDATORY, but until all producing services are reliably setting the Expiry claim,
+		// we MAY still accept verified JWTs with no Expiry claim.
+		// jwt.WithExpirationRequired(),
+
+		// Nbf
+		// If the NotBefore claim is set it will automatically be enforced.
+		// Note: There is no parsing option for this.
+	)
+
+	// Loop through any client provided parsing options and apply them
+	parserOptions := newDecoderParser()
+	for _, option := range options {
+		option(parserOptions)
+	}
+
+	if parserOptions.expectedAud != "" {
+		opts = append(opts, jwt.WithAudience(parserOptions.expectedAud))
+	}
+
+	if parserOptions.expectedIss != "" {
+		opts = append(opts, jwt.WithIssuer(parserOptions.expectedIss))
+	}
+
+	if parserOptions.expectedSub != "" {
+		opts = append(opts, jwt.WithSubject(parserOptions.expectedSub))
+	}
+
+	return opts
 }
 
 func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
