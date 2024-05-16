@@ -3,26 +3,22 @@ package jwt
 import (
 	"crypto/ecdsa"
 	"crypto/rsa"
-	"sync"
 	"time"
 
 	"github.com/go-errors/errors"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lestrrat-go/jwx/v2/jwk"
-	"github.com/patrickmn/go-cache"
 )
 
 const (
-	kidHeaderKey                  = "kid"
-	algorithmHeaderKey            = "alg"
-	webGatewayKid                 = "web-gateway"
-	accountIDClaim                = "accountId"
-	realUserIDClaim               = "realUserId"
-	effectiveUserIDClaim          = "effectiveUserId"
-	jwksCacheKey                  = "decoder_jwks_key"
-	defaultDecoderExpiration      = 60 * time.Minute
-	defaultDecoderCleanupInterval = 1 * time.Minute
-	defaultDecoderLeeway          = 10 * time.Second
+	kidHeaderKey                   = "kid"
+	algorithmHeaderKey             = "alg"
+	accountIDClaim                 = "accountId"
+	realUserIDClaim                = "realUserId"
+	effectiveUserIDClaim           = "effectiveUserId"
+	defaultDecoderExpiration       = 60 * time.Minute
+	defaultDecoderRotationDuration = 30 * time.Second
+	defaultDecoderLeeway           = 10 * time.Second
 )
 
 type publicKey interface{} // Only ECDSA (perferred) and RSA public keys allowed
@@ -32,19 +28,19 @@ type DecoderJwksRetriever func() string
 
 // JwtDecoder can decode a jwt token string.
 type JwtDecoder struct {
-	fetchJwkKeys      DecoderJwksRetriever // func provided by clients of this library to supply a refreshed JWKS
-	mu                sync.Mutex           // mutex to protect cache.Get/Set race condition
-	cache             *cache.Cache         // memory cache holding the jwk.Set
-	defaultExpiration time.Duration        // default is 60 minutes
-	cleanupInterval   time.Duration        // default is every 1 minute
+	dispatcher     DecoderJwksRetriever // func provided by clients of this library to supply the current JWKS
+	expiresWithin  time.Duration        // default is 60 minutes
+	rotationWindow time.Duration        // default is 30 seconds
+	jwks           *jwkFetcher          // manages the life cycle of a JWK Set
 }
 
 // NewJwtDecoder creates a new JwtDecoder with the set ECDSA and RSA public keys in the JWK string.
 func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) (*JwtDecoder, error) {
 	decoder := &JwtDecoder{
-		fetchJwkKeys:      fetchJWKS,
-		defaultExpiration: defaultDecoderExpiration,
-		cleanupInterval:   defaultDecoderCleanupInterval,
+		dispatcher:     fetchJWKS,
+		jwks:           nil,
+		expiresWithin:  defaultDecoderExpiration,
+		rotationWindow: defaultDecoderRotationDuration,
 	}
 
 	// Loop through our Decoder options and apply them
@@ -52,10 +48,10 @@ func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) 
 		option(decoder)
 	}
 
-	decoder.cache = cache.New(decoder.defaultExpiration, decoder.cleanupInterval)
+	decoder.jwks = newJWKSet(fetchJWKS, decoder.expiresWithin, decoder.rotationWindow)
 
-	// call the getJWKS func to make sure its valid and we can parse the JWKS
-	_, err := decoder.loadJWKSet()
+	// call the get to make sure its valid and we can parse the JWKS
+	_, err := decoder.jwks.Get()
 	if err != nil {
 		return nil, errors.Errorf("failed to load jwks: %w", err)
 	}
@@ -106,7 +102,7 @@ func (d *JwtDecoder) DecodeWithCustomClaims(tokenString string, customClaims jwt
 	return nil
 }
 
-func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) { //nolint:ireturn
+func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	if token == nil {
 		return nil, errors.Errorf("failed to decode: missing token")
 	}
@@ -131,82 +127,66 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) { 
 		return nil, errors.Errorf("failed to decode: invalid key_id (kid) header")
 	}
 
-	// check cache and possibly fetch new JWKS
-	jwkSet, err := d.loadJWKSet()
+	// check if kid exists in the JWK Set
+	return d.lookupKeyID(kid)
+}
+
+// lookupKeyID returns the public key in the JWKS that matches the "kid".
+func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) {
+	// check cache and possibly fetch new JWKS if cache has expired
+	jwkSet, err := d.jwks.Get()
 	if err != nil {
 		return nil, errors.Errorf("failed to load jwks: %w", err)
+	}
+
+	// set if the kid exists in the set
+	key, found := jwkSet.LookupKeyID(kid)
+	if found {
+		// Found a match, so use this key!
+		return d.getPublicKey(key)
+	}
+
+	return d.tryRefreshedLookupKeyID(kid)
+}
+
+func (d *JwtDecoder) tryRefreshedLookupKeyID(kid string) (publicKey, error) {
+	// If the jwks aren't "fresh" and we are being asked for a kid we don't have
+	// then get a new jwks and try again. This can occur when a new key has been
+	// added or rotated and we haven't got the latest copy.
+	// The "canRefresh" check is important here, as for bad kid's we don't want
+	// blast the client (which in turn might blast Secrets Manager or FushionAuth)
+	// with a huge number of requests over and over again.
+	jwkSet, err := d.jwks.Refresh()
+	if err != nil {
+		// we didn't refresh, or we did but we failed to parse it
+		return nil, errors.Errorf("failed to decode: no matching key_id (kid) header for: %s. err: %w", kid, err)
 	}
 
 	key, found := jwkSet.LookupKeyID(kid)
 	if found {
 		// Found a match, so use this key
-		var rawkey interface{}
-		err := key.Raw(&rawkey)
-		if err != nil {
-			return nil, errors.Errorf("failed to decode: bad public key in jwks")
-		}
-
-		// If the JWKS contains the full key (Private AND Public) then check for that for both ECDSA & RSA
-		// NOTE: this should never happen in PRPD - but does in the unit tests
-		if ecdsa, ok := rawkey.(*ecdsa.PrivateKey); ok {
-			return &ecdsa.PublicKey, nil
-		}
-		if rsa, ok := rawkey.(*rsa.PrivateKey); ok {
-			return &rsa.PublicKey, nil
-		}
-
-		return rawkey, err
+		return d.getPublicKey(key)
 	}
 
-	// Didn't find a matching kid
 	return nil, errors.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)
 }
 
-func (d *JwtDecoder) loadJWKSet() (jwk.Set, error) { //nolint:ireturn
-	// First check cache, if its there then great, use it!
-	if jwks, ok := d.getCachedJWKSet(); ok {
-		return jwks, nil
-	}
-
-	// Only allow one thread to fetch, parse and update the cache
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	// check the cache again in case another go routine just updated it
-	if jwks, ok := d.getCachedJWKSet(); ok {
-		return jwks, nil
-	}
-
-	// Call client retriever func
-	jwkKeys := d.fetchJwkKeys()
-
-	// Parse all new JWKs JSON keys and make sure its valid
-	jwkSet, err := d.parseJWKs(jwkKeys)
+func (d *JwtDecoder) getPublicKey(key jwk.Key) (publicKey, error) {
+	var rawkey interface{}
+	err := key.Raw(&rawkey)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to decode: bad public key in jwks")
 	}
 
-	// Add back into the cache
-	err = d.cache.Add(jwksCacheKey, jwkSet, cache.DefaultExpiration)
-	return jwkSet, err
-}
-
-func (d *JwtDecoder) getCachedJWKSet() (jwk.Set, bool) { //nolint:ireturn
-	obj, found := d.cache.Get(jwksCacheKey)
-	if !found {
-		return nil, false
+	// If the JWKS contains the full key (Private AND Public) then only return the public one
+	// ECDSA & RSA keys only.
+	// NOTE: this should never happen in production - but does in the unit tests
+	if ecdsa, ok := rawkey.(*ecdsa.PrivateKey); ok {
+		return &ecdsa.PublicKey, nil
+	}
+	if rsa, ok := rawkey.(*rsa.PrivateKey); ok {
+		return &rsa.PublicKey, nil
 	}
 
-	jwks, ok := obj.(jwk.Set)
-	return jwks, ok
-}
-
-func (d *JwtDecoder) parseJWKs(jwks string) (jwk.Set, error) { //nolint:ireturn
-	if jwks == "" {
-		// If no jwks json, then returm empty map
-		return nil, errors.Errorf("missing jwks")
-	}
-
-	// 1. Parse the jwks JSON string to an iterable set
-	return jwk.ParseString(jwks)
+	return rawkey, err
 }

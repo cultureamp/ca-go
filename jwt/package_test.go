@@ -9,6 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	webGatewayKid = "web-gateway"
+)
+
 func TestPackageEncodeDecode(t *testing.T) {
 	claims := &StandardClaims{
 		AccountId:       "abc123",
