@@ -6,8 +6,10 @@ import (
 	"github.com/go-errors/errors"
 )
 
+type Cleanup func() error
+
 type KafkaConsumer interface {
-	Start(ctx context.Context) error
+	Consume(ctx context.Context) (Cleanup, error)
 }
 
 // Consumer provides a high level API for consuming and handling messages from
@@ -29,35 +31,36 @@ func NewConsumer(opts ...Option) (*Consumer, error) {
 		opt(c)
 	}
 
-	if err := c.conf.mustProcess(); err != nil {
+	if err := c.conf.shouldProcess(); err != nil {
 		return nil, errors.Errorf("bad consumer config: %w", err)
 	}
 
 	return c, nil
 }
 
-func (c *Consumer) Start(ctx context.Context) error {
+func (c *Consumer) Consume(ctx context.Context) (Cleanup, error) {
+	// if already consuming, do nothing
 	if c.group != nil {
-		return errors.Errorf("already running! (forgot to call Stop?)")
+		return c.stop, nil
 	}
 
 	group, err := newGroupConsumer(c.client, c.conf)
 	if err != nil {
-		return errors.Errorf("failed to create kafka consumer: %w", err)
+		return c.stop, errors.Errorf("failed to create kafka consumer: %w", err)
 	}
-
 	c.group = group
-	// is this correct? run in a go-routine?
-	err = group.consume(ctx)
-	return err
+
+	// blocking call until either
+	// 1. context is cancelled OR
+	// 2. a server-side kafka rebalance happens
+	return c.stop, c.group.consume(ctx)
 }
 
-func (c *Consumer) Stop() error {
+func (c *Consumer) stop() error {
+	// if already stopped, do nothing
 	if c.group == nil {
 		return nil
 	}
 
-	// err := c.group.stop()
-	c.group = nil
-	return nil
+	return c.group.stop()
 }

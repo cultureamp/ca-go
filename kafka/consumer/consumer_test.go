@@ -90,7 +90,7 @@ func TestNewConsumerCtxDeadLine(t *testing.T) {
 	mockConsumerGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockConsumerGroup.On("Close").Return(nil)
 
-	// push one message into the channel of size 10
+	// create channel of size 10
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
 	receiverChannel = mockChannel
@@ -108,12 +108,15 @@ func TestNewConsumerCtxDeadLine(t *testing.T) {
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
 
-	err = c.Start(ctx)
+	cleanup, err := c.Consume(ctx)
+	cleanup()
+
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "context deadline exceeded")
 
 	mockClient.AssertExpectations(t)
 	mockConsumerGroup.AssertExpectations(t)
+	mockConsumerGroupSession.AssertExpectations(t)
 }
 
 func TestNewConsumerWithReceiverError(t *testing.T) {
@@ -159,67 +162,13 @@ func TestNewConsumerWithReceiverError(t *testing.T) {
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
 
-	err = c.Start(ctx)
+	cleanup, err := c.Consume(ctx)
+	cleanup()
+
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "test error")
 
 	mockClient.AssertExpectations(t)
 	mockConsumerGroup.AssertExpectations(t)
+	mockConsumerGroupSession.AssertExpectations(t)
 }
-
-/*
-func TestNewConsumerSuccess(t *testing.T) {
-	ctx := context.Background()
-
-	mockClient := newMockKafkaClient()
-	mockConsumerGroupSession := newMockConsumerGroupSession()
-	mockConsumerGroupClaim := newMockConsumerGroupClaim()
-	mockConsumerGroup := newMockConsumerGroup(mockConsumerGroupSession, mockConsumerGroupClaim)
-
-	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockConsumerGroup, nil)
-	mockClient.On("CommitMessage", mock.Anything, mock.Anything)
-	mockConsumerGroupSession.On("Context").Return(ctx)
-	mockConsumerGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	mockConsumerGroup.On("Close").Return(nil)
-
-	saramaMessage := &sarama.ConsumerMessage{
-		Topic:     "test",
-		Partition: 1,
-		Key:       []byte("key"),
-		Value:     []byte("value"),
-		Offset:    1,
-		Timestamp: time.Now(),
-		Headers:   nil,
-	}
-
-	// push one message into the channel
-	mockChannel := make(chan *sarama.ConsumerMessage, 10)
-	mockChannel <- saramaMessage
-	mockChannel <- saramaMessage
-	mockChannel <- saramaMessage
-	var receiverChannel (<-chan *sarama.ConsumerMessage)
-	receiverChannel = mockChannel
-	mockConsumerGroupClaim.On("Messages").Return(receiverChannel)
-
-	c, err := NewConsumer(
-		WithKafkaClient(mockClient),
-		WithBrokers([]string{"localhost:9001"}),
-		WithTopics([]string{"test-topic"}),
-		WithGroupId("group_id"),
-		WithAssignor("roundrobin"),
-		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
-		WithLogging(newTestLogger()),
-	)
-	assert.NotNil(t, c)
-	assert.Nil(t, err)
-
-	err = c.Start(ctx)
-	assert.Nil(t, err)
-
-	// should signal the consumer to stop
-	// c.Stop()
-
-	mockClient.AssertExpectations(t)
-	mockConsumerGroup.AssertExpectations(t)
-}
-*/

@@ -39,6 +39,7 @@ func newConfig() *Config {
 	// By default, errors are logged and not returned over this channel.
 	// If you want to implement any custom error handling, set your config's
 	// Consumer.Return.Errors setting to true, and read from this channel.
+
 	// conf.saramaConfig.Consumer.Return.Errors = true
 	conf.saramaConfig.Consumer.Offsets.AutoCommit.Enable = true
 	conf.saramaConfig.Consumer.IsolationLevel = sarama.ReadCommitted
@@ -46,7 +47,7 @@ func newConfig() *Config {
 	return conf
 }
 
-func (conf *Config) mustProcess() error {
+func (conf *Config) shouldProcess() error {
 	conf.saramaConfig.ClientID = conf.id
 
 	if conf.stdLogger != nil {
