@@ -53,7 +53,7 @@ func (r *receiver) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 			}
 
 			// otherwise, we can commit this message now
-			r.client.commitMessage(session, msg)
+			r.client.CommitMessage(session, msg)
 
 		case <-session.Context().Done():
 			// Should return when `session.Context()` is done.

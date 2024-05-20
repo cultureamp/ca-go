@@ -209,7 +209,7 @@ issues:
       linters:
         - godox
 
-    - path: kafka/consumer/sarama.go
+    - path: kafka/consumer/client.go
       linters:
         - ireturn
 
