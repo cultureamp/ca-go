@@ -10,7 +10,7 @@ type testLogger struct {
 }
 
 func newTestLogger() *testLogger {
-	l := log.New(os.Stdout, "[Kafka-Consumer] ", log.LstdFlags)
+	l := log.New(os.Stdout, "[Kafka-Consumer]", log.LstdFlags)
 	return &testLogger{
 		l: l,
 	}

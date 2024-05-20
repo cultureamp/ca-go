@@ -9,7 +9,7 @@ import (
 
 type groupConsumer struct {
 	conf        *Config
-	kafka       kafkaClient
+	client      kafkaClient
 	groupClient sarama.ConsumerGroup
 }
 
@@ -21,7 +21,7 @@ func newGroupConsumer(client kafkaClient, conf *Config) (*groupConsumer, error) 
 
 	return &groupConsumer{
 		conf:        conf,
-		kafka:       client,
+		client:      client,
 		groupClient: group,
 	}, nil
 }
@@ -34,7 +34,7 @@ func (gc *groupConsumer) consume(ctx context.Context) error {
 	// server-side rebalance happens, the consumer session will need to be
 	// recreated to get the new claims
 	for {
-		receiver := newReceiver(gc.kafka, gc.conf.handler)
+		receiver := newReceiver(gc.client, gc.conf.handler)
 		if err := gc.groupClient.Consume(ctx, gc.conf.topics, receiver); err != nil {
 			if errors.Is(err, sarama.ErrClosedConsumerGroup) {
 				return err

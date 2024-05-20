@@ -5,13 +5,13 @@ import (
 )
 
 type receiver struct {
-	kafka   kafkaClient
+	client  kafkaClient
 	handler *messageHandler
 }
 
 func newReceiver(client kafkaClient, handler Handler) *receiver {
 	return &receiver{
-		kafka:   client,
+		client:  client,
 		handler: newMessageHandler(handler),
 	}
 }
@@ -38,10 +38,13 @@ func (r *receiver) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 		select {
 		case msg, ok := <-claim.Messages():
 			if !ok {
-				sarama.Logger.Printf("consumer: message channel was closed\n")
+				sarama.Logger.Printf("consumer: message channel was closed")
 				return nil
 			}
-			sarama.Logger.Printf("consumer: message received Ok: timestamp=%v, topic=%s, partition=%d, offset=%d\n", msg.Timestamp, msg.Topic, msg.Partition, msg.Offset)
+			sarama.Logger.Printf(
+				"consumer: message received Ok: timestamp=%v, topic=%s, partition=%d, offset=%d",
+				msg.Timestamp, msg.Topic, msg.Partition, msg.Offset,
+			)
 
 			// dispatch the message
 			if err := r.handler.dispatch(session.Context(), msg); err != nil {
@@ -50,13 +53,13 @@ func (r *receiver) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 			}
 
 			// otherwise, we can commit this message now
-			r.kafka.commitMessage(session, msg)
+			r.client.commitMessage(session, msg)
 
 		case <-session.Context().Done():
 			// Should return when `session.Context()` is done.
 			// If not, will raise `ErrRebalanceInProgress` or `read tcp <ip>:<port>: i/o timeout` when kafka rebalance. see:
 			// https://github.com/IBM/sarama/issues/1192
-			sarama.Logger.Printf("consumer: context is Done. Exiting...\n")
+			sarama.Logger.Printf("consumer: context is Done. Exiting...")
 			return nil
 		}
 	}
