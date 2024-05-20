@@ -201,6 +201,14 @@ issues:
       linters:
         - ireturn
 
+    - path: kafka/consumer/*
+      linters:
+        - godox
+
+    - path: kafka/consumer/sarama.go
+      linters:
+        - ireturn
+
     - path: sentry/*
       linters:
         - lll

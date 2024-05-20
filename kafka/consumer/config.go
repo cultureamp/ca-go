@@ -19,9 +19,7 @@ type Config struct {
 	returnOnError bool             // If the receiver.dispatch returns error, then exit consume (Default false)
 	stdLogger     sarama.StdLogger // Consumer logging (Default nil)
 	debugLogger   sarama.StdLogger // Sarama logger (Default nil)
-	client        kafkaClient      // Kafka client interfaces (Default Sarama if nil)
-
-	saramaConfig *sarama.Config
+	saramaConfig  *sarama.Config
 }
 
 func newConfig() *Config {
@@ -34,7 +32,6 @@ func newConfig() *Config {
 		oldest:        true,
 		returnOnError: false,
 		version:       sarama.DefaultVersion.String(),
-		client:        newSaramaClient(),
 		saramaConfig:  sarama.NewConfig(),
 	}
 

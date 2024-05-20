@@ -13,13 +13,15 @@ type KafkaConsumer interface {
 // Consumer provides a high level API for consuming and handling messages from
 // a Kafka topic.
 type Consumer struct {
-	conf *Config
+	client kafkaClient // Kafka client interfaces (Default Sarama if nil)
+	conf   *Config
 }
 
 // NewConsumer returns a new Consumer configured with the provided dialer and config.
 func NewConsumer(opts ...Option) (*Consumer, error) {
 	c := &Consumer{
-		conf: newConfig(),
+		conf:   newConfig(),
+		client: newSaramaClient(),
 	}
 
 	for _, opt := range opts {
@@ -34,7 +36,7 @@ func NewConsumer(opts ...Option) (*Consumer, error) {
 }
 
 func (c *Consumer) Consume(ctx context.Context) error {
-	group, err := newGroupConsumer(c.conf.client, c.conf)
+	group, err := newGroupConsumer(c.client, c.conf)
 	if err != nil {
 		return errors.Errorf("failed to create kafka consumer: %w", err)
 	}

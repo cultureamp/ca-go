@@ -6,6 +6,12 @@ import (
 
 type Option func(consumer *Consumer)
 
+func WithKafkaClient(client kafkaClient) Option {
+	return func(consumer *Consumer) {
+		consumer.client = client
+	}
+}
+
 func WithBrokers(brokers []string) Option {
 	return func(consumer *Consumer) {
 		consumer.conf.brokers = brokers
@@ -66,12 +72,6 @@ func WithGroupId(id string) Option {
 func WithAssignor(assignor string) Option {
 	return func(consumer *Consumer) {
 		consumer.conf.assignor = assignor
-	}
-}
-
-func WithKafkaClient(client kafkaClient) Option {
-	return func(consumer *Consumer) {
-		consumer.conf.client = client
 	}
 }
 
