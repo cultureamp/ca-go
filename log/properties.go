@@ -10,7 +10,9 @@ type Property struct {
 }
 
 func newLoggerProperty(impl *zerolog.Event) *Property {
-	return &Property{impl: impl}
+	return &Property{
+		impl: impl,
+	}
 }
 
 // Properties adds an entire sub-document of type Property to the log.
@@ -23,7 +25,7 @@ func (lf *Property) Properties(fields *Field) *Property {
 // and can now be sent to the output.
 //
 // NOTICE: once this method is called, the *Property should be disposed.
-// Calling Details twice can have unexpected result.
+// Calling Details twice can have unexpected results.
 func (lf *Property) Details(details string) {
 	lf.impl.Msg(details)
 }
@@ -33,7 +35,7 @@ func (lf *Property) Details(details string) {
 // and can now be sent to the output.
 //
 // NOTICE: once this method is called, the *Property should be disposed.
-// Calling Detailsf twice can have unexpected result.
+// Calling Detailsf twice can have unexpected results.
 func (lf *Property) Detailsf(format string, v ...interface{}) {
 	lf.impl.Msgf(format, v...)
 }
@@ -42,6 +44,7 @@ func (lf *Property) Detailsf(format string, v ...interface{}) {
 // sent to the output.
 //
 // NOTICE: once this method is called, the *Property should be disposed.
+// Calling Send twice can have unexpected results.
 func (lf *Property) Send() {
 	lf.impl.Send()
 }

@@ -8,7 +8,7 @@ on:
 
 env:
   GO_VERSION: 1.22
-  GOTOOLCHAIN: go1.22.2
+  GOTOOLCHAIN: go1.22.3
 
 jobs:
   go-setup:
@@ -41,11 +41,11 @@ jobs:
           cache-dependency-path: ./go.sum
 
       - name: GoLint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         with:
           version: "latest"
           args: --verbose --timeout=5m
-          skip-pkg-cache: true
+          skip-cache: false
 
       - name: GoVet
         run: go vet ./...
@@ -107,16 +107,16 @@ jobs:
           go install github.com/boumenot/gocover-cobertura@v1.2.0
           go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@v2.5.0
 
-      - name: Run all tests
+      - name: Run all tests with 'race'
         run: |
-          go test ./...
+          go test -race ./...
 
-      - name: Run coverage tests
+      - name: Run test coverage
         run: |
-          go test -race -json -v -coverprofile=coverage.json -covermode atomic ./... 2>&1 | tee gotest.log | gotestfmt
+          go test -json -v -coverprofile=coverage.json -covermode atomic ./... 2>&1 | tee gotest.log | gotestfmt
 
       - name: Convert go coverage to corbetura format
-        run: gocover-cobertura -ignore-files test\*.go < coverage.json > coverage.xml
+        run: gocover-cobertura -ignore-dirs '(example|kafkatest)' -ignore-files 'test\*.go' -ignore-gen-files < coverage.json > coverage.xml
 
       - name: Generate code coverage report
         uses: irongut/CodeCoverageSummary@v1.3.0
@@ -129,7 +129,7 @@ jobs:
           hide_complexity: true
           indicators: true
           output: both
-          thresholds: '60 80'
+          thresholds: "60 80"
 
       - name: Add Coverage PR Comment
         uses: marocchino/sticky-pull-request-comment@v2

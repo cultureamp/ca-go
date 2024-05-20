@@ -6,6 +6,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const (
+	defaultExpiresAt = 10 * time.Minute
+)
+
 // StandardClaims represent the standard Culture Amp JWT claims.
 type StandardClaims struct {
 	AccountId       string // uuid
@@ -100,7 +104,7 @@ func newEncoderClaims(sc *StandardClaims) *encoderStandardClaims {
 	claims.Subject = sc.Subject
 	claims.Audience = sc.Audience
 	now := time.Now()
-	claims.ExpiresAt = claims.correctTime(sc.ExpiresAt, now.Add(10*time.Minute))
+	claims.ExpiresAt = claims.correctTime(sc.ExpiresAt, now.Add(defaultExpiresAt))
 	claims.NotBefore = claims.correctTime(sc.NotBefore, now)
 	claims.IssuedAt = claims.correctTime(sc.IssuedAt, now)
 

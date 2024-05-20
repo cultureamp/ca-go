@@ -19,11 +19,11 @@ func TestCommonSettings(t *testing.T) {
 	t.Setenv(ProductEnv, "standard_library")
 
 	settings := newCommonSettings()
-	assert.Equal(t, "ca-go-unit-tests", settings.App_Name)
-	assert.Equal(t, "1.2.3", settings.App_Version)
-	assert.Equal(t, "local", settings.App_Env)
-	assert.Equal(t, "local", settings.Farm_Name)
-	assert.Equal(t, "standard_library", settings.Product_Suite)
+	assert.Equal(t, "ca-go-unit-tests", settings.AppNameEnv)
+	assert.Equal(t, "1.2.3", settings.AppVersionEnv)
+	assert.Equal(t, "local", settings.AppTypeEnv)
+	assert.Equal(t, "local", settings.FarmNameEnv)
+	assert.Equal(t, "standard_library", settings.ProductSuiteEnv)
 }
 
 func TestSettingsHelpers(t *testing.T) {
@@ -42,21 +42,21 @@ func Test_Settings_Env_IsAws_IsLocal(t *testing.T) {
 	t.Setenv(AppFarmEnv, "local")
 	settings := newCommonSettings()
 	assert.NotNil(t, settings)
-	assert.Equal(t, "local", settings.Farm_Name)
+	assert.Equal(t, "local", settings.FarmNameEnv)
 	assert.True(t, settings.IsRunningLocal())
 	assert.False(t, settings.IsRunningInAWS())
 
 	t.Setenv(AppFarmEnv, "falcon")
 	settings = newCommonSettings()
 	assert.NotNil(t, settings)
-	assert.Equal(t, "falcon", settings.Farm_Name)
+	assert.Equal(t, "falcon", settings.FarmNameEnv)
 	assert.False(t, settings.IsRunningLocal())
 	assert.True(t, settings.IsRunningInAWS())
 
 	t.Setenv(AppFarmEnv, "production")
 	settings = newCommonSettings()
 	assert.NotNil(t, settings)
-	assert.Equal(t, "production", settings.Farm_Name)
+	assert.Equal(t, "production", settings.FarmNameEnv)
 	assert.False(t, settings.IsRunningLocal())
 	assert.True(t, settings.IsRunningInAWS())
 }

@@ -1,11 +1,13 @@
 package log_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/cultureamp/ca-go/log"
 	"github.com/stretchr/testify/mock"
@@ -42,7 +44,13 @@ func TestCommonExamples(t *testing.T) {
 	t.Setenv("AWS_REGION", "dev")
 	t.Setenv("PRODUCT", "cago")
 
-	log.DefaultLogger = nil // force re-create
+	log.DefaultOptions(
+		log.WithProperties(log.Add().
+			Bool("global_bool", true).
+			Int("global_int", 42).
+			Duration("global_dur", 42*time.Second),
+		),
+	)
 
 	log.Debug("hander_added").
 		Properties(log.Add().
@@ -169,36 +177,60 @@ type mockLogger struct {
 
 func (ml *mockLogger) Debug(event string) *log.Property {
 	args := ml.Called(event)
-	output, _ := args.Get(0).(*log.Property)
-	return output
+	return args.Get(0).(*log.Property)
 }
 
 func (ml *mockLogger) Info(event string) *log.Property {
 	args := ml.Called(event)
-	output, _ := args.Get(0).(*log.Property)
-	return output
+	return args.Get(0).(*log.Property)
 }
 
 func (ml *mockLogger) Warn(event string) *log.Property {
 	args := ml.Called(event)
-	output, _ := args.Get(0).(*log.Property)
-	return output
+	return args.Get(0).(*log.Property)
 }
 
 func (ml *mockLogger) Error(event string, err error) *log.Property {
 	args := ml.Called(event)
-	output, _ := args.Get(0).(*log.Property)
-	return output
+	return args.Get(0).(*log.Property)
 }
 
 func (ml *mockLogger) Fatal(event string, err error) *log.Property {
 	args := ml.Called(event)
-	output, _ := args.Get(0).(*log.Property)
-	return output
+	return args.Get(0).(*log.Property)
 }
 
 func (ml *mockLogger) Panic(event string, err error) *log.Property {
 	args := ml.Called(event)
-	output, _ := args.Get(0).(*log.Property)
-	return output
+	return args.Get(0).(*log.Property)
+}
+
+func (ml *mockLogger) Child(options ...log.LoggerOption) log.Logger {
+	args := ml.Called(options)
+	return args.Get(0).(log.Logger)
+}
+
+func (ml *mockLogger) WithContext(ctx context.Context) context.Context {
+	args := ml.Called(ctx)
+	return args.Get(0).(context.Context)
+}
+
+func getExampleLogger(sev string) log.Logger {
+	config := getExampleLoggerConfig(sev)
+	return log.NewLogger(config)
+}
+
+func getExampleLoggerConfig(sev string) *log.Config {
+	config, _ := log.NewLoggerConfig()
+	config.AppName = "logger-test"
+	config.AwsRegion = "def"
+	config.Product = "cago"
+	config.LogLevel = sev
+	config.Quiet = false
+	config.ConsoleWriter = true
+	config.ConsoleColour = false
+	config.TimeNow = func() time.Time {
+		return time.Date(2020, 11, 14, 11, 30, 32, 0, time.UTC)
+	}
+	return config
 }

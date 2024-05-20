@@ -1,6 +1,8 @@
 package log
 
 import (
+	"context"
+
 	"github.com/rs/zerolog"
 	strcase "github.com/stoewer/go-strcase"
 )
@@ -12,11 +14,11 @@ type standardLogger struct {
 }
 
 // NewLogger creates a new standardLogger using the supplied config.
-func NewLogger(config *Config) *standardLogger {
+func NewLogger(config *Config, options ...LoggerOption) *standardLogger {
 	lvl := config.Level()
 	writer := config.getWriter()
 
-	impl := zerolog.
+	lc := zerolog.
 		New(writer).
 		Level(lvl).
 		With().
@@ -25,10 +27,16 @@ func NewLogger(config *Config) *standardLogger {
 		Str("aws_region", config.AwsRegion).
 		Str("aws_account_id", config.AwsAccountID).
 		Str("farm", config.Farm).
-		Str("product", config.Product).
-		Logger()
+		Str("product", config.Product)
 
-	// We have our own Timestamp hook so that we can mock in tests
+	// Loop through our Logger options and apply them
+	for _, option := range options {
+		lc = option(lc)
+	}
+
+	impl := lc.Logger()
+
+	// We have our own Timestamp hook so that we can mock "time" in tests
 	impl = impl.Hook(&timestampHook{config: config})
 
 	return &standardLogger{
@@ -62,8 +70,6 @@ func (l *standardLogger) Enabled(logLevel string) bool {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Debug(event string) *Property {
-	l.config.mustProcess() // make sure mandatory config values are set
-
 	le := l.impl.Debug().Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le)
 }
@@ -72,8 +78,6 @@ func (l *standardLogger) Debug(event string) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Info(event string) *Property {
-	l.config.mustProcess() // make sure mandatory config values are set
-
 	le := l.impl.Info().Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le)
 }
@@ -82,8 +86,6 @@ func (l *standardLogger) Info(event string) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Warn(event string) *Property {
-	l.config.mustProcess() // make sure mandatory config values are set
-
 	le := l.impl.Warn().Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le)
 }
@@ -92,8 +94,6 @@ func (l *standardLogger) Warn(event string) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Error(event string, err error) *Property {
-	l.config.mustProcess() // make sure mandatory config values are set
-
 	le := l.impl.Error()
 	le.Dict("error", zerolog.Dict().
 		Stack().
@@ -107,8 +107,6 @@ func (l *standardLogger) Error(event string, err error) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Fatal(event string, err error) *Property {
-	l.config.mustProcess() // make sure mandatory config values are set
-
 	le := l.impl.Fatal()
 	le.Dict("error", zerolog.Dict().
 		Stack().
@@ -122,12 +120,35 @@ func (l *standardLogger) Fatal(event string, err error) *Property {
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
 func (l *standardLogger) Panic(event string, err error) *Property {
-	l.config.mustProcess() // make sure mandatory config values are set
-
 	le := l.impl.Panic()
 	le.Dict("error", zerolog.Dict().
 		Stack().
 		Err(err),
 	).Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le).WithSystemTracing()
+}
+
+// Child returns a new logger that inherits all the properties of the parent.
+func (l *standardLogger) Child(options ...LoggerOption) Logger { //nolint:ireturn
+	lc := l.impl.With()
+
+	// Loop through our Logger options and apply them
+	for _, option := range options {
+		lc = option(lc)
+	}
+
+	return &standardLogger{
+		impl:   lc.Logger(),
+		config: l.config,
+	}
+}
+
+type ctxLoggerKey struct{}
+
+// WithContext returns a context with an associated logger attached.
+func (l *standardLogger) WithContext(ctx context.Context) context.Context {
+	if _, ok := ctx.Value(ctxLoggerKey{}).(Logger); ok {
+		return ctx
+	}
+	return context.WithValue(ctx, ctxLoggerKey{}, l)
 }

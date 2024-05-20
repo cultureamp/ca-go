@@ -2,10 +2,17 @@ package log
 
 import (
 	"net"
+	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
+	"runtime/debug"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	iso8601 "github.com/sosodev/duration"
 )
 
 // Field contains an element of the log, usually a key-value pair.
@@ -84,7 +91,10 @@ func (lf *Field) Bytes(key string, val []byte) *Field {
 
 // Duration adds the property key with val as an time.Duration to the log.
 func (lf *Field) Duration(key string, d time.Duration) *Field {
-	lf.impl = lf.impl.Dur(key, d)
+	// Logging Std https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3114598406/Logging+Standard#Custom-fields
+	// time durations use ISO8601 Duration format.
+	s := iso8601.Format(d)
+	lf.impl = lf.impl.Str(key, s)
 	return lf
 }
 
@@ -111,4 +121,66 @@ func (lf *Field) UUID(key string, uuid uuid.UUID) *Field {
 func (lf *Field) Func(f func(e *zerolog.Event)) *Field {
 	lf.impl = lf.impl.Func(f)
 	return lf
+}
+
+func requestTracingFields(req *http.Request) *Field {
+	traceID := req.Header.Get(TraceIDHeader)
+	requestID := req.Header.Get(RequestIDHeader)
+	correlationID := req.Header.Get(CorrelationIDHeader)
+
+	return Add().
+		Str("trace_id", traceID).
+		Str("request_id", requestID).
+		Str("correlation_id", correlationID)
+}
+
+func requestDiagnosticsFields(req *http.Request) *Field {
+	url := req.URL
+
+	return Add().
+		Str("method", req.Method).
+		Str("proto", req.Proto).
+		Str("host", req.Host).
+		Str("scheme", url.Scheme).
+		Str("path", url.Path).
+		Str("query", url.RawQuery).
+		Str("fragment", url.Fragment)
+}
+
+func authenticatedUserTracingFields(auth *AuthPayload) *Field {
+	return Add().
+		Str("account_id", auth.CustomerAccountID).
+		Str("realuser_id", auth.RealUserID).
+		Str("user_id", auth.UserID)
+}
+
+func authorizationTracingFields(req *http.Request) *Field {
+	authToken := req.Header.Get(AuthorizationHeader)
+	xcaAuthToken := req.Header.Get(XCAServiceGatewayAuthorizationHeader)
+	userAgent := req.Header.Get(UserAgentHeader)
+	forwardFor := req.Header.Get(XForwardedForHeader)
+
+	return Add().
+		Str("authorization_token", redactString(authToken)).
+		Str("xca_service_authorization_token", redactString(xcaAuthToken)).
+		Str("user_agent", userAgent).
+		Str("x_forwarded_for", forwardFor)
+}
+
+func systemTracingFields() *Field {
+	host, _ := os.Hostname()
+	_, path, line, ok := runtime.Caller(1)
+	file := "unknown"
+	if ok {
+		file = filepath.Base(path)
+	}
+	buildInfo, _ := debug.ReadBuildInfo()
+
+	return Add().
+		Str("os", runtime.GOOS).
+		Int("num_cpu", runtime.NumCPU()).
+		Str("host", host).
+		Int("pid", os.Getpid()).
+		Str("go_version", buildInfo.GoVersion).
+		Str("loc", file+":"+strconv.Itoa(line))
 }

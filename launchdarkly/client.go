@@ -33,9 +33,10 @@ type Client struct {
 type mode int
 
 const (
-	modeProxy  mode = iota // proxies requests through the LD Relay.
-	modeLambda             // connects directly to DynamoDB.
-	modeTest               // allows test data to be supplied.
+	modeProxy       mode = iota // proxies requests through the LD Relay.
+	modeLambda                  // connects directly to DynamoDB.
+	modeTest                    // allows test data to be supplied.
+	defaultInitWait = 5 * time.Second
 )
 
 // NewClient configures and returns an instance of the client. The client is
@@ -44,7 +45,7 @@ const (
 // launchdarkly/flags/doc.go for more information.
 func NewClient(opts ...ConfigOption) (*Client, error) {
 	c := &Client{
-		initWait:           5 * time.Second, // wait up to 5 seconds for LD to connect.
+		initWait:           defaultInitWait, // wait up to 5 seconds for LD to connect.
 		mode:               modeProxy,       // defaults to proxying requests through the LD Relay.
 		bigSegmentsEnabled: true,            // defaults to enable big segments
 	}

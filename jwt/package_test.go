@@ -9,6 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	webGatewayKid = "web-gateway"
+)
+
 func TestPackageEncodeDecode(t *testing.T) {
 	claims := &StandardClaims{
 		AccountId:       "abc123",
@@ -38,6 +42,30 @@ func TestPackageEncodeDecode(t *testing.T) {
 	assert.Equal(t, "abc123", sc.AccountId)
 	assert.Equal(t, "xyz234", sc.RealUserId)
 	assert.Equal(t, "xyz345", sc.EffectiveUserId)
+
+	// Decode it back again, checking aud, iss and sub all match
+	sc, err = Decode(token, MustMatchAudience("decoder-name"), MustMatchIssuer("encoder-name"), MustMatchSubject("test"))
+	assert.Nil(t, err)
+
+	// check it matches
+	assert.Equal(t, "abc123", sc.AccountId)
+	assert.Equal(t, "xyz234", sc.RealUserId)
+	assert.Equal(t, "xyz345", sc.EffectiveUserId)
+
+	// Decode it back again, checking aud should fail
+	sc, err = Decode(token, MustMatchAudience("incorrect-aud"))
+	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "token has invalid audience")
+
+	// Decode it back again, checking iss should fail
+	sc, err = Decode(token, MustMatchIssuer("incorrect-iss"))
+	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "token has invalid issuer")
+
+	// Decode it back again, checking sub should fail
+	sc, err = Decode(token, MustMatchSubject("incorrect-sub"))
+	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "token has invalid subject")
 }
 
 func TestPackageEncodeDecodeNotBeforeExpiryChecks(t *testing.T) {
