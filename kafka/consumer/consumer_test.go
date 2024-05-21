@@ -18,14 +18,14 @@ func TestNewConsumer(t *testing.T) {
 	assert.ErrorContains(t, err, "missing brokers")
 
 	c, err = NewConsumer(
-		WithBrokers([]string{"localhost:9001"}),
+		WithBrokers([]string{"localhost:9092"}),
 	)
 	assert.Nil(t, c)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "missing topics")
 
 	c, err = NewConsumer(
-		WithBrokers([]string{"localhost:9001"}),
+		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 	)
 	assert.Nil(t, c)
@@ -33,18 +33,28 @@ func TestNewConsumer(t *testing.T) {
 	assert.ErrorContains(t, err, "missing group")
 
 	c, err = NewConsumer(
-		WithBrokers([]string{"localhost:9001"}),
+		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupId("group_id"),
 	)
 	assert.Nil(t, c)
 	assert.NotNil(t, err)
-	assert.ErrorContains(t, err, "unrecognized consumer group partition assignor")
+	assert.ErrorContains(t, err, "missing message handler")
 
 	c, err = NewConsumer(
-		WithBrokers([]string{"localhost:9001"}),
+		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupId("group_id"),
+		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+	)
+	assert.NotNil(t, c)
+	assert.Nil(t, err)
+
+	c, err = NewConsumer(
+		WithBrokers([]string{"localhost:9092"}),
+		WithTopics([]string{"test-topic"}),
+		WithGroupId("group_id"),
+		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
 		WithAssignor("abc"),
 	)
 	assert.Nil(t, c)
@@ -52,21 +62,49 @@ func TestNewConsumer(t *testing.T) {
 	assert.ErrorContains(t, err, "unrecognized consumer group partition assignor")
 
 	c, err = NewConsumer(
-		WithBrokers([]string{"localhost:9001"}),
+		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupId("group_id"),
+		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
 		WithAssignor("roundrobin"),
+	)
+	assert.NotNil(t, c)
+	assert.Nil(t, err)
+
+	c, err = NewConsumer(
+		WithBrokers([]string{"localhost:9092"}),
+		WithTopics([]string{"test-topic"}),
+		WithGroupId("group_id"),
+		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithAssignor("roundrobin"),
+		WithVersion("abc"),
 	)
 	assert.Nil(t, c)
 	assert.NotNil(t, err)
-	assert.ErrorContains(t, err, "missing message handler")
+	assert.ErrorContains(t, err, "invalid kafka version")
 
 	c, err = NewConsumer(
-		WithBrokers([]string{"localhost:9001"}),
+		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupId("group_id"),
-		WithAssignor("roundrobin"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithAssignor("roundrobin"),
+		WithVersion("1.0.0"),
+	)
+	assert.NotNil(t, c)
+	assert.Nil(t, err)
+
+	// full list for coverage purposes
+	c, err = NewConsumer(
+		WithConsumerID("abc.123.uuid"),
+		WithBrokers([]string{"localhost:9092"}),
+		WithTopics([]string{"test-topic"}),
+		WithGroupId("group_id"),
+		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithAssignor("roundrobin"),
+		WithOldest(false),
+		WithLogging(newTestLogger()),
+		WithDebugLogger(newTestLogger()),
 	)
 	assert.NotNil(t, c)
 	assert.Nil(t, err)

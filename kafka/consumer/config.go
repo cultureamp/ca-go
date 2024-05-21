@@ -86,7 +86,7 @@ func (conf *Config) shouldProcess() error {
 		conf.saramaConfig.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategySticky()}
 	case "roundrobin":
 		conf.saramaConfig.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategyRoundRobin()}
-	case "range":
+	case "range", "":
 		conf.saramaConfig.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategyRange()}
 	default:
 		// can we default to avoid this error?

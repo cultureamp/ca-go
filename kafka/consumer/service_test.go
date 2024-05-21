@@ -85,6 +85,33 @@ func TestServiceWithClientError(t *testing.T) {
 	assert.Equal(t, int32(3), calls.Load())
 }
 
+func TestServiceWithDoubleStartDoubleStop(t *testing.T) {
+	ctx := context.Background()
+
+	var calls atomic.Int32
+	handler := func(ctx context.Context, msg *Message) error {
+		calls.Add(1)
+		return errors.Errorf("test error")
+	}
+
+	s := testService(t, ctx, handler, 3)
+	assert.NotNil(t, s)
+
+	// non blocking
+	s.Start(ctx)
+	s.Start(ctx)
+
+	// sleep this thread for a bit to let the service do some work
+	time.Sleep(1 * time.Second)
+
+	// stop the Service
+	err := s.Stop()
+	assert.Nil(t, err)
+	assert.Equal(t, int32(3), calls.Load())
+	err = s.Stop()
+	assert.Nil(t, err)
+}
+
 func testService(t *testing.T, ctx context.Context, handler Handler, numMessages int64) *Service {
 	mockClient := newMockKafkaClient()
 	mockConsumerGroupSession := newMockConsumerGroupSession()
