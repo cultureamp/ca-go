@@ -40,7 +40,7 @@ func NewConsumer(opts ...Option) (*Consumer, error) {
 	return c, nil
 }
 
-func (c *Consumer) Consume(ctx context.Context) error { // (StopFunc, error) {
+func (c *Consumer) Consume(ctx context.Context) error {
 	group, err := c.setupGroupConsumer()
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (c *Consumer) setupGroupConsumer() (*groupConsumer, error) {
 
 	// if already consuming, do nothing
 	if c.group != nil {
-		return nil, errors.Errorf("consumer group already running!")
+		return nil, errors.Errorf("consumer group already running! (forgot to call Stop()?)")
 	}
 
 	group, err := newGroupConsumer(c.client, c.conf)
@@ -80,5 +80,8 @@ func (c *Consumer) Stop() error {
 		return nil
 	}
 
-	return c.group.stop()
+	err := c.group.stop()
+	c.group = nil
+
+	return err
 }

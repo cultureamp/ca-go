@@ -18,7 +18,13 @@ func newMockKafkaClient() *mockKafkaClient {
 
 func (m *mockKafkaClient) NewConsumerGroup(brokers []string, groupId string, config *sarama.Config) (sarama.ConsumerGroup, error) {
 	args := m.Called(brokers, groupId, config)
-	gc := args.Get(0).(sarama.ConsumerGroup)
+
+	var gc sarama.ConsumerGroup = nil
+	argZero := args.Get(0)
+	if argZero != nil {
+		gc = argZero.(sarama.ConsumerGroup)
+	}
+
 	return gc, args.Error(1)
 }
 
