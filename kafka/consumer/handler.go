@@ -25,8 +25,7 @@ func newMessageHandler(handler Handler) *messageHandler {
 }
 
 func (h *messageHandler) dispatch(ctx context.Context, msg *sarama.ConsumerMessage) error {
-	// todo: add retries, etc.
-
+	// add retries, etc.
 	span, ctx := tracer.StartSpanFromContext(ctx, "kafka.consumer.handle", tracer.ResourceName(msg.Topic))
 	defer span.Finish()
 

@@ -2,10 +2,12 @@ package consumer
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/IBM/sarama"
+	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -14,16 +16,13 @@ func TestServiceWithCancelledContext(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 
-	calls := 0
+	var calls atomic.Int32
 	handler := func(ctx context.Context, msg *Message) error {
-		calls++
+		calls.Add(1)
 		return nil
 	}
 
-	c := testConsumer(t, ctx, handler, 4)
-	assert.NotNil(t, c)
-
-	s := NewService(c)
+	s := testService(t, ctx, handler, 4)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -35,22 +34,19 @@ func TestServiceWithCancelledContext(t *testing.T) {
 
 	// cancel the context to signal the service to stop
 	cancel()
-	assert.Equal(t, 4, calls)
+	assert.Equal(t, int32(4), calls.Load())
 }
 
 func TestServiceWithStop(t *testing.T) {
 	ctx := context.Background()
 
-	calls := 0
+	var calls atomic.Int32
 	handler := func(ctx context.Context, msg *Message) error {
-		calls++
+		calls.Add(1)
 		return nil
 	}
 
-	c := testConsumer(t, ctx, handler, 2)
-	assert.NotNil(t, c)
-
-	s := NewService(c)
+	s := testService(t, ctx, handler, 2)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -59,11 +55,37 @@ func TestServiceWithStop(t *testing.T) {
 	// sleep this thread for a bit to let the service do some work
 	time.Sleep(1 * time.Second)
 
-	s.Stop()
-	assert.Equal(t, 2, calls)
+	// stop the Service
+	err := s.Stop()
+	assert.Nil(t, err)
+	assert.Equal(t, int32(2), calls.Load())
 }
 
-func testConsumer(t *testing.T, ctx context.Context, handler Handler, numMessages int64) *Consumer {
+func TestServiceWithClientError(t *testing.T) {
+	ctx := context.Background()
+
+	var calls atomic.Int32
+	handler := func(ctx context.Context, msg *Message) error {
+		calls.Add(1)
+		return errors.Errorf("test error")
+	}
+
+	s := testService(t, ctx, handler, 3)
+	assert.NotNil(t, s)
+
+	// non blocking
+	s.Start(ctx)
+
+	// sleep this thread for a bit to let the service do some work
+	time.Sleep(1 * time.Second)
+
+	// stop the Service
+	err := s.Stop()
+	assert.Nil(t, err)
+	assert.Equal(t, int32(3), calls.Load())
+}
+
+func testService(t *testing.T, ctx context.Context, handler Handler, numMessages int64) *Service {
 	mockClient := newMockKafkaClient()
 	mockConsumerGroupSession := newMockConsumerGroupSession()
 	mockConsumerGroupClaim := newMockConsumerGroupClaim()
@@ -95,7 +117,7 @@ func testConsumer(t *testing.T, ctx context.Context, handler Handler, numMessage
 	receiverChannel = mockChannel
 	mockConsumerGroupClaim.On("Messages").Return(receiverChannel)
 
-	c, err := NewConsumer(
+	s, err := NewService(
 		WithKafkaClient(mockClient),
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
@@ -103,9 +125,9 @@ func testConsumer(t *testing.T, ctx context.Context, handler Handler, numMessage
 		WithAssignor("roundrobin"),
 		WithHandler(handler),
 		WithLogging(newTestLogger()),
-		WithReturnOnError(true),
+		WithReturnOnClientDispathError(false),
 	)
 	assert.Nil(t, err)
 
-	return c
+	return s
 }

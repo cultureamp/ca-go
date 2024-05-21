@@ -8,31 +8,31 @@ import (
 
 // Config is a configuration object used to create a new Consumer.
 type Config struct {
-	id            string           // Default: UUID
-	brokers       []string         // Kafka bootstrap brokers to connect to
-	version       string           // Kafka cluster version (Default )
-	topics        []string         // Kafka topics to be consumed
-	groupId       string           // Kafka consumer group definition
-	assignor      string           // Consumer group partition assignment strategy (range, roundrobin, sticky)
-	handler       Handler          // The client handler to receive and process messages
-	oldest        bool             // Kafka consumer consume initial offset from oldest (Default true)
-	returnOnError bool             // If the receiver.dispatch returns error, then exit consume (Default false)
-	stdLogger     sarama.StdLogger // Consumer logging (Default nil)
-	debugLogger   sarama.StdLogger // Sarama logger (Default nil)
-	saramaConfig  *sarama.Config
+	id                          string           // Default: UUID
+	brokers                     []string         // Kafka bootstrap brokers to connect to
+	version                     string           // Kafka cluster version (Default )
+	topics                      []string         // Kafka topics to be consumed
+	groupId                     string           // Kafka consumer group definition
+	assignor                    string           // Consumer group partition assignment strategy (range, roundrobin, sticky)
+	handler                     Handler          // The client handler to receive and process messages
+	oldest                      bool             // Kafka consumer consume initial offset from oldest (Default true)
+	returnOnClientDispatchError bool             // If the receiver.dispatch returns error, then exit consume (Default false)
+	stdLogger                   sarama.StdLogger // Consumer logging (Default nil)
+	debugLogger                 sarama.StdLogger // Sarama logger (Default nil)
+	saramaConfig                *sarama.Config
 }
 
 func newConfig() *Config {
 	// set defaults
 	conf := &Config{
-		id:            uuid.New().String(),
-		stdLogger:     nil,
-		debugLogger:   nil,
-		handler:       nil,
-		oldest:        true,
-		returnOnError: false,
-		version:       sarama.DefaultVersion.String(),
-		saramaConfig:  sarama.NewConfig(),
+		id:                          uuid.New().String(),
+		stdLogger:                   nil,
+		debugLogger:                 nil,
+		handler:                     nil,
+		oldest:                      true,
+		returnOnClientDispatchError: false,
+		version:                     sarama.DefaultVersion.String(),
+		saramaConfig:                sarama.NewConfig(),
 	}
 
 	// ConsumerGroup <- Errors returns a read channel of errors that occurred during the consumer life-cycle.
@@ -51,10 +51,12 @@ func (conf *Config) shouldProcess() error {
 	conf.saramaConfig.ClientID = conf.id
 
 	if conf.stdLogger != nil {
+		// sarama.Logger is a global package level variable
 		sarama.Logger = conf.stdLogger
 	}
 
 	if conf.debugLogger != nil {
+		// sarama.DebugLogger is a global package level variable
 		sarama.DebugLogger = conf.debugLogger
 	}
 

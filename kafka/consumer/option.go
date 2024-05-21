@@ -75,8 +75,8 @@ func WithAssignor(assignor string) Option {
 	}
 }
 
-func WithReturnOnError(returnOnError bool) Option {
+func WithReturnOnClientDispathError(returnOnError bool) Option {
 	return func(consumer *Consumer) {
-		consumer.conf.returnOnError = returnOnError
+		consumer.conf.returnOnClientDispatchError = returnOnError
 	}
 }

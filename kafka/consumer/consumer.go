@@ -11,8 +11,8 @@ type KafkaConsumer interface {
 	Stop() error
 }
 
-// Consumer provides a high level API for consuming and handling messages from
-// a Kafka topic.
+// Consumer provides a high level API for consuming and handling messages from a Kafka topic.
+// This implementation blocks on Consume() if you want a non-blocking version use Service.
 type Consumer struct {
 	client kafkaClient // Kafka client interfaces (Default: Sarama)
 	conf   *Config
@@ -50,8 +50,9 @@ func (c *Consumer) Consume(ctx context.Context) error {
 	c.group = group
 
 	// blocking call until either
-	// 1. context is cancelled OR
-	// 2. a server-side kafka rebalance happens
+	// 1. context is cancelled/done OR
+	// 2. a server-side kafka rebalance happens OR
+	// 3. client dispatch error occurs (and returnOnClientDispatchError=true in the)
 	return c.group.consume(ctx)
 }
 

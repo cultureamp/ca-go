@@ -174,7 +174,7 @@ func TestNewConsumerWithReceiverError(t *testing.T) {
 		WithAssignor("roundrobin"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return errors.Errorf("test error") }),
 		WithLogging(newTestLogger()),
-		WithReturnOnError(true),
+		WithReturnOnClientDispathError(true),
 	)
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
