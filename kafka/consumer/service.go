@@ -9,13 +9,15 @@ import (
 
 type Service struct {
 	consumer KafkaConsumer
-	cleanup  Cleanup
-	mu       sync.Mutex
+
+	mu      sync.Mutex
+	running bool
 }
 
 func NewService(consumer KafkaConsumer) *Service {
 	return &Service{
 		consumer: consumer,
+		running:  false,
 	}
 }
 
@@ -24,18 +26,23 @@ func (s *Service) Start(ctx context.Context) {
 	defer s.mu.Unlock()
 
 	// if running, do nothing
+	if s.running {
+		sarama.Logger.Printf("service: already running!")
+		return
+	}
 
 	// blocking call, so run in a go-routine
+	sarama.Logger.Printf("service: starting...")
 	go s.run(ctx)
+	s.running = true
 }
 
 func (s *Service) run(ctx context.Context) {
 	// blocking call until context Done or Kafka rebalance
-	cleanup, err := s.consumer.Consume(ctx)
+	err := s.consumer.Consume(ctx)
 	if err != nil {
 		sarama.Logger.Printf("service: error consuming topic: '%s'", err.Error())
 	}
-	s.cleanup = cleanup
 }
 
 func (s *Service) Stop() error {
@@ -43,14 +50,17 @@ func (s *Service) Stop() error {
 	defer s.mu.Unlock()
 
 	// if already stopped, do nothing
-	if s.cleanup == nil {
+	if !s.running {
+		sarama.Logger.Printf("service: already stopped!")
 		return nil
 	}
 
-	err := s.cleanup()
+	sarama.Logger.Printf("service: stopping...")
+	err := s.consumer.Stop()
 	if err != nil {
 		sarama.Logger.Printf("service: error stopping consumer: '%s'", err.Error())
 	}
 
+	s.running = false
 	return err
 }

@@ -86,19 +86,33 @@ func TestNewConsumerCtxDeadLine(t *testing.T) {
 	mockConsumerGroup := newMockConsumerGroup(mockConsumerGroupSession, mockConsumerGroupClaim)
 
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockConsumerGroup, nil)
+	mockClient.On("CommitMessage", mock.Anything, mock.Anything)
 	mockConsumerGroupSession.On("Context").Return(ctx)
 	mockConsumerGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockConsumerGroup.On("Close").Return(nil)
 
-	// create channel of size 10
+	saramaMessage := &sarama.ConsumerMessage{
+		Topic:     "test",
+		Partition: 1,
+		Key:       []byte("key"),
+		Value:     []byte("value"),
+		Offset:    1,
+		Timestamp: time.Now(),
+		Headers:   nil,
+	}
+
+	// push a few message into the channel
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
+	mockChannel <- saramaMessage
+	mockChannel <- saramaMessage
+	mockChannel <- saramaMessage
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
 	receiverChannel = mockChannel
 	mockConsumerGroupClaim.On("Messages").Return(receiverChannel)
 
 	c, err := NewConsumer(
 		WithKafkaClient(mockClient),
-		WithBrokers([]string{"localhost:9001"}),
+		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupId("group_id"),
 		WithAssignor("roundrobin"),
@@ -108,11 +122,14 @@ func TestNewConsumerCtxDeadLine(t *testing.T) {
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
 
-	cleanup, err := c.Consume(ctx)
-	cleanup()
-
+	// blocks until Kafka rebalance, handler error or context.Done
+	err = c.Consume(ctx)
 	assert.NotNil(t, err)
-	assert.ErrorContains(t, err, "context deadline exceeded")
+	assert.ErrorIs(t, err, context.DeadlineExceeded)
+
+	// after finished, clean up
+	err = c.Stop()
+	assert.Nil(t, err)
 
 	mockClient.AssertExpectations(t)
 	mockConsumerGroup.AssertExpectations(t)
@@ -151,7 +168,7 @@ func TestNewConsumerWithReceiverError(t *testing.T) {
 
 	c, err := NewConsumer(
 		WithKafkaClient(mockClient),
-		WithBrokers([]string{"localhost:9001"}),
+		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupId("group_id"),
 		WithAssignor("roundrobin"),
@@ -162,11 +179,14 @@ func TestNewConsumerWithReceiverError(t *testing.T) {
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
 
-	cleanup, err := c.Consume(ctx)
-	cleanup()
-
+	// blocks until Kafka rebalance, handler error or context.Done
+	err = c.Consume(ctx)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "test error")
+
+	// after finished, clean up
+	err = c.Stop()
+	assert.Nil(t, err)
 
 	mockClient.AssertExpectations(t)
 	mockConsumerGroup.AssertExpectations(t)

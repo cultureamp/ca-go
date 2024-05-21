@@ -6,10 +6,9 @@ import (
 	"github.com/go-errors/errors"
 )
 
-type Cleanup func() error
-
 type KafkaConsumer interface {
-	Consume(ctx context.Context) (Cleanup, error)
+	Consume(ctx context.Context) error
+	Stop() error
 }
 
 // Consumer provides a high level API for consuming and handling messages from
@@ -38,25 +37,25 @@ func NewConsumer(opts ...Option) (*Consumer, error) {
 	return c, nil
 }
 
-func (c *Consumer) Consume(ctx context.Context) (Cleanup, error) {
+func (c *Consumer) Consume(ctx context.Context) error {
 	// if already consuming, do nothing
 	if c.group != nil {
-		return c.stop, nil
+		return nil
 	}
 
 	group, err := newGroupConsumer(c.client, c.conf)
 	if err != nil {
-		return c.stop, errors.Errorf("failed to create kafka consumer: %w", err)
+		return errors.Errorf("failed to create kafka consumer: %w", err)
 	}
 	c.group = group
 
 	// blocking call until either
 	// 1. context is cancelled OR
 	// 2. a server-side kafka rebalance happens
-	return c.stop, c.group.consume(ctx)
+	return c.group.consume(ctx)
 }
 
-func (c *Consumer) stop() error {
+func (c *Consumer) Stop() error {
 	// if already stopped, do nothing
 	if c.group == nil {
 		return nil

@@ -28,7 +28,6 @@ func newGroupConsumer(client kafkaClient, conf *Config) (*groupConsumer, error) 
 
 func (gc *groupConsumer) consume(ctx context.Context) error {
 	// need to close() this groupConsumer or it will leak memory
-	// defer gc.group.Close()
 
 	// `consume` should be called inside an infinite loop, when a
 	// server-side rebalance happens, the consumer session will need to be
@@ -53,5 +52,6 @@ func (gc *groupConsumer) consume(ctx context.Context) error {
 }
 
 func (gc *groupConsumer) stop() error {
+	// need to close() this groupConsumer or it will leak memory
 	return gc.group.Close()
 }
