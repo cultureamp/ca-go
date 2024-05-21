@@ -35,12 +35,12 @@ func (s *Service) Start(ctx context.Context) {
 
 	// if running, do nothing
 	if s.running {
-		s.logf("service: already running!")
+		s.logger.Printf("service: already running!")
 		return
 	}
 
 	// blocking call, so run in a go-routine
-	s.logf("service: starting...")
+	s.logger.Printf("service: starting...")
 	go s.run(ctx)
 	s.running = true
 }
@@ -49,7 +49,7 @@ func (s *Service) run(ctx context.Context) {
 	// blocking call until context Done, client dispatch error, or Kafka rebalance
 	err := s.consumer.Consume(ctx)
 	if err != nil {
-		s.logf("service: error consuming topic: '%s'", err.Error())
+		s.logger.Printf("service: error consuming topic: '%s'", err.Error())
 	}
 }
 
@@ -59,24 +59,16 @@ func (s *Service) Stop() error {
 
 	// if already stopped, do nothing
 	if !s.running {
-		s.logf("service: already stopped!")
+		s.logger.Printf("service: already stopped!")
 		return nil
 	}
 
-	s.logf("service: stopping...")
+	s.logger.Printf("service: stopping...")
 	err := s.consumer.Stop()
 	if err != nil {
-		s.logf("service: error stopping consumer: '%s'", err.Error())
+		s.logger.Printf("service: error stopping consumer: '%s'", err.Error())
 	}
 
 	s.running = false
 	return err
-}
-
-func (s *Service) logf(format string, v ...interface{}) {
-	if s.logger == nil {
-		return
-	}
-
-	s.logger.Printf(format, v...)
 }

@@ -1,6 +1,9 @@
 package consumer
 
 import (
+	"io"
+	"log"
+
 	"github.com/IBM/sarama"
 	"github.com/go-errors/errors"
 	"github.com/google/uuid"
@@ -26,8 +29,8 @@ func newConfig() *Config {
 	// set defaults
 	conf := &Config{
 		id:                          uuid.New().String(),
-		stdLogger:                   nil,
-		debugLogger:                 nil,
+		stdLogger:                   log.New(io.Discard, "", log.LstdFlags),
+		debugLogger:                 log.New(io.Discard, "", log.LstdFlags),
 		handler:                     nil,
 		oldest:                      true,
 		returnOnClientDispatchError: false,

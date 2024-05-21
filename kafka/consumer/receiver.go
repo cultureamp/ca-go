@@ -20,14 +20,14 @@ func newReceiver(client kafkaClient, handler Handler, logger sarama.StdLogger) *
 
 // Setup is run at the beginning of a new session, before ConsumeClaim.
 func (r *receiver) Setup(sarama.ConsumerGroupSession) error {
-	r.logf("receiver: setup...")
+	r.logger.Printf("receiver: setup...")
 	// add call to dispatch a "setup" call to the client
 	return nil
 }
 
 // Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited.
 func (r *receiver) Cleanup(sarama.ConsumerGroupSession) error {
-	r.logf("receiver: cleanup...")
+	r.logger.Printf("receiver: cleanup...")
 	// add call to dispatch a "cleanup" call to the client
 	return nil
 }
@@ -44,17 +44,17 @@ func (r *receiver) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 		select {
 		case msg, msgChannelOk := <-claim.Messages():
 			if !msgChannelOk {
-				r.logf("receiver: message channel was closed")
+				r.logger.Printf("receiver: message channel was closed")
 				return nil
 			}
-			r.logf(
+			r.logger.Printf(
 				"receiver: message received Ok: timestamp=%v, topic=%s, partition=%d, offset=%d",
 				msg.Timestamp, msg.Topic, msg.Partition, msg.Offset,
 			)
 
 			// dispatch the message
 			if err := r.handler.dispatch(session.Context(), msg); err != nil {
-				r.logf("receiver: failed to dispatch message to client handler: '%s'", err.Error())
+				r.logger.Printf("receiver: failed to dispatch message to client handler: '%s'", err.Error())
 				return err
 			}
 
@@ -65,16 +65,8 @@ func (r *receiver) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 			// Should return when `session.Context()` is done.
 			// If not, will raise `ErrRebalanceInProgress` or `read tcp <ip>:<port>: i/o timeout` when kafka rebalance. see:
 			// https://github.com/IBM/sarama/issues/1192
-			r.logf("receiver: context is Done. Exiting...")
+			r.logger.Printf("receiver: context is Done. Exiting...")
 			return nil
 		}
 	}
-}
-
-func (r *receiver) logf(format string, v ...interface{}) {
-	if r.logger == nil {
-		return
-	}
-
-	r.logger.Printf(format, v...)
 }
