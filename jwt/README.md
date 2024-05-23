@@ -111,6 +111,12 @@ To do this you can pass `MustMatch<Type>` to the `Decode` and `DecodeWithCustomC
 - func MustMatchIssuer(iss string)
 - func MustMatchSubject(sub string)
 
+### Issues: Decode when missing "kid" header in token
+
+Currently, the web-gateway does NOT add any kid into the tokens is creates. This is because of historical reasons.
+Until all receivers are using the JWKS (which has the web-gateway key with the correct kid) we need to support
+the decode logic of "if no kid, then assume kid="web-gateway"
+
 ## Examples
 ```
 package cago
