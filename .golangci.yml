@@ -174,14 +174,18 @@ issues:
 
   exclude-rules:
     # exluded rules from standard packages for reasons...
-    - path: log/logger.go
-      linters:
-        - zerologlint
-
     - path: log/legacy_extensions.go
       linters:
         - lll
         - tagliatelle
+
+    - path: log/logger.go
+      linters:
+        - zerologlint
+
+    - path: log/fields.go
+      linters:
+        - canonicalheader
 
     - path: jwt/decoder.go
       linters:
