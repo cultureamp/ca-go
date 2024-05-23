@@ -115,7 +115,7 @@ To do this you can pass `MustMatch<Type>` to the `Decode` and `DecodeWithCustomC
 
 Currently, the web-gateway does NOT add any kid into the tokens is creates. This is because of historical reasons.
 Until all receivers are using the JWKS (which has the web-gateway key with the correct kid) we need to support
-the decode logic of "if no kid, then assume kid="web-gateway"
+the decode logic of "if no kid, then assume kid="web-gateway" or we run the risk of breaking legacy receiver code.
 
 ## Examples
 ```
