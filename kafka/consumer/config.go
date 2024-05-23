@@ -3,6 +3,8 @@ package consumer
 import (
 	"io"
 	"log"
+	"os"
+	"strings"
 
 	"github.com/IBM/sarama"
 	"github.com/go-errors/errors"
@@ -36,6 +38,17 @@ func newConfig() *Config {
 		returnOnClientDispatchError: false,
 		version:                     sarama.DefaultVersion.String(),
 		saramaConfig:                sarama.NewConfig(),
+	}
+
+	// set env var defaults
+	brokers := os.Getenv("KAFKA_BROKERS")
+	if brokers != "" {
+		conf.brokers = strings.Split(brokers, ",")
+	}
+
+	topics := os.Getenv("KAFKA_TOPICS")
+	if topics != "" {
+		conf.topics = strings.Split(topics, ",")
 	}
 
 	// ConsumerGroup <- Errors returns a read channel of errors that occurred during the consumer life-cycle.

@@ -53,3 +53,16 @@ func TestConfigShouldProcess(t *testing.T) {
 	err = conf.shouldProcess()
 	assert.Nil(t, err)
 }
+
+func TestConfigShouldProcessWithEnvVars(t *testing.T) {
+	t.Setenv("KAFKA_BROKERS", "localhost:9092,localhost:9093")
+	t.Setenv("KAFKA_TOPICS", "test-topic1, test_topic2")
+	conf := newConfig()
+	assert.NotNil(t, conf)
+
+	conf.groupId = "group_id"
+	conf.handler = func(context.Context, *Message) error { return nil }
+
+	err := conf.shouldProcess()
+	assert.Nil(t, err)
+}
