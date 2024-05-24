@@ -186,7 +186,7 @@ issues:
     - path: log/logger.go
       linters:
         - zerologlint
- 
+
     - path: jwt/decoder.go
       linters:
         - ireturn
@@ -208,7 +208,7 @@ issues:
         - err113
         - lll
         - tagliatelle
-     
+
     - path: sentry/*
       linters:
         - lll
