@@ -22,7 +22,7 @@ func TestGroupWithNewConsumerGroup(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), Handler(handler), int64(3), mockChannel)
+	c := testConsumer(t, client(mockClient), Handler(handler), int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -42,8 +42,8 @@ func TestGroupWithConsumeError(t *testing.T) {
 
 	mockClient := newMockKafkaClient()
 	mockSession := newMockConsumerGroupSession()
-	mockClaim := newMockConsumerGroupClaim()
-	mockGroup := newMockConsumerGroup(mockSession, mockClaim)
+	mockConsumer := newMockConsumerGroupClaim()
+	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
 
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(sarama.ErrClosedConsumerGroup)
@@ -55,7 +55,7 @@ func TestGroupWithConsumeError(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), Handler(handler), int64(3), mockChannel)
+	c := testConsumer(t, client(mockClient), Handler(handler), int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -69,6 +69,6 @@ func TestGroupWithConsumeError(t *testing.T) {
 
 	mockClient.AssertExpectations(t)
 	mockSession.AssertExpectations(t)
-	mockClaim.AssertExpectations(t)
+	mockConsumer.AssertExpectations(t)
 	mockGroup.AssertExpectations(t)
 }

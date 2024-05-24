@@ -10,7 +10,7 @@ import (
 // Subscriber provides a high level API for consuming and handling messages from a Kafka topic.
 // This implementation blocks on Consume() if you want a non-blocking version use Service.
 type Subscriber struct {
-	client kafkaClient // Kafka client interfaces (Default: Sarama)
+	client client // Kafka client interfaces (Default: Sarama)
 	conf   *Config
 
 	groupMutex sync.Mutex

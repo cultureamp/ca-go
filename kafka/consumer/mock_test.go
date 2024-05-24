@@ -52,8 +52,11 @@ func (m *mockSaramaConsumerGroup) Consume(ctx context.Context, topics []string, 
 	err := args.Error(0)
 	// success case
 	if err == nil {
+		// mimic lifecycle of a consumer
+		_ = handler.Setup(m.sesson)
 		// we need to call the handler with a session & claim
 		err = handler.ConsumeClaim(m.sesson, m.claim)
+		_ = handler.Cleanup(m.sesson)
 	}
 
 	return err

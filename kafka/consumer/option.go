@@ -6,7 +6,7 @@ import (
 
 type Option func(consumer *Subscriber)
 
-func WithKafkaClient(client kafkaClient) Option {
+func WithKafkaClient(client client) Option {
 	return func(consumer *Subscriber) {
 		consumer.client = client
 	}

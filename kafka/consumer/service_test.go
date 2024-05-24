@@ -114,15 +114,15 @@ func TestServiceWithDoubleStartDoubleStop(t *testing.T) {
 
 func testService(t *testing.T, ctx context.Context, handler Handler, numMessages int64) *Service {
 	mockClient := newMockKafkaClient()
-	mockConsumerGroupSession := newMockConsumerGroupSession()
-	mockConsumerGroupClaim := newMockConsumerGroupClaim()
-	mockConsumerGroup := newMockConsumerGroup(mockConsumerGroupSession, mockConsumerGroupClaim)
+	mockSession := newMockConsumerGroupSession()
+	mockConsumer := newMockConsumerGroupClaim()
+	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
 
-	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockConsumerGroup, nil)
+	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockClient.On("CommitMessage", mock.Anything, mock.Anything)
-	mockConsumerGroupSession.On("Context").Return(ctx)
-	mockConsumerGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	mockConsumerGroup.On("Close").Return(nil)
+	mockSession.On("Context").Return(ctx)
+	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockGroup.On("Close").Return(nil)
 
 	// push a few messages into the channel
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
@@ -142,7 +142,7 @@ func testService(t *testing.T, ctx context.Context, handler Handler, numMessages
 
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
 	receiverChannel = mockChannel
-	mockConsumerGroupClaim.On("Messages").Return(receiverChannel)
+	mockConsumer.On("Messages").Return(receiverChannel)
 
 	s, err := NewService(
 		WithKafkaClient(mockClient),

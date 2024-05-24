@@ -5,12 +5,12 @@ import (
 )
 
 type consumer struct {
-	client  kafkaClient
+	client  client
 	handler *messageHandler
 	logger  sarama.StdLogger
 }
 
-func newConsumer(client kafkaClient, handler Handler, logger sarama.StdLogger) *consumer {
+func newConsumer(client client, handler Handler, logger sarama.StdLogger) *consumer {
 	return &consumer{
 		client:  client,
 		handler: newMessageHandler(handler),
