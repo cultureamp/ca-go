@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	webgatewayKid                  = "web-gateway"
 	kidHeaderKey                   = "kid"
 	algorithmHeaderKey             = "alg"
 	accountIDClaim                 = "accountId"
@@ -146,7 +147,11 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	kidHeader, found := token.Header[kidHeaderKey]
 	if !found {
 		// no kid header but its MANDATORY
-		return nil, errors.Errorf("failed to decode: missing key_id (kid) header")
+		// Currently, the web-gateway doesn't encode the "kid" in its tokens (we should fix that)
+		// So until we do, instead of returning an error here, we default to trying the "web-gateway" kid in the JWKs.
+
+		kidHeader = webgatewayKid
+		// return nil, errors.Errorf("failed to decode: missing key_id (kid) header")
 	}
 
 	kid, ok := kidHeader.(string)

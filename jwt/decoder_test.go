@@ -117,9 +117,10 @@ func TestDecoderDecodeAllClaims(t *testing.T) {
 			year:            1,
 		},
 		{
-			desc:            "Error 2: missing kid",
-			token:           "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.S48Yfs0COCQR70jCrD2y6kD26nns6-c9CLvxKTahxzv0KrkdAXC7I62yIz2yD6j3v3rTKVQ8eGhSKOkN6EU_M8BZa5ltt7TmcIOnn5RWbwnfSfFLMR3njzlMiRT2MGAi2A2WMkx_LrTk9PZZRIlfceQxFVhThjc-Dp92C_zFJARZ8yss3upAW0m0pbeD5Y23GWs6bkkBbAAvh8Rw6rICjW6qROnqj6u8mcb4bS3kDlmmFkYnQdKMLu4bWa6twyLwUMg0N-Y5h2rp6GyAYuTrqyKif5IU1IEhNW63gj5h1xCLNyX4ZGJsNSZP_HOQGVVQMBDg2rsg7tBxow_E2wvYTgDYn8f1SjKE7vKdL2uYzA732hcd63fNwJpNcrwFs3lW8DjM_VYf-M4ePSr4GqHg6PawTCFgWCVNvi-lsmogfRUq_1t21GXlX7pQd029CFJ7mnnxUBau7KxTuX-Pxpny3jhYpJ87GlDA3WaB0r1tEg4Hl87VDawQ5Cb5ac6R6eXEO34i5oESVt6lFL-wpWUnU7KbiWVxKkSifN0M27IE8vAEsUBhgD8sKZpBsUvUDpRcb_atpFE_xU0K6DZXGUgFpZBx-CULmmfoDubTNfRNtqwmJiXI-M1YyiRbc_lOVQBAibuZ20ucixyhhqYSa-5fWa4m5NcjkRquTR2J-OaxmhA",
-			expectedErrMsg:  "missing key_id (kid) header",
+			desc:  "Error 2: missing kid", // note until we encode the web-gateway kid, this will assume kid="web-gateway"
+			token: "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJhYmMxMjMiLCJlZmZlY3RpdmVVc2VySWQiOiJ4eXozNDUiLCJyZWFsVXNlcklkIjoieHl6MjM0IiwiaXNzIjoiY2EtZ28vand0Iiwic3ViIjoic3RhbmRhcmQiLCJleHAiOjIyMTE3OTc1MzIsIm5iZiI6MTU4MDYwODkyMiwiaWF0IjoxNTgwNjA4OTIyfQ.S48Yfs0COCQR70jCrD2y6kD26nns6-c9CLvxKTahxzv0KrkdAXC7I62yIz2yD6j3v3rTKVQ8eGhSKOkN6EU_M8BZa5ltt7TmcIOnn5RWbwnfSfFLMR3njzlMiRT2MGAi2A2WMkx_LrTk9PZZRIlfceQxFVhThjc-Dp92C_zFJARZ8yss3upAW0m0pbeD5Y23GWs6bkkBbAAvh8Rw6rICjW6qROnqj6u8mcb4bS3kDlmmFkYnQdKMLu4bWa6twyLwUMg0N-Y5h2rp6GyAYuTrqyKif5IU1IEhNW63gj5h1xCLNyX4ZGJsNSZP_HOQGVVQMBDg2rsg7tBxow_E2wvYTgDYn8f1SjKE7vKdL2uYzA732hcd63fNwJpNcrwFs3lW8DjM_VYf-M4ePSr4GqHg6PawTCFgWCVNvi-lsmogfRUq_1t21GXlX7pQd029CFJ7mnnxUBau7KxTuX-Pxpny3jhYpJ87GlDA3WaB0r1tEg4Hl87VDawQ5Cb5ac6R6eXEO34i5oESVt6lFL-wpWUnU7KbiWVxKkSifN0M27IE8vAEsUBhgD8sKZpBsUvUDpRcb_atpFE_xU0K6DZXGUgFpZBx-CULmmfoDubTNfRNtqwmJiXI-M1YyiRbc_lOVQBAibuZ20ucixyhhqYSa-5fWa4m5NcjkRquTR2J-OaxmhA",
+			// expectedErrMsg:  "missing key_id (kid) header",
+			expectedErrMsg:  "token signature is invalid",
 			accountId:       "",
 			realUserId:      "",
 			effectiveUserId: "",
