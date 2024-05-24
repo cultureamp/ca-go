@@ -1,87 +1,72 @@
 package consumer
 
 import (
-	"context"
-	"sync"
-
-	"github.com/go-errors/errors"
+	"github.com/IBM/sarama"
 )
 
-type KafkaConsumer interface {
-	Consume(ctx context.Context) error
-	Stop() error
+type consumer struct {
+	client  kafkaClient
+	handler *messageHandler
+	logger  sarama.StdLogger
 }
 
-// Consumer provides a high level API for consuming and handling messages from a Kafka topic.
-// This implementation blocks on Consume() if you want a non-blocking version use Service.
-type Consumer struct {
-	client kafkaClient // Kafka client interfaces (Default: Sarama)
-	conf   *Config
-
-	groupMutex sync.Mutex
-	group      *groupConsumer
+func newConsumer(client kafkaClient, handler Handler, logger sarama.StdLogger) *consumer {
+	return &consumer{
+		client:  client,
+		handler: newMessageHandler(handler),
+		logger:  logger,
+	}
 }
 
-// NewConsumer returns a new Consumer configured with the provided dialer and config.
-func NewConsumer(opts ...Option) (*Consumer, error) {
-	c := &Consumer{
-		conf:   newConfig(),
-		client: newSaramaClient(),
-	}
-
-	for _, opt := range opts {
-		opt(c)
-	}
-
-	if err := c.conf.shouldProcess(); err != nil {
-		return nil, errors.Errorf("bad consumer config: %w", err)
-	}
-
-	return c, nil
+// Setup is run at the beginning of a new session, before ConsumeClaim.
+func (r *consumer) Setup(sarama.ConsumerGroupSession) error {
+	r.logger.Printf("receiver: setup...")
+	// add call to dispatch a "setup" call to the client
+	return nil
 }
 
-func (c *Consumer) Consume(ctx context.Context) error {
-	group, err := c.setupGroupConsumer()
-	if err != nil {
-		return err
-	}
-
-	// blocking call until either
-	// 1. context is cancelled/done OR
-	// 2. a server-side kafka rebalance happens OR
-	// 3. client dispatch error occurs (and returnOnClientDispatchError=true in the)
-	return group.consume(ctx)
+// Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited.
+func (r *consumer) Cleanup(sarama.ConsumerGroupSession) error {
+	r.logger.Printf("receiver: cleanup...")
+	// add call to dispatch a "cleanup" call to the client
+	return nil
 }
 
-func (c *Consumer) setupGroupConsumer() (*groupConsumer, error) {
-	c.groupMutex.Lock()
-	defer c.groupMutex.Unlock()
+// ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
+// Once the Messages() channel is closed, the Handler must finish its processing
+// loop and exit.
+func (r *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	// NOTE:
+	// Do not move the code below to a goroutine.
+	// The `ConsumeClaim` itself is called within a goroutine, see:
+	// https://github.com/IBM/sarama/blob/main/consumer_group.go#L27-L29
+	for {
+		select {
+		case msg, msgChannelOk := <-claim.Messages():
+			if !msgChannelOk {
+				r.logger.Printf("receiver: message channel was closed")
+				return nil
+			}
+			r.logger.Printf(
+				"receiver: message received Ok: timestamp=%v, topic=%s, partition=%d, offset=%d",
+				msg.Timestamp, msg.Topic, msg.Partition, msg.Offset,
+			)
 
-	// if already consuming, do nothing
-	if c.group != nil {
-		return nil, errors.Errorf("consumer group already running! (forgot to call Stop()?)")
+			// dispatch the message
+			if err := r.handler.dispatch(session.Context(), msg); err != nil {
+				r.logger.Printf("receiver: failed to dispatch message to client handler: '%s'", err.Error())
+				return err
+			}
+
+			// otherwise, we can commit this message now
+			r.client.CommitMessage(session, msg)
+
+		case <-session.Context().Done():
+			// Should return when `session.Context()` is done.
+			// If not, will raise `ErrRebalanceInProgress` or `read tcp <ip>:<port>: i/o timeout` when kafka rebalance. see:
+			// https://github.com/IBM/sarama/issues/1192
+			r.logger.Printf("receiver: context is Done. Exiting...")
+			return nil
+		}
 	}
-
-	group, err := newGroupConsumer(c.client, c.conf)
-	if err != nil {
-		return nil, errors.Errorf("failed to create kafka consumer: %w", err)
-	}
-
-	c.group = group
-	return group, nil
-}
-
-func (c *Consumer) Stop() error {
-	c.groupMutex.Lock()
-	defer c.groupMutex.Unlock()
-
-	// if already stopped, do nothing
-	if c.group == nil {
-		return nil
-	}
-
-	err := c.group.stop()
-	c.group = nil
-
-	return err
 }

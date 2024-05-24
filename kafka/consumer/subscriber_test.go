@@ -12,19 +12,19 @@ import (
 )
 
 func TestNewConsumer(t *testing.T) {
-	c, err := NewConsumer()
+	c, err := NewSubscriber()
 	assert.Nil(t, c)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "missing brokers")
 
-	c, err = NewConsumer(
+	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 	)
 	assert.Nil(t, c)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "missing topics")
 
-	c, err = NewConsumer(
+	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 	)
@@ -32,7 +32,7 @@ func TestNewConsumer(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "missing group")
 
-	c, err = NewConsumer(
+	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupId("group_id"),
@@ -41,7 +41,7 @@ func TestNewConsumer(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "missing message handler")
 
-	c, err = NewConsumer(
+	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupId("group_id"),
@@ -50,7 +50,7 @@ func TestNewConsumer(t *testing.T) {
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
 
-	c, err = NewConsumer(
+	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupId("group_id"),
@@ -61,7 +61,7 @@ func TestNewConsumer(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "unrecognized consumer group partition assignor")
 
-	c, err = NewConsumer(
+	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupId("group_id"),
@@ -71,7 +71,7 @@ func TestNewConsumer(t *testing.T) {
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
 
-	c, err = NewConsumer(
+	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupId("group_id"),
@@ -83,7 +83,7 @@ func TestNewConsumer(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "invalid kafka version")
 
-	c, err = NewConsumer(
+	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupId("group_id"),
@@ -95,7 +95,7 @@ func TestNewConsumer(t *testing.T) {
 	assert.Nil(t, err)
 
 	// full list for coverage purposes
-	c, err = NewConsumer(
+	c, err = NewSubscriber(
 		WithConsumerID("abc.123.uuid"),
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
@@ -141,7 +141,7 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
-	err := c.Consume(ctx)
+	err := c.Subscribe(ctx)
 	assert.NotNil(t, err)
 	assert.ErrorIs(t, err, context.DeadlineExceeded)
 
@@ -181,7 +181,7 @@ func TestConsumerWithReceiverError(t *testing.T) {
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
-	err := c.Consume(ctx)
+	err := c.Subscribe(ctx)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "test error")
 
@@ -221,11 +221,11 @@ func TestConsumerWithDoubleConsumeAndStop(t *testing.T) {
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
-	err := c.Consume(ctx)
+	err := c.Subscribe(ctx)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "test error")
 
-	err = c.Consume(ctx)
+	err = c.Subscribe(ctx)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "consumer group already running!")
 
@@ -242,8 +242,7 @@ func TestConsumerWithDoubleConsumeAndStop(t *testing.T) {
 	mockGroup.AssertExpectations(t)
 }
 
-
-func testConsumer(t *testing.T, client kafkaClient, handler Handler, numMessages int64, ch chan *sarama.ConsumerMessage) *Consumer {
+func testConsumer(t *testing.T, client kafkaClient, handler Handler, numMessages int64, ch chan *sarama.ConsumerMessage) *Subscriber {
 	// push a few messages into the channel
 	for i := range numMessages {
 		saramaMessage := &sarama.ConsumerMessage{
@@ -258,7 +257,7 @@ func testConsumer(t *testing.T, client kafkaClient, handler Handler, numMessages
 		ch <- saramaMessage
 	}
 
-	c, err := NewConsumer(
+	c, err := NewSubscriber(
 		WithKafkaClient(client),
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),

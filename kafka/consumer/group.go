@@ -33,7 +33,7 @@ func (gc *groupConsumer) consume(ctx context.Context) error {
 	// server-side rebalance happens, the consumer session will need to be
 	// recreated to get the new claims
 	for {
-		receiver := newReceiver(gc.client, gc.conf.handler, gc.conf.stdLogger)
+		receiver := newConsumer(gc.client, gc.conf.handler, gc.conf.stdLogger)
 		if err := gc.group.Consume(ctx, gc.conf.topics, receiver); err != nil {
 			if errors.Is(err, sarama.ErrClosedConsumerGroup) {
 				return err

@@ -8,23 +8,22 @@ import (
 )
 
 type Service struct {
-	consumer KafkaConsumer
-	logger   sarama.StdLogger
-
+	subscriber    *Subscriber
+	logger        sarama.StdLogger
 	runnningMutex sync.Mutex
 	running       bool
 }
 
 func NewService(opts ...Option) (*Service, error) {
-	c, err := NewConsumer(opts...)
+	c, err := NewSubscriber(opts...)
 	if err != nil {
 		return nil, err
 	}
 
 	s := &Service{
-		consumer: c,
-		logger:   c.conf.stdLogger,
-		running:  false,
+		subscriber: c,
+		logger:     c.conf.stdLogger,
+		running:    false,
 	}
 	return s, nil
 }
@@ -47,7 +46,7 @@ func (s *Service) Start(ctx context.Context) {
 
 func (s *Service) run(ctx context.Context) {
 	// blocking call until context Done, client dispatch error, or Kafka rebalance
-	err := s.consumer.Consume(ctx)
+	err := s.subscriber.Subscribe(ctx)
 	if err != nil {
 		s.logger.Printf("service: error consuming topic: '%s'", err.Error())
 	}
@@ -64,7 +63,7 @@ func (s *Service) Stop() error {
 	}
 
 	s.logger.Printf("service: stopping...")
-	err := s.consumer.Stop()
+	err := s.subscriber.Stop()
 	if err != nil {
 		s.logger.Printf("service: error stopping consumer: '%s'", err.Error())
 	}
