@@ -61,7 +61,7 @@ func TestServiceWithStop(t *testing.T) {
 	assert.Equal(t, int32(2), calls.Load())
 }
 
-func TestServiceWithClientError(t *testing.T) {
+func TestServiceWithHandlerError(t *testing.T) {
 	ctx := context.Background()
 
 	var calls atomic.Int32

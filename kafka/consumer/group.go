@@ -11,6 +11,7 @@ type groupConsumer struct {
 	conf   *Config
 	client client
 	group  sarama.ConsumerGroup
+	logger sarama.StdLogger
 }
 
 func newGroupConsumer(client client, conf *Config) (*groupConsumer, error) {
@@ -23,6 +24,7 @@ func newGroupConsumer(client client, conf *Config) (*groupConsumer, error) {
 		conf:   conf,
 		client: client,
 		group:  group,
+		logger: conf.stdLogger,
 	}, nil
 }
 
@@ -38,12 +40,24 @@ func (gc *groupConsumer) consume(ctx context.Context) error {
 			if errors.Is(err, sarama.ErrClosedConsumerGroup) {
 				return err
 			}
-			// for any client dispatch errors, return is the conf was set to true
-			// otherwise, ignore
-			if gc.conf.returnOnClientDispatchError {
+
+			if errors.Is(err, errClosedMessageChannel) {
 				return err
 			}
+
+			var target dispatchHandlerError
+			if errors.As(err, &target) {
+				// for any client dispatch errors, return if the conf was set to true otherwise, ignore.
+				if gc.conf.returnOnClientDispatchError {
+					return err
+				}
+
+				gc.logger.Printf("consumer group detected client dispatch failure: err='%s'. Trying to recover...", err)
+			}
+
+			gc.logger.Printf("consumer group detected unexpected error: err='%s'. Trying to recover...", err)
 		}
+
 		// check if context was cancelled, signaling that the consumer should stop
 		if ctx.Err() != nil {
 			return ctx.Err()

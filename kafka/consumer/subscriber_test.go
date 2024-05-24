@@ -155,7 +155,7 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 	mockGroup.AssertExpectations(t)
 }
 
-func TestConsumerWithReceiverError(t *testing.T) {
+func TestConsumerWithHandlerError(t *testing.T) {
 	ctx := context.Background()
 
 	mockClient := newMockKafkaClient()
@@ -184,6 +184,47 @@ func TestConsumerWithReceiverError(t *testing.T) {
 	err := c.Subscribe(ctx)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "test error")
+
+	// after finished, clean up
+	err = c.Stop()
+	assert.Nil(t, err)
+
+	mockClient.AssertExpectations(t)
+	mockSession.AssertExpectations(t)
+	mockConsumer.AssertExpectations(t)
+	mockGroup.AssertExpectations(t)
+}
+
+func TestConsumerWithChannelError(t *testing.T) {
+	ctx := context.Background()
+
+	mockClient := newMockKafkaClient()
+	mockSession := newMockConsumerGroupSession()
+	mockConsumer := newMockConsumerGroupClaim()
+	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
+
+	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
+	mockSession.On("Context").Return(ctx)
+	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockGroup.On("Close").Return(nil)
+
+	mockChannel := make(chan *sarama.ConsumerMessage, 10)
+	var receiverChannel (<-chan *sarama.ConsumerMessage)
+	receiverChannel = mockChannel
+	close(mockChannel)
+	mockConsumer.On("Messages").Return(receiverChannel)
+
+	handler := func(ctx context.Context, msg *Message) error {
+		return nil
+	}
+
+	c := testConsumer(t, client(mockClient), Handler(handler), int64(0), mockChannel)
+	assert.NotNil(t, c)
+
+	// blocks until Kafka rebalance, handler error or context.Done
+	err := c.Subscribe(ctx)
+	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "message channel closed or in error state")
 
 	// after finished, clean up
 	err = c.Stop()
