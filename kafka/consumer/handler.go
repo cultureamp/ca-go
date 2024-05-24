@@ -29,6 +29,10 @@ func (h *messageHandler) dispatch(ctx context.Context, msg *sarama.ConsumerMessa
 	span, ctx := tracer.StartSpanFromContext(ctx, "kafka.consumer.handle", tracer.ResourceName(msg.Topic))
 	defer span.Finish()
 
+	// add generics here to convert message to type V
+	// github.com/hamba/avro
+	// https://github.com/confluentinc/schema-registry/blob/master/avro-serializer/src/main/java/io/confluent/
+	// kafka/serializers/AbstractKafkaAvroDeserializer.java#L203
 	message := &Message{msg}
 	if err := h.dispatchMessage(ctx, message); err != nil {
 		return err
