@@ -37,25 +37,9 @@ func (gc *groupConsumer) consume(ctx context.Context) error {
 	for {
 		receiver := newConsumer(gc.client, gc.conf.handler, gc.conf.stdLogger)
 		if err := gc.group.Consume(ctx, gc.conf.topics, receiver); err != nil {
-			if errors.Is(err, sarama.ErrClosedConsumerGroup) {
-				return err
+			if errFatal := gc.handleConsumeErrors(err); errFatal != nil {
+				return errFatal
 			}
-
-			if errors.Is(err, errClosedMessageChannel) {
-				return err
-			}
-
-			var target dispatchHandlerError
-			if errors.As(err, &target) {
-				// for any client dispatch errors, return if the conf was set to true otherwise, ignore.
-				if gc.conf.returnOnClientDispatchError {
-					return err
-				}
-
-				gc.logger.Printf("consumer group detected client dispatch failure: err='%s'. Trying to recover...", err)
-			}
-
-			gc.logger.Printf("consumer group detected unexpected error: err='%s'. Trying to recover...", err)
 		}
 
 		// check if context was cancelled, signaling that the consumer should stop
@@ -63,6 +47,29 @@ func (gc *groupConsumer) consume(ctx context.Context) error {
 			return ctx.Err()
 		}
 	}
+}
+
+func (gc *groupConsumer) handleConsumeErrors(err error) error {
+	if errors.Is(err, sarama.ErrClosedConsumerGroup) {
+		return err
+	}
+
+	if errors.Is(err, errClosedMessageChannel) {
+		return err
+	}
+
+	var target dispatchHandlerError
+	if errors.As(err, &target) {
+		// for any client dispatch errors, return if the conf was set to true otherwise, ignore.
+		if gc.conf.returnOnClientDispatchError {
+			return err
+		}
+
+		gc.logger.Printf("consumer group detected client dispatch failure: err='%s'. Trying to recover...", err)
+	}
+
+	gc.logger.Printf("consumer group detected unexpected error: err='%s'. Trying to recover...", err)
+	return nil
 }
 
 func (gc *groupConsumer) stop() error {
