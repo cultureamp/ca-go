@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	TraceIDHeader                        = "X-amzn-Trace-ID"
+	TraceIDHeader                        = "X-Amzn-Trace-Id"
 	RequestIDHeader                      = "X-Request-ID"
 	CorrelationIDHeader                  = "X-Correlation-ID"
 	ErrorUUID                            = "00000000-0000-0000-0000-000000000000"
