@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "github>cultureamp/renovate-presets:golang.json5#v1.5",
-    "github>cultureamp/renovate-presets:tools.json5#v1.5",
+    "github>cultureamp/renovate-presets:golang.json5#v1.6",
+    "github>cultureamp/renovate-presets:tools.json5#v1.6",
   ],
 }
