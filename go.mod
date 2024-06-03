@@ -7,22 +7,22 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/kms v1.32.1
 	github.com/caarlos0/env/v11 v11.0.1
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/getsentry/sentry-go v0.27.0
+	github.com/getsentry/sentry-go v0.28.0
 	github.com/go-errors/errors v1.5.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/launchdarkly/go-sdk-common/v3 v3.1.0
 	github.com/launchdarkly/go-server-sdk-dynamodb/v4 v4.0.0
 	github.com/launchdarkly/go-server-sdk/v7 v7.4.0
-	github.com/rs/zerolog v1.32.0
-	github.com/segmentio/kafka-go v0.4.42
+	github.com/rs/zerolog v1.33.0
+	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.9.0
 	goa.design/goa/v3 v3.16.2
-	gopkg.in/DataDog/dd-trace-go.v1 v1.63.1
+	gopkg.in/DataDog/dd-trace-go.v1 v1.64.0
 )
 
 require (
-	github.com/andybalholm/brotli v1.0.6 // indirect
+	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/aws/aws-sdk-go v1.47.9 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/eapache/go-resiliency v1.6.0 // indirect
@@ -47,8 +47,7 @@ require (
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.51.0 // indirect
-	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
+	github.com/valyala/fasthttp v1.52.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240515191416-fc5f0ca64291 // indirect
