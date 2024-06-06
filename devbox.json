@@ -8,7 +8,7 @@
   ],
   "shell": {
     "scripts": {
-      "setup": "make mod"
+      "setup": "make mod",
     },
   },
 }
