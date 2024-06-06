@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.11.0/.schema/devbox.schema.json",
+  "packages": [
+    "go@1.22",
+    "pre-commit@latest",
+    "snyk@latest",
+    "trufflehog@latest",
+  ],
+  "shell": {
+    "scripts": {
+      "setup": "make mod"
+    },
+  },
+}
