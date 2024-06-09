@@ -20,7 +20,7 @@ require (
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.9.0
 	goa.design/goa/v3 v3.16.2
-	gopkg.in/DataDog/dd-trace-go.v1 v1.64.0
+	gopkg.in/DataDog/dd-trace-go.v1 v1.64.1
 )
 
 require (
