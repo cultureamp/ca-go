@@ -4,10 +4,10 @@ go 1.22.4
 
 require (
 	github.com/aws/aws-lambda-go v1.47.0
-	github.com/aws/aws-sdk-go-v2/service/kms v1.32.3
+	github.com/aws/aws-sdk-go-v2/service/kms v1.33.0
 	github.com/caarlos0/env/v11 v11.0.1
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/getsentry/sentry-go v0.28.0
+	github.com/getsentry/sentry-go v0.28.1
 	github.com/go-errors/errors v1.5.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang/mock v1.6.0
@@ -20,10 +20,11 @@ require (
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.9.0
 	goa.design/goa/v3 v3.16.2
-	gopkg.in/DataDog/dd-trace-go.v1 v1.64.1
+	gopkg.in/DataDog/dd-trace-go.v1 v1.65.0
 )
 
 require (
+	github.com/DataDog/go-libddwaf/v3 v3.2.1 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/aws/aws-sdk-go v1.47.9 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
@@ -45,13 +46,12 @@ require (
 )
 
 require (
-	github.com/DataDog/appsec-internal-go v1.5.0 // indirect
+	github.com/DataDog/appsec-internal-go v1.6.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/obfuscate v0.48.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.48.1 // indirect
 	github.com/DataDog/datadog-go/v5 v5.3.0 // indirect
-	github.com/DataDog/go-libddwaf/v2 v2.4.2 // indirect
 	github.com/DataDog/go-tuf v1.0.2-0.5.2 // indirect
-	github.com/DataDog/sketches-go v1.4.2 // indirect
+	github.com/DataDog/sketches-go v1.4.5 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/actgardner/gogen-avro/v10 v10.2.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.27.2
@@ -65,7 +65,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.8.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.29.3
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.30.0
 	github.com/aws/aws-sdk-go-v2/service/sso v1.20.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.24.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.12 // indirect
@@ -78,8 +78,6 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
-	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/julienschmidt/httprouter v1.3.0 // indirect
