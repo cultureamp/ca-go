@@ -5,7 +5,7 @@ go 1.22.4
 require (
 	github.com/aws/aws-lambda-go v1.47.0
 	github.com/aws/aws-sdk-go-v2/service/kms v1.34.1
-	github.com/caarlos0/env/v11 v11.0.1
+	github.com/caarlos0/env/v11 v11.1.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/go-errors/errors v1.5.1
