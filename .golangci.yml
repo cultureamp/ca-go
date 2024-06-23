@@ -203,6 +203,10 @@ issues:
       linters:
         - ireturn
 
+    - path: kafka/consumer/consumer_group.go
+      linters:
+        - ireturn
+
     - path: launchdarkly/*
       linters:
         - err113
