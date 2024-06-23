@@ -145,7 +145,7 @@ type HandlerRetryBackOffConstructor func() backoff.BackOff
 //
 // The max interval of 5 hours is intended to leave enough time for manual
 // intervention if necessary.
-func NonStopExponentialBackOff() backoff.BackOff { //nolint:ireturn
+func NonStopExponentialBackOff() backoff.BackOff {
 	bo := backoff.NewExponentialBackOff()
 	bo.RandomizationFactor = defaultBackoffRandomizationFactor
 	bo.MaxInterval = defaultBackoffMaxInterval
