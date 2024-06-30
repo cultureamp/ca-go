@@ -15,7 +15,7 @@ require (
 	github.com/heetch/avro v0.4.5
 	github.com/launchdarkly/go-sdk-common/v3 v3.1.0
 	github.com/launchdarkly/go-server-sdk-dynamodb/v4 v4.0.0
-	github.com/launchdarkly/go-server-sdk/v7 v7.4.1
+	github.com/launchdarkly/go-server-sdk/v7 v7.5.0
 	github.com/rs/zerolog v1.33.0
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.9.0
@@ -85,7 +85,7 @@ require (
 	github.com/launchdarkly/ccache v1.1.0 // indirect
 	github.com/launchdarkly/eventsource v1.7.1 // indirect
 	github.com/launchdarkly/go-jsonstream/v3 v3.1.0 // indirect
-	github.com/launchdarkly/go-sdk-events/v3 v3.2.0 // indirect
+	github.com/launchdarkly/go-sdk-events/v3 v3.3.0 // indirect
 	github.com/launchdarkly/go-semver v1.0.2 // indirect
 	github.com/launchdarkly/go-server-sdk-evaluation/v3 v3.0.0 // indirect
 	github.com/lestrrat-go/jwx/v2 v2.0.21
