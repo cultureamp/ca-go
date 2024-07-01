@@ -3,6 +3,7 @@
 .DS_Store
 /.idea
 .dccache
+.env.local
 
 # Binaries for programs and plugins
 *.exe
