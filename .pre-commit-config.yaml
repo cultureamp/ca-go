@@ -11,6 +11,7 @@ repos:
     rev: v4.5.0 # Use the ref you want to point at
     hooks:
       - id: check-json
+        exclude: 'devbox.json' # Is HuJSON which allows comments and trailing commas. https://github.com/tailscale/hujson
       - id: check-yaml
       - id: check-added-large-files
         args: [--maxkb=100]

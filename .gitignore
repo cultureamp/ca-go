@@ -2,7 +2,6 @@
 /artifacts
 .DS_Store
 /.idea
-.envrc
 .dccache
 
 # Binaries for programs and plugins
