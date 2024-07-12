@@ -2,8 +2,8 @@
 /artifacts
 .DS_Store
 /.idea
-.envrc
 .dccache
+.env.local
 
 # Binaries for programs and plugins
 *.exe
