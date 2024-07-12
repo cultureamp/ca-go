@@ -37,35 +37,20 @@ These packages are going to be changed in the near future.
 
 ## Contributing
 
-To work on `ca-go`, you'll need a working Go installation. The project currently targets Go 1.22.
+### Installation and running with Devbox
 
-### Setting up your environment
+Ensure devbox is setup as per [https://cultureamp.atlassian.net/wiki/spaces/DE/pages/3342434338/Devbox+setup](https://cultureamp.atlassian.net/wiki/spaces/DE/pages/3342434338/Devbox+setup)
 
-You can use [VSCode Remote Containers](https://code.visualstudio.com/docs/remote/containers) to get
-up-and-running quickly. A basic configuration is defined in the `.devcontainer/`
-directory. This works locally and via [GitHub Codespaces](https://github.com/features/codespaces).
-
-#### Locally
-
-1. Clone `ca-go` and open the directory in VSCode.
-2. A prompt should appear on the bottom-right of the editor, offering to start a Remote Containers session. Click **Reopen in Container**.
-3. If a prompt didn't appear, open the Command Palette (i.e. Cmd + Shift + P) and select **Remote-Containers: Open Folder in Container...**
-
-#### Codespaces
-
-1. Click the **Code** button above the source listing on the repository homepage.
-2. Click **New codespace**.
+Run
+```
+devbox run setup
+```
 
 ### Pre-Commit
 
 This is optional but is recommended for engineers working with highly sensitive secrets or data.
 
 The pre-commit config is stored in `.pre-commit-config.yaml`.
-
-Download:
-1. brew install pre-commit
-2. brew install trufflehog
-3. brew install snyk-cli
 
 To install / turn on for a repo:
 %> pre-commit install
