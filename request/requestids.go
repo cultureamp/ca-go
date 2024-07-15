@@ -4,31 +4,31 @@ import "context"
 
 type contextValueKey string
 
-const httpFieldIDsKey = contextValueKey("fields")
+const uniqueIDsKey = contextValueKey("fields")
 
-// HTTPFieldIDs represent the set of unique identifiers for a request.
-type HTTPFieldIDs struct {
+// UniqueIDs represent the set of unique identifiers for a request.
+type UniqueIDs struct {
 	RequestID     string
 	CorrelationID string
 }
 
-// ContextWithHTTPFieldIDs returns a new context with the given RequestIDs
+// ContextWithUniqueIDs returns a new context with the given RequestIDs
 // embedded as a value.
-func ContextWithHTTPFieldIDs(ctx context.Context, fields HTTPFieldIDs) context.Context {
-	return context.WithValue(ctx, httpFieldIDsKey, fields)
+func ContextWithUniqueIDs(ctx context.Context, fields UniqueIDs) context.Context {
+	return context.WithValue(ctx, uniqueIDsKey, fields)
 }
 
-// HTTPFieldIDsFromContext attempts to retrieve a RequestIDs struct from the given
+// UniqueIDsFromContext attempts to retrieve a RequestIDs struct from the given
 // context, returning a RequestIDs struct along with a boolean signalling
 // whether the retrieval was successful.
-func HTTPFieldIDsFromContext(ctx context.Context) (HTTPFieldIDs, bool) {
-	ids, ok := ctx.Value(httpFieldIDsKey).(HTTPFieldIDs)
+func UniqueIDsFromContext(ctx context.Context) (UniqueIDs, bool) {
+	ids, ok := ctx.Value(uniqueIDsKey).(UniqueIDs)
 	return ids, ok
 }
 
-// ContextHasHTTPFieldIDs returns whether the given context contains a RequestIDs
+// ContextHasUniqueIDs returns whether the given context contains a RequestIDs
 // value.
-func ContextHasHTTPFieldIDs(ctx context.Context) bool {
-	_, ok := HTTPFieldIDsFromContext(ctx)
+func ContextHasUniqueIDs(ctx context.Context) bool {
+	_, ok := UniqueIDsFromContext(ctx)
 	return ok
 }

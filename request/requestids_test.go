@@ -9,34 +9,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newRequestIDs() request.HTTPFieldIDs {
-	return request.HTTPFieldIDs{
+func newUniqueIDs() request.UniqueIDs {
+	return request.UniqueIDs{
 		RequestID:     "123",
 		CorrelationID: "456",
 	}
 }
 
-func TestContextWithHTTPFieldIDs(t *testing.T) {
-	ids := newRequestIDs()
+func TestContextWithUniqueIDs(t *testing.T) {
+	ids := newUniqueIDs()
 	ctx := context.Background()
 
-	ctx = request.ContextWithHTTPFieldIDs(ctx, ids)
-	idsFromContext, ok := request.HTTPFieldIDsFromContext(ctx)
+	ctx = request.ContextWithUniqueIDs(ctx, ids)
+	idsFromContext, ok := request.UniqueIDsFromContext(ctx)
 
 	assert.Equal(t, ids, idsFromContext)
 	assert.True(t, ok)
 }
 
-func ExampleContextWithHTTPFieldIDs() {
-	requestIDs := request.HTTPFieldIDs{
+func ExampleContextWithUniqueIDs() {
+	requestIDs := request.UniqueIDs{
 		RequestID:     "123",
 		CorrelationID: "456",
 	}
 	ctx := context.Background()
 
-	ctx = request.ContextWithHTTPFieldIDs(ctx, requestIDs)
+	ctx = request.ContextWithUniqueIDs(ctx, requestIDs)
 
-	if requestIDsFromContext, ok := request.HTTPFieldIDsFromContext(ctx); ok {
+	if requestIDsFromContext, ok := request.UniqueIDsFromContext(ctx); ok {
 		fmt.Println(requestIDsFromContext.RequestID)
 		fmt.Println(requestIDsFromContext.CorrelationID)
 
@@ -46,37 +46,37 @@ func ExampleContextWithHTTPFieldIDs() {
 	}
 }
 
-func TestHTTPFieldIDsFromContextMissing(t *testing.T) {
+func TestUniqueIDsFromContextMissing(t *testing.T) {
 	ctx := context.Background()
 
-	_, ok := request.HTTPFieldIDsFromContext(ctx)
+	_, ok := request.UniqueIDsFromContext(ctx)
 	assert.False(t, ok)
 }
 
-func ExampleContextHasHTTPFieldIDs() {
-	requestIDs := request.HTTPFieldIDs{
+func ExampleContextHasUniqueIDs() {
+	requestIDs := request.UniqueIDs{
 		RequestID:     "123",
 		CorrelationID: "456",
 	}
 	ctx := context.Background()
 
-	ctx = request.ContextWithHTTPFieldIDs(ctx, requestIDs)
+	ctx = request.ContextWithUniqueIDs(ctx, requestIDs)
 
-	ok := request.ContextHasHTTPFieldIDs(ctx)
+	ok := request.ContextHasUniqueIDs(ctx)
 	fmt.Println(ok)
 	// Output: true
 }
 
-func TestContextHasHTTPFieldIDsSucceeds(t *testing.T) {
-	ctx := request.ContextWithHTTPFieldIDs(context.Background(), newRequestIDs())
+func TestContextHasUniqueIDsSucceeds(t *testing.T) {
+	ctx := request.ContextWithUniqueIDs(context.Background(), newUniqueIDs())
 
-	ok := request.ContextHasHTTPFieldIDs(ctx)
+	ok := request.ContextHasUniqueIDs(ctx)
 	assert.True(t, ok)
 }
 
-func TestContextHasHTTPFieldIDsFails(t *testing.T) {
+func TestContextHasUniqueIDsFails(t *testing.T) {
 	ctx := context.Background()
 
-	ok := request.ContextHasHTTPFieldIDs(ctx)
+	ok := request.ContextHasUniqueIDs(ctx)
 	assert.False(t, ok)
 }
