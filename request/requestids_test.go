@@ -16,7 +16,7 @@ func newRequestIDs() request.HTTPFieldIDs {
 	}
 }
 
-func TestContextWithRequestIDs(t *testing.T) {
+func TestContextWithHTTPFieldIDs(t *testing.T) {
 	ids := newRequestIDs()
 	ctx := context.Background()
 
@@ -27,7 +27,7 @@ func TestContextWithRequestIDs(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func ExampleContextWithRequestIDs() {
+func ExampleContextWithHTTPFieldIDs() {
 	requestIDs := request.HTTPFieldIDs{
 		RequestID:     "123",
 		CorrelationID: "456",
@@ -46,14 +46,14 @@ func ExampleContextWithRequestIDs() {
 	}
 }
 
-func TestRequestIDsFromContextMissing(t *testing.T) {
+func TestHTTPFieldIDsFromContextMissing(t *testing.T) {
 	ctx := context.Background()
 
 	_, ok := request.HTTPFieldIDsFromContext(ctx)
 	assert.False(t, ok)
 }
 
-func ExampleContextHasRequestIDs() {
+func ExampleContextHasHTTPFieldIDs() {
 	requestIDs := request.HTTPFieldIDs{
 		RequestID:     "123",
 		CorrelationID: "456",
@@ -67,14 +67,14 @@ func ExampleContextHasRequestIDs() {
 	// Output: true
 }
 
-func TestContextHasRequestIDsSucceeds(t *testing.T) {
+func TestContextHasHTTPFieldIDsSucceeds(t *testing.T) {
 	ctx := request.ContextWithHTTPFieldIDs(context.Background(), newRequestIDs())
 
 	ok := request.ContextHasHTTPFieldIDs(ctx)
 	assert.True(t, ok)
 }
 
-func TestContextHasRequestIDsFails(t *testing.T) {
+func TestContextHasHTTPFieldIDsFails(t *testing.T) {
 	ctx := context.Background()
 
 	ok := request.ContextHasHTTPFieldIDs(ctx)
