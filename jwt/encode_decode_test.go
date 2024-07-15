@@ -24,9 +24,9 @@ const (
 
 func TestEncodeDecode(t *testing.T) {
 	claims := &StandardClaims{
-		AccountId:       "abc123",
-		RealUserId:      "xyz234",
-		EffectiveUserId: "xyz345",
+		AccountID:       "abc123",
+		RealUserID:      "xyz234",
+		EffectiveUserID: "xyz345",
 		Issuer:          "encoder-name",
 		Subject:         "test",
 		Audience:        []string{"decoder-name"},
@@ -100,9 +100,9 @@ func TestEncodeDecode(t *testing.T) {
 			assert.Nil(t, err)
 
 			// 4. Assert its the same
-			assert.Equal(t, claims.AccountId, actual.AccountId)
-			assert.Equal(t, claims.RealUserId, actual.RealUserId)
-			assert.Equal(t, claims.EffectiveUserId, actual.EffectiveUserId)
+			assert.Equal(t, claims.AccountID, actual.AccountID)
+			assert.Equal(t, claims.RealUserID, actual.RealUserID)
+			assert.Equal(t, claims.EffectiveUserID, actual.EffectiveUserID)
 			assert.Equal(t, claims.Issuer, actual.Issuer)
 			assert.Equal(t, claims.Subject, actual.Subject)
 			assert.Equal(t, claims.Audience, actual.Audience)

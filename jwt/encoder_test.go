@@ -60,9 +60,9 @@ func TestNewEncoder(t *testing.T) {
 
 func TestEncoderRSA(t *testing.T) {
 	claims := &StandardClaims{
-		AccountId:       "abc123",
-		RealUserId:      "xyz234",
-		EffectiveUserId: "xyz345",
+		AccountID:       "abc123",
+		RealUserID:      "xyz234",
+		EffectiveUserID: "xyz345",
 		Issuer:          "encoder-name",
 		Subject:         "test",
 		Audience:        []string{"decoder-name"},
@@ -133,9 +133,9 @@ func TestEncoderRSA(t *testing.T) {
 
 func TestEncoderECDSA(t *testing.T) {
 	claims := &StandardClaims{
-		AccountId:       "abc123",
-		RealUserId:      "xyz234",
-		EffectiveUserId: "xyz345",
+		AccountID:       "abc123",
+		RealUserID:      "xyz234",
+		EffectiveUserID: "xyz345",
 		Issuer:          "encoder-name",
 		Subject:         "test",
 		Audience:        []string{"decoder-name"},
@@ -182,7 +182,7 @@ func TestEncoderECDSA(t *testing.T) {
 			b, err := os.ReadFile(filepath.Clean(tC.key))
 			assert.Nil(t, err)
 
-			ecdsaEncoder, err := NewJwtEncoder(func() (string, string) {return string(b), tC.kid})
+			ecdsaEncoder, err := NewJwtEncoder(func() (string, string) { return string(b), tC.kid })
 			assert.Nil(t, err)
 
 			token, err := ecdsaEncoder.Encode(claims)

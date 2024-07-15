@@ -15,7 +15,7 @@ func TestEncoderOptions(t *testing.T) {
 	privKey := string(b)
 
 	i := 0
-// This will be called each time the cache is refreshed and they we can assert i has been incremented the correct number of times below.
+	// This will be called each time the cache is refreshed and they we can assert i has been incremented the correct number of times below.
 	encoderKeyFunc := func() (string, string) {
 		i++
 		return privKey, "rsa-256"
@@ -26,9 +26,9 @@ func TestEncoderOptions(t *testing.T) {
 	assert.NotNil(t, encoder)
 
 	claims := &StandardClaims{
-		AccountId:       "abc123",
-		RealUserId:      "xyz234",
-		EffectiveUserId: "xyz345",
+		AccountID:       "abc123",
+		RealUserID:      "xyz234",
+		EffectiveUserID: "xyz345",
 		Issuer:          "encoder-name",
 		Subject:         "test",
 		Audience:        []string{"decoder-name"},

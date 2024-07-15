@@ -17,9 +17,9 @@ const (
 
 func Example() {
 	claims := &jwt.StandardClaims{
-		AccountId:       "abc123",
-		RealUserId:      "xyz234",
-		EffectiveUserId: "xyz345",
+		AccountID:       "abc123",
+		RealUserID:      "xyz234",
+		EffectiveUserID: "xyz345",
 		Issuer:          "encoder-name",
 		Subject:         "test",
 		Audience:        []string{"decoder-name"},
@@ -36,7 +36,7 @@ func Example() {
 	claim, err := jwt.Decode(token)
 	fmt.Printf(
 		"The decoded token is '%s %s %s %s %v %s %s' (err='%+v')\n",
-		claim.AccountId, claim.RealUserId, claim.EffectiveUserId,
+		claim.AccountID, claim.RealUserID, claim.EffectiveUserID,
 		claim.Issuer, claim.Subject, claim.Audience,
 		claim.ExpiresAt.UTC().Format(time.RFC3339),
 		err,
@@ -55,7 +55,7 @@ func Example() {
 	claim, err = decoder.Decode(token)
 	fmt.Printf(
 		"The decoded token is '%s %s %s %s %v %s %s' (err='%+v')\n",
-		claim.AccountId, claim.RealUserId, claim.EffectiveUserId,
+		claim.AccountID, claim.RealUserID, claim.EffectiveUserID,
 		claim.Issuer, claim.Subject, claim.Audience,
 		claim.ExpiresAt.UTC().Format(time.RFC3339),
 		err,
@@ -70,9 +70,9 @@ func Example() {
 
 func ExampleDefaultJwtEncoder() {
 	claims := &jwt.StandardClaims{
-		AccountId:       "abc123",
-		RealUserId:      "xyz234",
-		EffectiveUserId: "xyz345",
+		AccountID:       "abc123",
+		RealUserID:      "xyz234",
+		EffectiveUserID: "xyz345",
 		Issuer:          "encoder-name",
 		Subject:         "test",
 		Audience:        []string{"decoder-name"},
@@ -101,9 +101,9 @@ func ExampleDefaultJwtEncoder() {
 
 func ExampleDefaultJwtDecoder() {
 	claims := &jwt.StandardClaims{
-		AccountId:       "abc123",
-		RealUserId:      "xyz234",
-		EffectiveUserId: "xyz345",
+		AccountID:       "abc123",
+		RealUserID:      "xyz234",
+		EffectiveUserID: "xyz345",
 		Issuer:          "encoder-name",
 		Subject:         "test",
 		Audience:        []string{"decoder-name"},
@@ -126,7 +126,7 @@ func ExampleDefaultJwtDecoder() {
 	claim, err := jwt.Decode("eyJhbGciOiJSUzUxMiIsImtpZCI6IndlYi1nYXRld2F5IiwidHlwIjoiSldUIn0")
 	fmt.Printf(
 		"The decoded token is '%s %s %s %s %v %s %s' (err='%+v')\n",
-		claim.AccountId, claim.RealUserId, claim.EffectiveUserId,
+		claim.AccountID, claim.RealUserID, claim.EffectiveUserID,
 		claim.Issuer, claim.Subject, claim.Audience,
 		claim.ExpiresAt.UTC().Format(time.RFC3339),
 		err,

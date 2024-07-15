@@ -98,9 +98,9 @@ func getDatadogInstance() *datadogSettings {
 	return newDatadogSettings()
 }
 
-// GetDatadogApiKey returns the "DD_API_KEY" environment variable.
-func DatadogApiKey() string {
-	return DefaultDatadogSettings.DatadogApiKey()
+// GetDatadogAPIKey returns the "DD_API_KEY" environment variable.
+func DatadogAPIKey() string {
+	return DefaultDatadogSettings.DatadogAPIKey()
 }
 
 // GetDatadogLogEndpoint returns the "DD_LOG_ENDPOINT" environment variable.
