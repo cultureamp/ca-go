@@ -7,14 +7,14 @@ import (
 	strcase "github.com/stoewer/go-strcase"
 )
 
-// standardLogger that implements the CA Logging standard.
-type standardLogger struct {
+// StandardLogger that implements the CA Logging standard.
+type StandardLogger struct {
 	impl   zerolog.Logger
 	config *Config
 }
 
 // NewLogger creates a new standardLogger using the supplied config.
-func NewLogger(config *Config, options ...LoggerOption) *standardLogger {
+func NewLogger(config *Config, options ...LoggerOption) *StandardLogger {
 	lvl := config.Level()
 	writer := config.getWriter()
 
@@ -39,14 +39,14 @@ func NewLogger(config *Config, options ...LoggerOption) *standardLogger {
 	// We have our own Timestamp hook so that we can mock "time" in tests
 	impl = impl.Hook(&timestampHook{config: config})
 
-	return &standardLogger{
+	return &StandardLogger{
 		impl:   impl,
 		config: config,
 	}
 }
 
 // Enabled return false if the log is going to be filtered out by log level.
-func (l *standardLogger) Enabled(logLevel string) bool {
+func (l *StandardLogger) Enabled(logLevel string) bool {
 	lvl := l.config.ToLevel(logLevel)
 	switch lvl {
 	case zerolog.DebugLevel:
@@ -69,7 +69,7 @@ func (l *standardLogger) Enabled(logLevel string) bool {
 // Debug starts a new message with debug level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *standardLogger) Debug(event string) *Property {
+func (l *StandardLogger) Debug(event string) *Property {
 	le := l.impl.Debug().Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le)
 }
@@ -77,7 +77,7 @@ func (l *standardLogger) Debug(event string) *Property {
 // Info starts a new message with info level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *standardLogger) Info(event string) *Property {
+func (l *StandardLogger) Info(event string) *Property {
 	le := l.impl.Info().Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le)
 }
@@ -85,7 +85,7 @@ func (l *standardLogger) Info(event string) *Property {
 // Warn starts a new message with warn level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *standardLogger) Warn(event string) *Property {
+func (l *StandardLogger) Warn(event string) *Property {
 	le := l.impl.Warn().Str("event", strcase.SnakeCase(event))
 	return newLoggerProperty(le)
 }
@@ -93,7 +93,7 @@ func (l *standardLogger) Warn(event string) *Property {
 // Error starts a new message with error level.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *standardLogger) Error(event string, err error) *Property {
+func (l *StandardLogger) Error(event string, err error) *Property {
 	le := l.impl.Error()
 	le.Dict("error", zerolog.Dict().
 		Stack().
@@ -106,7 +106,7 @@ func (l *standardLogger) Error(event string, err error) *Property {
 // is called by the Msg method, which terminates the program immediately.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *standardLogger) Fatal(event string, err error) *Property {
+func (l *StandardLogger) Fatal(event string, err error) *Property {
 	le := l.impl.Fatal()
 	le.Dict("error", zerolog.Dict().
 		Stack().
@@ -119,7 +119,7 @@ func (l *standardLogger) Fatal(event string, err error) *Property {
 // is called by the Msg method, which stops the ordinary flow of a goroutine.
 //
 // You must call Msg or Send on the returned event in order to send the event to the output.
-func (l *standardLogger) Panic(event string, err error) *Property {
+func (l *StandardLogger) Panic(event string, err error) *Property {
 	le := l.impl.Panic()
 	le.Dict("error", zerolog.Dict().
 		Stack().
@@ -129,7 +129,7 @@ func (l *standardLogger) Panic(event string, err error) *Property {
 }
 
 // Child returns a new logger that inherits all the properties of the parent.
-func (l *standardLogger) Child(options ...LoggerOption) Logger { //nolint:ireturn
+func (l *StandardLogger) Child(options ...LoggerOption) Logger { //nolint:ireturn
 	lc := l.impl.With()
 
 	// Loop through our Logger options and apply them
@@ -137,7 +137,7 @@ func (l *standardLogger) Child(options ...LoggerOption) Logger { //nolint:iretur
 		lc = option(lc)
 	}
 
-	return &standardLogger{
+	return &StandardLogger{
 		impl:   lc.Logger(),
 		config: l.config,
 	}
@@ -146,7 +146,7 @@ func (l *standardLogger) Child(options ...LoggerOption) Logger { //nolint:iretur
 type ctxLoggerKey struct{}
 
 // WithContext returns a context with an associated logger attached.
-func (l *standardLogger) WithContext(ctx context.Context) context.Context {
+func (l *StandardLogger) WithContext(ctx context.Context) context.Context {
 	if _, ok := ctx.Value(ctxLoggerKey{}).(Logger); ok {
 		return ctx
 	}

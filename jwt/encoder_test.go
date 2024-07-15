@@ -45,7 +45,7 @@ func TestNewEncoder(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			encoder, err := NewJwtEncoder(func() (string, string) { return tC.key, tC.kid })
+			encoder, err := NewEncoder(func() (string, string) { return tC.key, tC.kid })
 			if tC.expectedErrMsg != "" {
 				assert.NotNil(t, err)
 				assert.ErrorContains(t, err, tC.expectedErrMsg)
@@ -109,7 +109,7 @@ func TestEncoderRSA(t *testing.T) {
 			b, err := os.ReadFile(filepath.Clean(tC.key))
 			assert.Nil(t, err)
 
-			rsaEncoder, err := NewJwtEncoder(func() (string, string) { return string(b), tC.kid })
+			rsaEncoder, err := NewEncoder(func() (string, string) { return string(b), tC.kid })
 			assert.Nil(t, err)
 
 			token, err := rsaEncoder.Encode(claims)
@@ -182,7 +182,7 @@ func TestEncoderECDSA(t *testing.T) {
 			b, err := os.ReadFile(filepath.Clean(tC.key))
 			assert.Nil(t, err)
 
-			ecdsaEncoder, err := NewJwtEncoder(func() (string, string) { return string(b), tC.kid })
+			ecdsaEncoder, err := NewEncoder(func() (string, string) { return string(b), tC.kid })
 			assert.Nil(t, err)
 
 			token, err := ecdsaEncoder.Encode(claims)

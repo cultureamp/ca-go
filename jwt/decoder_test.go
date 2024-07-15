@@ -46,7 +46,7 @@ func TestNewDecoder(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			decoder, err := NewJwtDecoder(func() string { return tC.jwks })
+			decoder, err := NewDecoder(func() string { return tC.jwks })
 			if tC.expectedErrMsg != "" {
 				assert.NotNil(t, err)
 				assert.ErrorContains(t, err, tC.expectedErrMsg)
@@ -156,7 +156,7 @@ func TestDecoderDecodeAllClaims(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			decoder, err := NewJwtDecoder(jwks)
+			decoder, err := NewDecoder(jwks)
 			assert.Nil(t, err)
 			assert.NotNil(t, decoder)
 
@@ -202,7 +202,7 @@ func TestDecoderRotateKeys(t *testing.T) {
 		return testJWKS
 	}
 
-	decoder, err := NewJwtDecoder(jwks,
+	decoder, err := NewDecoder(jwks,
 		WithDecoderJwksExpiry(time.Millisecond*500),
 		WithDecoderRotateWindow(time.Millisecond*100),
 	)

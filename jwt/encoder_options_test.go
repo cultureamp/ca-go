@@ -21,7 +21,7 @@ func TestEncoderOptions(t *testing.T) {
 		return privKey, "rsa-256"
 	}
 
-	encoder, err := NewJwtEncoder(encoderKeyFunc, WithEncoderCacheExpiry(100*time.Millisecond, 50*time.Millisecond))
+	encoder, err := NewEncoder(encoderKeyFunc, WithEncoderCacheExpiry(100*time.Millisecond, 50*time.Millisecond))
 	assert.Nil(t, err)
 	assert.NotNil(t, encoder)
 

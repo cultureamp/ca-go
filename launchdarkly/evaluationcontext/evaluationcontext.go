@@ -149,11 +149,11 @@ func NewEvaluationContext(opts ...ContextOption) EvaluationContext {
 	return *e
 }
 
-// EvaluationContextFromContext extracts the effective user aggregate ID, real user aggregate
+// FromContext extracts the effective user aggregate ID, real user aggregate
 // ID, and account aggregate ID from the context. These values are used to
 // create a new EvaluationContext object. An error is returned if user identifiers are not
 // present in the context.
-func EvaluationContextFromContext(ctx context.Context) (EvaluationContext, error) {
+func FromContext(ctx context.Context) (EvaluationContext, error) {
 	authenticatedUser, ok := request.AuthenticatedUserFromContext(ctx)
 	if !ok {
 		return EvaluationContext{}, errors.New("no AuthenticatedUser in supplied context")

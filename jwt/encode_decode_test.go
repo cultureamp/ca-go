@@ -78,7 +78,7 @@ func TestEncodeDecode(t *testing.T) {
 			assert.Nil(t, err)
 			privKey := string(b)
 
-			encoder, err := NewJwtEncoder(func() (string, string) { return privKey, tC.kid })
+			encoder, err := NewEncoder(func() (string, string) { return privKey, tC.kid })
 			assert.Nil(t, err)
 			assert.NotNil(t, encoder)
 
@@ -87,7 +87,7 @@ func TestEncodeDecode(t *testing.T) {
 			assert.Nil(t, err)
 			jwks := string(b)
 
-			decoder, err := NewJwtDecoder(func() string { return jwks })
+			decoder, err := NewDecoder(func() string { return jwks })
 			assert.Nil(t, err)
 			assert.NotNil(t, decoder)
 

@@ -69,7 +69,7 @@ func mustHaveDefaultJwtDecoder() error {
 		return nil // its set so we are good to go
 	}
 
-	decoder, err := NewJwtDecoder(func() string { return os.Getenv("AUTH_PUBLIC_JWK_KEYS") })
+	decoder, err := NewDecoder(func() string { return os.Getenv("AUTH_PUBLIC_JWK_KEYS") })
 	if err != nil {
 		return errors.Errorf("error loading default jwk decoder, maybe missing env vars: err='%w'", err)
 	}
@@ -83,7 +83,7 @@ func mustHaveDefaultJwtEncoder() error {
 		return nil // its set so we are good to go
 	}
 
-	encoder, err := NewJwtEncoder(func() (string, string) {
+	encoder, err := NewEncoder(func() (string, string) {
 		privKey := os.Getenv("AUTH_PRIVATE_KEY")
 		keyID := os.Getenv("AUTH_PRIVATE_KEY_ID")
 		return privKey, keyID
