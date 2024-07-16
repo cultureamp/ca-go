@@ -179,27 +179,13 @@ issues:
         - lll
         - tagliatelle
 
-    - path: log/logger.go
-      linters:
-        - zerologlint
-
     - path: log/fields.go
       linters:
         - canonicalheader
 
-    - path: jwt/decoder.go
+    - path: log/logger.go
       linters:
-        - ireturn
-
-    - path: kafka/consumer/consumer_group.go
-      linters:
-        - ireturn
-
-    - path: launchdarkly/*
-      linters:
-        - err113
-        - lll
-        - tagliatelle
+        - zerologlint
 
     - path: jwt/decoder.go
       linters:
@@ -208,6 +194,12 @@ issues:
     - path: jwt/decoder_jwks.go
       linters:
         - ireturn
+
+    - path: launchdarkly/*
+      linters:
+        - err113
+        - lll
+        - tagliatelle
 
     - path: sentry/*
       linters:
