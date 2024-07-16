@@ -12,4 +12,3 @@ type ClientLogger interface {
 	Infof(fmt string, params ...interface{})
 	Errorf(fmt string, params ...interface{})
 }
-
