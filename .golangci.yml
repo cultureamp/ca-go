@@ -190,8 +190,11 @@ issues:
     - path: jwt/decoder.go
       linters:
         - ireturn
-
     - path: jwt/decoder_jwks.go
+      linters:
+        - ireturn
+
+    - path: kafka/consumer/client.go
       linters:
         - ireturn
 
