@@ -34,8 +34,8 @@ type encoderPrivateKey struct {
 	kid               string
 }
 
-// JwtEncoder can encode a claim to a jwt token string.
-type JwtEncoder struct {
+// StandardEncoder can encode a claim to a jwt token string.
+type StandardEncoder struct {
 	fetchPrivateKey   EncoderKeyRetriever // func provided by clients of this library to supply a refreshed private key and kid
 	mu                sync.Mutex          // mutex to protect cache.Get/Set race condition
 	cache             *cache.Cache        // memory cache holding the encoderPrivateKey struct
@@ -43,9 +43,9 @@ type JwtEncoder struct {
 	cleanupInterval   time.Duration       // default is every 1 minute
 }
 
-// NewJwtEncoder creates a new JwtEncoder.
-func NewJwtEncoder(fetchPrivateKey EncoderKeyRetriever, options ...JwtEncoderOption) (*JwtEncoder, error) {
-	encoder := &JwtEncoder{
+// NewEncoder creates a new JwtEncoder.
+func NewEncoder(fetchPrivateKey EncoderKeyRetriever, options ...EncoderOption) (*StandardEncoder, error) {
+	encoder := &StandardEncoder{
 		fetchPrivateKey:   fetchPrivateKey,
 		defaultExpiration: defaultEncoderExpiration,
 		cleanupInterval:   defaultEncoderCleanupInterval,
@@ -68,14 +68,14 @@ func NewJwtEncoder(fetchPrivateKey EncoderKeyRetriever, options ...JwtEncoderOpt
 }
 
 // Encode the Standard Culture Amp Claims in a jwt token string.
-func (e *JwtEncoder) Encode(claims *StandardClaims) (string, error) {
+func (e *StandardEncoder) Encode(claims *StandardClaims) (string, error) {
 	registerClaims := newEncoderClaims(claims)
 
 	return e.EncodeWithCustomClaims(registerClaims)
 }
 
 // EncodeWithCustomClaims encodes the Custom Claims in a jwt token string.
-func (e *JwtEncoder) EncodeWithCustomClaims(customClaims jwt.Claims) (string, error) {
+func (e *StandardEncoder) EncodeWithCustomClaims(customClaims jwt.Claims) (string, error) {
 	var token *jwt.Token
 
 	// Will check cache and re-fetch if expired
@@ -104,7 +104,7 @@ func (e *JwtEncoder) EncodeWithCustomClaims(customClaims jwt.Claims) (string, er
 	return token.SignedString(encodingKey.privateSigningKey)
 }
 
-func (e *JwtEncoder) loadPrivateKey() (*encoderPrivateKey, error) {
+func (e *StandardEncoder) loadPrivateKey() (*encoderPrivateKey, error) {
 	// First chech cache, if its there then great, use it!
 	if key, ok := e.getCachedPrivateKey(); ok {
 		return key, nil
@@ -133,7 +133,7 @@ func (e *JwtEncoder) loadPrivateKey() (*encoderPrivateKey, error) {
 	return encodingKey, err
 }
 
-func (e *JwtEncoder) getCachedPrivateKey() (*encoderPrivateKey, bool) {
+func (e *StandardEncoder) getCachedPrivateKey() (*encoderPrivateKey, bool) {
 	// First chech cache, if its there then great, use it!
 	obj, found := e.cache.Get(privCacheKey)
 	if !found {
@@ -144,7 +144,7 @@ func (e *JwtEncoder) getCachedPrivateKey() (*encoderPrivateKey, bool) {
 	return key, ok
 }
 
-func (e *JwtEncoder) parsePrivateKey(privKey string, kid string) (*encoderPrivateKey, error) {
+func (e *StandardEncoder) parsePrivateKey(privKey string, kid string) (*encoderPrivateKey, error) {
 	privatePEMKey := []byte(privKey)
 
 	ecdaPrivateKey, err := jwt.ParseECPrivateKeyFromPEM(privatePEMKey)

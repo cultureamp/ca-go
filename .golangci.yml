@@ -12,8 +12,6 @@ linters:
     - gochecknoglobals
     - gomnd # renamed to "mnd"
     - nlreturn
-    - revive # need to turn this on one day...
-    - stylecheck # need to turn this on way day...
     - varnamelen
     - wrapcheck
     - wsl

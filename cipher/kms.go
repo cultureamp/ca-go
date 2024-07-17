@@ -8,19 +8,19 @@ import (
 	"github.com/go-errors/errors"
 )
 
-type awsKMSClient struct {
+type KMSClient struct {
 	aws *kms.Client
 }
 
-func NewKMSClient(region string, optFns ...func(*kms.Options)) *awsKMSClient {
+func NewKMSClient(region string, optFns ...func(*kms.Options)) *KMSClient {
 	client := kms.New(kms.Options{Region: region}, optFns...)
-	return &awsKMSClient{
+	return &KMSClient{
 		aws: client,
 	}
 }
 
 // Encrypt will use the KMS keyId to encrypt the plainStr and return it as a base64 encoded string.
-func (c *awsKMSClient) Encrypt(ctx context.Context, keyID string, plainStr string) (string, error) {
+func (c *KMSClient) Encrypt(ctx context.Context, keyID string, plainStr string) (string, error) {
 	input := &kms.EncryptInput{
 		KeyId:     &keyID,
 		Plaintext: []byte(plainStr),
@@ -36,7 +36,7 @@ func (c *awsKMSClient) Encrypt(ctx context.Context, keyID string, plainStr strin
 }
 
 // Decrpyt will use the KMS keyId and the base64 encoded encryptedStr and return it decrypted as a plain string.
-func (c *awsKMSClient) Decrypt(ctx context.Context, keyID string, encryptedStr string) (string, error) {
+func (c *KMSClient) Decrypt(ctx context.Context, keyID string, encryptedStr string) (string, error) {
 	blob, err := b64.StdEncoding.DecodeString(encryptedStr)
 	if err != nil {
 		return "", errors.Errorf("failed to decode: %w", err)

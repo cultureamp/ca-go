@@ -39,7 +39,7 @@ func TestDefaultSettings(t *testing.T) {
 	logLevel := env.LogLevel()
 	assert.Equal(t, "INFO", logLevel)
 
-	ddApiKey := env.DatadogApiKey()
+	ddApiKey := env.DatadogAPIKey()
 	assert.Equal(t, "", ddApiKey)
 
 	ddEndpoint := env.DatadogLogEndpoint()

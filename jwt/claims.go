@@ -12,9 +12,9 @@ const (
 
 // StandardClaims represent the standard Culture Amp JWT claims.
 type StandardClaims struct {
-	AccountId       string // uuid
-	RealUserId      string // uuid
-	EffectiveUserId string // uuid
+	AccountID       string // uuid
+	RealUserID      string // uuid
+	EffectiveUserID string // uuid
 
 	// Optional claims
 
@@ -42,9 +42,9 @@ type encoderStandardClaims struct {
 func newStandardClaims(claims jwt.MapClaims) *StandardClaims {
 	std := &StandardClaims{}
 
-	std.AccountId = std.getCustomString(claims, accountIDClaim)
-	std.RealUserId = std.getCustomString(claims, realUserIDClaim)
-	std.EffectiveUserId = std.getCustomString(claims, effectiveUserIDClaim)
+	std.AccountID = std.getCustomString(claims, accountIDClaim)
+	std.RealUserID = std.getCustomString(claims, realUserIDClaim)
+	std.EffectiveUserID = std.getCustomString(claims, effectiveUserIDClaim)
 
 	std.Issuer = std.getString(claims.GetIssuer)
 	std.Subject = std.getString(claims.GetSubject)
@@ -95,9 +95,9 @@ func (sc *StandardClaims) getCustomString(claims jwt.MapClaims, key string) stri
 
 func newEncoderClaims(sc *StandardClaims) *encoderStandardClaims {
 	claims := &encoderStandardClaims{
-		AccountID:       sc.AccountId,
-		EffectiveUserID: sc.EffectiveUserId,
-		RealUserID:      sc.RealUserId,
+		AccountID:       sc.AccountID,
+		EffectiveUserID: sc.EffectiveUserID,
+		RealUserID:      sc.RealUserID,
 	}
 
 	claims.Issuer = sc.Issuer
