@@ -177,6 +177,10 @@ issues:
         - lll
         - tagliatelle
 
+    - path: log/fields.go
+      linters:
+        - canonicalheader
+
     - path: log/logger.go
       linters:
         - ireturn
