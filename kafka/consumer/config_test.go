@@ -25,7 +25,7 @@ func TestConfigShouldProcess(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "missing group")
 
-	conf.groupId = "group_id"
+	conf.groupID = "group_id"
 	err = conf.shouldProcess()
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "missing message handler")
@@ -60,7 +60,7 @@ func TestConfigShouldProcessWithEnvVars(t *testing.T) {
 	conf := newConfig()
 	assert.NotNil(t, conf)
 
-	conf.groupId = "group_id"
+	conf.groupID = "group_id"
 	conf.handler = func(context.Context, *Message) error { return nil }
 
 	err := conf.shouldProcess()

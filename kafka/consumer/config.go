@@ -17,7 +17,7 @@ type Config struct {
 	brokers                     []string         // Kafka bootstrap brokers to connect to
 	version                     string           // Kafka cluster version (Default )
 	topics                      []string         // Kafka topics to be consumed
-	groupId                     string           // Kafka consumer group definition
+	groupID                     string           // Kafka consumer group definition
 	assignor                    string           // Consumer group partition assignment strategy (range, roundrobin, sticky)
 	handler                     Handler          // The client handler to receive and process messages
 	oldest                      bool             // Kafka consumer consume initial offset from oldest (Default true)
@@ -84,7 +84,7 @@ func (conf *Config) shouldProcess() error {
 		return errors.Errorf("missing topics")
 	}
 
-	if conf.groupId == "" {
+	if conf.groupID == "" {
 		return errors.Errorf("missing group")
 	}
 

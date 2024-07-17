@@ -148,7 +148,7 @@ func testService(t *testing.T, ctx context.Context, handler Handler, numMessages
 		WithKafkaClient(mockClient),
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
-		WithGroupId("group_id"),
+		WithGroupID("group_id"),
 		WithAssignor("roundrobin"),
 		WithHandler(handler),
 		WithLogging(newTestLogger()),

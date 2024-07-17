@@ -15,7 +15,7 @@ type groupConsumer struct {
 }
 
 func newGroupConsumer(client client, conf *Config) (*groupConsumer, error) {
-	group, err := client.NewConsumerGroup(conf.brokers, conf.groupId, conf.saramaConfig)
+	group, err := client.NewConsumerGroup(conf.brokers, conf.groupID, conf.saramaConfig)
 	if err != nil {
 		return nil, errors.Errorf("error creating consumer: %w", err)
 	}

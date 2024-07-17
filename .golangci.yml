@@ -177,17 +177,15 @@ issues:
         - lll
         - tagliatelle
 
-    - path: log/fields.go
-      linters:
-        - canonicalheader
-
     - path: log/logger.go
       linters:
+        - ireturn
         - zerologlint
 
     - path: jwt/decoder.go
       linters:
         - ireturn
+
     - path: jwt/decoder_jwks.go
       linters:
         - ireturn

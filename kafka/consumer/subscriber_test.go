@@ -35,7 +35,7 @@ func TestNewConsumer(t *testing.T) {
 	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
-		WithGroupId("group_id"),
+		WithGroupID("group_id"),
 	)
 	assert.Nil(t, c)
 	assert.NotNil(t, err)
@@ -44,7 +44,7 @@ func TestNewConsumer(t *testing.T) {
 	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
-		WithGroupId("group_id"),
+		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
 	)
 	assert.NotNil(t, c)
@@ -53,7 +53,7 @@ func TestNewConsumer(t *testing.T) {
 	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
-		WithGroupId("group_id"),
+		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
 		WithAssignor("abc"),
 	)
@@ -64,7 +64,7 @@ func TestNewConsumer(t *testing.T) {
 	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
-		WithGroupId("group_id"),
+		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
 		WithAssignor("roundrobin"),
 	)
@@ -74,7 +74,7 @@ func TestNewConsumer(t *testing.T) {
 	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
-		WithGroupId("group_id"),
+		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
 		WithAssignor("roundrobin"),
 		WithVersion("abc"),
@@ -86,7 +86,7 @@ func TestNewConsumer(t *testing.T) {
 	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
-		WithGroupId("group_id"),
+		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
 		WithAssignor("roundrobin"),
 		WithVersion("1.0.0"),
@@ -99,7 +99,7 @@ func TestNewConsumer(t *testing.T) {
 		WithConsumerID("abc.123.uuid"),
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
-		WithGroupId("group_id"),
+		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
 		WithAssignor("roundrobin"),
 		WithOldest(false),
@@ -302,7 +302,7 @@ func testConsumer(t *testing.T, client client, handler Handler, numMessages int6
 		WithKafkaClient(client),
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
-		WithGroupId("group_id"),
+		WithGroupID("group_id"),
 		WithAssignor("roundrobin"),
 		WithHandler(handler),
 		WithLogging(newTestLogger()),

@@ -63,9 +63,9 @@ func WithHandler(handler Handler) Option {
 	}
 }
 
-func WithGroupId(id string) Option {
+func WithGroupID(id string) Option {
 	return func(consumer *Subscriber) {
-		consumer.conf.groupId = id
+		consumer.conf.groupID = id
 	}
 }
 
