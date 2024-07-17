@@ -4,20 +4,20 @@ import (
 	"time"
 )
 
-// JwtDecoderOption function signature for adding JWT Decoder options.
-type JwtDecoderOption func(*JwtDecoder)
+// DecoderOption function signature for adding JWT Decoder options.
+type DecoderOption func(*StandardDecoder)
 
 // WithDecoderJwksExpiry sets the JwtDecoder JWKs expiry time.Duration
 // defaultExpiration defaults to 60 minutes.
-func WithDecoderJwksExpiry(expiry time.Duration) JwtDecoderOption {
-	return func(decoder *JwtDecoder) {
+func WithDecoderJwksExpiry(expiry time.Duration) DecoderOption {
+	return func(decoder *StandardDecoder) {
 		decoder.expiresWithin = expiry
 	}
 }
 
 // WithDecoderRotateWindow sets the JWKS rotation window to an time.Duration.
-func WithDecoderRotateWindow(rotate time.Duration) JwtDecoderOption {
-	return func(decoder *JwtDecoder) {
+func WithDecoderRotateWindow(rotate time.Duration) DecoderOption {
+	return func(decoder *StandardDecoder) {
 		decoder.rotationWindow = rotate
 	}
 }

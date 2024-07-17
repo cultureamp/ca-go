@@ -7,7 +7,7 @@ import (
 // DatadogSettings implements Datadog settings.
 // This is an interface so that clients can mock out this behaviour in tests.
 type DatadogSettings interface {
-	DatadogApiKey() string
+	DatadogAPIKey() string
 	DatadogLogEndpoint() string
 	DatadogEnv() string
 	DatadogService() string
@@ -43,8 +43,8 @@ func newDatadogSettings() *datadogSettings {
 	return &settings
 }
 
-// DatadogApiKey returns the "DD_API_KEY" environment variable.
-func (s *datadogSettings) DatadogApiKey() string {
+// DatadogAPIKey returns the "DD_API_KEY" environment variable.
+func (s *datadogSettings) DatadogAPIKey() string {
 	return s.DDApiKeyEnv
 }
 

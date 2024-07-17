@@ -58,17 +58,17 @@ func getAWSInstance() *awsSettings {
 	return newAWSSettings()
 }
 
-// GetAwsProfile returns the AWS profile from the "AWS_PROFILE" environment variable.
+// AwsProfile returns the AWS profile from the "AWS_PROFILE" environment variable.
 func AwsProfile() string {
 	return DefaultAWSSettings.AwsProfile()
 }
 
-// GetAwsRegion returns the AWS region from the "AWS_REGION" environment variable.
+// AwsRegion returns the AWS region from the "AWS_REGION" environment variable.
 func AwsRegion() string {
 	return DefaultAWSSettings.AwsRegion()
 }
 
-// GetAwsAccountID returns the AWS region from the "AWS_ACCOUNT_ID" environment variable.
+// AwsAccountID returns the AWS region from the "AWS_ACCOUNT_ID" environment variable.
 func AwsAccountID() string {
 	return DefaultAWSSettings.AwsAccountID()
 }
@@ -85,7 +85,7 @@ func getLogInstance() *logSettings {
 	return newLogSettings()
 }
 
-// GetLogLevel returns the "LOG_LEVEL" environment variable.
+// LogLevel returns the "LOG_LEVEL" environment variable.
 // Examples: "DEBUG, "INFO", "WARN", "ERROR".
 func LogLevel() string {
 	return DefaultLogSettings.LogLevel()
@@ -98,57 +98,57 @@ func getDatadogInstance() *datadogSettings {
 	return newDatadogSettings()
 }
 
-// GetDatadogApiKey returns the "DD_API_KEY" environment variable.
-func DatadogApiKey() string {
-	return DefaultDatadogSettings.DatadogApiKey()
+// DatadogAPIKey returns the "DD_API_KEY" environment variable.
+func DatadogAPIKey() string {
+	return DefaultDatadogSettings.DatadogAPIKey()
 }
 
-// GetDatadogLogEndpoint returns the "DD_LOG_ENDPOINT" environment variable.
+// DatadogLogEndpoint returns the "DD_LOG_ENDPOINT" environment variable.
 func DatadogLogEndpoint() string {
 	return DefaultDatadogSettings.DatadogLogEndpoint()
 }
 
-// GetDatadogEnv returns the "DD_ENV" environment variable.
+// DatadogEnv returns the "DD_ENV" environment variable.
 // Default: AppEnv().
 func DatadogEnv() string {
 	return DefaultDatadogSettings.DatadogEnv()
 }
 
-// GetDatadogService returns the "DD_SERVICE" environment variable.
+// DatadogService returns the "DD_SERVICE" environment variable.
 // Default: App().
 func DatadogService() string {
 	return DefaultDatadogSettings.DatadogService()
 }
 
-// GetDatadogVersion returns the "DD_VERSION" environment variable.
+// DatadogVersion returns the "DD_VERSION" environment variable.
 // Default: AppVersion().
 func DatadogVersion() string {
 	return DefaultDatadogSettings.DatadogVersion()
 }
 
-// GetDatadogAgentHost returns the "DD_AGENT_HOST" environment variable.
+// DatadogAgentHost returns the "DD_AGENT_HOST" environment variable.
 func DatadogAgentHost() string {
 	return DefaultDatadogSettings.DatadogAgentHost()
 }
 
-// GetDatadogStatsDPort returns the "DD_DOGSTATSD_PORT" environment variable.
+// DatadogStatsDPort returns the "DD_DOGSTATSD_PORT" environment variable.
 // Default: 8125.
 func DatadogStatsDPort() int {
 	return DefaultDatadogSettings.DatadogStatsDPort()
 }
 
-// GetDatadogTimeoutInMs returns the "DD_TIMEOUT" environment variable.
+// DatadogTimeoutInMs returns the "DD_TIMEOUT" environment variable.
 // Default: 500.
 func DatadogTimeoutInMs() int {
 	return DefaultDatadogSettings.DatadogTimeoutInMs()
 }
 
-// GetDatadogSite returns the "DD_SITE" environment variable.
+// DatadogSite returns the "DD_SITE" environment variable.
 func DatadogSite() string {
 	return DefaultDatadogSettings.DatadogSite()
 }
 
-// GetDatadogLogLevel returns the "DD_LOG_LEVEL" environment variable.
+// DatadogLogLevel returns the "DD_LOG_LEVEL" environment variable.
 // Default: LogLevel().
 func DatadogLogLevel() string {
 	return DefaultDatadogSettings.DatadogLogLevel()
@@ -161,12 +161,12 @@ func getSentryInstance() *sentrySettings {
 	return newSentrySettings()
 }
 
-// GetSentryDSN returns the "SENTRY_DSN" environment variable.
+// SentryDSN returns the "SENTRY_DSN" environment variable.
 func SentryDSN() string {
 	return DefaultSentrySettings.SentryDSN()
 }
 
-// GetSentryFlushTimeoutInMs returns the "SENTRY_FLUSH_TIMEOUT_IN_MS" environment variable.
+// SentryFlushTimeoutInMs returns the "SENTRY_FLUSH_TIMEOUT_IN_MS" environment variable.
 // Default: 100.
 func SentryFlushTimeoutInMs() int {
 	return DefaultSentrySettings.SentryFlushTimeoutInMs()

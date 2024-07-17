@@ -27,17 +27,17 @@ type publicKey interface{} // Only ECDSA (perferred) and RSA public keys allowed
 // DecoderJwksRetriever defines the function signature required to retrieve JWKS json.
 type DecoderJwksRetriever func() string
 
-// JwtDecoder can decode a jwt token string.
-type JwtDecoder struct {
+// StandardDecoder can decode a jwt token string.
+type StandardDecoder struct {
 	dispatcher     DecoderJwksRetriever // func provided by clients of this library to supply the current JWKS
 	expiresWithin  time.Duration        // default is 60 minutes
 	rotationWindow time.Duration        // default is 30 seconds
 	jwks           *jwkFetcher          // manages the life cycle of a JWK Set
 }
 
-// NewJwtDecoder creates a new JwtDecoder with the set ECDSA and RSA public keys in the JWK string.
-func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) (*JwtDecoder, error) {
-	decoder := &JwtDecoder{
+// NewDecoder creates a new JwtDecoder with the set ECDSA and RSA public keys in the JWK string.
+func NewDecoder(fetchJWKS DecoderJwksRetriever, options ...DecoderOption) (*StandardDecoder, error) {
+	decoder := &StandardDecoder{
 		dispatcher:     fetchJWKS,
 		jwks:           nil,
 		expiresWithin:  defaultDecoderExpiration,
@@ -61,7 +61,7 @@ func NewJwtDecoder(fetchJWKS DecoderJwksRetriever, options ...JwtDecoderOption) 
 }
 
 // Decode a jwt token string and return the Standard Culture Amp Claims.
-func (d *JwtDecoder) Decode(tokenString string, options ...DecoderParserOption) (*StandardClaims, error) {
+func (d *StandardDecoder) Decode(tokenString string, options ...DecoderParserOption) (*StandardClaims, error) {
 	claims := jwt.MapClaims{}
 	err := d.DecodeWithCustomClaims(tokenString, claims, options...)
 	if err != nil {
@@ -71,7 +71,7 @@ func (d *JwtDecoder) Decode(tokenString string, options ...DecoderParserOption) 
 }
 
 // DecodeWithCustomClaims takes a jwt token string and populate the customClaims.
-func (d *JwtDecoder) DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims, options ...DecoderParserOption) error {
+func (d *StandardDecoder) DecodeWithCustomClaims(tokenString string, customClaims jwt.Claims, options ...DecoderParserOption) error {
 	// sample token string in the form "header.payload.signature"
 	// eg. "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIiLCJuYmYiOjE0NDQ0Nzg0MDB9.u1riaD1rW97opCoAuRCTy4w58Br-Zk-bh7vLiRIsrpU"
 
@@ -90,7 +90,7 @@ func (d *JwtDecoder) DecodeWithCustomClaims(tokenString string, customClaims jwt
 	return nil
 }
 
-func (d *JwtDecoder) enforceParsingOptions(options ...DecoderParserOption) []jwt.ParserOption {
+func (d *StandardDecoder) enforceParsingOptions(options ...DecoderParserOption) []jwt.ParserOption {
 	// Eng Std: https://cultureamp.atlassian.net/wiki/spaces/TV/pages/3253240053/JWT+Authentication
 	var opts []jwt.ParserOption
 
@@ -131,7 +131,7 @@ func (d *JwtDecoder) enforceParsingOptions(options ...DecoderParserOption) []jwt
 	return opts
 }
 
-func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
+func (d *StandardDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 	if token == nil {
 		return nil, errors.Errorf("failed to decode: missing token")
 	}
@@ -165,7 +165,7 @@ func (d *JwtDecoder) useCorrectPublicKey(token *jwt.Token) (publicKey, error) {
 }
 
 // lookupKeyID returns the public key in the JWKS that matches the "kid".
-func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) {
+func (d *StandardDecoder) lookupKeyID(kid string) (publicKey, error) {
 	// check cache and possibly fetch new JWKS if cache has expired
 	jwkSet, err := d.jwks.Get()
 	if err != nil {
@@ -182,7 +182,7 @@ func (d *JwtDecoder) lookupKeyID(kid string) (publicKey, error) {
 	return d.tryRefreshedLookupKeyID(kid)
 }
 
-func (d *JwtDecoder) tryRefreshedLookupKeyID(kid string) (publicKey, error) {
+func (d *StandardDecoder) tryRefreshedLookupKeyID(kid string) (publicKey, error) {
 	// If the jwks aren't "fresh" and we are being asked for a kid we don't have
 	// then get a new jwks and try again. This can occur when a new key has been
 	// added or rotated and we haven't got the latest copy.
@@ -204,7 +204,7 @@ func (d *JwtDecoder) tryRefreshedLookupKeyID(kid string) (publicKey, error) {
 	return nil, errors.Errorf("failed to decode: no matching key_id (kid) header for: %s", kid)
 }
 
-func (d *JwtDecoder) getPublicKey(key jwk.Key) (publicKey, error) {
+func (d *StandardDecoder) getPublicKey(key jwk.Key) (publicKey, error) {
 	var rawkey interface{}
 	err := key.Raw(&rawkey)
 	if err != nil {

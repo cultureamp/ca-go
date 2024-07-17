@@ -49,7 +49,7 @@ func TestEvaluationContextFromContext(t *testing.T) {
 
 		ctx = request.ContextWithAuthenticatedUser(ctx, user)
 
-		flagsEvalContext, err := evaluationcontext.EvaluationContextFromContext(ctx)
+		flagsEvalContext, err := evaluationcontext.FromContext(ctx)
 		require.NoError(t, err)
 		assertContextAttributes(t, flagsEvalContext, "789", "456", "123", "", 2)
 	})

@@ -121,7 +121,7 @@ func addRequestFieldsToScope(ctx context.Context, scope *sentry.Scope) {
 		scope.SetTag("user.real", authenticatedUser.RealUserID)
 	}
 
-	if requestIDs, ok := request.RequestIDsFromContext(ctx); ok {
+	if requestIDs, ok := request.UniqueIDsFromContext(ctx); ok {
 		scope.SetTag("RequestID", requestIDs.RequestID)
 
 		// add as a context as well for display below the stack trace

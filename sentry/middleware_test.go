@@ -26,7 +26,7 @@ func setupContextForSentry() (context.Context, func(t *testing.T, transport *tra
 		UserID:            "456",
 		RealUserID:        "789",
 	})
-	ctx = request.ContextWithRequestIDs(ctx, request.RequestIDs{
+	ctx = request.ContextWithUniqueIDs(ctx, request.UniqueIDs{
 		RequestID:     "abc",
 		CorrelationID: "def",
 	})

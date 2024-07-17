@@ -15,9 +15,9 @@ const (
 
 func TestPackageEncodeDecode(t *testing.T) {
 	claims := &StandardClaims{
-		AccountId:       "abc123",
-		RealUserId:      "xyz234",
-		EffectiveUserId: "xyz345",
+		AccountID:       "abc123",
+		RealUserID:      "xyz234",
+		EffectiveUserID: "xyz345",
 		Issuer:          "encoder-name",
 		Subject:         "test",
 		Audience:        []string{"decoder-name"},
@@ -39,18 +39,18 @@ func TestPackageEncodeDecode(t *testing.T) {
 	assert.Nil(t, err)
 
 	// check it matches
-	assert.Equal(t, "abc123", sc.AccountId)
-	assert.Equal(t, "xyz234", sc.RealUserId)
-	assert.Equal(t, "xyz345", sc.EffectiveUserId)
+	assert.Equal(t, "abc123", sc.AccountID)
+	assert.Equal(t, "xyz234", sc.RealUserID)
+	assert.Equal(t, "xyz345", sc.EffectiveUserID)
 
 	// Decode it back again, checking aud, iss and sub all match
 	sc, err = Decode(token, MustMatchAudience("decoder-name"), MustMatchIssuer("encoder-name"), MustMatchSubject("test"))
 	assert.Nil(t, err)
 
 	// check it matches
-	assert.Equal(t, "abc123", sc.AccountId)
-	assert.Equal(t, "xyz234", sc.RealUserId)
-	assert.Equal(t, "xyz345", sc.EffectiveUserId)
+	assert.Equal(t, "abc123", sc.AccountID)
+	assert.Equal(t, "xyz234", sc.RealUserID)
+	assert.Equal(t, "xyz345", sc.EffectiveUserID)
 
 	// Decode it back again, checking aud should fail
 	sc, err = Decode(token, MustMatchAudience("incorrect-aud"))
@@ -74,9 +74,9 @@ func TestPackageEncodeDecodeNotBeforeExpiryChecks(t *testing.T) {
 	expiry := now.Add(10 * time.Hour)
 	notBefore := now.Add(-10 * time.Hour)
 	okClaims := &StandardClaims{
-		AccountId:       "abc123",
-		RealUserId:      "xyz234",
-		EffectiveUserId: "xyz345",
+		AccountID:       "abc123",
+		RealUserID:      "xyz234",
+		EffectiveUserID: "xyz345",
 		Issuer:          "encoder-name",
 		Subject:         "test",
 		Audience:        []string{"decoder-name"},
@@ -87,9 +87,9 @@ func TestPackageEncodeDecodeNotBeforeExpiryChecks(t *testing.T) {
 	expiry = now.Add(-1 * time.Hour)
 	notBefore = now.Add(-10 * time.Hour)
 	expiryClaims := &StandardClaims{
-		AccountId:       "abc123",
-		RealUserId:      "xyz234",
-		EffectiveUserId: "xyz345",
+		AccountID:       "abc123",
+		RealUserID:      "xyz234",
+		EffectiveUserID: "xyz345",
 		Issuer:          "encoder-name",
 		Subject:         "test",
 		Audience:        []string{"decoder-name"},
@@ -100,9 +100,9 @@ func TestPackageEncodeDecodeNotBeforeExpiryChecks(t *testing.T) {
 	expiry = now.Add(10 * time.Hour)
 	notBefore = now.Add(1 * time.Hour)
 	notBeforeClaims := &StandardClaims{
-		AccountId:       "abc123",
-		RealUserId:      "xyz234",
-		EffectiveUserId: "xyz345",
+		AccountID:       "abc123",
+		RealUserID:      "xyz234",
+		EffectiveUserID: "xyz345",
 		Issuer:          "encoder-name",
 		Subject:         "test",
 		Audience:        []string{"decoder-name"},
@@ -149,9 +149,9 @@ func TestPackageEncodeDecodeNotBeforeExpiryChecks(t *testing.T) {
 			if tC.expectedDecoderErrMsg == "" {
 				assert.Nil(t, err)
 				// check it matches
-				assert.Equal(t, "abc123", sc.AccountId)
-				assert.Equal(t, "xyz234", sc.RealUserId)
-				assert.Equal(t, "xyz345", sc.EffectiveUserId)
+				assert.Equal(t, "abc123", sc.AccountID)
+				assert.Equal(t, "xyz234", sc.RealUserID)
+				assert.Equal(t, "xyz345", sc.EffectiveUserID)
 				assert.Equal(t, "encoder-name", sc.Issuer)
 				assert.Equal(t, "test", sc.Subject)
 				assert.Equal(t, []string{"decoder-name"}, sc.Audience)
@@ -165,9 +165,9 @@ func TestPackageEncodeDecodeNotBeforeExpiryChecks(t *testing.T) {
 
 func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 	claims := &StandardClaims{
-		AccountId:       "abc123",
-		RealUserId:      "xyz234",
-		EffectiveUserId: "xyz345",
+		AccountID:       "abc123",
+		RealUserID:      "xyz234",
+		EffectiveUserID: "xyz345",
 		Issuer:          "encoder-name",
 		Subject:         "test",
 		Audience:        []string{"decoder-name"},
@@ -227,9 +227,9 @@ func TestPackageEncodeDecodeWithDifferentEnvVars(t *testing.T) {
 			if tC.expectedDecoderErrMsg == "" {
 				assert.Nil(t, err)
 				// check it matches
-				assert.Equal(t, "abc123", sc.AccountId)
-				assert.Equal(t, "xyz234", sc.RealUserId)
-				assert.Equal(t, "xyz345", sc.EffectiveUserId)
+				assert.Equal(t, "abc123", sc.AccountID)
+				assert.Equal(t, "xyz234", sc.RealUserID)
+				assert.Equal(t, "xyz345", sc.EffectiveUserID)
 				assert.Equal(t, "encoder-name", sc.Issuer)
 				assert.Equal(t, "test", sc.Subject)
 				assert.Equal(t, []string{"decoder-name"}, sc.Audience)

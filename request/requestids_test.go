@@ -9,34 +9,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newRequestIDs() request.RequestIDs {
-	return request.RequestIDs{
+func newUniqueIDs() request.UniqueIDs {
+	return request.UniqueIDs{
 		RequestID:     "123",
 		CorrelationID: "456",
 	}
 }
 
-func TestContextWithRequestIDs(t *testing.T) {
-	ids := newRequestIDs()
+func TestContextWithUniqueIDs(t *testing.T) {
+	ids := newUniqueIDs()
 	ctx := context.Background()
 
-	ctx = request.ContextWithRequestIDs(ctx, ids)
-	idsFromContext, ok := request.RequestIDsFromContext(ctx)
+	ctx = request.ContextWithUniqueIDs(ctx, ids)
+	idsFromContext, ok := request.UniqueIDsFromContext(ctx)
 
 	assert.Equal(t, ids, idsFromContext)
 	assert.True(t, ok)
 }
 
-func ExampleContextWithRequestIDs() {
-	requestIDs := request.RequestIDs{
+func ExampleContextWithUniqueIDs() {
+	requestIDs := request.UniqueIDs{
 		RequestID:     "123",
 		CorrelationID: "456",
 	}
 	ctx := context.Background()
 
-	ctx = request.ContextWithRequestIDs(ctx, requestIDs)
+	ctx = request.ContextWithUniqueIDs(ctx, requestIDs)
 
-	if requestIDsFromContext, ok := request.RequestIDsFromContext(ctx); ok {
+	if requestIDsFromContext, ok := request.UniqueIDsFromContext(ctx); ok {
 		fmt.Println(requestIDsFromContext.RequestID)
 		fmt.Println(requestIDsFromContext.CorrelationID)
 
@@ -46,37 +46,37 @@ func ExampleContextWithRequestIDs() {
 	}
 }
 
-func TestRequestIDsFromContextMissing(t *testing.T) {
+func TestUniqueIDsFromContextMissing(t *testing.T) {
 	ctx := context.Background()
 
-	_, ok := request.RequestIDsFromContext(ctx)
+	_, ok := request.UniqueIDsFromContext(ctx)
 	assert.False(t, ok)
 }
 
-func ExampleContextHasRequestIDs() {
-	requestIDs := request.RequestIDs{
+func ExampleContextHasUniqueIDs() {
+	requestIDs := request.UniqueIDs{
 		RequestID:     "123",
 		CorrelationID: "456",
 	}
 	ctx := context.Background()
 
-	ctx = request.ContextWithRequestIDs(ctx, requestIDs)
+	ctx = request.ContextWithUniqueIDs(ctx, requestIDs)
 
-	ok := request.ContextHasRequestIDs(ctx)
+	ok := request.ContextHasUniqueIDs(ctx)
 	fmt.Println(ok)
 	// Output: true
 }
 
-func TestContextHasRequestIDsSucceeds(t *testing.T) {
-	ctx := request.ContextWithRequestIDs(context.Background(), newRequestIDs())
+func TestContextHasUniqueIDsSucceeds(t *testing.T) {
+	ctx := request.ContextWithUniqueIDs(context.Background(), newUniqueIDs())
 
-	ok := request.ContextHasRequestIDs(ctx)
+	ok := request.ContextHasUniqueIDs(ctx)
 	assert.True(t, ok)
 }
 
-func TestContextHasRequestIDsFails(t *testing.T) {
+func TestContextHasUniqueIDsFails(t *testing.T) {
 	ctx := context.Background()
 
-	ok := request.ContextHasRequestIDs(ctx)
+	ok := request.ContextHasUniqueIDs(ctx)
 	assert.False(t, ok)
 }

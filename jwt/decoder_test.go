@@ -46,7 +46,7 @@ func TestNewDecoder(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			decoder, err := NewJwtDecoder(func() string { return tC.jwks })
+			decoder, err := NewDecoder(func() string { return tC.jwks })
 			if tC.expectedErrMsg != "" {
 				assert.NotNil(t, err)
 				assert.ErrorContains(t, err, tC.expectedErrMsg)
@@ -156,16 +156,16 @@ func TestDecoderDecodeAllClaims(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			decoder, err := NewJwtDecoder(jwks)
+			decoder, err := NewDecoder(jwks)
 			assert.Nil(t, err)
 			assert.NotNil(t, decoder)
 
 			claim, err := decoder.Decode(tC.token)
 			if tC.expectedErrMsg == "" {
 				assert.Nil(t, err)
-				assert.Equal(t, tC.accountId, claim.AccountId)
-				assert.Equal(t, tC.realUserId, claim.RealUserId)
-				assert.Equal(t, tC.effectiveUserId, claim.EffectiveUserId)
+				assert.Equal(t, tC.accountId, claim.AccountID)
+				assert.Equal(t, tC.realUserId, claim.RealUserID)
+				assert.Equal(t, tC.effectiveUserId, claim.EffectiveUserID)
 				assert.Equal(t, tC.issuer, claim.Issuer)
 				assert.Equal(t, tC.subject, claim.Subject)
 				assert.Equal(t, tC.audience, claim.Audience)
@@ -202,7 +202,7 @@ func TestDecoderRotateKeys(t *testing.T) {
 		return testJWKS
 	}
 
-	decoder, err := NewJwtDecoder(jwks,
+	decoder, err := NewDecoder(jwks,
 		WithDecoderJwksExpiry(time.Millisecond*500),
 		WithDecoderRotateWindow(time.Millisecond*100),
 	)
@@ -222,9 +222,9 @@ func TestDecoderRotateKeys(t *testing.T) {
 	assert.Nil(t, err)
 
 	require.NotNil(t, claim)
-	assert.Equal(t, "abc123", claim.AccountId)
-	assert.Equal(t, "xyz234", claim.RealUserId)
-	assert.Equal(t, "xyz345", claim.EffectiveUserId)
+	assert.Equal(t, "abc123", claim.AccountID)
+	assert.Equal(t, "xyz234", claim.RealUserID)
+	assert.Equal(t, "xyz345", claim.EffectiveUserID)
 	assert.Equal(t, "encoder-name", claim.Issuer)
 	assert.Equal(t, "test", claim.Subject)
 	assert.Equal(t, []string{"decoder-name"}, claim.Audience)

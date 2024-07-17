@@ -14,7 +14,7 @@ type config struct {
 
 	tags map[string]string
 
-	beforeFilter SentryBeforeFilter
+	beforeFilter BeforeFilter
 	transport    sentry.Transport
 }
 
@@ -30,9 +30,9 @@ func (c *config) tag(name string, value string) {
 // behaviour of Sentry.
 type Option func(c *config)
 
-// SentryBeforeFilter is executed before a Sentry event is sent. It allows attributes
+// BeforeFilter is executed before a Sentry event is sent. It allows attributes
 // of the event to be modified. The event can be discarded by returning nil.
-type SentryBeforeFilter func(event *sentry.Event, hint *sentry.EventHint) *sentry.Event
+type BeforeFilter func(event *sentry.Event, hint *sentry.EventHint) *sentry.Event
 
 // WithEnvironment configures Sentry for the given environment, e.g. production-us.
 // This is the name of the AWS account to which the application is deployed, and should be
@@ -71,7 +71,7 @@ func WithDebug() Option {
 // WithBeforeFilter configures a function that will be called before an
 // error is reported. This can be used to filter out certain errors from
 // being reported.
-func WithBeforeFilter(filter SentryBeforeFilter) Option {
+func WithBeforeFilter(filter BeforeFilter) Option {
 	return func(c *config) {
 		c.beforeFilter = filter
 	}
