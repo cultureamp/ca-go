@@ -46,7 +46,7 @@ func (s *Service) Start(ctx context.Context) {
 
 func (s *Service) run(ctx context.Context) {
 	// blocking call until context Done, client dispatch error, or Kafka rebalance
-	err := s.subscriber.Subscribe(ctx)
+	err := s.subscriber.ConsumeAll(ctx)
 	if err != nil {
 		s.logger.Printf("service: error consuming topic: '%s'", err.Error())
 	}

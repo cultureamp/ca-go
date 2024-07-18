@@ -8,7 +8,7 @@ import (
 )
 
 // Subscriber provides a high level API for consuming and handling messages from a Kafka topic.
-// This implementation blocks on Consume() if you want a non-blocking version use Service.
+// This implementation blocks on ConsumeAll() if you want a non-blocking version use Service.
 type Subscriber struct {
 	conf *Config
 
@@ -45,7 +45,7 @@ func NewSubscriber(opts ...Option) (*Subscriber, error) {
 	return c, nil
 }
 
-func (c *Subscriber) Subscribe(ctx context.Context) error {
+func (c *Subscriber) ConsumeAll(ctx context.Context) error {
 	group, err := c.setupGroupConsumer()
 	if err != nil {
 		return err

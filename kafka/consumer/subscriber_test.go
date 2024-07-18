@@ -161,7 +161,7 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
-	err := c.Subscribe(ctx)
+	err := c.ConsumeAll(ctx)
 	assert.NotNil(t, err)
 	assert.ErrorIs(t, err, context.DeadlineExceeded)
 
@@ -203,7 +203,7 @@ func TestConsumerWithDecodeError(t *testing.T) {
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
-	err := c.Subscribe(ctx)
+	err := c.ConsumeAll(ctx)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "test decode error")
 
@@ -245,7 +245,7 @@ func TestConsumerWithHandlerError(t *testing.T) {
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
-	err := c.Subscribe(ctx)
+	err := c.ConsumeAll(ctx)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "test handler error")
 
@@ -288,7 +288,7 @@ func TestConsumerWithChannelError(t *testing.T) {
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
-	err := c.Subscribe(ctx)
+	err := c.ConsumeAll(ctx)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "message channel closed or in error state")
 
@@ -330,11 +330,11 @@ func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
-	err := c.Subscribe(ctx)
+	err := c.ConsumeAll(ctx)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "test error")
 
-	err = c.Subscribe(ctx)
+	err = c.ConsumeAll(ctx)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "consumer group already running!")
 
