@@ -5,16 +5,16 @@ import (
 )
 
 type consumer struct {
-	client  client
-	handler *messageHandler
-	logger  sarama.StdLogger
+	client         client
+	messageHandler *handler
+	logger         sarama.StdLogger
 }
 
-func newConsumer(client client, handler Receiver, decoder decoder, logger sarama.StdLogger) *consumer {
+func newConsumer(client client, messageHandler *handler, logger sarama.StdLogger) *consumer {
 	return &consumer{
-		client:  client,
-		handler: newMessageHandler(handler, decoder),
-		logger:  logger,
+		client:         client,
+		messageHandler: messageHandler,
+		logger:         logger,
 	}
 }
 
@@ -53,7 +53,7 @@ func (r *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 			)
 
 			// dispatch the message
-			if err := r.handler.dispatch(session.Context(), msg); err != nil {
+			if err := r.messageHandler.Dispatch(session.Context(), msg); err != nil {
 				r.logger.Printf("consumer: failed to dispatch message to client handler: err='%s'", err.Error())
 				return newDispatchHandlerError(err)
 			}

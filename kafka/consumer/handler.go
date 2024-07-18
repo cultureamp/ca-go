@@ -8,25 +8,29 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
-type Message struct {
+type Handler interface {
+	Dispatch(ctx context.Context, msg *sarama.ConsumerMessage) error
+}
+
+type ReceivedMessage struct {
 	json string // json
 }
 
-type Receiver func(ctx context.Context, msg *Message) error
+type Receiver func(ctx context.Context, msg *ReceivedMessage) error
 
-type messageHandler struct {
+type handler struct {
 	receiver Receiver
 	decoder  decoder
 }
 
-func newMessageHandler(receiver Receiver, decoder decoder) *messageHandler {
-	return &messageHandler{
+func newHandler(receiver Receiver, decoder decoder) *handler {
+	return &handler{
 		receiver: receiver,
 		decoder:  decoder,
 	}
 }
 
-func (h *messageHandler) dispatch(ctx context.Context, msg *sarama.ConsumerMessage) error {
+func (h *handler) Dispatch(ctx context.Context, msg *sarama.ConsumerMessage) error {
 	// add retries, etc.
 	span, ctx := tracer.StartSpanFromContext(ctx, "kafka.consumer.handle", tracer.ResourceName(msg.Topic))
 	defer span.Finish()
@@ -38,7 +42,7 @@ func (h *messageHandler) dispatch(ctx context.Context, msg *sarama.ConsumerMessa
 		return err
 	}
 
-	message := &Message{json}
+	message := &ReceivedMessage{json}
 	if err := h.receiver(ctx, message); err != nil {
 		return err
 	}

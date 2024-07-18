@@ -8,27 +8,25 @@ import (
 )
 
 type groupConsumer struct {
-	conf    *Config
-	client  client
-	decoder decoder
-	handler Receiver
-	group   sarama.ConsumerGroup
-	logger  sarama.StdLogger
+	conf           *Config
+	client         client
+	messageHandler *handler
+	group          sarama.ConsumerGroup
+	logger         sarama.StdLogger
 }
 
-func newGroupConsumer(client client, decoder decoder, handler Receiver, conf *Config) (*groupConsumer, error) {
+func newGroupConsumer(client client, messageHandler *handler, conf *Config) (*groupConsumer, error) {
 	group, err := client.NewConsumerGroup(conf.brokers, conf.groupID, conf.saramaConfig)
 	if err != nil {
 		return nil, errors.Errorf("error creating consumer: %w", err)
 	}
 
 	return &groupConsumer{
-		conf:    conf,
-		client:  client,
-		decoder: decoder,
-		handler: handler,
-		group:   group,
-		logger:  conf.stdLogger,
+		conf:           conf,
+		client:         client,
+		messageHandler: messageHandler,
+		group:          group,
+		logger:         conf.stdLogger,
 	}, nil
 }
 
@@ -39,7 +37,7 @@ func (gc *groupConsumer) consume(ctx context.Context) error {
 	// server-side rebalance happens, the consumer session will need to be
 	// recreated to get the new claims
 	for {
-		receiver := newConsumer(gc.client, gc.handler, gc.decoder, gc.conf.stdLogger)
+		receiver := newConsumer(gc.client, gc.messageHandler, gc.conf.stdLogger)
 		if err := gc.group.Consume(ctx, gc.conf.topics, receiver); err != nil {
 			if errFatal := gc.handleConsumeErrors(err); errFatal != nil {
 				return errFatal

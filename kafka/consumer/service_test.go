@@ -17,7 +17,7 @@ func TestServiceWithCancelledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var calls atomic.Int32
-	handler := func(ctx context.Context, msg *Message) error {
+	handler := func(ctx context.Context, msg *ReceivedMessage) error {
 		calls.Add(1)
 		return nil
 	}
@@ -41,7 +41,7 @@ func TestServiceWithStop(t *testing.T) {
 	ctx := context.Background()
 
 	var calls atomic.Int32
-	handler := func(ctx context.Context, msg *Message) error {
+	handler := func(ctx context.Context, msg *ReceivedMessage) error {
 		calls.Add(1)
 		return nil
 	}
@@ -65,7 +65,7 @@ func TestServiceWithHandlerError(t *testing.T) {
 	ctx := context.Background()
 
 	var calls atomic.Int32
-	handler := func(ctx context.Context, msg *Message) error {
+	handler := func(ctx context.Context, msg *ReceivedMessage) error {
 		calls.Add(1)
 		return errors.Errorf("test error")
 	}
@@ -89,7 +89,7 @@ func TestServiceWithDoubleStartDoubleStop(t *testing.T) {
 	ctx := context.Background()
 
 	var calls atomic.Int32
-	handler := func(ctx context.Context, msg *Message) error {
+	handler := func(ctx context.Context, msg *ReceivedMessage) error {
 		calls.Add(1)
 		return errors.Errorf("test error")
 	}

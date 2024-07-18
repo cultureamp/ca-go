@@ -19,8 +19,6 @@ type Config struct {
 	topics                      []string         // Kafka topics to be consumed
 	groupID                     string           // Kafka consumer group definition
 	assignor                    string           // Consumer group partition assignment strategy (range, roundrobin, sticky)
-	decoder                     decoder          // Avro Schema Registry decoder
-	handler                     Receiver         // The client handler to receive and process messages
 	schemaRegistryURL           string           // The client avro registry URL
 	oldest                      bool             // Kafka consumer consume initial offset from oldest (Default true)
 	returnOnClientDispatchError bool             // If the receiver.dispatch returns error, then exit consume (Default false)
@@ -35,7 +33,6 @@ func newConfig() *Config {
 		id:                          uuid.New().String(),
 		stdLogger:                   log.New(io.Discard, "", log.LstdFlags),
 		debugLogger:                 log.New(io.Discard, "", log.LstdFlags),
-		handler:                     nil,
 		oldest:                      true,
 		returnOnClientDispatchError: false,
 		version:                     sarama.DefaultVersion.String(),
@@ -113,10 +110,6 @@ func (conf *Config) shouldProcess() error {
 		return errors.Errorf("unrecognized consumer group partition assignor: %s", conf.assignor)
 	}
 
-	if conf.handler == nil {
-		return errors.Errorf("missing message handler")
-	}
-
 	if conf.schemaRegistryURL == "" {
 		return errors.Errorf("missing schema registry URL")
 	}
@@ -126,15 +119,4 @@ func (conf *Config) shouldProcess() error {
 	}
 
 	return nil
-}
-
-func (conf *Config) GetDecoder() decoder {
-	if conf.decoder != nil {
-		return conf.decoder
-	}
-	return newAvroSchemaRegistryClient(conf.schemaRegistryURL)
-}
-
-func (conf *Config) GetHandler() Receiver {
-	return conf.handler
 }

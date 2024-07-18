@@ -39,24 +39,25 @@ func TestNewConsumer(t *testing.T) {
 	)
 	assert.Nil(t, c)
 	assert.NotNil(t, err)
-	assert.ErrorContains(t, err, "missing message handler")
-
-	c, err = NewSubscriber(
-		WithBrokers([]string{"localhost:9092"}),
-		WithTopics([]string{"test-topic"}),
-		WithGroupID("group_id"),
-		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
-	)
-	assert.Nil(t, c)
-	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "missing schema registry URL")
 
 	c, err = NewSubscriber(
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
-		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
 		WithSchemaRegistryURL("http://localhost:8081"),
+	)
+
+	assert.Nil(t, c)
+	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "missing message handler")
+
+	c, err = NewSubscriber(
+		WithBrokers([]string{"localhost:9092"}),
+		WithTopics([]string{"test-topic"}),
+		WithGroupID("group_id"),
+		WithSchemaRegistryURL("http://localhost:8081"),
+		WithHandler(func(ctx context.Context, msg *ReceivedMessage) error { return nil }),
 	)
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
@@ -65,7 +66,7 @@ func TestNewConsumer(t *testing.T) {
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
-		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithHandler(func(ctx context.Context, msg *ReceivedMessage) error { return nil }),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithAssignor("abc"),
 	)
@@ -77,7 +78,7 @@ func TestNewConsumer(t *testing.T) {
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
-		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithHandler(func(ctx context.Context, msg *ReceivedMessage) error { return nil }),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithAssignor("roundrobin"),
 	)
@@ -88,7 +89,7 @@ func TestNewConsumer(t *testing.T) {
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
-		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithHandler(func(ctx context.Context, msg *ReceivedMessage) error { return nil }),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithAssignor("roundrobin"),
 		WithVersion("abc"),
@@ -101,7 +102,7 @@ func TestNewConsumer(t *testing.T) {
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
-		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithHandler(func(ctx context.Context, msg *ReceivedMessage) error { return nil }),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithAssignor("roundrobin"),
 		WithVersion("1.0.0"),
@@ -115,7 +116,7 @@ func TestNewConsumer(t *testing.T) {
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
-		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithHandler(func(ctx context.Context, msg *ReceivedMessage) error { return nil }),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithAssignor("roundrobin"),
 		WithOldest(false),
@@ -151,7 +152,7 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 	receiverChannel = mockChannel
 	mockConsumer.On("Messages").Return(receiverChannel)
 
-	handler := func(ctx context.Context, msg *Message) error {
+	handler := func(ctx context.Context, msg *ReceivedMessage) error {
 		return nil
 	}
 
@@ -193,7 +194,7 @@ func TestConsumerWithHandlerError(t *testing.T) {
 	receiverChannel = mockChannel
 	mockConsumer.On("Messages").Return(receiverChannel)
 
-	handler := func(ctx context.Context, msg *Message) error {
+	handler := func(ctx context.Context, msg *ReceivedMessage) error {
 		return errors.Errorf("test error")
 	}
 
@@ -236,7 +237,7 @@ func TestConsumerWithChannelError(t *testing.T) {
 	close(mockChannel)
 	mockConsumer.On("Messages").Return(receiverChannel)
 
-	handler := func(ctx context.Context, msg *Message) error {
+	handler := func(ctx context.Context, msg *ReceivedMessage) error {
 		return nil
 	}
 
@@ -278,7 +279,7 @@ func TestConsumerWithDoubleConsumeAndStop(t *testing.T) {
 	receiverChannel = mockChannel
 	mockConsumer.On("Messages").Return(receiverChannel)
 
-	handler := func(ctx context.Context, msg *Message) error {
+	handler := func(ctx context.Context, msg *ReceivedMessage) error {
 		return errors.Errorf("test error")
 	}
 

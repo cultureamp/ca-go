@@ -19,7 +19,7 @@ func TestGroupWithNewConsumerGroup(t *testing.T) {
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.Errorf("failed to create group"))
 
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
-	handler := func(ctx context.Context, msg *Message) error {
+	handler := func(ctx context.Context, msg *ReceivedMessage) error {
 		return errors.Errorf("test error")
 	}
 
@@ -53,7 +53,7 @@ func TestGroupWithConsumeError(t *testing.T) {
 
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 
-	handler := func(ctx context.Context, msg *Message) error {
+	handler := func(ctx context.Context, msg *ReceivedMessage) error {
 		return errors.Errorf("test error")
 	}
 

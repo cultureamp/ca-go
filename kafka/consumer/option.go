@@ -14,7 +14,13 @@ func WithKafkaClient(client client) Option {
 
 func WithAvroDecoder(decoder decoder) Option {
 	return func(consumer *Subscriber) {
-		consumer.conf.decoder = decoder
+		consumer.decoder = decoder
+	}
+}
+
+func WithHandler(handler Receiver) Option {
+	return func(consumer *Subscriber) {
+		consumer.receiver = handler
 	}
 }
 
@@ -60,12 +66,6 @@ func WithDebugLogger(logger sarama.StdLogger) Option {
 func WithConsumerID(id string) Option {
 	return func(consumer *Subscriber) {
 		consumer.conf.id = id
-	}
-}
-
-func WithHandler(handler Receiver) Option {
-	return func(consumer *Subscriber) {
-		consumer.conf.handler = handler
 	}
 }
 
