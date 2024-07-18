@@ -17,12 +17,12 @@ func TestServiceWithCancelledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var calls atomic.Int32
-	handler := func(ctx context.Context, msg *ReceivedMessage) error {
+	mockReceiver := func(ctx context.Context, msg *ReceivedMessage) error {
 		calls.Add(1)
 		return nil
 	}
 
-	s := testService(t, ctx, handler, 4)
+	s := testService(t, ctx, mockReceiver, 4)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -41,12 +41,12 @@ func TestServiceWithStop(t *testing.T) {
 	ctx := context.Background()
 
 	var calls atomic.Int32
-	handler := func(ctx context.Context, msg *ReceivedMessage) error {
+	mockReceiver := func(ctx context.Context, msg *ReceivedMessage) error {
 		calls.Add(1)
 		return nil
 	}
 
-	s := testService(t, ctx, handler, 2)
+	s := testService(t, ctx, mockReceiver, 2)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -65,12 +65,12 @@ func TestServiceWithHandlerError(t *testing.T) {
 	ctx := context.Background()
 
 	var calls atomic.Int32
-	handler := func(ctx context.Context, msg *ReceivedMessage) error {
+	mockReceiver := func(ctx context.Context, msg *ReceivedMessage) error {
 		calls.Add(1)
 		return errors.Errorf("test error")
 	}
 
-	s := testService(t, ctx, handler, 3)
+	s := testService(t, ctx, mockReceiver, 3)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -89,12 +89,12 @@ func TestServiceWithDoubleStartDoubleStop(t *testing.T) {
 	ctx := context.Background()
 
 	var calls atomic.Int32
-	handler := func(ctx context.Context, msg *ReceivedMessage) error {
+	mockReceiver := func(ctx context.Context, msg *ReceivedMessage) error {
 		calls.Add(1)
 		return errors.Errorf("test error")
 	}
 
-	s := testService(t, ctx, handler, 3)
+	s := testService(t, ctx, mockReceiver, 3)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -112,7 +112,7 @@ func TestServiceWithDoubleStartDoubleStop(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func testService(t *testing.T, ctx context.Context, handler Receiver, numMessages int64) *Service {
+func testService(t *testing.T, ctx context.Context, receiver Receiver, numMessages int64) *Service {
 	mockClient := newMockKafkaClient()
 	mockSession := newMockConsumerGroupSession()
 	mockConsumer := newMockConsumerGroupClaim()
@@ -153,7 +153,7 @@ func testService(t *testing.T, ctx context.Context, handler Receiver, numMessage
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
 		WithAssignor("roundrobin"),
-		WithHandler(handler),
+		WithHandler(receiver),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithLogging(newTestLogger()),
 		WithReturnOnClientDispathError(false),
