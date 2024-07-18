@@ -13,7 +13,7 @@ type Handler interface {
 }
 
 type ReceivedMessage struct {
-	json string // json
+	json string // json, client needs to json.Unmarshal to struct
 }
 
 type Receiver func(ctx context.Context, msg *ReceivedMessage) error
@@ -35,9 +35,7 @@ func (h *handler) Dispatch(ctx context.Context, msg *sarama.ConsumerMessage) err
 	span, ctx := tracer.StartSpanFromContext(ctx, "kafka.consumer.handle", tracer.ResourceName(msg.Topic))
 	defer span.Finish()
 
-	// add generics here to convert message to type V ???
-
-	json, err := h.decoder.DecodeAsString(msg)
+	json, err := h.decoder.Decode(msg)
 	if err != nil {
 		return err
 	}

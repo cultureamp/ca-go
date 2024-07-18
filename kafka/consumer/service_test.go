@@ -124,7 +124,7 @@ func testService(t *testing.T, ctx context.Context, handler Receiver, numMessage
 	mockSession.On("Context").Return(ctx)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
-	mockDecoder.On("DecodeAsString", mock.Anything).Return("{}", nil)
+	mockDecoder.On("Decode", mock.Anything).Return("{}", nil)
 
 	// push a few messages into the channel
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
