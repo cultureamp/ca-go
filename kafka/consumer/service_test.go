@@ -112,17 +112,19 @@ func TestServiceWithDoubleStartDoubleStop(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func testService(t *testing.T, ctx context.Context, handler Handler, numMessages int64) *Service {
+func testService(t *testing.T, ctx context.Context, handler Receiver, numMessages int64) *Service {
 	mockClient := newMockKafkaClient()
 	mockSession := newMockConsumerGroupSession()
 	mockConsumer := newMockConsumerGroupClaim()
 	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
+	mockDecoder := newMockArvoDecoder()
 
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockClient.On("CommitMessage", mock.Anything, mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
+	mockDecoder.On("DecodeAsString", mock.Anything).Return("{}", nil)
 
 	// push a few messages into the channel
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
@@ -146,11 +148,13 @@ func testService(t *testing.T, ctx context.Context, handler Handler, numMessages
 
 	s, err := NewService(
 		WithKafkaClient(mockClient),
+		WithAvroDecoder(mockDecoder),
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
 		WithAssignor("roundrobin"),
 		WithHandler(handler),
+		WithSchemaRegistryURL("http://localhost:8081"),
 		WithLogging(newTestLogger()),
 		WithReturnOnClientDispathError(false),
 	)

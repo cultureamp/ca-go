@@ -47,6 +47,17 @@ func TestNewConsumer(t *testing.T) {
 		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
 	)
+	assert.Nil(t, c)
+	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "missing schema registry URL")
+
+	c, err = NewSubscriber(
+		WithBrokers([]string{"localhost:9092"}),
+		WithTopics([]string{"test-topic"}),
+		WithGroupID("group_id"),
+		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithSchemaRegistryURL("http://localhost:8081"),
+	)
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
 
@@ -55,6 +66,7 @@ func TestNewConsumer(t *testing.T) {
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithSchemaRegistryURL("http://localhost:8081"),
 		WithAssignor("abc"),
 	)
 	assert.Nil(t, c)
@@ -66,6 +78,7 @@ func TestNewConsumer(t *testing.T) {
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithSchemaRegistryURL("http://localhost:8081"),
 		WithAssignor("roundrobin"),
 	)
 	assert.NotNil(t, c)
@@ -76,6 +89,7 @@ func TestNewConsumer(t *testing.T) {
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithSchemaRegistryURL("http://localhost:8081"),
 		WithAssignor("roundrobin"),
 		WithVersion("abc"),
 	)
@@ -88,6 +102,7 @@ func TestNewConsumer(t *testing.T) {
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithSchemaRegistryURL("http://localhost:8081"),
 		WithAssignor("roundrobin"),
 		WithVersion("1.0.0"),
 	)
@@ -101,6 +116,7 @@ func TestNewConsumer(t *testing.T) {
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *Message) error { return nil }),
+		WithSchemaRegistryURL("http://localhost:8081"),
 		WithAssignor("roundrobin"),
 		WithOldest(false),
 		WithLogging(newTestLogger()),
@@ -121,12 +137,14 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 	mockSession := newMockConsumerGroupSession()
 	mockConsumer := newMockConsumerGroupClaim()
 	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
+	mockDecoder := newMockArvoDecoder()
 
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockClient.On("CommitMessage", mock.Anything, mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
+	mockDecoder.On("DecodeAsString", mock.Anything).Return("{}", nil)
 
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
@@ -137,7 +155,7 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 		return nil
 	}
 
-	c := testConsumer(t, client(mockClient), Handler(handler), int64(3), mockChannel)
+	c := testConsumer(t, client(mockClient), mockDecoder, Receiver(handler), int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -162,11 +180,13 @@ func TestConsumerWithHandlerError(t *testing.T) {
 	mockSession := newMockConsumerGroupSession()
 	mockConsumer := newMockConsumerGroupClaim()
 	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
+	mockDecoder := newMockArvoDecoder()
 
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockSession.On("Context").Return(ctx)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
+	mockDecoder.On("DecodeAsString", mock.Anything).Return("{}", nil)
 
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
@@ -177,7 +197,7 @@ func TestConsumerWithHandlerError(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	c := testConsumer(t, client(mockClient), Handler(handler), int64(3), mockChannel)
+	c := testConsumer(t, client(mockClient), mockDecoder, Receiver(handler), int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -202,11 +222,13 @@ func TestConsumerWithChannelError(t *testing.T) {
 	mockSession := newMockConsumerGroupSession()
 	mockConsumer := newMockConsumerGroupClaim()
 	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
+	mockDecoder := newMockArvoDecoder()
 
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockSession.On("Context").Return(ctx)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
+	mockDecoder.On("DecodeAsString", mock.Anything).Return("{}", nil)
 
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
@@ -218,7 +240,7 @@ func TestConsumerWithChannelError(t *testing.T) {
 		return nil
 	}
 
-	c := testConsumer(t, client(mockClient), Handler(handler), int64(0), mockChannel)
+	c := testConsumer(t, client(mockClient), mockDecoder, Receiver(handler), int64(0), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -243,11 +265,13 @@ func TestConsumerWithDoubleConsumeAndStop(t *testing.T) {
 	mockSession := newMockConsumerGroupSession()
 	mockConsumer := newMockConsumerGroupClaim()
 	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
+	mockDecoder := newMockArvoDecoder()
 
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockSession.On("Context").Return(ctx)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
+	mockDecoder.On("DecodeAsString", mock.Anything).Return("{}", nil)
 
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
@@ -258,7 +282,7 @@ func TestConsumerWithDoubleConsumeAndStop(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	c := testConsumer(t, client(mockClient), Handler(handler), int64(3), mockChannel)
+	c := testConsumer(t, client(mockClient), mockDecoder, Receiver(handler), int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -283,14 +307,14 @@ func TestConsumerWithDoubleConsumeAndStop(t *testing.T) {
 	mockGroup.AssertExpectations(t)
 }
 
-func testConsumer(t *testing.T, client client, handler Handler, numMessages int64, ch chan *sarama.ConsumerMessage) *Subscriber {
+func testConsumer(t *testing.T, client client, decoder decoder, handler Receiver, numMessages int64, ch chan *sarama.ConsumerMessage) *Subscriber {
 	// push a few messages into the channel
 	for i := range numMessages {
 		saramaMessage := &sarama.ConsumerMessage{
 			Topic:     "test",
 			Partition: 1,
 			Key:       []byte("key"),
-			Value:     []byte("value"),
+			Value:     []byte("{id: 123, name: 'test'}"),
 			Offset:    i,
 			Timestamp: time.Now(),
 			Headers:   nil,
@@ -300,11 +324,13 @@ func testConsumer(t *testing.T, client client, handler Handler, numMessages int6
 
 	c, err := NewSubscriber(
 		WithKafkaClient(client),
+		WithAvroDecoder(decoder),
 		WithBrokers([]string{"localhost:9092"}),
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
 		WithAssignor("roundrobin"),
 		WithHandler(handler),
+		WithSchemaRegistryURL("http://localhost:8081"),
 		WithLogging(newTestLogger()),
 		WithReturnOnClientDispathError(true),
 	)

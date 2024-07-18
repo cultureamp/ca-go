@@ -10,8 +10,10 @@ import (
 // Subscriber provides a high level API for consuming and handling messages from a Kafka topic.
 // This implementation blocks on Consume() if you want a non-blocking version use Service.
 type Subscriber struct {
-	client client // Kafka client interfaces (Default: Sarama)
-	conf   *Config
+	client  client // Kafka client (Default: Sarama)
+	decoder decoder
+	handler Receiver
+	conf    *Config
 
 	groupMutex sync.Mutex
 	group      *groupConsumer
@@ -31,6 +33,9 @@ func NewSubscriber(opts ...Option) (*Subscriber, error) {
 	if err := c.conf.shouldProcess(); err != nil {
 		return nil, errors.Errorf("bad consumer config: %w", err)
 	}
+
+	c.decoder = c.conf.GetDecoder()
+	c.handler = c.conf.GetHandler()
 
 	return c, nil
 }
@@ -57,7 +62,7 @@ func (c *Subscriber) setupGroupConsumer() (*groupConsumer, error) {
 		return nil, errors.Errorf("consumer group already running! (forgot to call Stop()?)")
 	}
 
-	group, err := newGroupConsumer(c.client, c.conf)
+	group, err := newGroupConsumer(c.client, c.decoder, c.handler, c.conf)
 	if err != nil {
 		return nil, errors.Errorf("failed to create kafka consumer: %w", err)
 	}

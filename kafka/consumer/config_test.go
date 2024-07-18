@@ -32,6 +32,11 @@ func TestConfigShouldProcess(t *testing.T) {
 
 	conf.handler = func(context.Context, *Message) error { return nil }
 	err = conf.shouldProcess()
+	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "missing schema registry URL")
+
+	conf.schemaRegistryURL = "http://localhost:8081"
+	err = conf.shouldProcess()
 	assert.Nil(t, err)
 
 	// valid options are: sticky, range, roundrobin
@@ -62,6 +67,7 @@ func TestConfigShouldProcessWithEnvVars(t *testing.T) {
 
 	conf.groupID = "group_id"
 	conf.handler = func(context.Context, *Message) error { return nil }
+	conf.schemaRegistryURL = "http://localhost:8081"
 
 	err := conf.shouldProcess()
 	assert.Nil(t, err)

@@ -10,10 +10,10 @@ type consumer struct {
 	logger  sarama.StdLogger
 }
 
-func newConsumer(client client, handler Handler, logger sarama.StdLogger) *consumer {
+func newConsumer(client client, handler Receiver, decoder decoder, logger sarama.StdLogger) *consumer {
 	return &consumer{
 		client:  client,
-		handler: newMessageHandler(handler),
+		handler: newMessageHandler(handler, decoder),
 		logger:  logger,
 	}
 }

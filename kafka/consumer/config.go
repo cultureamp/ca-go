@@ -19,7 +19,9 @@ type Config struct {
 	topics                      []string         // Kafka topics to be consumed
 	groupID                     string           // Kafka consumer group definition
 	assignor                    string           // Consumer group partition assignment strategy (range, roundrobin, sticky)
-	handler                     Handler          // The client handler to receive and process messages
+	decoder                     decoder          // Avro Schema Registry decoder
+	handler                     Receiver         // The client handler to receive and process messages
+	schemaRegistryURL           string           // The client avro registry URL
 	oldest                      bool             // Kafka consumer consume initial offset from oldest (Default true)
 	returnOnClientDispatchError bool             // If the receiver.dispatch returns error, then exit consume (Default false)
 	stdLogger                   sarama.StdLogger // Consumer logging (Default nil)
@@ -49,6 +51,11 @@ func newConfig() *Config {
 	topics := os.Getenv("KAFKA_TOPICS")
 	if topics != "" {
 		conf.topics = strings.Split(topics, ",")
+	}
+
+	schemaRegistryURL := os.Getenv("SCHEMA_REGISTRY_URL")
+	if schemaRegistryURL != "" {
+		conf.schemaRegistryURL = schemaRegistryURL
 	}
 
 	// ConsumerGroup <- Errors returns a read channel of errors that occurred during the consumer life-cycle.
@@ -110,9 +117,24 @@ func (conf *Config) shouldProcess() error {
 		return errors.Errorf("missing message handler")
 	}
 
+	if conf.schemaRegistryURL == "" {
+		return errors.Errorf("missing schema registry URL")
+	}
+
 	if conf.oldest {
 		conf.saramaConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
 	}
 
 	return nil
+}
+
+func (conf *Config) GetDecoder() decoder {
+	if conf.decoder != nil {
+		return conf.decoder
+	}
+	return newAvroSchemaRegistryClient(conf.schemaRegistryURL)
+}
+
+func (conf *Config) GetHandler() Receiver {
+	return conf.handler
 }

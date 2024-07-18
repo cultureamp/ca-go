@@ -9,18 +9,20 @@ import (
 )
 
 type Message struct {
-	*sarama.ConsumerMessage
+	json string // json
 }
 
-type Handler func(ctx context.Context, msg *Message) error
+type Receiver func(ctx context.Context, msg *Message) error
 
 type messageHandler struct {
-	dispatchMessage Handler
+	receiver Receiver
+	decoder  decoder
 }
 
-func newMessageHandler(handler Handler) *messageHandler {
+func newMessageHandler(receiver Receiver, decoder decoder) *messageHandler {
 	return &messageHandler{
-		dispatchMessage: handler,
+		receiver: receiver,
+		decoder:  decoder,
 	}
 }
 
@@ -29,12 +31,15 @@ func (h *messageHandler) dispatch(ctx context.Context, msg *sarama.ConsumerMessa
 	span, ctx := tracer.StartSpanFromContext(ctx, "kafka.consumer.handle", tracer.ResourceName(msg.Topic))
 	defer span.Finish()
 
-	// add generics here to convert message to type V
-	// github.com/hamba/avro
-	// https://github.com/confluentinc/schema-registry/blob/master/avro-serializer/src/main/java/io/confluent/
-	// kafka/serializers/AbstractKafkaAvroDeserializer.java#L203
-	message := &Message{msg}
-	if err := h.dispatchMessage(ctx, message); err != nil {
+	// add generics here to convert message to type V ???
+
+	json, err := h.decoder.DecodeAsString(msg)
+	if err != nil {
+		return err
+	}
+
+	message := &Message{json}
+	if err := h.receiver(ctx, message); err != nil {
 		return err
 	}
 

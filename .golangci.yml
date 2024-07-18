@@ -67,6 +67,7 @@ linters-settings:
           - github.com/launchdarkly
           - github.com/lestrrat-go
           - github.com/patrickmn/go-cache
+          - github.com/riferrei/srclient
           - github.com/rs/zerolog
           - github.com/sosodev/duration
           - github.com/stoewer/go-strcase
@@ -195,6 +196,10 @@ issues:
         - ireturn
 
     - path: kafka/consumer/client.go
+      linters:
+        - ireturn
+
+    - path: kafka/consumer/config.go
       linters:
         - ireturn
 

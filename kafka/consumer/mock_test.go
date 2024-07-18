@@ -200,3 +200,22 @@ func (m *mockSaramaConsumerGroupClaim) Messages() <-chan *sarama.ConsumerMessage
 	messages := args.Get(0).(<-chan *sarama.ConsumerMessage)
 	return messages
 }
+
+// mockArvoDecoder mocks the Decoder interface.
+type mockArvoDecoder struct {
+	mock.Mock
+}
+
+func newMockArvoDecoder() *mockArvoDecoder {
+	return &mockArvoDecoder{}
+}
+
+func (m *mockArvoDecoder) Decode(msg *sarama.ConsumerMessage) ([]byte, error) {
+	args := m.Called(msg)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
+func (m *mockArvoDecoder) DecodeAsString(msg *sarama.ConsumerMessage) (string, error) {
+	args := m.Called(msg)
+	return args.Get(0).(string), args.Error(1)
+}

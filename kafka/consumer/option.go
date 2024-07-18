@@ -12,6 +12,12 @@ func WithKafkaClient(client client) Option {
 	}
 }
 
+func WithAvroDecoder(decoder decoder) Option {
+	return func(consumer *Subscriber) {
+		consumer.conf.decoder = decoder
+	}
+}
+
 func WithBrokers(brokers []string) Option {
 	return func(consumer *Subscriber) {
 		consumer.conf.brokers = brokers
@@ -57,9 +63,15 @@ func WithConsumerID(id string) Option {
 	}
 }
 
-func WithHandler(handler Handler) Option {
+func WithHandler(handler Receiver) Option {
 	return func(consumer *Subscriber) {
 		consumer.conf.handler = handler
+	}
+}
+
+func WithSchemaRegistryURL(schemaRegistryURL string) Option {
+	return func(consumer *Subscriber) {
+		consumer.conf.schemaRegistryURL = schemaRegistryURL
 	}
 }
 
