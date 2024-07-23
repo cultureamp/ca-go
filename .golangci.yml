@@ -195,7 +195,7 @@ issues:
       linters:
         - ireturn
 
-    - path: kafka/consumer/client.go
+    - path: kafka/consumer/kafka_client.go
       linters:
         - ireturn
 
