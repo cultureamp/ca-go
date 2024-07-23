@@ -7,13 +7,13 @@ metadata:
     - title: Github
       url: https://github.com/cultureamp/ca-go
   tags:
-    - users-internal
     - camp-platform
     - data-none
+    - users-internal
   annotations:
     github.com/project-slug: cultureamp/ca-go
-    github.com/team-slug: cultureamp/core-services
+    github.com/team-slug: cultureamp/permissions-and-login
 spec:
   type: library
-  owner: core-services
+  owner: permissions-and-login
   lifecycle: production
