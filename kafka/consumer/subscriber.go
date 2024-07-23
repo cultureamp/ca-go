@@ -12,18 +12,19 @@ import (
 type Subscriber struct {
 	conf *Config
 
-	client     client // Kafka client (Default: Sarama)
-	decoder    decoder
-	receiver   Receiver
-	groupMutex sync.Mutex
-	group      *groupConsumer
+	kakfaClient kafkaClient          // Kafka client (Default: Sarama)
+	avroClient  schemaRegistryClient // Avro client (Default: srclient)
+	decoder     decoder
+	receiver    Receiver
+	groupMutex  sync.Mutex
+	group       *groupConsumer
 }
 
 // NewSubscriber returns a new Subscriber configured with the provided dialer and config.
 func NewSubscriber(opts ...Option) (*Subscriber, error) {
 	c := &Subscriber{
-		conf:   newConfig(),
-		client: newSaramaClient(),
+		conf:        newConfig(),
+		kakfaClient: newSaramaClient(),
 	}
 
 	for _, opt := range opts {
@@ -34,12 +35,16 @@ func NewSubscriber(opts ...Option) (*Subscriber, error) {
 		return nil, errors.Errorf("bad consumer config: %w", err)
 	}
 
-	if c.decoder == nil {
-		c.decoder = newAvroSchemaRegistryClient(c.conf.schemaRegistryURL)
-	}
-
 	if c.receiver == nil {
 		return nil, errors.Errorf("missing message handler")
+	}
+
+	if c.avroClient == nil {
+		c.avroClient = newAvroSchemaRegistryClient(c.conf.schemaRegistryURL)
+	}
+
+	if c.decoder == nil {
+		c.decoder = newAvroDecoder(c.avroClient)
 	}
 
 	return c, nil
@@ -68,7 +73,7 @@ func (c *Subscriber) setupGroupConsumer() (*groupConsumer, error) {
 	}
 
 	handler := newHandler(c.receiver, c.decoder)
-	group, err := newGroupConsumer(c.client, handler, c.conf)
+	group, err := newGroupConsumer(c.kakfaClient, handler, c.conf)
 	if err != nil {
 		return nil, errors.Errorf("failed to create kafka consumer: %w", err)
 	}

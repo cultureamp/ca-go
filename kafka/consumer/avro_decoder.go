@@ -4,27 +4,25 @@ import (
 	"encoding/binary"
 
 	"github.com/IBM/sarama"
-	avro "github.com/riferrei/srclient"
+	"github.com/go-errors/errors"
 )
 
 type decoder interface {
 	Decode(msg *sarama.ConsumerMessage) (string, error)
 }
 
-type avroSchemaRegistryClient struct {
-	client *avro.SchemaRegistryClient
+type avroDecoder struct {
+	client schemaRegistryClient
 }
 
-func newAvroSchemaRegistryClient(schemaRegistryURL string) *avroSchemaRegistryClient {
-	client := avro.CreateSchemaRegistryClient(schemaRegistryURL)
-
-	return &avroSchemaRegistryClient{
+func newAvroDecoder(client schemaRegistryClient) *avroDecoder {
+	return &avroDecoder{
 		client: client,
 	}
 }
 
-func (c *avroSchemaRegistryClient) Decode(msg *sarama.ConsumerMessage) (string, error) {
-	value, err := c.decodeAsBytes(msg)
+func (d *avroDecoder) Decode(msg *sarama.ConsumerMessage) (string, error) {
+	value, err := d.decodeAsBytes(msg)
 	if err != nil {
 		return "", err
 	}
@@ -32,12 +30,16 @@ func (c *avroSchemaRegistryClient) Decode(msg *sarama.ConsumerMessage) (string, 
 	return string(value), nil
 }
 
-func (c *avroSchemaRegistryClient) decodeAsBytes(msg *sarama.ConsumerMessage) ([]byte, error) {
+func (d *avroDecoder) decodeAsBytes(msg *sarama.ConsumerMessage) ([]byte, error) {
+	if msg == nil {
+		return nil, errors.Errorf("failed to decode: message is nil")
+	}
+
 	// Recover the schema id from the message and use the
 	// client to retrieve the schema from Schema Registry.
 	// Then use it to deserialize the record accordingly.
 	schemaID := binary.BigEndian.Uint32(msg.Value[1:5])
-	schema, err := c.client.GetSchema(int(schemaID))
+	schema, err := d.client.GetSchemaByID(int(schemaID))
 	if err != nil {
 		return nil, err
 	}

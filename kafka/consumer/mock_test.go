@@ -2,8 +2,10 @@ package consumer
 
 import (
 	"context"
+	"encoding/binary"
 
 	"github.com/IBM/sarama"
+	avro "github.com/riferrei/srclient"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -201,16 +203,43 @@ func (m *mockSaramaConsumerGroupClaim) Messages() <-chan *sarama.ConsumerMessage
 	return messages
 }
 
-// mockArvoDecoder mocks the Decoder interface.
-type mockArvoDecoder struct {
+// mockSchemaRegistryClient mocks the schemaRegistryClient interface.
+type mockSchemaRegistryClient struct {
 	mock.Mock
 }
 
-func newMockArvoDecoder() *mockArvoDecoder {
-	return &mockArvoDecoder{}
+func newMockSchemaRegistryClient() *mockSchemaRegistryClient {
+	return &mockSchemaRegistryClient{}
+}
+
+func (m *mockSchemaRegistryClient) GetSchemaByID(id int) (*avro.Schema, error) {
+	args := m.Called(id)
+
+	var schema *avro.Schema = nil
+	argZero := args.Get(0)
+	if argZero != nil {
+		schema = argZero.(*avro.Schema)
+	}
+
+	return schema, args.Error(1)
+}
+
+// mockArvoDecoder mocks the Decoder interface.
+type mockArvoDecoder struct {
+	client schemaRegistryClient
+	mock.Mock
+}
+
+func newMockArvoDecoder(client schemaRegistryClient) *mockArvoDecoder {
+	return &mockArvoDecoder{
+		client: client,
+	}
 }
 
 func (m *mockArvoDecoder) Decode(msg *sarama.ConsumerMessage) (string, error) {
 	args := m.Called(msg)
+
+	schemaID := binary.BigEndian.Uint32(msg.Value[1:5])
+	m.client.GetSchemaByID(int(schemaID))
 	return args.Get(0).(string), args.Error(1)
 }

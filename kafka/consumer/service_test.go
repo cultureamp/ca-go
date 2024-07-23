@@ -8,6 +8,8 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/go-errors/errors"
+	"github.com/linkedin/goavro/v2"
+	"github.com/riferrei/srclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -117,14 +119,21 @@ func testService(t *testing.T, ctx context.Context, receiver Receiver, numMessag
 	mockSession := newMockConsumerGroupSession()
 	mockConsumer := newMockConsumerGroupClaim()
 	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
-	mockDecoder := newMockArvoDecoder()
+	mockSchemaRegistryClient := newMockSchemaRegistryClient()
+	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
+	schema := testServiceSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockClient.On("CommitMessage", mock.Anything, mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
-	mockDecoder.On("Decode", mock.Anything).Return("{}", nil)
+	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(schema, nil)
+	mockDecoder.On("Decode", mock.Anything).Return(`
+	{
+		"id": 123,
+		"name": "test"
+	}`, nil)
 
 	// push a few messages into the channel
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
@@ -161,4 +170,37 @@ func testService(t *testing.T, ctx context.Context, receiver Receiver, numMessag
 	assert.Nil(t, err)
 
 	return s
+}
+
+func testServiceSchema(t *testing.T) *srclient.Schema {
+	codec, err := goavro.NewCodec(`
+	{
+		"type": "record",
+		"name": "TestObject",
+		"namespace": "ca.dataedu",
+		"fields": [
+			{
+			"name": "id",
+			"type": [
+				"null",
+				"int"
+			],
+			"default": null
+			},
+			{
+			"name": "name",
+			"type": [
+				"null",
+				"string"
+			],
+			"default": null
+			}
+		]
+		}`)
+	assert.Nil(t, err)
+
+	schema, err := srclient.NewSchema(1, "test", srclient.Avro, 1, nil, codec, nil)
+	assert.Nil(t, err)
+
+	return schema
 }

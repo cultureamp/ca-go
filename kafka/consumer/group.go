@@ -9,13 +9,13 @@ import (
 
 type groupConsumer struct {
 	conf           *Config
-	client         client
+	client         kafkaClient
 	messageHandler *handler
 	group          sarama.ConsumerGroup
 	logger         sarama.StdLogger
 }
 
-func newGroupConsumer(client client, messageHandler *handler, conf *Config) (*groupConsumer, error) {
+func newGroupConsumer(client kafkaClient, messageHandler *handler, conf *Config) (*groupConsumer, error) {
 	group, err := client.NewConsumerGroup(conf.brokers, conf.groupID, conf.saramaConfig)
 	if err != nil {
 		return nil, errors.Errorf("error creating consumer: %w", err)

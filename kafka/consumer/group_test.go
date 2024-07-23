@@ -14,7 +14,8 @@ func TestGroupWithNewConsumerGroup(t *testing.T) {
 	ctx := context.Background()
 
 	mockClient := newMockKafkaClient()
-	mockDecoder := newMockArvoDecoder()
+	mockSchemaRegistryClient := newMockSchemaRegistryClient()
+	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.Errorf("failed to create group"))
 
@@ -23,7 +24,7 @@ func TestGroupWithNewConsumerGroup(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	c := testConsumer(t, client(mockClient), mockDecoder, Receiver(handler), int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, Receiver(handler), int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -45,7 +46,8 @@ func TestGroupWithConsumeError(t *testing.T) {
 	mockSession := newMockConsumerGroupSession()
 	mockConsumer := newMockConsumerGroupClaim()
 	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
-	mockDecoder := newMockArvoDecoder()
+	mockSchemaRegistryClient := newMockSchemaRegistryClient()
+	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(sarama.ErrClosedConsumerGroup)
@@ -57,7 +59,7 @@ func TestGroupWithConsumeError(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	c := testConsumer(t, client(mockClient), mockDecoder, Receiver(handler), int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, Receiver(handler), int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done

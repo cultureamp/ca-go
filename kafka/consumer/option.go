@@ -6,9 +6,15 @@ import (
 
 type Option func(consumer *Subscriber)
 
-func WithKafkaClient(client client) Option {
+func WithKafkaClient(client kafkaClient) Option {
 	return func(consumer *Subscriber) {
-		consumer.client = client
+		consumer.kakfaClient = client
+	}
+}
+
+func WithAvroSchemaRegistryClient(client schemaRegistryClient) Option {
+	return func(consumer *Subscriber) {
+		consumer.avroClient = client
 	}
 }
 

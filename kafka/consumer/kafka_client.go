@@ -2,7 +2,7 @@ package consumer
 
 import "github.com/IBM/sarama"
 
-type client interface {
+type kafkaClient interface {
 	NewConsumerGroup(brokers []string, groupID string, config *sarama.Config) (sarama.ConsumerGroup, error)
 	CommitMessage(session sarama.ConsumerGroupSession, msg *sarama.ConsumerMessage)
 }

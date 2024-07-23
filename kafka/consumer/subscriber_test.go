@@ -7,6 +7,8 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/go-errors/errors"
+	"github.com/linkedin/goavro/v2"
+	"github.com/riferrei/srclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -138,14 +140,17 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 	mockSession := newMockConsumerGroupSession()
 	mockConsumer := newMockConsumerGroupClaim()
 	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
-	mockDecoder := newMockArvoDecoder()
+	mockSchemaRegistryClient := newMockSchemaRegistryClient()
+	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
+	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockClient.On("CommitMessage", mock.Anything, mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
-	mockDecoder.On("Decode", mock.Anything).Return("{id: 123, name: 'test'}", nil)
+	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(schema, nil)
+	mockDecoder.On("Decode", mock.Anything).Return(`{"id": 123,"name": "test"}`, nil)
 
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
@@ -153,11 +158,11 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 	mockConsumer.On("Messages").Return(receiverChannel)
 
 	mockReceiver := func(ctx context.Context, msg *ReceivedMessage) error {
-		assert.Equal(t, "{id: 123, name: 'test'}", msg.json)
+		assert.Equal(t, `{"id": 123,"name": "test"}`, msg.json)
 		return nil
 	}
 
-	c := testConsumer(t, client(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -182,12 +187,14 @@ func TestConsumerWithDecodeError(t *testing.T) {
 	mockSession := newMockConsumerGroupSession()
 	mockConsumer := newMockConsumerGroupClaim()
 	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
-	mockDecoder := newMockArvoDecoder()
+	mockSchemaRegistryClient := newMockSchemaRegistryClient()
+	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockSession.On("Context").Return(ctx)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
+	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(nil, errors.Errorf("test schema error"))
 	mockDecoder.On("Decode", mock.Anything).Return("", errors.Errorf("test decode error"))
 
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
@@ -199,7 +206,7 @@ func TestConsumerWithDecodeError(t *testing.T) {
 		return nil
 	}
 
-	c := testConsumer(t, client(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -224,13 +231,16 @@ func TestConsumerWithHandlerError(t *testing.T) {
 	mockSession := newMockConsumerGroupSession()
 	mockConsumer := newMockConsumerGroupClaim()
 	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
-	mockDecoder := newMockArvoDecoder()
+	mockSchemaRegistryClient := newMockSchemaRegistryClient()
+	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
+	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockSession.On("Context").Return(ctx)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
-	mockDecoder.On("Decode", mock.Anything).Return("{id: 123, name: 'test'}", nil)
+	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(schema, nil)
+	mockDecoder.On("Decode", mock.Anything).Return(`{"id": 123,"name": "test"}`, nil)
 
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
@@ -241,7 +251,7 @@ func TestConsumerWithHandlerError(t *testing.T) {
 		return errors.Errorf("test handler error")
 	}
 
-	c := testConsumer(t, client(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -266,13 +276,16 @@ func TestConsumerWithChannelError(t *testing.T) {
 	mockSession := newMockConsumerGroupSession()
 	mockConsumer := newMockConsumerGroupClaim()
 	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
-	mockDecoder := newMockArvoDecoder()
+	mockSchemaRegistryClient := newMockSchemaRegistryClient()
+	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
+	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockSession.On("Context").Return(ctx)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
-	mockDecoder.On("Decode", mock.Anything).Return("{id: 123, name: 'test'}", nil)
+	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(schema, nil)
+	mockDecoder.On("Decode", mock.Anything).Return(`{"id": 123,"name": "test"}`, nil)
 
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
@@ -284,7 +297,7 @@ func TestConsumerWithChannelError(t *testing.T) {
 		return nil
 	}
 
-	c := testConsumer(t, client(mockClient), mockDecoder, mockReceiver, int64(0), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(0), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -309,13 +322,16 @@ func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 	mockSession := newMockConsumerGroupSession()
 	mockConsumer := newMockConsumerGroupClaim()
 	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
-	mockDecoder := newMockArvoDecoder()
+	mockSchemaRegistryClient := newMockSchemaRegistryClient()
+	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
+	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockSession.On("Context").Return(ctx)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
-	mockDecoder.On("Decode", mock.Anything).Return("{id: 123, name: 'test'}", nil)
+	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(schema, nil)
+	mockDecoder.On("Decode", mock.Anything).Return(`{"id": 123,"name": "test"}`, nil)
 
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
@@ -326,7 +342,7 @@ func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	c := testConsumer(t, client(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -351,14 +367,14 @@ func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 	mockGroup.AssertExpectations(t)
 }
 
-func testConsumer(t *testing.T, client client, decoder decoder, receiver Receiver, numMessages int64, ch chan *sarama.ConsumerMessage) *Subscriber {
+func testConsumer(t *testing.T, client kafkaClient, decoder decoder, receiver Receiver, numMessages int64, ch chan *sarama.ConsumerMessage) *Subscriber {
 	// push a few messages into the channel
 	for i := range numMessages {
 		saramaMessage := &sarama.ConsumerMessage{
 			Topic:     "test",
 			Partition: 1,
 			Key:       []byte("key"),
-			Value:     []byte("{id: 123, name: 'test'}"),
+			Value:     []byte(`{"id": 123,"name": "test"}`),
 			Offset:    i,
 			Timestamp: time.Now(),
 			Headers:   nil,
@@ -381,4 +397,37 @@ func testConsumer(t *testing.T, client client, decoder decoder, receiver Receive
 	assert.Nil(t, err)
 
 	return c
+}
+
+func testSubscriberSchema(t *testing.T) *srclient.Schema {
+	codec, err := goavro.NewCodec(`
+	{
+		"type": "record",
+		"name": "TestObject",
+		"namespace": "ca.dataedu",
+		"fields": [
+			{
+			"name": "id",
+			"type": [
+				"null",
+				"int"
+			],
+			"default": null
+			},
+			{
+			"name": "name",
+			"type": [
+				"null",
+				"string"
+			],
+			"default": null
+			}
+		]
+		}`)
+	assert.Nil(t, err)
+
+	schema, err := srclient.NewSchema(1, "test", srclient.Avro, 1, nil, codec, nil)
+	assert.Nil(t, err)
+
+	return schema
 }
