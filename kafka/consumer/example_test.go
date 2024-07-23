@@ -2,6 +2,7 @@ package consumer_test
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/cultureamp/ca-go/kafka/consumer"
@@ -14,7 +15,20 @@ func ExampleNewSubscriber() {
 		consumer.WithTopics([]string{"test-topic"}),             // if missing, will default to env var 'KAFKA_TOPICS'
 		consumer.WithSchemaRegistryURL("http://localhost:8081"), // if missing, will default to env var 'SCHEMA_REGISTRY_URL'
 		consumer.WithGroupID("group_id"),
-		consumer.WithHandler(func(ctx context.Context, msg *consumer.ReceivedMessage) error { return nil }),
+		consumer.WithHandler(func(ctx context.Context, msg *consumer.ReceivedMessage) error {
+			// check topic, timestamp, etc. if need be
+
+			// do something with the message, typically unmarshal the json to your domain object
+			var myDomainObject interface{}
+			err := json.Unmarshal([]byte(msg.DecodedText), &myDomainObject)
+			if err != nil {
+				// recover, or return this error, which will stop the subscriber from consuming any more messages
+				return err
+			}
+
+			// save the domain object to a database, etc.
+			return nil
+		}),
 	)
 	if err != nil {
 		panic(err)
@@ -41,7 +55,20 @@ func ExampleNewService() {
 		consumer.WithTopics([]string{"test-topic"}),             // if missing, will default to env var 'KAFKA_TOPICS'
 		consumer.WithSchemaRegistryURL("http://localhost:8081"), // if missing, will default to env var 'SCHEMA_REGISTRY_URL'
 		consumer.WithGroupID("group_id"),
-		consumer.WithHandler(func(ctx context.Context, msg *consumer.ReceivedMessage) error { return nil }),
+		consumer.WithHandler(func(ctx context.Context, msg *consumer.ReceivedMessage) error {
+			// check topic, timestamp, etc. if need be
+
+			// do something with the message, typically unmarshal the json to your domain object
+			var myDomainObject interface{}
+			err := json.Unmarshal([]byte(msg.DecodedText), &myDomainObject)
+			if err != nil {
+				// recover, or return this error, which will stop the subscriber from consuming any more messages
+				return err
+			}
+
+			// save the domain object to a database, etc.
+			return nil
+		}),
 	)
 	if err != nil {
 		panic(err)
