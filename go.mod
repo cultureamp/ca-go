@@ -13,6 +13,7 @@ require (
 	github.com/launchdarkly/go-sdk-common/v3 v3.1.0
 	github.com/launchdarkly/go-server-sdk-dynamodb/v4 v4.0.0
 	github.com/launchdarkly/go-server-sdk/v7 v7.5.0
+	github.com/linkedin/goavro/v2 v2.11.1
 	github.com/rs/zerolog v1.33.0
 	github.com/stretchr/testify v1.9.0
 	goa.design/goa/v3 v3.17.2
@@ -42,7 +43,6 @@ require (
 	github.com/lestrrat-go/httprc v1.0.5 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
-	github.com/linkedin/goavro/v2 v2.11.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
