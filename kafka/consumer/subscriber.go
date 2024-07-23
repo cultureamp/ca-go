@@ -20,7 +20,8 @@ type Subscriber struct {
 	group       *groupConsumer
 }
 
-// NewSubscriber returns a new Subscriber configured with the provided dialer and config.
+// NewSubscriber returns a new Subscriber configured with the provided options.
+// Note: The receiver MUST be set using WithHandler() option.
 func NewSubscriber(opts ...Option) (*Subscriber, error) {
 	c := &Subscriber{
 		conf:        newConfig(),
@@ -50,6 +51,8 @@ func NewSubscriber(opts ...Option) (*Subscriber, error) {
 	return c, nil
 }
 
+// ConsumeAll consumes all the messages from the configured Kafka topic.
+// Note: The is a blocking call until the context is done, cancelled, deadline reached or an error occurs.
 func (c *Subscriber) ConsumeAll(ctx context.Context) error {
 	group, err := c.setupGroupConsumer()
 	if err != nil {
@@ -82,6 +85,7 @@ func (c *Subscriber) setupGroupConsumer() (*groupConsumer, error) {
 	return group, nil
 }
 
+// Stop terminates the subscriber and closes the underlying Kafka consumer.
 func (c *Subscriber) Stop() error {
 	c.groupMutex.Lock()
 	defer c.groupMutex.Unlock()

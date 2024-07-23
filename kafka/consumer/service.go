@@ -14,6 +14,7 @@ type Service struct {
 	running       bool
 }
 
+// NewService returns a new Service configured with the provided options.
 func NewService(opts ...Option) (*Service, error) {
 	c, err := NewSubscriber(opts...)
 	if err != nil {
@@ -28,6 +29,8 @@ func NewService(opts ...Option) (*Service, error) {
 	return s, nil
 }
 
+// Start begins consuming messages from kafka.
+// Note: The service runs in its own go-routine, so is non blocking.
 func (s *Service) Start(ctx context.Context) {
 	s.runnningMutex.Lock()
 	defer s.runnningMutex.Unlock()
@@ -52,6 +55,7 @@ func (s *Service) run(ctx context.Context) {
 	}
 }
 
+// Stop terminates the service and stops the underlying kafka consumer.
 func (s *Service) Stop() error {
 	s.runnningMutex.Lock()
 	defer s.runnningMutex.Unlock()

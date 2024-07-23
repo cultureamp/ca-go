@@ -13,7 +13,8 @@ type handler interface {
 	Dispatch(ctx context.Context, msg *sarama.ConsumerMessage) error
 }
 
-// ReceivedMessage contains the decoded message from the raw kafka message.Value.
+// ReceivedMessage contains the underlying kafka message,
+// as well as the Avro DecodedText from the raw kafka message.Value.
 type ReceivedMessage struct {
 	Timestamp   time.Time
 	Topic       string
@@ -22,6 +23,8 @@ type ReceivedMessage struct {
 	DecodedText string // typically json, client needs to json.Unmarshal to specific domain struct
 }
 
+// Receiver is the client's message handler that processes the ReceivedMessage.
+// Returning an error will cause the consumer to stop consuming messages.
 type Receiver func(ctx context.Context, msg *ReceivedMessage) error
 
 type dispatchHandler struct {
@@ -36,6 +39,8 @@ func newHandler(receiver Receiver, decoder decoder) *dispatchHandler {
 	}
 }
 
+// Dispatch handles the kafka message by decoding the message and calling the client's Receiver.
+// Returning an error will cause the consumer to stop consuming messages.
 func (h *dispatchHandler) Dispatch(ctx context.Context, msg *sarama.ConsumerMessage) error {
 	// add retries, etc.
 	span, ctx := tracer.StartSpanFromContext(ctx, "kafka.consumer.handle", tracer.ResourceName(msg.Topic))
