@@ -20,6 +20,7 @@ func newAvroSchemaRegistryClient(schemaRegistryURL string) *avroSchemaRegistryCl
 	}
 }
 
+// GetSchemaByID retrieves the schema from the schema registry by id.
 func (c *avroSchemaRegistryClient) GetSchemaByID(id int) (*avro.Schema, error) {
 	return c.client.GetSchema(id)
 }

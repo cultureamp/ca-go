@@ -21,6 +21,7 @@ func newAvroDecoder(client schemaRegistryClient) *avroDecoder {
 	}
 }
 
+// Decode takes a Kafka consumer message and avro decodes the value field as a string (usually json).
 func (d *avroDecoder) Decode(msg *sarama.ConsumerMessage) (string, error) {
 	value, err := d.decodeAsBytes(msg)
 	if err != nil {
