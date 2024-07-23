@@ -13,6 +13,11 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+type decoderTestObject struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
 func TestAvroDecodeErrorWhenMessageIsNil(t *testing.T) {
 	mockSchemaRegistryClient := newMockSchemaRegistryClient()
 	decoder := newAvroDecoder(mockSchemaRegistryClient)
@@ -48,31 +53,16 @@ func TestAvroDecode(t *testing.T) {
 	decoder := newAvroDecoder(mockSchemaRegistryClient)
 
 	schema := testDecoderSchema(t)
+
 	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(schema, nil)
 
-	schemaIDBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(schemaIDBytes, uint32(schema.ID()))
-
-	td := testData{ID: 123, Name: "Gopher"}
-	value, _ := json.Marshal(td)
-	codec := schema.Codec()
-	native, _, err := codec.NativeFromTextual(value)
-	assert.Nil(t, err)
-	valueBytes, err := codec.BinaryFromNative(nil, native)
-	assert.Nil(t, err)
-
-	var recordValue []byte
-	recordValue = append(recordValue, byte(0))
-	recordValue = append(recordValue, schemaIDBytes...)
-	recordValue = append(recordValue, valueBytes...)
-
-	msg := &sarama.ConsumerMessage{}
-	msg.Value = recordValue
+	dto := decoderTestObject{ID: 123, Name: "Gopher"}
+	msg := testDecoderKafkaMessage(t, schema, dto)
 
 	decodedJSON, err := decoder.Decode(msg)
 	assert.Nil(t, err)
 
-	var result testData
+	var result decoderTestObject
 	err = json.Unmarshal([]byte(decodedJSON), &result)
 	assert.Nil(t, err)
 
@@ -87,7 +77,7 @@ func testDecoderSchema(t *testing.T) *srclient.Schema {
 	{
   "type": "record",
   "name": "TestObject",
-  "namespace": "ca.dataedu",
+  "namespace": "com.example",
   "fields": [
     {
       "name": "id",
@@ -107,7 +97,24 @@ func testDecoderSchema(t *testing.T) *srclient.Schema {
 	return schema
 }
 
-type testData struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+func testDecoderKafkaMessage(t *testing.T, schema *srclient.Schema, dto decoderTestObject) *sarama.ConsumerMessage {
+	schemaIDBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(schemaIDBytes, uint32(schema.ID()))
+	codec := schema.Codec()
+
+	value, _ := json.Marshal(dto)
+	native, _, err := codec.NativeFromTextual(value)
+	assert.Nil(t, err)
+	valueBytes, err := codec.BinaryFromNative(nil, native)
+	assert.Nil(t, err)
+
+	var recordValue []byte
+	recordValue = append(recordValue, byte(0))
+	recordValue = append(recordValue, schemaIDBytes...)
+	recordValue = append(recordValue, valueBytes...)
+
+	msg := &sarama.ConsumerMessage{}
+	msg.Value = recordValue
+
+	return msg
 }
