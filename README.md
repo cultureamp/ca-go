@@ -18,6 +18,7 @@ These packages are stable and there use is actively encouraged.
 - `cipher`: easy access to kms Encrypt/Decrpyt. See [cipher](cipher/README.md) for further details.
 - `env`: easy access to common environment settings. See [env](env/README.md) for further details.
 - `jwt`: encode and decode the Culture Amp authentication payload. See [jwt](jwt/README.md) for further details.
+- `kafka/consumer`: provides a subscriber (blocking) and service (non-blocking) with automatic Avro schema decoding. See [kafka/consumer](kafka/consumer/README.md) for further details.
 - `launchdarkly`: eases the implementation and usage of LaunchDarkly for feature flags, encapsulating usage patterns in
 Culture Amp.See [launchdarkly](launchdarkly/LAUNCHDARKLY.md) for further details.
 - `log`: easy and simple logging that confirms to the logging engineer standard.

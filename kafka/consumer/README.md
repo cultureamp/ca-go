@@ -2,7 +2,7 @@
 
 The `kafka/consumer` package implements a blocking and non-blocking Kafka consumer with Avro decoding via our Schema Registry. Clients using this library need only supply a `Receiver` function which is called for every consumed message.
 
-To avoid using CGO, the `ca-go` implementation does not use `https://github.com/confluentinc/confluent-kafka-go` and instead provides a wrapper over the `https://github.com/IBM/sarama` implementation. While this comes with some small risk of impatibilities or feature lag, we think this trade-off is worth the cost to avoid having to enable CGO (and having to live with all the downsides that introduces).
+To avoid using CGO, this `ca-go` implementation does not use `https://github.com/confluentinc/confluent-kafka-go` and instead provides a wrapper over `https://github.com/IBM/sarama`. While this comes with some small risk of impatibilities or feature lag, we think this trade-off is worth the cost to avoid having to enable CGO (and having to live with all the downsides that introduces). We are happy to revisit this if need be.
 
 ## Environment Variables
 
@@ -12,12 +12,16 @@ To avoid using CGO, the `ca-go` implementation does not use `https://github.com/
 
 ## Avro and the Schema Registry
 
+Before each Kafka message is sent to the client Receiver function, the msg.Value is arvo decoded via our [Schema Registry](https://cultureamp.atlassian.net/wiki/spaces/TDS/pages/2809562876/Team+Data+Services+On-Call+doc#Endpoints)
+
 - <https://schema-registry.kafka.usw2.prod-us.cultureamp.io/>
 - <https://schema-registry.kafka.usw2.dev-us.cultureamp.io/>  (via Dev VPN)
 
-Documentation is here:  <https://cultureamp.atlassian.net/wiki/spaces/TDS/pages/2809562876/Team+Data+Services+On-Call+doc>
+The decoded value is added to the `consumer.ReceivedMessage` struct as `DecodedText`. Typically this will be a `json` document that you can then `json.Unmarshal()` to your domain object and then process how you wish (eg. upsert into a database table).
 
 ## Subscriber
+
+Below is an example from `example_test.go` which creates a typical consumer.Subscriber which blocks on `ConsumeAll` so clients either need to manage this in their own go-routine or some other fashion.
 
 ```go
 func ExampleNewSubscriber() {
@@ -27,6 +31,7 @@ func ExampleNewSubscriber() {
   consumer.WithTopics([]string{"test-topic"}),             // if missing, will default to env var 'KAFKA_TOPICS'
   consumer.WithSchemaRegistryURL("http://localhost:8081"), // if missing, will default to env var 'SCHEMA_REGISTRY_URL'
   consumer.WithGroupID("group_id"),
+  consumer.WithReturnOnClientDispathError(true),
   consumer.WithHandler(func(ctx context.Context, msg *consumer.ReceivedMessage) error {
    // check topic, timestamp, etc. if need be
 
@@ -64,6 +69,8 @@ func ExampleNewSubscriber() {
 
 ## Service
 
+Below is an example from `example_test.go` which creates a typical consumer.Service which does not block the client routinue and will continue to run until `Stop` is called, or an error is encounted in the Reciever function and WithReturnOnClientDispathError is `true`.
+
 ```go
 func ExampleNewService() {
  // create a new service
@@ -72,6 +79,7 @@ func ExampleNewService() {
   consumer.WithTopics([]string{"test-topic"}),             // if missing, will default to env var 'KAFKA_TOPICS'
   consumer.WithSchemaRegistryURL("http://localhost:8081"), // if missing, will default to env var 'SCHEMA_REGISTRY_URL'
   consumer.WithGroupID("group_id"),
+  consumer.WithReturnOnClientDispathError(true),
   consumer.WithHandler(func(ctx context.Context, msg *consumer.ReceivedMessage) error {
    // check topic, timestamp, etc. if need be
 
@@ -97,7 +105,6 @@ func ExampleNewService() {
  service.Start(ctx)
 
  // do other work here
- time.Sleep(1 * time.Second)
 
  // stop the Service
  err = service.Stop()

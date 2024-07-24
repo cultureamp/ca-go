@@ -15,6 +15,7 @@ func ExampleNewSubscriber() {
 		consumer.WithTopics([]string{"test-topic"}),             // if missing, will default to env var 'KAFKA_TOPICS'
 		consumer.WithSchemaRegistryURL("http://localhost:8081"), // if missing, will default to env var 'SCHEMA_REGISTRY_URL'
 		consumer.WithGroupID("group_id"),
+		consumer.WithReturnOnClientDispathError(true),
 		consumer.WithHandler(func(ctx context.Context, msg *consumer.ReceivedMessage) error {
 			// check topic, timestamp, etc. if need be
 
@@ -56,6 +57,7 @@ func ExampleNewService() {
 		consumer.WithTopics([]string{"test-topic"}),             // if missing, will default to env var 'KAFKA_TOPICS'
 		consumer.WithSchemaRegistryURL("http://localhost:8081"), // if missing, will default to env var 'SCHEMA_REGISTRY_URL'
 		consumer.WithGroupID("group_id"),
+		consumer.WithReturnOnClientDispathError(true),
 		consumer.WithHandler(func(ctx context.Context, msg *consumer.ReceivedMessage) error {
 			// check topic, timestamp, etc. if need be
 
@@ -81,7 +83,6 @@ func ExampleNewService() {
 	service.Start(ctx)
 
 	// do other work here
-	time.Sleep(1 * time.Second)
 
 	// stop the Service
 	err = service.Stop()
