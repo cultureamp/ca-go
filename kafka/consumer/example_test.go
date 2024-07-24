@@ -23,6 +23,7 @@ func ExampleNewSubscriber() {
 			err := json.Unmarshal([]byte(msg.DecodedText), &myDomainObject)
 			if err != nil {
 				// recover, or return this error, which will stop the subscriber from consuming any more messages
+				// if WithReturnOnClientDispathError(true)
 				return err
 			}
 
@@ -63,6 +64,7 @@ func ExampleNewService() {
 			err := json.Unmarshal([]byte(msg.DecodedText), &myDomainObject)
 			if err != nil {
 				// recover, or return this error, which will stop the subscriber from consuming any more messages
+				// if WithReturnOnClientDispathError(true)
 				return err
 			}
 
