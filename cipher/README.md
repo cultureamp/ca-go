@@ -11,6 +11,7 @@ The encrypted string will be a base64 string and look something like: `AQICAHgk4
 ## Environment Variables
 
 Here is the list of mandatory environment variables that MUST be set for this package:
+
 - AwsRegionEnv    = "AWS_REGION"
 
 ## Methods
@@ -20,41 +21,42 @@ Here is the list of mandatory environment variables that MUST be set for this pa
 
 ## Examples
 
-```
+```go
 package cago
 
 import (
-	"context"
-	"fmt"
-	"os"
+ "context"
+ "fmt"
+ "os"
 
-	"github.com/cultureamp/ca-go/cipher"
+ "github.com/cultureamp/ca-go/cipher"
 )
 
 func Example() {
-	ctx := context.Background()
+ ctx := context.Background()
 
-	os.SetEnv("AWS_REGION", "us-west-2")
+ os.SetEnv("AWS_REGION", "us-west-2")
 
-	// Replace the following example key ARN with any valid key identfier
-	keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab";
+ // Replace the following example key ARN with any valid key identfier
+ keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab";
 
-	// this will automatically use the environment variable "AWS_REGION"
-	encrypted, err := cipher.Encrypt(ctx, keyId, "plain-string")
-	fmt.Printf("The encrypted string is '%s' (err='%v')\n", encrypted, err)
+ // this will automatically use the environment variable "AWS_REGION"
+ encrypted, err := cipher.Encrypt(ctx, keyId, "plain-string")
+ fmt.Printf("The encrypted string is '%s' (err='%v')\n", encrypted, err)
 
-	decrypted, err := cipher.Decrypt(ctx, keyId, encrypted)
-	fmt.Printf("The decrypted string is '%s' (err='%v')\n", decrypted, err)
+ decrypted, err := cipher.Decrypt(ctx, keyId, encrypted)
+ fmt.Printf("The decrypted string is '%s' (err='%v')\n", decrypted, err)
 
-	// or if you need cipher for another region use
-	crypto := cipher.NewKMSCipher("region")
-	encrypted, err = crypto.Encrypt(ctx, keyId, "plain-string")
-	fmt.Printf("The encrypted string is '%s' (err='%v')\n", encrypted, err)
+ // or if you need cipher for another region use
+ crypto := cipher.NewKMSCipher("region")
+ encrypted, err = crypto.Encrypt(ctx, keyId, "plain-string")
+ fmt.Printf("The encrypted string is '%s' (err='%v')\n", encrypted, err)
 
-	decrypted, err = crypto.Decrypt(ctx, keyId, encrypted)
-	fmt.Printf("The decrypted string is '%s' (err='%v')\n", decrypted, err)
+ decrypted, err = crypto.Decrypt(ctx, keyId, encrypted)
+ fmt.Printf("The decrypted string is '%s' (err='%v')\n", decrypted, err)
 }
 ```
+
 ## Testing and Mocks
 
 During tests you can override the package level `DefaultKMSCipher.Client` with a mock that supports the `KMSClient` interface.
@@ -62,47 +64,47 @@ During tests you can override the package level `DefaultKMSCipher.Client` with a
 - Encrypt(ctx context.Context, keyId string, plainStr string) (string, error)
 - Decrypt(ctx context.Context, keyId string, encryptedStr string) (string, error)
 
-```
+```go
 import (
-	"context"
-	"testing"
+ "context"
+ "testing"
 
-	"github.com/cultureamp/ca-go/cipher"
-	"github.com/stretchr/testify/assert"
+ "github.com/cultureamp/ca-go/cipher"
+ "github.com/stretchr/testify/assert"
 )
 
 func TestPackageEncrypt(t *testing.T) {
-	ctx := context.Background()
-	keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+ ctx := context.Background()
+ keyId := "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
 
-	// replace the package level client with our mock
-	stdClient := cipher.DefaultKMSCipher.Client
-	cipher.DefaultKMSCipher.Client = newMockedCipherClient()
-	defer func() {
-		cipher.DefaultKMSCipher.Client = stdClient
-	}()
+ // replace the package level client with our mock
+ stdClient := cipher.DefaultKMSCipher.Client
+ cipher.DefaultKMSCipher.Client = newMockedCipherClient()
+ defer func() {
+  cipher.DefaultKMSCipher.Client = stdClient
+ }()
 
-	cipherText, err := cipher.Encrypt(ctx, keyId, "test_plain_str")
-	assert.Nil(t, err)
+ cipherText, err := cipher.Encrypt(ctx, keyId, "test_plain_str")
+ assert.Nil(t, err)
 
-	plainText, err := cipher.Decrypt(ctx, keyId, cipherText)
-	assert.Nil(t, err)
-	assert.Equal(t, "test_plain_str", plainText)
+ plainText, err := cipher.Decrypt(ctx, keyId, cipherText)
+ assert.Nil(t, err)
+ assert.Equal(t, "test_plain_str", plainText)
 }
 
 type mockedCipherClient struct{}
 
 func newMockedCipherClient() *mockedCipherClient {
-	return &mockedCipherClient{}
+ return &mockedCipherClient{}
 }
 
 // Encrypt on the test runner just returns the "plainStr" as the encrypted encryptedStr.
 func (c *mockedCipherClient) Encrypt(ctx context.Context, _ string, plainStr string) (string, error) {
-	return plainStr, nil
+ return plainStr, nil
 }
 
 // Decrypt on the test runner just returns the "encryptedStr" as the decrypted plainstr.
 func (c *mockedCipherClient) Decrypt(ctx context.Context, _ string, encryptedStr string) (string, error) {
-	return encryptedStr, nil
+ return encryptedStr, nil
 }
 ```
