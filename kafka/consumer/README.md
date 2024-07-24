@@ -2,7 +2,7 @@
 
 The `kafka/consumer` package implements a blocking and non-blocking Kafka consumer with Avro decoding via our Schema Registry. Clients using this library need only supply a `Receiver` function which is called for every consumed message.
 
-To avoid using CGO, this `ca-go` implementation does not use `https://github.com/confluentinc/confluent-kafka-go` and instead provides a wrapper over `https://github.com/IBM/sarama`. While this comes with some small risk of impatibilities or feature lag, we think this trade-off is worth the cost to avoid having to enable CGO (and having to live with all the downsides that introduces). We are happy to revisit this if need be.
+To avoid using CGO, this `ca-go` implementation does not use `https://github.com/confluentinc/confluent-kafka-go` and instead provides a wrapper over `https://github.com/IBM/sarama`. While this comes with some small risk of incompatibilities or feature lag, we think this trade-off is worth the cost to avoid having to enable CGO (and having to live with all the downsides that introduces). We are happy to revisit this if need be.
 
 ## Environment Variables
 
