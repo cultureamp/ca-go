@@ -51,7 +51,7 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 		if err != nil {
 			// Either the session has closed or something went wrong reading the latest message.
 			// dispatch what we have to the client and return the error
-			if e := c.dispatch(session, topic, batch); e != nil {
+			if e := c.processBatch(session, topic, batch); e != nil {
 				return errors.Errorf("consumer[%s]: failed to dispatch message to client handler: err='%s'", topic, e.Error())
 			}
 			return err
@@ -62,7 +62,7 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 
 		// if the batch is full, dispatch it
 		if len(batch) >= c.batchSize {
-			if err := c.dispatch(session, topic, batch); err != nil {
+			if err := c.processBatch(session, topic, batch); err != nil {
 				// dispatch failed, so stop processing and return the error
 				return err
 			}
@@ -92,18 +92,22 @@ func (c *consumer) getNextMessage(session sarama.ConsumerGroupSession, claim sar
 	}
 }
 
-func (c *consumer) dispatch(session sarama.ConsumerGroupSession, topic string, batch []*sarama.ConsumerMessage) error {
-	if err := c.messageHandler.Dispatch(session.Context(), batch); err != nil {
-		c.logger.Printf("consumer[%s]: failed to dispatch message to client handler: err='%s'", topic, err.Error())
-		return newDispatchHandlerError(topic, err)
-	}
+func (c *consumer) processBatch(session sarama.ConsumerGroupSession, topic string, batch []*sarama.ConsumerMessage) error {
+	err := c.dispatchBatch(session, topic, batch)
+	c.logger.Printf("consumer[%s]: committing batch offset", topic)
+	c.client.Commit(session)
+	return err
+}
 
+func (c *consumer) dispatchBatch(session sarama.ConsumerGroupSession, topic string, batch []*sarama.ConsumerMessage) error {
 	for _, msg := range batch {
+		if err := c.messageHandler.Dispatch(session.Context(), msg); err != nil {
+			c.logger.Printf("consumer[%s]: failed to dispatch message to client handler: err='%s'", topic, err.Error())
+			return newDispatchHandlerError(topic, err)
+		}
+
 		c.logger.Printf("consumer[%s]: committing message with offset=%d", topic, msg.Offset)
 		c.client.CommitMessage(session, msg)
 	}
-
-	c.logger.Printf("consumer[%s]: committing batch offset", topic)
-	c.client.Commit(session)
 	return nil
 }

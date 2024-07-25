@@ -10,7 +10,7 @@ import (
 )
 
 type handler interface {
-	Dispatch(ctx context.Context, msg []*sarama.ConsumerMessage) error
+	Dispatch(ctx context.Context, msg *sarama.ConsumerMessage) error
 }
 
 // ReceivedMessage contains the underlying kafka message,
@@ -41,24 +41,22 @@ func newHandler(receiver Receiver, decoder decoder) *dispatchHandler {
 
 // Dispatch handles the kafka message by decoding the message and calling the client's Receiver.
 // Returning an error will cause the consumer to stop consuming messages.
-func (h *dispatchHandler) Dispatch(ctx context.Context, msg []*sarama.ConsumerMessage) error {
-	for _, m := range msg {
-		text, err := h.decoder.Decode(m)
-		if err != nil {
-			return err
-		}
+func (h *dispatchHandler) Dispatch(ctx context.Context, msg *sarama.ConsumerMessage) error {
+	text, err := h.decoder.Decode(msg)
+	if err != nil {
+		return err
+	}
 
-		message := &ReceivedMessage{
-			Timestamp:   m.Timestamp,
-			Topic:       m.Topic,
-			Offset:      m.Offset,
-			Key:         m.Key,
-			Value:       m.Value,
-			DecodedText: text,
-		}
-		if err := h.dispatchToClient(ctx, message); err != nil {
-			return err
-		}
+	message := &ReceivedMessage{
+		Timestamp:   msg.Timestamp,
+		Topic:       msg.Topic,
+		Offset:      msg.Offset,
+		Key:         msg.Key,
+		Value:       msg.Value,
+		DecodedText: text,
+	}
+	if err := h.dispatchToClient(ctx, message); err != nil {
+		return err
 	}
 
 	return nil

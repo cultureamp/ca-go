@@ -193,6 +193,7 @@ func TestConsumerWithDecodeError(t *testing.T) {
 	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
+	mockClient.On("Commit", mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockConsumerClaim.On("Topic").Return("test-consumer-decode-error-topic")
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -239,6 +240,7 @@ func TestConsumerWithHandlerError(t *testing.T) {
 
 	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
+	mockClient.On("Commit", mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockConsumerClaim.On("Topic").Return("test-consumer-handle-error-topic")
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -333,6 +335,7 @@ func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 
 	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
+	mockClient.On("Commit", mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockConsumerClaim.On("Topic").Return("test-consumer-double-subscribe-single-stop-topic")
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
