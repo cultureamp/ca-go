@@ -24,7 +24,7 @@ func TestGroupWithNewConsumerGroup(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, Receiver(handler), int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, Receiver(handler), 3, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -59,7 +59,7 @@ func TestGroupWithConsumeError(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, Receiver(handler), int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, Receiver(handler), 3, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done

@@ -24,14 +24,14 @@ func newConsumer(client kafkaClient, batchSize int, messageHandler handler, logg
 // Setup is run at the beginning of a new session, before ConsumeClaim.
 func (c *consumer) Setup(sarama.ConsumerGroupSession) error {
 	c.logger.Printf("consumer: setup...")
-	// add call to dispatch a "setup" call to the client
 	return nil
 }
 
 // Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited.
 func (c *consumer) Cleanup(sarama.ConsumerGroupSession) error {
 	c.logger.Printf("consumer: cleanup...")
-	// add call to dispatch a "cleanup" call to the client
+	// We don't dispatch any outstanding messages in the batch to the client,
+	// but neither will those be marked as committed
 	return nil
 }
 
@@ -94,7 +94,7 @@ func (c *consumer) getNextMessage(session sarama.ConsumerGroupSession, claim sar
 
 func (c *consumer) processBatch(session sarama.ConsumerGroupSession, topic string, batch []*sarama.ConsumerMessage) error {
 	err := c.dispatchBatch(session, topic, batch)
-	c.logger.Printf("consumer[%s]: committing batch offset", topic)
+	c.logger.Printf("consumer[%s]: committing last committed message offset...", topic)
 	c.client.Commit(session)
 	return err
 }
@@ -102,7 +102,7 @@ func (c *consumer) processBatch(session sarama.ConsumerGroupSession, topic strin
 func (c *consumer) dispatchBatch(session sarama.ConsumerGroupSession, topic string, batch []*sarama.ConsumerMessage) error {
 	for _, msg := range batch {
 		if err := c.messageHandler.Dispatch(session.Context(), msg); err != nil {
-			c.logger.Printf("consumer[%s]: failed to dispatch message to client handler: err='%s'", topic, err.Error())
+			c.logger.Printf("consumer[%s]: failed to dispatch message[%s] to client handler: err='%s'", topic, string(msg.Key), err.Error())
 			return newDispatchHandlerError(topic, err)
 		}
 

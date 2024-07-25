@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"context"
+	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -24,7 +25,7 @@ func TestServiceWithCancelledContext(t *testing.T) {
 		return nil
 	}
 
-	s := testService(t, ctx, mockReceiver, "test-service-cancelled-context", 2, 4)
+	s := testService(t, ctx, mockReceiver, "test-service-cancelled-context", 3, 4)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -32,10 +33,15 @@ func TestServiceWithCancelledContext(t *testing.T) {
 	defer s.Stop()
 
 	// sleep this thread for a bit to let the service do some work
-	time.Sleep(1 * time.Second)
+	time.Sleep(750 * time.Millisecond)
 
 	// cancel the context to signal the service to stop
 	cancel()
+
+	// sleep this thread for a bit to let the service clean up
+	time.Sleep(500 * time.Millisecond)
+
+	// even though the batch size is 3, we expect 4 calls to the receiver because the context was cancelled
 	assert.Equal(t, int32(4), calls.Load())
 }
 
@@ -48,7 +54,7 @@ func TestServiceWithStop(t *testing.T) {
 		return nil
 	}
 
-	s := testService(t, ctx, mockReceiver, "test-service-with-stop", 2, 2)
+	s := testService(t, ctx, mockReceiver, "test-service-with-stop", 3, 5)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -59,8 +65,10 @@ func TestServiceWithStop(t *testing.T) {
 
 	// stop the Service
 	err := s.Stop()
+
 	assert.Nil(t, err)
-	assert.Equal(t, int32(2), calls.Load())
+	// only expect the first batch of "3" messages to be processed, the other 2 are dropped (uncommitted)
+	assert.Equal(t, int32(3), calls.Load())
 }
 
 func TestServiceWithHandlerError(t *testing.T) {
@@ -72,7 +80,7 @@ func TestServiceWithHandlerError(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	s := testService(t, ctx, mockReceiver, "test-service-with-handler-error", 1, 3)
+	s := testService(t, ctx, mockReceiver, "test-service-with-handler-error", 2, 7)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -84,7 +92,8 @@ func TestServiceWithHandlerError(t *testing.T) {
 	// stop the Service
 	err := s.Stop()
 	assert.Nil(t, err)
-	assert.Equal(t, int32(3), calls.Load())
+	// expect 1 as we return Receiver error, so the rest of the batch and other messages are dropped.
+	assert.Equal(t, int32(1), calls.Load())
 }
 
 func TestServiceWithDoubleStartDoubleStop(t *testing.T) {
@@ -109,9 +118,11 @@ func TestServiceWithDoubleStartDoubleStop(t *testing.T) {
 	// stop the Service
 	err := s.Stop()
 	assert.Nil(t, err)
-	assert.Equal(t, int32(3), calls.Load())
 	err = s.Stop()
 	assert.Nil(t, err)
+
+	// expect 1 as we return Receiver error, so the rest of the batch and other messages are dropped.
+	assert.Equal(t, int32(1), calls.Load())
 }
 
 func testService(t *testing.T, ctx context.Context, receiver Receiver, topic string, batchSize int, numMessages int64) *Service {
@@ -144,8 +155,8 @@ func testService(t *testing.T, ctx context.Context, receiver Receiver, topic str
 		saramaMessage := &sarama.ConsumerMessage{
 			Topic:     "test",
 			Partition: 1,
-			Key:       []byte("key"),
-			Value:     []byte("value"),
+			Key:       []byte(fmt.Sprintf("uuid-%d", i)),
+			Value:     []byte(`{"id": 123,"name": "test"}`),
 			Offset:    i,
 			Timestamp: time.Now(),
 			Headers:   nil,
@@ -168,7 +179,7 @@ func testService(t *testing.T, ctx context.Context, receiver Receiver, topic str
 		WithHandler(receiver),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithLogging(newTestLogger()),
-		WithReturnOnClientDispathError(false),
+		WithReturnOnClientDispathError(true),
 	)
 	assert.Nil(t, err)
 

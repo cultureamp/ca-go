@@ -52,17 +52,17 @@ func newMockConsumerGroup(sesson sarama.ConsumerGroupSession, claim sarama.Consu
 	}
 }
 
-func (m *mockSaramaConsumerGroup) Consume(ctx context.Context, topics []string, handler sarama.ConsumerGroupHandler) error {
-	args := m.Called(ctx, topics, handler)
+func (m *mockSaramaConsumerGroup) Consume(ctx context.Context, topics []string, consumer sarama.ConsumerGroupHandler) error {
+	args := m.Called(ctx, topics, consumer)
 
 	err := args.Error(0)
 	// success case
 	if err == nil {
 		// mimic lifecycle of a consumer
-		_ = handler.Setup(m.sesson)
+		_ = consumer.Setup(m.sesson)
 		// we need to call the handler with a session & claim
-		err = handler.ConsumeClaim(m.sesson, m.claim)
-		_ = handler.Cleanup(m.sesson)
+		err = consumer.ConsumeClaim(m.sesson, m.claim)
+		_ = consumer.Cleanup(m.sesson)
 	}
 
 	return err

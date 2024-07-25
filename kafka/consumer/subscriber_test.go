@@ -164,7 +164,7 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 		return nil
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, 3, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -210,7 +210,7 @@ func TestConsumerWithDecodeError(t *testing.T) {
 		return nil
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, 2, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -257,7 +257,7 @@ func TestConsumerWithHandlerError(t *testing.T) {
 		return errors.Errorf("test handler error")
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, 2, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -305,7 +305,7 @@ func TestConsumerWithChannelError(t *testing.T) {
 		return nil
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(0), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, 3, int64(0), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -352,7 +352,7 @@ func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, 1, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -377,7 +377,7 @@ func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 	mockGroup.AssertExpectations(t)
 }
 
-func testConsumer(t *testing.T, client kafkaClient, decoder decoder, receiver Receiver, numMessages int64, ch chan *sarama.ConsumerMessage) *Subscriber {
+func testConsumer(t *testing.T, client kafkaClient, decoder decoder, receiver Receiver, batchSize int, numMessages int64, ch chan *sarama.ConsumerMessage) *Subscriber {
 	// push a few messages into the channel
 	for i := range numMessages {
 		saramaMessage := &sarama.ConsumerMessage{
@@ -399,7 +399,7 @@ func testConsumer(t *testing.T, client kafkaClient, decoder decoder, receiver Re
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
 		WithAssignor("roundrobin"),
-		WithBatchSize(1),
+		WithBatchSize(batchSize),
 		WithHandler(receiver),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithLogging(newTestLogger()),
