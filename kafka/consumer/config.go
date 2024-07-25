@@ -11,6 +11,12 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	mBytes           = 1024 * 1024
+	tenMBytes        = 10 * mBytes
+	defaultBatchSize = 100
+)
+
 // Config is a configuration object used to create a new Consumer.
 type Config struct {
 	id                          string           // Default: UUID
@@ -20,6 +26,7 @@ type Config struct {
 	groupID                     string           // Kafka consumer group definition
 	assignor                    string           // Consumer group partition assignment strategy (range, roundrobin, sticky)
 	schemaRegistryURL           string           // The client avro registry URL
+	batchSize                   int              // Batch messages before dispatching to the client (Default 100)
 	oldest                      bool             // Kafka consumer consume initial offset from oldest (Default true)
 	returnOnClientDispatchError bool             // If the receiver.dispatch returns error, then exit consume (Default false)
 	stdLogger                   sarama.StdLogger // Consumer logging (Default nil)
@@ -33,6 +40,7 @@ func newConfig() *Config {
 		id:                          uuid.New().String(),
 		stdLogger:                   log.New(io.Discard, "", log.LstdFlags),
 		debugLogger:                 log.New(io.Discard, "", log.LstdFlags),
+		batchSize:                   defaultBatchSize,
 		oldest:                      true,
 		returnOnClientDispatchError: false,
 		version:                     sarama.DefaultVersion.String(),
@@ -55,14 +63,15 @@ func newConfig() *Config {
 		conf.schemaRegistryURL = schemaRegistryURL
 	}
 
+	conf.saramaConfig.Consumer.Fetch.Default = tenMBytes
+	conf.saramaConfig.Consumer.IsolationLevel = sarama.ReadCommitted
+	conf.saramaConfig.Consumer.Offsets.AutoCommit.Enable = true
+
 	// ConsumerGroup <- Errors returns a read channel of errors that occurred during the consumer life-cycle.
 	// By default, errors are logged and not returned over this channel.
 	// If you want to implement any custom error handling, set your config's
 	// Consumer.Return.Errors setting to true, and read from this channel.
-
 	// conf.saramaConfig.Consumer.Return.Errors = true
-	conf.saramaConfig.Consumer.Offsets.AutoCommit.Enable = true
-	conf.saramaConfig.Consumer.IsolationLevel = sarama.ReadCommitted
 
 	return conf
 }

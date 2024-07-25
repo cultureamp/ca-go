@@ -34,6 +34,10 @@ func (m *mockKafkaClient) CommitMessage(session sarama.ConsumerGroupSession, msg
 	m.Called(session, msg)
 }
 
+func (m *mockKafkaClient) Commit(session sarama.ConsumerGroupSession) {
+	m.Called(session)
+}
+
 // mockSaramaConsumerGroup must support the sarama.ConsumerGroup interface.
 type mockSaramaConsumerGroup struct {
 	sesson sarama.ConsumerGroupSession

@@ -24,7 +24,7 @@ func TestServiceWithCancelledContext(t *testing.T) {
 		return nil
 	}
 
-	s := testService(t, ctx, mockReceiver, 4)
+	s := testService(t, ctx, mockReceiver, "test-service-cancelled-context", 2, 4)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -48,7 +48,7 @@ func TestServiceWithStop(t *testing.T) {
 		return nil
 	}
 
-	s := testService(t, ctx, mockReceiver, 2)
+	s := testService(t, ctx, mockReceiver, "test-service-with-stop", 2, 2)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -72,7 +72,7 @@ func TestServiceWithHandlerError(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	s := testService(t, ctx, mockReceiver, 3)
+	s := testService(t, ctx, mockReceiver, "test-service-with-handler-error", 1, 3)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -96,7 +96,7 @@ func TestServiceWithDoubleStartDoubleStop(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	s := testService(t, ctx, mockReceiver, 3)
+	s := testService(t, ctx, mockReceiver, "test-service-with-double-start", 1, 3)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -114,18 +114,20 @@ func TestServiceWithDoubleStartDoubleStop(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func testService(t *testing.T, ctx context.Context, receiver Receiver, numMessages int64) *Service {
+func testService(t *testing.T, ctx context.Context, receiver Receiver, topic string, batchSize int, numMessages int64) *Service {
 	mockClient := newMockKafkaClient()
 	mockSession := newMockConsumerGroupSession()
-	mockConsumer := newMockConsumerGroupClaim()
-	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
+	mockConsumerClaim := newMockConsumerGroupClaim()
+	mockGroup := newMockConsumerGroup(mockSession, mockConsumerClaim)
 	mockSchemaRegistryClient := newMockSchemaRegistryClient()
 	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
 	schema := testServiceSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockClient.On("CommitMessage", mock.Anything, mock.Anything)
+	mockClient.On("Commit", mock.Anything)
 	mockSession.On("Context").Return(ctx)
+	mockConsumerClaim.On("Topic").Return(topic)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
 	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(schema, nil)
@@ -153,15 +155,16 @@ func testService(t *testing.T, ctx context.Context, receiver Receiver, numMessag
 
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
 	receiverChannel = mockChannel
-	mockConsumer.On("Messages").Return(receiverChannel)
+	mockConsumerClaim.On("Messages").Return(receiverChannel)
 
 	s, err := NewService(
 		WithKafkaClient(mockClient),
 		WithAvroDecoder(mockDecoder),
 		WithBrokers([]string{"localhost:9092"}),
-		WithTopics([]string{"test-topic"}),
+		WithTopics([]string{topic}),
 		WithGroupID("group_id"),
 		WithAssignor("roundrobin"),
+		WithBatchSize(batchSize),
 		WithHandler(receiver),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithLogging(newTestLogger()),

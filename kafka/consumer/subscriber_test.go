@@ -138,15 +138,17 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 
 	mockClient := newMockKafkaClient()
 	mockSession := newMockConsumerGroupSession()
-	mockConsumer := newMockConsumerGroupClaim()
-	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
+	mockConsumerClaim := newMockConsumerGroupClaim()
+	mockGroup := newMockConsumerGroup(mockSession, mockConsumerClaim)
 	mockSchemaRegistryClient := newMockSchemaRegistryClient()
 	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
 	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockClient.On("CommitMessage", mock.Anything, mock.Anything)
+	mockClient.On("Commit", mock.Anything)
 	mockSession.On("Context").Return(ctx)
+	mockConsumerClaim.On("Topic").Return("test-consumer-ctx-deadline-topic")
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
 	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(schema, nil)
@@ -155,7 +157,7 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
 	receiverChannel = mockChannel
-	mockConsumer.On("Messages").Return(receiverChannel)
+	mockConsumerClaim.On("Messages").Return(receiverChannel)
 
 	mockReceiver := func(ctx context.Context, msg *ReceivedMessage) error {
 		assert.Equal(t, `{"id": 123,"name": "test"}`, msg.DecodedText)
@@ -176,7 +178,7 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 
 	mockClient.AssertExpectations(t)
 	mockSession.AssertExpectations(t)
-	mockConsumer.AssertExpectations(t)
+	mockConsumerClaim.AssertExpectations(t)
 	mockGroup.AssertExpectations(t)
 }
 
@@ -185,13 +187,14 @@ func TestConsumerWithDecodeError(t *testing.T) {
 
 	mockClient := newMockKafkaClient()
 	mockSession := newMockConsumerGroupSession()
-	mockConsumer := newMockConsumerGroupClaim()
-	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
+	mockConsumerClaim := newMockConsumerGroupClaim()
+	mockGroup := newMockConsumerGroup(mockSession, mockConsumerClaim)
 	mockSchemaRegistryClient := newMockSchemaRegistryClient()
 	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockSession.On("Context").Return(ctx)
+	mockConsumerClaim.On("Topic").Return("test-consumer-decode-error-topic")
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
 	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(nil, errors.Errorf("test schema error"))
@@ -200,7 +203,7 @@ func TestConsumerWithDecodeError(t *testing.T) {
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
 	receiverChannel = mockChannel
-	mockConsumer.On("Messages").Return(receiverChannel)
+	mockConsumerClaim.On("Messages").Return(receiverChannel)
 
 	mockReceiver := func(ctx context.Context, msg *ReceivedMessage) error {
 		return nil
@@ -220,7 +223,7 @@ func TestConsumerWithDecodeError(t *testing.T) {
 
 	mockClient.AssertExpectations(t)
 	mockSession.AssertExpectations(t)
-	mockConsumer.AssertExpectations(t)
+	mockConsumerClaim.AssertExpectations(t)
 	mockGroup.AssertExpectations(t)
 }
 
@@ -229,14 +232,15 @@ func TestConsumerWithHandlerError(t *testing.T) {
 
 	mockClient := newMockKafkaClient()
 	mockSession := newMockConsumerGroupSession()
-	mockConsumer := newMockConsumerGroupClaim()
-	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
+	mockConsumerClaim := newMockConsumerGroupClaim()
+	mockGroup := newMockConsumerGroup(mockSession, mockConsumerClaim)
 	mockSchemaRegistryClient := newMockSchemaRegistryClient()
 	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
 	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockSession.On("Context").Return(ctx)
+	mockConsumerClaim.On("Topic").Return("test-consumer-handle-error-topic")
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
 	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(schema, nil)
@@ -245,7 +249,7 @@ func TestConsumerWithHandlerError(t *testing.T) {
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
 	receiverChannel = mockChannel
-	mockConsumer.On("Messages").Return(receiverChannel)
+	mockConsumerClaim.On("Messages").Return(receiverChannel)
 
 	mockReceiver := func(ctx context.Context, msg *ReceivedMessage) error {
 		return errors.Errorf("test handler error")
@@ -265,7 +269,7 @@ func TestConsumerWithHandlerError(t *testing.T) {
 
 	mockClient.AssertExpectations(t)
 	mockSession.AssertExpectations(t)
-	mockConsumer.AssertExpectations(t)
+	mockConsumerClaim.AssertExpectations(t)
 	mockGroup.AssertExpectations(t)
 }
 
@@ -274,14 +278,16 @@ func TestConsumerWithChannelError(t *testing.T) {
 
 	mockClient := newMockKafkaClient()
 	mockSession := newMockConsumerGroupSession()
-	mockConsumer := newMockConsumerGroupClaim()
-	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
+	mockConsumerClaim := newMockConsumerGroupClaim()
+	mockGroup := newMockConsumerGroup(mockSession, mockConsumerClaim)
 	mockSchemaRegistryClient := newMockSchemaRegistryClient()
 	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
 	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
+	mockClient.On("Commit", mock.Anything)
 	mockSession.On("Context").Return(ctx)
+	mockConsumerClaim.On("Topic").Return("test-consumer-channel-error-topic")
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
 	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(schema, nil)
@@ -291,7 +297,7 @@ func TestConsumerWithChannelError(t *testing.T) {
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
 	receiverChannel = mockChannel
 	close(mockChannel)
-	mockConsumer.On("Messages").Return(receiverChannel)
+	mockConsumerClaim.On("Messages").Return(receiverChannel)
 
 	mockReceiver := func(ctx context.Context, msg *ReceivedMessage) error {
 		return nil
@@ -311,7 +317,7 @@ func TestConsumerWithChannelError(t *testing.T) {
 
 	mockClient.AssertExpectations(t)
 	mockSession.AssertExpectations(t)
-	mockConsumer.AssertExpectations(t)
+	mockConsumerClaim.AssertExpectations(t)
 	mockGroup.AssertExpectations(t)
 }
 
@@ -320,14 +326,15 @@ func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 
 	mockClient := newMockKafkaClient()
 	mockSession := newMockConsumerGroupSession()
-	mockConsumer := newMockConsumerGroupClaim()
-	mockGroup := newMockConsumerGroup(mockSession, mockConsumer)
+	mockConsumerClaim := newMockConsumerGroupClaim()
+	mockGroup := newMockConsumerGroup(mockSession, mockConsumerClaim)
 	mockSchemaRegistryClient := newMockSchemaRegistryClient()
 	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
 	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockSession.On("Context").Return(ctx)
+	mockConsumerClaim.On("Topic").Return("test-consumer-double-subscribe-single-stop-topic")
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockGroup.On("Close").Return(nil)
 	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(schema, nil)
@@ -336,7 +343,7 @@ func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 	mockChannel := make(chan *sarama.ConsumerMessage, 10)
 	var receiverChannel (<-chan *sarama.ConsumerMessage)
 	receiverChannel = mockChannel
-	mockConsumer.On("Messages").Return(receiverChannel)
+	mockConsumerClaim.On("Messages").Return(receiverChannel)
 
 	mockReceiver := func(ctx context.Context, msg *ReceivedMessage) error {
 		return errors.Errorf("test error")
@@ -363,7 +370,7 @@ func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 
 	mockClient.AssertExpectations(t)
 	mockSession.AssertExpectations(t)
-	mockConsumer.AssertExpectations(t)
+	mockConsumerClaim.AssertExpectations(t)
 	mockGroup.AssertExpectations(t)
 }
 
@@ -389,6 +396,7 @@ func testConsumer(t *testing.T, client kafkaClient, decoder decoder, receiver Re
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
 		WithAssignor("roundrobin"),
+		WithBatchSize(1),
 		WithHandler(receiver),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithLogging(newTestLogger()),

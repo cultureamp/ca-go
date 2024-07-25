@@ -2,71 +2,108 @@ package consumer
 
 import (
 	"github.com/IBM/sarama"
+	"github.com/go-errors/errors"
 )
 
 type consumer struct {
 	client         kafkaClient
+	batchSize      int
 	messageHandler handler
 	logger         sarama.StdLogger
 }
 
-func newConsumer(client kafkaClient, messageHandler handler, logger sarama.StdLogger) *consumer {
+func newConsumer(client kafkaClient, batchSize int, messageHandler handler, logger sarama.StdLogger) *consumer {
 	return &consumer{
 		client:         client,
+		batchSize:      batchSize,
 		messageHandler: messageHandler,
 		logger:         logger,
 	}
 }
 
 // Setup is run at the beginning of a new session, before ConsumeClaim.
-func (r *consumer) Setup(sarama.ConsumerGroupSession) error {
-	r.logger.Printf("consumer: setup...")
+func (c *consumer) Setup(sarama.ConsumerGroupSession) error {
+	c.logger.Printf("consumer: setup...")
 	// add call to dispatch a "setup" call to the client
 	return nil
 }
 
 // Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited.
-func (r *consumer) Cleanup(sarama.ConsumerGroupSession) error {
-	r.logger.Printf("consumer: cleanup...")
+func (c *consumer) Cleanup(sarama.ConsumerGroupSession) error {
+	c.logger.Printf("consumer: cleanup...")
 	// add call to dispatch a "cleanup" call to the client
 	return nil
 }
 
 // ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
-// Once the Messages() channel is closed, the Handler must finish its processing
-// loop and exit.
-func (r *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+// Once the Messages() channel is closed, the Handler must finish its processing loop and exit.
+func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	// NOTE:
 	// Do not move the code below to a goroutine.
 	// The `ConsumeClaim` itself is called within a goroutine, see:
 	// https://github.com/IBM/sarama/blob/main/consumer_group.go#L27-L29
+
+	var batch []*sarama.ConsumerMessage
 	for {
-		select {
-		case msg, msgChannelOk := <-claim.Messages():
-			if !msgChannelOk {
-				r.logger.Printf("consumer: message channel is closed")
-				return errClosedMessageChannel
+		topic := claim.Topic()
+
+		msg, err := c.getNextMessage(session, claim)
+		if err != nil {
+			// Either the session has closed or something went wrong reading the latest message.
+			// dispatch what we have to the client and return the error
+			if e := c.dispatch(session, topic, batch); e != nil {
+				return errors.Errorf("consumer[%s]: failed to dispatch message to client handler: err='%s'", topic, e.Error())
 			}
-			r.logger.Printf(
-				"consumer: message received Ok: timestamp=%v, topic=%s, partition=%d, offset=%d",
-				msg.Timestamp, msg.Topic, msg.Partition, msg.Offset,
-			)
+			return err
+		}
 
-			// dispatch the message
-			if err := r.messageHandler.Dispatch(session.Context(), msg); err != nil {
-				r.logger.Printf("consumer: failed to dispatch message to client handler: err='%s'", err.Error())
-				return newDispatchHandlerError(err)
+		// successfully read a message, so add it to the batch
+		batch = append(batch, msg)
+
+		// if the batch is full, dispatch it
+		if len(batch) >= c.batchSize {
+			if err := c.dispatch(session, topic, batch); err != nil {
+				// dispatch failed, so stop processing and return the error
+				return err
 			}
-
-			// otherwise, we can commit this message now
-			r.client.CommitMessage(session, msg)
-
-		case <-session.Context().Done():
-			// Should return when `session.Context()` is done.
-			// If not, will raise `ErrRebalanceInProgress` or `read tcp <ip>:<port>: i/o timeout` when kafka rebalance. see:
-			// https://github.com/IBM/sarama/issues/1192
-			r.logger.Printf("consumer: context is Done. Exiting...")
-			return nil
+			batch = nil
 		}
 	}
+}
+
+func (c *consumer) getNextMessage(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) (*sarama.ConsumerMessage, error) {
+	topic := claim.Topic()
+	select {
+	case msg, msgChannelOk := <-claim.Messages():
+		if !msgChannelOk {
+			c.logger.Printf("consumer[%s]: message channel is closed", topic)
+			return nil, errClosedMessageChannel
+		}
+
+		c.logger.Printf(
+			"consumer[%s]: message received Ok: timestamp=%v, partition=%d, offset=%d",
+			topic, msg.Timestamp, msg.Partition, msg.Offset,
+		)
+		return msg, nil
+
+	case <-session.Context().Done():
+		c.logger.Printf("consumer[%s]: context is Done. Exiting...", topic)
+		return nil, errDoneMessageChannel
+	}
+}
+
+func (c *consumer) dispatch(session sarama.ConsumerGroupSession, topic string, batch []*sarama.ConsumerMessage) error {
+	if err := c.messageHandler.Dispatch(session.Context(), batch); err != nil {
+		c.logger.Printf("consumer[%s]: failed to dispatch message to client handler: err='%s'", topic, err.Error())
+		return newDispatchHandlerError(topic, err)
+	}
+
+	for _, msg := range batch {
+		c.logger.Printf("consumer[%s]: committing message with offset=%d", topic, msg.Offset)
+		c.client.CommitMessage(session, msg)
+	}
+
+	c.logger.Printf("consumer[%s]: committing batch offset", topic)
+	c.client.Commit(session)
+	return nil
 }
