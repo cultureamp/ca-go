@@ -65,11 +65,17 @@ func (h *dispatchHandler) Dispatch(ctx context.Context, msg *sarama.ConsumerMess
 func (h *dispatchHandler) dispatchToClient(ctx context.Context, msg *ReceivedMessage) error {
 	// add retries, etc.
 	span, ctx := tracer.StartSpanFromContext(ctx, "kafka.consumer.handle", tracer.ResourceName(msg.Topic))
-	defer span.Finish()
+
+	// Set tags
+	span.SetTag("kafka.consumer.handle.message.key", string(msg.Key))
+	span.SetTag("kafka.consumer.handle.message.offset", msg.Offset)
+	span.SetTag("kafka.consumer.handle.message.timestamp", msg.Timestamp)
 
 	if err := h.receiver(ctx, msg); err != nil {
+		span.Finish(tracer.WithError(err))
 		return err
 	}
 
+	span.Finish()
 	return nil
 }
