@@ -4,6 +4,8 @@ The `kafka/consumer` package implements a blocking and non-blocking Kafka consum
 
 To avoid using CGO, this `ca-go` implementation does not use `https://github.com/confluentinc/confluent-kafka-go` and instead provides a wrapper over `https://github.com/IBM/sarama`. While this comes with some small risk of incompatibilities or feature lag, we think this trade-off is worth the cost to avoid having to enable CGO (and having to live with all the downsides that introduces). We are happy to revisit this if need be.
 
+The implementation follows most of the guidance and recommendations found in this Sarama guide: [Effective Kafka Consumption in Golang: A Comprehensive Guide](https://medium.com/@moabbas.ch/effective-kafka-consumption-in-golang-a-comprehensive-guide-aac54b5b79f0)
+
 ## Environment Variables
 
 - KAFKA_BROKERS = The list of Kafka brokers to use. Calling `WithBrokers(brokers)` overwrites this default.

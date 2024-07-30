@@ -2,10 +2,7 @@ package consumer
 
 import "github.com/go-errors/errors"
 
-var (
-	errClosedMessageChannel = errors.Errorf("consumer: message channel closed or in error state")
-	errDoneMessageChannel   = errors.Errorf("consumer: message channel done")
-)
+var errClosedMessageChannel = errors.Errorf("consumer: message channel closed")
 
 type dispatchHandlerError struct {
 	err error

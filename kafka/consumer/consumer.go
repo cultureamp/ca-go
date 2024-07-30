@@ -61,7 +61,7 @@ func (c *consumer) getNextMessage(session sarama.ConsumerGroupSession, claim sar
 	select {
 	case msg, msgChannelOk := <-claim.Messages():
 		if !msgChannelOk {
-			c.logger.Printf("consumer[%s]: message channel is closed", topic)
+			c.logger.Printf("consumer[%s]: message channel read error. Closed?", topic)
 			return nil, errClosedMessageChannel
 		}
 
@@ -73,7 +73,7 @@ func (c *consumer) getNextMessage(session sarama.ConsumerGroupSession, claim sar
 
 	case <-session.Context().Done():
 		c.logger.Printf("consumer[%s]: context is Done. Exiting...", topic)
-		return nil, errDoneMessageChannel
+		return nil, session.Context().Err()
 	}
 }
 
@@ -86,7 +86,9 @@ func (c *consumer) processMessage(session sarama.ConsumerGroupSession, topic str
 	c.logger.Printf("consumer[%s]: marking message[%s] as successfully consumed", topic, string(msg.Key))
 	c.client.MarkMessageConsumed(session, msg, "done")
 
-	c.logger.Printf("consumer[%s]: committing message offset[%d]", topic, msg.Offset)
-	c.client.Commit(session)
+	// Given https://medium.com/@moabbas.ch/effective-kafka-consumption-in-golang-a-comprehensive-guide-aac54b5b79f0
+	// I MarkMessageConsumed() is enough to commit the message offset.
+	// c.logger.Printf("consumer[%s]: committing message offset[%d]", topic, msg.Offset)
+	// c.client.Commit(session)
 	return nil
 }

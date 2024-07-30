@@ -60,6 +60,10 @@ func (gc *groupConsumer) handleConsumeErrors(err error) error {
 		return err
 	}
 
+	if errors.Is(err, context.DeadlineExceeded) {
+		return err
+	}
+
 	var target dispatchHandlerError
 	if errors.As(err, &target) {
 		// for any client dispatch errors, return if the conf was set to true otherwise, ignore.

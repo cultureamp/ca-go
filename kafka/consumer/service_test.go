@@ -135,7 +135,6 @@ func testService(t *testing.T, ctx context.Context, receiver Receiver, topic str
 	schema := testServiceSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
 	mockClient.On("MarkMessageConsumed", mock.Anything, mock.Anything, mock.Anything)
-	mockClient.On("Commit", mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockConsumerClaim.On("Topic").Return(topic)
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
