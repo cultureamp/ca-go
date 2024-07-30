@@ -56,13 +56,6 @@ func WithTopics(topics []string) Option {
 	}
 }
 
-// WithBatchSize sets the consumer batch size (Default: 100).
-func WithBatchSize(batchSize int) Option {
-	return func(consumer *Subscriber) {
-		consumer.conf.batchSize = batchSize
-	}
-}
-
 // WithOldest sets the consumer initial offset from oldest (Default: true).
 func WithOldest(oldest bool) Option {
 	return func(consumer *Subscriber) {

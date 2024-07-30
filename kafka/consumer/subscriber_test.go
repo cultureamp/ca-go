@@ -145,7 +145,7 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 
 	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
-	mockClient.On("CommitMessage", mock.Anything, mock.Anything)
+	mockClient.On("MarkMessageConsumed", mock.Anything, mock.Anything, mock.Anything)
 	mockClient.On("Commit", mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockConsumerClaim.On("Topic").Return("test-consumer-ctx-deadline-topic")
@@ -164,7 +164,7 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 		return nil
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, 3, int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -193,7 +193,6 @@ func TestConsumerWithDecodeError(t *testing.T) {
 	mockDecoder := newMockArvoDecoder(mockSchemaRegistryClient)
 
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
-	mockClient.On("Commit", mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockConsumerClaim.On("Topic").Return("test-consumer-decode-error-topic")
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -210,7 +209,7 @@ func TestConsumerWithDecodeError(t *testing.T) {
 		return nil
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, 2, int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -240,7 +239,6 @@ func TestConsumerWithHandlerError(t *testing.T) {
 
 	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
-	mockClient.On("Commit", mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockConsumerClaim.On("Topic").Return("test-consumer-handle-error-topic")
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -257,7 +255,7 @@ func TestConsumerWithHandlerError(t *testing.T) {
 		return errors.Errorf("test handler error")
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, 2, int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -287,7 +285,6 @@ func TestConsumerWithChannelError(t *testing.T) {
 
 	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
-	mockClient.On("Commit", mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockConsumerClaim.On("Topic").Return("test-consumer-channel-error-topic")
 	mockGroup.On("Consume", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -305,7 +302,7 @@ func TestConsumerWithChannelError(t *testing.T) {
 		return nil
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, 3, int64(0), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(0), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
@@ -325,6 +322,10 @@ func TestConsumerWithChannelError(t *testing.T) {
 
 func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 	ctx := context.Background()
+	// ctx will expire in 1 second
+	deadline := time.Now().Add(1 * time.Second)
+	ctx, cancelCtx := context.WithDeadline(ctx, deadline)
+	defer cancelCtx()
 
 	mockClient := newMockKafkaClient()
 	mockSession := newMockConsumerGroupSession()
@@ -335,6 +336,7 @@ func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 
 	schema := testSubscriberSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
+	mockClient.On("MarkMessageConsumed", mock.Anything, mock.Anything, mock.Anything)
 	mockClient.On("Commit", mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockConsumerClaim.On("Topic").Return("test-consumer-double-subscribe-single-stop-topic")
@@ -349,16 +351,16 @@ func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 	mockConsumerClaim.On("Messages").Return(receiverChannel)
 
 	mockReceiver := func(ctx context.Context, msg *ReceivedMessage) error {
-		return errors.Errorf("test error")
+		return nil
 	}
 
-	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, 1, int64(3), mockChannel)
+	c := testConsumer(t, kafkaClient(mockClient), mockDecoder, mockReceiver, int64(3), mockChannel)
 	assert.NotNil(t, c)
 
 	// blocks until Kafka rebalance, handler error or context.Done
 	err := c.ConsumeAll(ctx)
 	assert.NotNil(t, err)
-	assert.ErrorContains(t, err, "test error")
+	assert.ErrorContains(t, err, "context deadline exceeded")
 
 	err = c.ConsumeAll(ctx)
 	assert.NotNil(t, err)
@@ -377,7 +379,7 @@ func TestConsumerWithDoubleSubscribeAndSingleStop(t *testing.T) {
 	mockGroup.AssertExpectations(t)
 }
 
-func testConsumer(t *testing.T, client kafkaClient, decoder decoder, receiver Receiver, batchSize int, numMessages int64, ch chan *sarama.ConsumerMessage) *Subscriber {
+func testConsumer(t *testing.T, client kafkaClient, decoder decoder, receiver Receiver, numMessages int64, ch chan *sarama.ConsumerMessage) *Subscriber {
 	// push a few messages into the channel
 	for i := range numMessages {
 		saramaMessage := &sarama.ConsumerMessage{
@@ -399,7 +401,6 @@ func testConsumer(t *testing.T, client kafkaClient, decoder decoder, receiver Re
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
 		WithAssignor("roundrobin"),
-		WithBatchSize(batchSize),
 		WithHandler(receiver),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithLogging(newTestLogger()),

@@ -30,8 +30,8 @@ func (m *mockKafkaClient) NewConsumerGroup(brokers []string, groupId string, con
 	return gc, args.Error(1)
 }
 
-func (m *mockKafkaClient) CommitMessage(session sarama.ConsumerGroupSession, msg *sarama.ConsumerMessage) {
-	m.Called(session, msg)
+func (m *mockKafkaClient) MarkMessageConsumed(session sarama.ConsumerGroupSession, msg *sarama.ConsumerMessage, metadata string) {
+	m.Called(session, msg, metadata)
 }
 
 func (m *mockKafkaClient) Commit(session sarama.ConsumerGroupSession) {

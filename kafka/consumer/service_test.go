@@ -25,7 +25,7 @@ func TestServiceWithCancelledContext(t *testing.T) {
 		return nil
 	}
 
-	s := testService(t, ctx, mockReceiver, "test-service-cancelled-context", 3, 4)
+	s := testService(t, ctx, mockReceiver, "test-service-cancelled-context", 4)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -54,7 +54,7 @@ func TestServiceWithStop(t *testing.T) {
 		return nil
 	}
 
-	s := testService(t, ctx, mockReceiver, "test-service-with-stop", 3, 5)
+	s := testService(t, ctx, mockReceiver, "test-service-with-stop", 5)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -67,8 +67,7 @@ func TestServiceWithStop(t *testing.T) {
 	err := s.Stop()
 
 	assert.Nil(t, err)
-	// only expect the first batch of "3" messages to be processed, the other 2 are dropped (uncommitted)
-	assert.Equal(t, int32(3), calls.Load())
+	assert.Equal(t, int32(5), calls.Load())
 }
 
 func TestServiceWithHandlerError(t *testing.T) {
@@ -80,7 +79,7 @@ func TestServiceWithHandlerError(t *testing.T) {
 		return errors.Errorf("test error")
 	}
 
-	s := testService(t, ctx, mockReceiver, "test-service-with-handler-error", 2, 7)
+	s := testService(t, ctx, mockReceiver, "test-service-with-handler-error", 7)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -102,10 +101,10 @@ func TestServiceWithDoubleStartDoubleStop(t *testing.T) {
 	var calls atomic.Int32
 	mockReceiver := func(ctx context.Context, msg *ReceivedMessage) error {
 		calls.Add(1)
-		return errors.Errorf("test error")
+		return nil
 	}
 
-	s := testService(t, ctx, mockReceiver, "test-service-with-double-start", 1, 3)
+	s := testService(t, ctx, mockReceiver, "test-service-with-double-start", 3)
 	assert.NotNil(t, s)
 
 	// non blocking
@@ -122,10 +121,10 @@ func TestServiceWithDoubleStartDoubleStop(t *testing.T) {
 	assert.Nil(t, err)
 
 	// expect 1 as we return Receiver error, so the rest of the batch and other messages are dropped.
-	assert.Equal(t, int32(1), calls.Load())
+	assert.Equal(t, int32(3), calls.Load())
 }
 
-func testService(t *testing.T, ctx context.Context, receiver Receiver, topic string, batchSize int, numMessages int64) *Service {
+func testService(t *testing.T, ctx context.Context, receiver Receiver, topic string, numMessages int64) *Service {
 	mockClient := newMockKafkaClient()
 	mockSession := newMockConsumerGroupSession()
 	mockConsumerClaim := newMockConsumerGroupClaim()
@@ -135,7 +134,7 @@ func testService(t *testing.T, ctx context.Context, receiver Receiver, topic str
 
 	schema := testServiceSchema(t)
 	mockClient.On("NewConsumerGroup", mock.Anything, mock.Anything, mock.Anything).Return(mockGroup, nil)
-	mockClient.On("CommitMessage", mock.Anything, mock.Anything)
+	mockClient.On("MarkMessageConsumed", mock.Anything, mock.Anything, mock.Anything)
 	mockClient.On("Commit", mock.Anything)
 	mockSession.On("Context").Return(ctx)
 	mockConsumerClaim.On("Topic").Return(topic)
@@ -175,7 +174,6 @@ func testService(t *testing.T, ctx context.Context, receiver Receiver, topic str
 		WithTopics([]string{topic}),
 		WithGroupID("group_id"),
 		WithAssignor("roundrobin"),
-		WithBatchSize(batchSize),
 		WithHandler(receiver),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithLogging(newTestLogger()),

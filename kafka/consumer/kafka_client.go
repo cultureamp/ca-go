@@ -4,7 +4,7 @@ import "github.com/IBM/sarama"
 
 type kafkaClient interface {
 	NewConsumerGroup(brokers []string, groupID string, config *sarama.Config) (sarama.ConsumerGroup, error)
-	CommitMessage(session sarama.ConsumerGroupSession, msg *sarama.ConsumerMessage)
+	MarkMessageConsumed(session sarama.ConsumerGroupSession, msg *sarama.ConsumerMessage, metadata string)
 	Commit(session sarama.ConsumerGroupSession)
 }
 
@@ -18,8 +18,8 @@ func (sc *saramaClient) NewConsumerGroup(brokers []string, groupID string, confi
 	return sarama.NewConsumerGroup(brokers, groupID, config)
 }
 
-func (sc *saramaClient) CommitMessage(session sarama.ConsumerGroupSession, msg *sarama.ConsumerMessage) {
-	session.MarkMessage(msg, "")
+func (sc *saramaClient) MarkMessageConsumed(session sarama.ConsumerGroupSession, msg *sarama.ConsumerMessage, metadata string) {
+	session.MarkMessage(msg, metadata)
 }
 
 func (sc *saramaClient) Commit(session sarama.ConsumerGroupSession) {

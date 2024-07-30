@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	mBytes           = 1024 * 1024
-	tenMBytes        = 10 * mBytes
-	defaultBatchSize = 100
+	mBytes       = 1024 * 1024
+	tenMBytes    = 10 * mBytes
+	twentyMBytes = 2 * tenMBytes
 )
 
 // Config is a configuration object used to create a new Consumer.
@@ -26,7 +26,6 @@ type Config struct {
 	groupID                     string           // Kafka consumer group definition
 	assignor                    string           // Consumer group partition assignment strategy (range, roundrobin, sticky)
 	schemaRegistryURL           string           // The client avro registry URL
-	batchSize                   int              // Batch messages before dispatching to the client (Default 100)
 	oldest                      bool             // Kafka consumer consume initial offset from oldest (Default true)
 	returnOnClientDispatchError bool             // If the receiver.dispatch returns error, then exit consume (Default false)
 	stdLogger                   sarama.StdLogger // Consumer logging (Default nil)
@@ -40,7 +39,6 @@ func newConfig() *Config {
 		id:                          uuid.New().String(),
 		stdLogger:                   log.New(io.Discard, "", log.LstdFlags),
 		debugLogger:                 log.New(io.Discard, "", log.LstdFlags),
-		batchSize:                   defaultBatchSize,
 		oldest:                      true,
 		returnOnClientDispatchError: false,
 		version:                     sarama.DefaultVersion.String(),
@@ -64,6 +62,7 @@ func newConfig() *Config {
 	}
 
 	conf.saramaConfig.Consumer.Fetch.Default = tenMBytes
+	conf.saramaConfig.Consumer.Fetch.Max = twentyMBytes
 	conf.saramaConfig.Consumer.IsolationLevel = sarama.ReadCommitted
 	conf.saramaConfig.Consumer.Offsets.AutoCommit.Enable = true
 

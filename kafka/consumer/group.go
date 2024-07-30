@@ -37,7 +37,7 @@ func (gc *groupConsumer) consume(ctx context.Context) error {
 	// server-side rebalance happens, the consumer session will need to be
 	// recreated to get the new claims
 	for {
-		receiver := newConsumer(gc.client, gc.conf.batchSize, gc.messageHandler, gc.conf.stdLogger)
+		receiver := newConsumer(gc.client, gc.messageHandler, gc.conf.stdLogger)
 		if err := gc.group.Consume(ctx, gc.conf.topics, receiver); err != nil {
 			if errFatal := gc.handleConsumeErrors(err); errFatal != nil {
 				return errFatal

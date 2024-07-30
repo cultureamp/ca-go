@@ -2,20 +2,17 @@ package consumer
 
 import (
 	"github.com/IBM/sarama"
-	"github.com/go-errors/errors"
 )
 
 type consumer struct {
 	client         kafkaClient
-	batchSize      int
 	messageHandler handler
 	logger         sarama.StdLogger
 }
 
-func newConsumer(client kafkaClient, batchSize int, messageHandler handler, logger sarama.StdLogger) *consumer {
+func newConsumer(client kafkaClient, messageHandler handler, logger sarama.StdLogger) *consumer {
 	return &consumer{
 		client:         client,
-		batchSize:      batchSize,
 		messageHandler: messageHandler,
 		logger:         logger,
 	}
@@ -43,30 +40,18 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 	// The `ConsumeClaim` itself is called within a goroutine, see:
 	// https://github.com/IBM/sarama/blob/main/consumer_group.go#L27-L29
 
-	var batch []*sarama.ConsumerMessage
 	for {
 		topic := claim.Topic()
 
 		msg, err := c.getNextMessage(session, claim)
 		if err != nil {
-			// Either the session has closed or something went wrong reading the latest message.
-			// dispatch what we have to the client and return the error
-			if e := c.processBatch(session, topic, batch); e != nil {
-				return errors.Errorf("consumer[%s]: failed to dispatch message to client handler: err='%s'", topic, e.Error())
-			}
+			// channel error (closed or context done?), so stop processing and return the error
 			return err
 		}
 
-		// successfully read a message, so add it to the batch
-		batch = append(batch, msg)
-
-		// if the batch is full, dispatch it
-		if len(batch) >= c.batchSize {
-			if err := c.processBatch(session, topic, batch); err != nil {
-				// dispatch failed, so stop processing and return the error
-				return err
-			}
-			batch = nil
+		if err := c.processMessage(session, topic, msg); err != nil {
+			// dispatch failed, so stop processing and return the error
+			return err
 		}
 	}
 }
@@ -92,22 +77,16 @@ func (c *consumer) getNextMessage(session sarama.ConsumerGroupSession, claim sar
 	}
 }
 
-func (c *consumer) processBatch(session sarama.ConsumerGroupSession, topic string, batch []*sarama.ConsumerMessage) error {
-	err := c.dispatchBatch(session, topic, batch)
-	c.logger.Printf("consumer[%s]: committing last committed message offset...", topic)
-	c.client.Commit(session)
-	return err
-}
-
-func (c *consumer) dispatchBatch(session sarama.ConsumerGroupSession, topic string, batch []*sarama.ConsumerMessage) error {
-	for _, msg := range batch {
-		if err := c.messageHandler.Dispatch(session.Context(), msg); err != nil {
-			c.logger.Printf("consumer[%s]: failed to dispatch message[%s] to client handler: err='%s'", topic, string(msg.Key), err.Error())
-			return newDispatchHandlerError(topic, err)
-		}
-
-		c.logger.Printf("consumer[%s]: committing message with offset=%d", topic, msg.Offset)
-		c.client.CommitMessage(session, msg)
+func (c *consumer) processMessage(session sarama.ConsumerGroupSession, topic string, msg *sarama.ConsumerMessage) error {
+	if err := c.messageHandler.Dispatch(session.Context(), msg); err != nil {
+		c.logger.Printf("consumer[%s]: failed to dispatch message[%s] to client handler: err='%s'", topic, string(msg.Key), err.Error())
+		return newDispatchHandlerError(topic, err)
 	}
+
+	c.logger.Printf("consumer[%s]: marking message[%s] as successfully consumed", topic, string(msg.Key))
+	c.client.MarkMessageConsumed(session, msg, "done")
+
+	c.logger.Printf("consumer[%s]: committing message offset[%d]", topic, msg.Offset)
+	c.client.Commit(session)
 	return nil
 }
