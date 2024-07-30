@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/go-errors/errors"
@@ -12,9 +13,10 @@ import (
 )
 
 const (
-	mBytes       = 1024 * 1024
-	tenMBytes    = 10 * mBytes
-	twentyMBytes = 2 * tenMBytes
+	mBytes             = 1024 * 1024
+	defaultChannelSize = 256
+	defaultFetchSize   = 10 * mBytes
+	defaultMaxWaitTime = 500 * time.Millisecond
 )
 
 // Config is a configuration object used to create a new Consumer.
@@ -61,9 +63,10 @@ func newConfig() *Config {
 		conf.schemaRegistryURL = schemaRegistryURL
 	}
 
-	conf.saramaConfig.Consumer.Fetch.Default = tenMBytes
-	conf.saramaConfig.Consumer.Fetch.Max = twentyMBytes
+	conf.saramaConfig.ChannelBufferSize = 256
+	conf.saramaConfig.Consumer.Fetch.Default = defaultFetchSize
 	conf.saramaConfig.Consumer.IsolationLevel = sarama.ReadCommitted
+	conf.saramaConfig.Consumer.MaxWaitTime = defaultMaxWaitTime
 	conf.saramaConfig.Consumer.Offsets.AutoCommit.Enable = true
 
 	// ConsumerGroup <- Errors returns a read channel of errors that occurred during the consumer life-cycle.

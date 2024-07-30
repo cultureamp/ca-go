@@ -1,6 +1,8 @@
 package consumer
 
 import (
+	"time"
+
 	"github.com/IBM/sarama"
 )
 
@@ -109,5 +111,26 @@ func WithAssignor(assignor string) Option {
 func WithReturnOnClientDispathError(returnOnError bool) Option {
 	return func(consumer *Subscriber) {
 		consumer.conf.returnOnClientDispatchError = returnOnError
+	}
+}
+
+// WithChannelSize sets the consumer channel size (Default: 256).
+func WithChannelMessageSize(size int) Option {
+	return func(consumer *Subscriber) {
+		consumer.conf.saramaConfig.ChannelBufferSize = size
+	}
+}
+
+// WithMaxWaitTime sets the consumer max wait time (Default: 500ms).
+func WithMaxWaitTime(waitTime time.Duration) Option {
+	return func(consumer *Subscriber) {
+		consumer.conf.saramaConfig.Consumer.MaxWaitTime = waitTime
+	}
+}
+
+// WithFetchSize sets the consumer fetch size (Default: 10MB).
+func WithFetchSize(fetchSize int) Option {
+	return func(consumer *Subscriber) {
+		consumer.conf.saramaConfig.Consumer.Fetch.Default = int32(fetchSize)
 	}
 }
