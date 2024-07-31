@@ -1,6 +1,8 @@
 package consumer
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"io"
 	"log"
 	"os"
@@ -30,6 +32,10 @@ type Config struct {
 	schemaRegistryURL           string           // The client avro registry URL
 	oldest                      bool             // Kafka consumer consume initial offset from oldest (Default true)
 	returnOnClientDispatchError bool             // If the receiver.dispatch returns error, then exit consume (Default false)
+	tlsEnabled                  bool             // Enable TLS (Default false)
+	tlsCertPem                  []byte           // TLS certificate pem
+	tlsCertKey                  []byte           // TLS certificate key
+	tlsCaPem                    []byte           // TLS CA pem
 	stdLogger                   sarama.StdLogger // Consumer logging (Default nil)
 	debugLogger                 sarama.StdLogger // Sarama logger (Default nil)
 	saramaConfig                *sarama.Config
@@ -43,6 +49,7 @@ func newConfig() *Config {
 		debugLogger:                 log.New(io.Discard, "", log.LstdFlags),
 		oldest:                      true,
 		returnOnClientDispatchError: false,
+		tlsEnabled:                  false,
 		version:                     sarama.DefaultVersion.String(),
 		saramaConfig:                sarama.NewConfig(),
 	}
@@ -61,6 +68,21 @@ func newConfig() *Config {
 	schemaRegistryURL := os.Getenv("SCHEMA_REGISTRY_URL")
 	if schemaRegistryURL != "" {
 		conf.schemaRegistryURL = schemaRegistryURL
+	}
+
+	certPem := os.Getenv("KAFKA_CERT_PEM")
+	if certPem != "" {
+		conf.tlsCertPem = []byte(certPem)
+	}
+
+	certKey := os.Getenv("KAFKA_CERT_KEY")
+	if certKey != "" {
+		conf.tlsCertKey = []byte(certKey)
+	}
+
+	caPem := os.Getenv("KAFKA_CA_PEM")
+	if caPem != "" {
+		conf.tlsCaPem = []byte(caPem)
 	}
 
 	conf.saramaConfig.ChannelBufferSize = 256
@@ -103,12 +125,34 @@ func (conf *Config) shouldProcess() error {
 		return errors.Errorf("missing group")
 	}
 
+	err := conf.shouldProcessAssignor()
+	if err != nil {
+		return err
+	}
+
 	version, err := sarama.ParseKafkaVersion(conf.version)
 	if err != nil {
 		return errors.Errorf("invalid kafka version '%s': %w", conf.version, err)
 	}
 	conf.saramaConfig.Version = version
 
+	if conf.schemaRegistryURL == "" {
+		return errors.Errorf("missing schema registry URL")
+	}
+
+	if conf.oldest {
+		conf.saramaConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
+	}
+
+	err = conf.shouldProcessTLS()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (conf *Config) shouldProcessAssignor() error {
 	switch conf.assignor {
 	case "sticky":
 		conf.saramaConfig.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategySticky()}
@@ -121,12 +165,30 @@ func (conf *Config) shouldProcess() error {
 		return errors.Errorf("unrecognized consumer group partition assignor: %s", conf.assignor)
 	}
 
-	if conf.schemaRegistryURL == "" {
-		return errors.Errorf("missing schema registry URL")
-	}
+	return nil
+}
 
-	if conf.oldest {
-		conf.saramaConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
+func (conf *Config) shouldProcessTLS() error {
+	if conf.tlsEnabled {
+		cert, err := tls.X509KeyPair(conf.tlsCertPem, conf.tlsCertKey)
+		if err != nil {
+			return errors.Errorf("error loading client certificate: %w", err)
+		}
+
+		pool := x509.NewCertPool()
+		ok := pool.AppendCertsFromPEM(conf.tlsCaPem)
+		if !ok {
+			return errors.Errorf("failed to parse root certificate")
+		}
+
+		tlsConf := &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			RootCAs:      pool,
+			MinVersion:   tls.VersionTLS12,
+		}
+
+		conf.saramaConfig.Net.TLS.Enable = true
+		conf.saramaConfig.Net.TLS.Config = tlsConf
 	}
 
 	return nil

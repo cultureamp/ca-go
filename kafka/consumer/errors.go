@@ -14,6 +14,7 @@ func newDispatchHandlerError(topic string, reason error) dispatchHandlerError {
 	}
 }
 
+// Error implements the error interface.
 func (e dispatchHandlerError) Error() string {
 	return e.err.Error()
 }

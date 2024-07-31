@@ -134,3 +134,31 @@ func WithFetchSize(fetchSize int) Option {
 		consumer.conf.saramaConfig.Consumer.Fetch.Default = int32(fetchSize)
 	}
 }
+
+// WithTLSEnabled sets the consumer TLS enabled (Default: false).
+func WithTLSEnabled(enabled bool) Option {
+	return func(consumer *Subscriber) {
+		consumer.conf.tlsEnabled = enabled
+	}
+}
+
+// WithTLSConfig sets the consumer TLS certificate PEM.
+func WithTLSCertPem(certPem []byte) Option {
+	return func(consumer *Subscriber) {
+		consumer.conf.tlsCertPem = certPem
+	}
+}
+
+// WithTLSKey sets the consumer TLS certificate key.
+func WithTLSCertKey(certKey []byte) Option {
+	return func(consumer *Subscriber) {
+		consumer.conf.tlsCertKey = certKey
+	}
+}
+
+// WithTLSCaPem sets the consumer TLS CA PEM.
+func WithTLSCaPem(caPem []byte) Option {
+	return func(consumer *Subscriber) {
+		consumer.conf.tlsCaPem = caPem
+	}
+}

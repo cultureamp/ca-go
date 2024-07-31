@@ -87,7 +87,9 @@ func (c *consumer) processMessage(session sarama.ConsumerGroupSession, topic str
 	c.client.MarkMessageConsumed(session, msg, "done")
 
 	// Given https://medium.com/@moabbas.ch/effective-kafka-consumption-in-golang-a-comprehensive-guide-aac54b5b79f0
-	// I MarkMessageConsumed() is enough to commit the message offset.
+	// It looks like calling MarkMessageConsumed() is enough to commit the message offset.
+	// If not, then uncomment the lines below.
+	//
 	// c.logger.Printf("consumer[%s]: committing message offset[%d]", topic, msg.Offset)
 	// c.client.Commit(session)
 	return nil
