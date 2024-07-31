@@ -159,7 +159,7 @@ func TestConsumerCtxDeadLine(t *testing.T) {
 	mockConsumerClaim.On("Messages").Return(receiverChannel)
 
 	mockReceiver := func(ctx context.Context, msg *ReceivedMessage) error {
-		assert.Equal(t, `{"id": 123,"name": "test"}`, msg.DecodedText)
+		assert.Equal(t, `{"id": 123,"name": "test"}`, msg.Value)
 		return nil
 	}
 

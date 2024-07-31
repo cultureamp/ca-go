@@ -21,7 +21,7 @@ func ExampleNewSubscriber() {
 
 			// do something with the message, typically unmarshal the json to your domain object
 			var myDomainObject interface{}
-			err := json.Unmarshal([]byte(msg.DecodedText), &myDomainObject)
+			err := json.Unmarshal([]byte(msg.Value), &myDomainObject)
 			if err != nil {
 				// recover, or return this error, which will stop the subscriber from consuming any more messages
 				// if WithReturnOnClientDispathError(true)
@@ -63,7 +63,7 @@ func ExampleNewService() {
 
 			// do something with the message, typically unmarshal the json to your domain object
 			var myDomainObject interface{}
-			err := json.Unmarshal([]byte(msg.DecodedText), &myDomainObject)
+			err := json.Unmarshal([]byte(msg.Value), &myDomainObject)
 			if err != nil {
 				// recover, or return this error, which will stop the subscriber from consuming any more messages
 				// if WithReturnOnClientDispathError(true)

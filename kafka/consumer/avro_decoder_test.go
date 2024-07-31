@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/IBM/sarama"
 	"github.com/go-errors/errors"
 	"github.com/linkedin/goavro/v2"
 	"github.com/riferrei/srclient"
@@ -24,7 +23,7 @@ func TestAvroDecodeErrorWhenMessageIsNil(t *testing.T) {
 
 	_, err := decoder.Decode(nil)
 	assert.NotNil(t, err)
-	assert.ErrorContains(t, err, "failed to decode: message is nil")
+	assert.ErrorContains(t, err, "message missing schema id")
 
 	mockSchemaRegistryClient.AssertExpectations(t)
 }
@@ -38,10 +37,7 @@ func TestAvroDecodeErrorWhenSchemaNotFound(t *testing.T) {
 	bs := make([]byte, 10)
 	binary.BigEndian.PutUint32(bs[1:], 1234)
 
-	msg := &sarama.ConsumerMessage{}
-	msg.Value = bs
-
-	_, err := decoder.Decode(msg)
+	_, err := decoder.Decode(bs)
 	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "failed to get schema")
 
@@ -57,9 +53,9 @@ func TestAvroDecode(t *testing.T) {
 	mockSchemaRegistryClient.On("GetSchemaByID", mock.Anything).Return(schema, nil)
 
 	dto := decoderTestObject{ID: 123, Name: "Gopher"}
-	msg := testDecoderKafkaMessage(t, schema, dto)
+	value := testDecoderKafkaValue(t, schema, dto)
 
-	decodedJSON, err := decoder.Decode(msg)
+	decodedJSON, err := decoder.Decode(value)
 	assert.Nil(t, err)
 
 	var result decoderTestObject
@@ -97,7 +93,7 @@ func testDecoderSchema(t *testing.T) *srclient.Schema {
 	return schema
 }
 
-func testDecoderKafkaMessage(t *testing.T, schema *srclient.Schema, dto decoderTestObject) *sarama.ConsumerMessage {
+func testDecoderKafkaValue(t *testing.T, schema *srclient.Schema, dto decoderTestObject) []byte {
 	schemaIDBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(schemaIDBytes, uint32(schema.ID()))
 	codec := schema.Codec()
@@ -112,9 +108,5 @@ func testDecoderKafkaMessage(t *testing.T, schema *srclient.Schema, dto decoderT
 	recordValue = append(recordValue, byte(0))
 	recordValue = append(recordValue, schemaIDBytes...)
 	recordValue = append(recordValue, valueBytes...)
-
-	msg := &sarama.ConsumerMessage{}
-	msg.Value = recordValue
-
-	return msg
+	return recordValue
 }

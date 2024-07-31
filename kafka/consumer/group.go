@@ -11,7 +11,7 @@ type groupConsumer struct {
 	conf           *Config
 	client         kafkaClient
 	messageHandler handler
-	group          sarama.ConsumerGroup
+	group          sarama.ConsumerGroup // Pete - this might make it too complex for others since it uses go routines
 	logger         sarama.StdLogger
 }
 

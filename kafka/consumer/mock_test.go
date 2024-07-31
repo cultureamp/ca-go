@@ -240,10 +240,10 @@ func newMockArvoDecoder(client schemaRegistryClient) *mockArvoDecoder {
 	}
 }
 
-func (m *mockArvoDecoder) Decode(msg *sarama.ConsumerMessage) (string, error) {
-	args := m.Called(msg)
+func (m *mockArvoDecoder) Decode(value []byte) (string, error) {
+	args := m.Called(value)
 
-	schemaID := binary.BigEndian.Uint32(msg.Value[1:5])
+	schemaID := binary.BigEndian.Uint32(value[1:5])
 	m.client.GetSchemaByID(int(schemaID))
 	return args.Get(0).(string), args.Error(1)
 }
