@@ -160,7 +160,6 @@ func (conf *Config) shouldProcessAssignor() error {
 
 func (conf *Config) shouldProcessSasl() error {
 	if conf.saramaConfig.Net.SASL.Enable {
-
 		if conf.saramaConfig.Net.SASL.User == "" {
 			return errors.Errorf("missing sasl username")
 		}
