@@ -129,7 +129,7 @@ func (l *StandardLogger) Panic(event string, err error) *Property {
 }
 
 // Child returns a new logger that inherits all the properties of the parent.
-func (l *StandardLogger) Child(options ...LoggerOption) Logger { //nolint:ireturn
+func (l *StandardLogger) Child(options ...LoggerOption) Logger {
 	lc := l.impl.With()
 
 	// Loop through our Logger options and apply them

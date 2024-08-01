@@ -5,6 +5,7 @@ The `secrets` package wraps the AWS SecretManager in a simple to use sington pat
 ## Environment Variables
 
 You MUST set these:
+
 - AWS_REGION = The AWS region this code is running in (eg. "us-west-1")
 
 ## FAQ
@@ -13,48 +14,49 @@ Question: I need to load secrets from another region? How do I do that?
 Answer: You can create your own secrets with sm := NewAWSSecrets("region") and then call sm.Get("secret")
 
 ## Examples
-```
+
+```go
 package cago
 
 import (
-	"fmt"
+ "fmt"
 
-	"github.com/cultureamp/ca-go/secrets"
+ "github.com/cultureamp/ca-go/secrets"
 )
 
 func BasicExamples() {
-	ctx := context.Background()
+ ctx := context.Background()
 
-	// this will automatically use the AWS Region as per the environment variable "AWS_REGION"
-	answer, err := secrets.Get(ctx, "my-test-secret")
-	fmt.Printf("The answer to the secret is '%s' (err='%v')\n", answer, err)
+ // this will automatically use the AWS Region as per the environment variable "AWS_REGION"
+ answer, err := secrets.Get(ctx, "my-test-secret")
+ fmt.Printf("The answer to the secret is '%s' (err='%v')\n", answer, err)
 
-	// or if you need secrets from another region other than the one you are running in use
-	sm, err := secrets.NewAWSSecretsManager(ctx, "a-different-region")
-	answer, err = sm.Get(ctx, "my-test-secret2")
-	fmt.Printf("The answer to the secret2 is '%s' (err='%v')\n", answer, err)
+ // or if you need secrets from another region other than the one you are running in use
+ sm, err := secrets.NewAWSSecretsManager(ctx, "a-different-region")
+ answer, err = sm.Get(ctx, "my-test-secret2")
+ fmt.Printf("The answer to the secret2 is '%s' (err='%v')\n", answer, err)
 
-	// of if you want to have a custom client that requires a different region
-	cfg, _ := config.LoadDefaultConfig(ctx, config.WithRegion("us-west-2"))
-	smc := secretsmanager.NewFromConfig(cfg)
-	sm = secrets.NewAWSSecretsManagerWithClient(smc)
+ // of if you want to have a custom client that requires a different region
+ cfg, _ := config.LoadDefaultConfig(ctx, config.WithRegion("us-west-2"))
+ smc := secretsmanager.NewFromConfig(cfg)
+ sm = secrets.NewAWSSecretsManagerWithClient(smc)
 
-	// or if you want to be able to mock the behavior
-	mockSM := newTestRunner()
-	oldSM := secrets.DefaultAWSSecretsManager
-	defer func() { secrets.DefaultAWSSecretsManager = oldSM }()
-	secrets.DefaultAWSSecretsManager = mockSM
+ // or if you want to be able to mock the behavior
+ mockSM := newTestRunner()
+ oldSM := secrets.DefaultAWSSecretsManager
+ defer func() { secrets.DefaultAWSSecretsManager = oldSM }()
+ secrets.DefaultAWSSecretsManager = mockSM
 }
 
 type testRunner struct{}
 
 func newTestRunner() *testRunner {
-	return &testRunner{}
+ return &testRunner{}
 }
 
 // Get on the test runner returns the key as the secret.
 func (c *testRunner) Get(_ context.Context, key string) (string, error) {
-	// do whatever you want here
-	return key, nil
+ // do whatever you want here
+ return key, nil
 }
 ```
