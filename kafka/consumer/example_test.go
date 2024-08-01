@@ -16,6 +16,8 @@ func ExampleNewSubscriber() {
 		consumer.WithSchemaRegistryURL("http://localhost:8081"), // if missing, will default to env var 'SCHEMA_REGISTRY_URL'
 		consumer.WithGroupID("group_id"),
 		consumer.WithReturnOnClientDispathError(true),
+		consumer.WithSaslUsername("test_user"),
+		consumer.WithSaslPassword("test_pwd"),
 		consumer.WithHandler(func(ctx context.Context, msg *consumer.ReceivedMessage) error {
 			// check topic, timestamp, etc. if need be
 
@@ -58,6 +60,8 @@ func ExampleNewService() {
 		consumer.WithSchemaRegistryURL("http://localhost:8081"), // if missing, will default to env var 'SCHEMA_REGISTRY_URL'
 		consumer.WithGroupID("group_id"),
 		consumer.WithReturnOnClientDispathError(true),
+		consumer.WithSaslUsername("test_user"),
+		consumer.WithSaslPassword("test_pwd"),
 		consumer.WithHandler(func(ctx context.Context, msg *consumer.ReceivedMessage) error {
 			// check topic, timestamp, etc. if need be
 

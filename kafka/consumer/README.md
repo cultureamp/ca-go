@@ -11,6 +11,8 @@ The implementation follows most of the guidance and recommendations found in thi
 - KAFKA_BROKERS = The list of Kafka brokers to use. Calling `WithBrokers(brokers)` overwrites this default.
 - KAFKA_TOPICS = The list of Kafka topics to consume. Calling `WithTopics(topics)` overwrites this default.
 - SCHEMA_REGISTRY_URL = The Avro Schema Registry to use. Calling `WithSchemaRegistryURL(url)` overwrites this default.
+- KAFKA_SASL_USERNAME = The sasl scram username used to authenticate with the Kafka cluster.
+- KAFKA_SASL_PASSWORD = The sasl scram password used to authenticate with the Kafka cluster.
 
 ## Avro and the Schema Registry
 
@@ -34,6 +36,8 @@ func ExampleNewSubscriber() {
   consumer.WithSchemaRegistryURL("http://localhost:8081"), // if missing, will default to env var 'SCHEMA_REGISTRY_URL'
   consumer.WithGroupID("group_id"),
   consumer.WithReturnOnClientDispathError(true),
+  consumer.WithSaslUsername("test_user"),
+  consumer.WithSaslPassword("test_pwd"),
   consumer.WithHandler(func(ctx context.Context, msg *consumer.ReceivedMessage) error {
    // check topic, timestamp, etc. if need be
 
@@ -82,6 +86,8 @@ func ExampleNewService() {
   consumer.WithSchemaRegistryURL("http://localhost:8081"), // if missing, will default to env var 'SCHEMA_REGISTRY_URL'
   consumer.WithGroupID("group_id"),
   consumer.WithReturnOnClientDispathError(true),
+  consumer.WithSaslUsername("test_user"),
+  consumer.WithSaslPassword("test_pwd"),
   consumer.WithHandler(func(ctx context.Context, msg *consumer.ReceivedMessage) error {
    // check topic, timestamp, etc. if need be
 

@@ -177,6 +177,7 @@ func testService(t *testing.T, ctx context.Context, receiver Receiver, topic str
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithLogging(newTestLogger()),
 		WithReturnOnClientDispathError(true),
+		WithSaslEnabled(false),
 	)
 	assert.Nil(t, err)
 

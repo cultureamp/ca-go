@@ -64,6 +64,17 @@ func newConfig() *Config {
 		conf.schemaRegistryURL = schemaRegistryURL
 	}
 
+	username := os.Getenv("KAFKA_SASL_USERNAME")
+	if username != "" {
+		conf.saramaConfig.Net.SASL.User = username
+	}
+
+	passwd := os.Getenv("KAFKA_SASL_PASSWORD")
+	if passwd != "" {
+		conf.saramaConfig.Net.SASL.Password = passwd
+	}
+
+	conf.saramaConfig.Net.SASL.Enable = true
 	conf.saramaConfig.ChannelBufferSize = 256
 	conf.saramaConfig.Consumer.Fetch.Default = defaultFetchSize
 	conf.saramaConfig.Consumer.IsolationLevel = sarama.ReadCommitted
@@ -148,8 +159,15 @@ func (conf *Config) shouldProcessAssignor() error {
 }
 
 func (conf *Config) shouldProcessSasl() error {
-	if conf.saramaConfig.Net.SASL.User != "" {
-		conf.saramaConfig.Net.SASL.Enable = true
+	if conf.saramaConfig.Net.SASL.Enable {
+
+		if conf.saramaConfig.Net.SASL.User == "" {
+			return errors.Errorf("missing sasl username")
+		}
+
+		if conf.saramaConfig.Net.SASL.Password == "" {
+			return errors.Errorf("missing sasl password")
+		}
 
 		switch conf.algorithm {
 		case "sha512", "":

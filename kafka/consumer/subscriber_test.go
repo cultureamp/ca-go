@@ -52,6 +52,31 @@ func TestNewConsumer(t *testing.T) {
 
 	assert.Nil(t, c)
 	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "missing sasl username")
+
+	c, err = NewSubscriber(
+		WithBrokers([]string{"localhost:9092"}),
+		WithTopics([]string{"test-topic"}),
+		WithGroupID("group_id"),
+		WithSchemaRegistryURL("http://localhost:8081"),
+		WithSaslUsername("test_user"),
+	)
+
+	assert.Nil(t, c)
+	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "missing sasl password")
+
+	c, err = NewSubscriber(
+		WithBrokers([]string{"localhost:9092"}),
+		WithTopics([]string{"test-topic"}),
+		WithGroupID("group_id"),
+		WithSchemaRegistryURL("http://localhost:8081"),
+		WithSaslUsername("test_user"),
+		WithSaslPassword("test_pwd"),
+	)
+
+	assert.Nil(t, c)
+	assert.NotNil(t, err)
 	assert.ErrorContains(t, err, "missing message handler")
 
 	c, err = NewSubscriber(
@@ -59,6 +84,8 @@ func TestNewConsumer(t *testing.T) {
 		WithTopics([]string{"test-topic"}),
 		WithGroupID("group_id"),
 		WithSchemaRegistryURL("http://localhost:8081"),
+		WithSaslUsername("test_user"),
+		WithSaslPassword("test_pwd"),
 		WithHandler(func(ctx context.Context, msg *ReceivedMessage) error { return nil }),
 	)
 	assert.NotNil(t, c)
@@ -70,6 +97,8 @@ func TestNewConsumer(t *testing.T) {
 		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *ReceivedMessage) error { return nil }),
 		WithSchemaRegistryURL("http://localhost:8081"),
+		WithSaslUsername("test_user"),
+		WithSaslPassword("test_pwd"),
 		WithAssignor("abc"),
 	)
 	assert.Nil(t, c)
@@ -82,6 +111,8 @@ func TestNewConsumer(t *testing.T) {
 		WithGroupID("group_id"),
 		WithHandler(func(ctx context.Context, msg *ReceivedMessage) error { return nil }),
 		WithSchemaRegistryURL("http://localhost:8081"),
+		WithSaslUsername("test_user"),
+		WithSaslPassword("test_pwd"),
 		WithAssignor("roundrobin"),
 	)
 	assert.NotNil(t, c)
@@ -94,6 +125,8 @@ func TestNewConsumer(t *testing.T) {
 		WithHandler(func(ctx context.Context, msg *ReceivedMessage) error { return nil }),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithAssignor("roundrobin"),
+		WithSaslUsername("test_user"),
+		WithSaslPassword("test_pwd"),
 		WithVersion("abc"),
 	)
 	assert.Nil(t, c)
@@ -107,6 +140,8 @@ func TestNewConsumer(t *testing.T) {
 		WithHandler(func(ctx context.Context, msg *ReceivedMessage) error { return nil }),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithAssignor("roundrobin"),
+		WithSaslUsername("test_user"),
+		WithSaslPassword("test_pwd"),
 		WithVersion("1.0.0"),
 	)
 	assert.NotNil(t, c)
@@ -121,6 +156,8 @@ func TestNewConsumer(t *testing.T) {
 		WithHandler(func(ctx context.Context, msg *ReceivedMessage) error { return nil }),
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithAssignor("roundrobin"),
+		WithSaslUsername("test_user"),
+		WithSaslPassword("test_pwd"),
 		WithOldest(false),
 		WithLogging(newTestLogger()),
 		WithDebugLogger(newTestLogger()),
@@ -403,6 +440,7 @@ func testConsumer(t *testing.T, client kafkaClient, decoder decoder, receiver Re
 		WithSchemaRegistryURL("http://localhost:8081"),
 		WithLogging(newTestLogger()),
 		WithReturnOnClientDispathError(true),
+		WithSaslEnabled(false),
 	)
 	assert.Nil(t, err)
 

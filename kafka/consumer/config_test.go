@@ -31,6 +31,16 @@ func TestConfigShouldProcess(t *testing.T) {
 
 	conf.schemaRegistryURL = "http://localhost:8081"
 	err = conf.shouldProcess()
+	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "missing sasl username")
+
+	conf.saramaConfig.Net.SASL.User = "test_user"
+	err = conf.shouldProcess()
+	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "missing sasl password")
+
+	conf.saramaConfig.Net.SASL.Password = "test_pwd"
+	err = conf.shouldProcess()
 	assert.Nil(t, err)
 
 	// valid options are: sticky, range, roundrobin
@@ -60,6 +70,7 @@ func TestConfigShouldProcessWithEnvVars(t *testing.T) {
 	conf := newConfig()
 	assert.NotNil(t, conf)
 
+	conf.saramaConfig.Net.SASL.Enable = false
 	conf.groupID = "group_id"
 
 	err := conf.shouldProcess()

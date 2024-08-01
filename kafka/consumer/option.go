@@ -135,6 +135,13 @@ func WithFetchSize(fetchSize int) Option {
 	}
 }
 
+// WithSaslEnabled sets the consumer SASL enabled (Default: true).
+func WithSaslEnabled(enabled bool) Option {
+	return func(consumer *Subscriber) {
+		consumer.conf.saramaConfig.Net.SASL.Enable = enabled
+	}
+}
+
 // WithSaslUsername sets the consumer SASL username.
 func WithSaslUsername(username string) Option {
 	return func(consumer *Subscriber) {
