@@ -11,8 +11,8 @@ The implementation follows most of the guidance and recommendations found in thi
 - KAFKA_BROKERS = The list of Kafka brokers to use. Calling `WithBrokers(brokers)` overwrites this default.
 - KAFKA_TOPICS = The list of Kafka topics to consume. Calling `WithTopics(topics)` overwrites this default.
 - SCHEMA_REGISTRY_URL = The Avro Schema Registry to use. Calling `WithSchemaRegistryURL(url)` overwrites this default.
-- KAFKA_SASL_USERNAME = The sasl scram username used to authenticate with the Kafka cluster.
-- KAFKA_SASL_PASSWORD = The sasl scram password used to authenticate with the Kafka cluster.
+- KAFKA_SASL_USERNAME = The sasl scram username used to authenticate with the Kafka cluster (see [Kafka Security](https://cultureamp.atlassian.net/wiki/spaces/TDS/pages/2859368483/Kafka+Security)).
+- KAFKA_SASL_PASSWORD = The sasl scram password used to authenticate with the Kafka cluster (see [Kafka Security](https://cultureamp.atlassian.net/wiki/spaces/TDS/pages/2859368483/Kafka+Security)).
 
 ## Avro and the Schema Registry
 
