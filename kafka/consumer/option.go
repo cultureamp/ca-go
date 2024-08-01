@@ -135,30 +135,21 @@ func WithFetchSize(fetchSize int) Option {
 	}
 }
 
-// WithTLSEnabled sets the consumer TLS enabled (Default: false).
-func WithTLSEnabled(enabled bool) Option {
+// WithSaslUsername sets the consumer SASL username.
+func WithSaslUsername(username string) Option {
 	return func(consumer *Subscriber) {
-		consumer.conf.tlsEnabled = enabled
+		consumer.conf.saramaConfig.Net.SASL.User = username
 	}
 }
 
-// WithTLSConfig sets the consumer TLS certificate PEM.
-func WithTLSCertPem(certPem []byte) Option {
+func WithSaslPassword(password string) Option {
 	return func(consumer *Subscriber) {
-		consumer.conf.tlsCertPem = certPem
+		consumer.conf.saramaConfig.Net.SASL.Password = password
 	}
 }
 
-// WithTLSKey sets the consumer TLS certificate key.
-func WithTLSCertKey(certKey []byte) Option {
+func WithSaslAlgorithm(algo string) Option {
 	return func(consumer *Subscriber) {
-		consumer.conf.tlsCertKey = certKey
-	}
-}
-
-// WithTLSCaPem sets the consumer TLS CA PEM.
-func WithTLSCaPem(caPem []byte) Option {
-	return func(consumer *Subscriber) {
-		consumer.conf.tlsCaPem = caPem
+		consumer.conf.algorithm = algo
 	}
 }

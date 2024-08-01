@@ -75,8 +75,8 @@ func (c *Subscriber) setupGroupConsumer() (*groupConsumer, error) {
 		return nil, errors.Errorf("consumer group already running! (forgot to call Stop()?)")
 	}
 
-	handler := newHandler(c.receiver, c.decoder)
-	group, err := newGroupConsumer(c.kakfaClient, handler, c.conf)
+	dispatcher := newDispatcher(c.receiver)
+	group, err := newGroupConsumer(c.kakfaClient, c.decoder, dispatcher, c.conf)
 	if err != nil {
 		return nil, errors.Errorf("failed to create kafka consumer: %w", err)
 	}

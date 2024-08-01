@@ -30,6 +30,18 @@ func (m *mockKafkaClient) NewConsumerGroup(brokers []string, groupId string, con
 	return gc, args.Error(1)
 }
 
+func (m *mockKafkaClient) NewConsumer(brokers []string, config *sarama.Config) (sarama.Consumer, error) {
+	args := m.Called(brokers, config)
+
+	var gc sarama.Consumer = nil
+	argZero := args.Get(0)
+	if argZero != nil {
+		gc = argZero.(sarama.Consumer)
+	}
+
+	return gc, args.Error(1)
+}
+
 func (m *mockKafkaClient) MarkMessageConsumed(session sarama.ConsumerGroupSession, msg *sarama.ConsumerMessage, metadata string) {
 	m.Called(session, msg, metadata)
 }

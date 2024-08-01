@@ -4,17 +4,17 @@ import "github.com/go-errors/errors"
 
 var errClosedMessageChannel = errors.Errorf("consumer: message channel closed")
 
-type dispatchHandlerError struct {
+type messageHandlerError struct {
 	err error
 }
 
-func newDispatchHandlerError(topic string, reason error) dispatchHandlerError {
-	return dispatchHandlerError{
+func newMessageHandlerError(topic string, reason error) messageHandlerError {
+	return messageHandlerError{
 		err: errors.Errorf("consumer[%s]: handler dispatch failed: err=%w", topic, reason),
 	}
 }
 
 // Error implements the error interface.
-func (e dispatchHandlerError) Error() string {
+func (e messageHandlerError) Error() string {
 	return e.err.Error()
 }

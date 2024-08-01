@@ -1,50 +1,90 @@
 package consumer
 
 import (
-	"context"
-	"time"
-
 	"github.com/IBM/sarama"
-
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
-type handler interface {
-	Dispatch(ctx context.Context, msg *sarama.ConsumerMessage) error
+type handler struct {
+	client     kafkaClient
+	decoder    decoder
+	dispatcher dispatcher
+	logger     sarama.StdLogger
 }
 
-// ReceivedMessage contains the underlying kafka message,
-// as well as the Avro DecodedText from the raw kafka message.Value.
-type ReceivedMessage struct {
-	Timestamp time.Time
-	Topic     string
-	Offset    int64
-	Key       []byte
-	Value     string // typically json, client needs to json.Unmarshal to specific domain struct
-}
-
-// Receiver is the client's message handler that processes the ReceivedMessage.
-// Returning an error will cause the consumer to stop consuming messages.
-type Receiver func(ctx context.Context, msg *ReceivedMessage) error
-
-type dispatchHandler struct {
-	receiver Receiver
-	decoder  decoder
-}
-
-func newHandler(receiver Receiver, decoder decoder) *dispatchHandler {
-	return &dispatchHandler{
-		receiver: receiver,
-		decoder:  decoder,
+func newHandler(client kafkaClient, decoder decoder, dispatcher dispatcher, logger sarama.StdLogger) *handler {
+	return &handler{
+		client:     client,
+		dispatcher: dispatcher,
+		decoder:    decoder,
+		logger:     logger,
 	}
 }
 
-// Dispatch handles the kafka message by decoding the message and calling the client's Receiver.
-// Returning an error will cause the consumer to stop consuming messages.
-func (h *dispatchHandler) Dispatch(ctx context.Context, msg *sarama.ConsumerMessage) error {
-	text, err := h.decoder.Decode(msg.Value)
+// Setup is run at the beginning of a new session, before ConsumeClaim.
+func (c *handler) Setup(sarama.ConsumerGroupSession) error {
+	c.logger.Printf("consumer: setup...")
+	return nil
+}
+
+// Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited.
+func (c *handler) Cleanup(sarama.ConsumerGroupSession) error {
+	c.logger.Printf("consumer: cleanup...")
+	// We don't dispatch any outstanding messages in the batch to the client,
+	// but neither will those be marked as committed
+	return nil
+}
+
+// ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
+// Once the Messages() channel is closed, the Handler must finish its processing loop and exit.
+func (c *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	// NOTE:
+	// Do not move the code below to a goroutine.
+	// The `ConsumeClaim` itself is called within a goroutine, see:
+	// https://github.com/IBM/sarama/blob/main/consumer_group.go#L27-L29
+
+	for {
+		topic := claim.Topic()
+
+		msg, err := c.getNextMessage(session, claim)
+		if err != nil {
+			// channel error (closed or context done?), so stop processing and return the error
+			return err
+		}
+
+		if err := c.processMessage(session, topic, msg); err != nil {
+			// dispatch failed, so stop processing and return the error
+			return err
+		}
+	}
+}
+
+func (c *handler) getNextMessage(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) (*sarama.ConsumerMessage, error) {
+	topic := claim.Topic()
+	select {
+	case msg, msgChannelOk := <-claim.Messages():
+		if !msgChannelOk {
+			c.logger.Printf("consumer[%s]: message channel read error. Closed?", topic)
+			return nil, errClosedMessageChannel
+		}
+
+		c.logger.Printf(
+			"consumer[%s]: message received Ok: timestamp=%v, partition=%d, offset=%d",
+			topic, msg.Timestamp, msg.Partition, msg.Offset,
+		)
+		return msg, nil
+
+	case <-session.Context().Done():
+		c.logger.Printf("acceptor[%s]: context is Done. Exiting...", topic)
+		return nil, session.Context().Err()
+	}
+}
+
+func (c *handler) processMessage(session sarama.ConsumerGroupSession, topic string, msg *sarama.ConsumerMessage) error {
+	// 1. Decode the msg.Value []byte to a string using the avro decoder
+	text, err := c.decoder.Decode(msg.Value)
 	if err != nil {
-		return err
+		c.logger.Printf("consumer[%s]: failed to decode message[%s]: err='%s'", topic, string(msg.Key), err.Error())
+		return newMessageHandlerError(topic, err)
 	}
 
 	message := &ReceivedMessage{
@@ -54,27 +94,22 @@ func (h *dispatchHandler) Dispatch(ctx context.Context, msg *sarama.ConsumerMess
 		Key:       msg.Key,
 		Value:     text,
 	}
-	if err := h.dispatchToClient(ctx, message); err != nil {
-		return err
+
+	// 2. Dispatch the message to the client's handler
+	if err := c.dispatcher.Dispatch(session.Context(), message); err != nil {
+		c.logger.Printf("consumer[%s]: failed to dispatch message[%s] to client handler: err='%s'", topic, string(msg.Key), err.Error())
+		return newMessageHandlerError(topic, err)
 	}
 
-	return nil
-}
+	// 3. Mark the message as successfully consumed
+	c.logger.Printf("consumer[%s]: marking message[%s] as successfully consumed", topic, string(msg.Key))
+	c.client.MarkMessageConsumed(session, msg, "done")
 
-func (h *dispatchHandler) dispatchToClient(ctx context.Context, msg *ReceivedMessage) error {
-	// add retries, etc.
-	span, ctx := tracer.StartSpanFromContext(ctx, "kafka.consumer.handle", tracer.ResourceName(msg.Topic))
-
-	// Set tags
-	span.SetTag("kafka.consumer.handle.message.key", string(msg.Key))
-	span.SetTag("kafka.consumer.handle.message.offset", msg.Offset)
-	span.SetTag("kafka.consumer.handle.message.timestamp", msg.Timestamp)
-
-	if err := h.receiver(ctx, msg); err != nil {
-		span.Finish(tracer.WithError(err))
-		return err
-	}
-
-	span.Finish()
+	// Given https://medium.com/@moabbas.ch/effective-kafka-consumption-in-golang-a-comprehensive-guide-aac54b5b79f0
+	// It looks like calling MarkMessageConsumed() is enough to commit the message offset.
+	// If not, then uncomment the lines below.
+	//
+	// c.logger.Printf("acceptor[%s]: committing message offset[%d]", topic, msg.Offset)
+	// c.client.Commit(session)
 	return nil
 }

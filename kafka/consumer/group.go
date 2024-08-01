@@ -8,25 +8,27 @@ import (
 )
 
 type groupConsumer struct {
-	conf           *Config
-	client         kafkaClient
-	messageHandler handler
-	group          sarama.ConsumerGroup // Pete - this might make it too complex for others since it uses go routines
-	logger         sarama.StdLogger
+	conf       *Config
+	client     kafkaClient
+	dispatcher dispatcher
+	decoder    decoder
+	group      sarama.ConsumerGroup // Pete - this might make it too complex for others since it uses go routines
+	logger     sarama.StdLogger
 }
 
-func newGroupConsumer(client kafkaClient, messageHandler handler, conf *Config) (*groupConsumer, error) {
+func newGroupConsumer(client kafkaClient, decoder decoder, dispatcher dispatcher, conf *Config) (*groupConsumer, error) {
 	group, err := client.NewConsumerGroup(conf.brokers, conf.groupID, conf.saramaConfig)
 	if err != nil {
 		return nil, errors.Errorf("error creating consumer: %w", err)
 	}
 
 	return &groupConsumer{
-		conf:           conf,
-		client:         client,
-		messageHandler: messageHandler,
-		group:          group,
-		logger:         conf.stdLogger,
+		conf:       conf,
+		client:     client,
+		decoder:    decoder,
+		dispatcher: dispatcher,
+		group:      group,
+		logger:     conf.stdLogger,
 	}, nil
 }
 
@@ -37,9 +39,9 @@ func (gc *groupConsumer) consume(ctx context.Context) error {
 	// server-side rebalance happens, the consumer session will need to be
 	// recreated to get the new claims
 	for {
-		consumer := newConsumer(gc.client, gc.messageHandler, gc.conf.stdLogger)
-		if err := gc.group.Consume(ctx, gc.conf.topics, consumer); err != nil {
-			if errFatal := gc.handleConsumeErrors(err); errFatal != nil {
+		handler := newHandler(gc.client, gc.decoder, gc.dispatcher, gc.conf.stdLogger)
+		if err := gc.group.Consume(ctx, gc.conf.topics, handler); err != nil {
+			if errFatal := gc.handleDispatchErrors(err); errFatal != nil {
 				return errFatal
 			}
 		}
@@ -51,7 +53,11 @@ func (gc *groupConsumer) consume(ctx context.Context) error {
 	}
 }
 
-func (gc *groupConsumer) handleConsumeErrors(err error) error {
+func (gc *groupConsumer) handleDispatchErrors(err error) error {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return err
+	}
+
 	if errors.Is(err, sarama.ErrClosedConsumerGroup) {
 		return err
 	}
@@ -60,11 +66,7 @@ func (gc *groupConsumer) handleConsumeErrors(err error) error {
 		return err
 	}
 
-	if errors.Is(err, context.DeadlineExceeded) {
-		return err
-	}
-
-	var target dispatchHandlerError
+	var target messageHandlerError
 	if errors.As(err, &target) {
 		// for any client dispatch errors, return if the conf was set to true otherwise, ignore.
 		if gc.conf.returnOnClientDispatchError {
